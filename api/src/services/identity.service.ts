@@ -301,6 +301,9 @@ function findEarliestRevisionByParent<
   return earliest;
 }
 
+// A case is only openable once the panel has finished it.
+const RESOLVED_CASE_STATUSES = new Set<string>(["approved", "rejected"]);
+
 // The caller's activites, which include guide and objective revisions they
 // authored and review cases they voted on.
 export async function getMyActivity(
@@ -400,7 +403,7 @@ export async function getMyActivity(
         created_at: rev.created_at,
         status,
         target_slug: guide?.slug ?? null,
-        review_case_id: caseId,
+        review_case_id: RESOLVED_CASE_STATUSES.has(caseStatus) ? caseId : null,
         revision_id: rev.id,
       });
     }
@@ -529,6 +532,7 @@ export async function getMyActivity(
         if (!caseId) continue;
         const rev = revByCase.get(caseId);
         const revData = rev ? revById.get(rev) : undefined;
+        const caseStatus = statusByCase.get(caseId) ?? "pending";
         rows.push({
           content_kind: "review",
           is_variant: false,
@@ -536,11 +540,13 @@ export async function getMyActivity(
           title: revData?.title ?? "Untitled",
           change_summary: revData?.change_summary ?? null,
           created_at: decision.created_at,
-          status: statusByCase.get(caseId) ?? "pending",
+          status: caseStatus,
           target_slug: revData
             ? (slugByGuide.get(revData.guide_id) ?? null)
             : null,
-          review_case_id: caseId,
+          review_case_id: RESOLVED_CASE_STATUSES.has(caseStatus)
+            ? caseId
+            : null,
           revision_id: rev ?? null,
         });
       }
