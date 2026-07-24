@@ -77,6 +77,9 @@ function ColumnFilter({
           align="start"
           className={cn("w-56 gap-3 tracking-normal normal-case", className)}
         >
+          <div className="text-xs font-medium">
+            Filter by {label.toLowerCase()}
+          </div>
           {children}
         </PopoverContent>
       </Popover>
@@ -281,7 +284,6 @@ export function DateColumnFilter({
       }
       className="w-auto"
     >
-      <div className="text-xs font-medium">Filter by date</div>
       <Popover
         open={activeField !== null}
         onOpenChange={(open) => {
