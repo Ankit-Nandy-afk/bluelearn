@@ -1,11 +1,10 @@
-import { Menu, Search, User, X } from "lucide-react";
+import { Menu, User, X } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { useAuth } from "@/lib/authContext";
 import { signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,15 +70,6 @@ export function Navbar() {
 
           {/* RIGHT */}
           <div className="flex items-center gap-3">
-            {/* Desktop search */}
-            <div className="relative hidden w-[280px] lg:block">
-              <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search guides..."
-                className="h-9 rounded-md border pl-9 text-xs"
-              />
-            </div>
-
             {/* Contribute Button */}
             <div className="hidden md:flex">
               <Link to="/contribute" className="btn-cta tracking-[0.08em]">
@@ -152,12 +142,6 @@ export function Navbar() {
         {mobileOpen && (
           <div className="absolute top-[65px] right-0 left-0 z-50 animate-in rounded-b-md border bg-white p-5 shadow-md fade-in slide-in-from-top-2 md:hidden">
             <div className="flex flex-col gap-y-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search..." className="h-9 pl-9 text-xs" />
-              </div>
-
               {/* Nav */}
               <div className="flex flex-col gap-3 py-3">
                 {visibleNavItems.map((item) => (
