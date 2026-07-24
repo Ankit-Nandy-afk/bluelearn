@@ -252,6 +252,13 @@ export function DateColumnFilter({
 
   // Which field the calendar popover is editing (null closes it).
   const [activeField, setActiveField] = useState<"from" | "to" | null>(null);
+  const [visibleMonth, setVisibleMonth] = useState<Date | undefined>(undefined);
+
+  function openField(field: "from" | "to") {
+    const date = field === "to" ? to : from;
+    setVisibleMonth(date ?? from ?? to ?? new Date());
+    setActiveField(field);
+  }
 
   // Swap dates if end date is earlier than start date.
   function commit(nextFrom: Date | undefined, nextTo: Date | undefined) {
@@ -270,7 +277,12 @@ export function DateColumnFilter({
   // closes on the end date click.
   function onPickDay(date: Date | undefined) {
     onSetDate(date);
-    setActiveField(activeField === "to" ? null : "to");
+    if (activeField === "to") {
+      setActiveField(null);
+    } else {
+      setVisibleMonth(to ?? new Date());
+      setActiveField("to");
+    }
   }
 
   const activeDate = activeField === "to" ? to : from;
@@ -299,7 +311,7 @@ export function DateColumnFilter({
             <DateField
               active={activeField === "from"}
               date={from}
-              onClick={() => setActiveField("from")}
+              onClick={() => openField("from")}
             />
           </FieldAnchor>
           <span className="text-muted-foreground">and</span>
@@ -307,7 +319,7 @@ export function DateColumnFilter({
             <DateField
               active={activeField === "to"}
               date={to}
-              onClick={() => setActiveField("to")}
+              onClick={() => openField("to")}
             />
           </FieldAnchor>
         </div>
@@ -315,13 +327,17 @@ export function DateColumnFilter({
           align="start"
           className="w-auto gap-3 tracking-normal normal-case"
         >
-          <SegmentedDateInput value={activeDate} onChange={onSetDate} />
+          <SegmentedDateInput
+            value={activeDate}
+            onChange={onSetDate}
+            onNavigate={setVisibleMonth}
+          />
           <Calendar
-            key={activeField}
             mode="single"
             selected={activeDate}
             onSelect={onPickDay}
-            defaultMonth={activeDate ?? from ?? to}
+            month={visibleMonth}
+            onMonthChange={setVisibleMonth}
           />
         </PopoverContent>
       </Popover>
@@ -349,9 +365,11 @@ export function DateColumnFilter({
 function SegmentedDateInput({
   value,
   onChange,
+  onNavigate,
 }: {
   value: Date | undefined;
   onChange: (date: Date | undefined) => void;
+  onNavigate: (date: Date) => void;
 }) {
   const monthRef = useRef<HTMLInputElement>(null);
   const dayRef = useRef<HTMLInputElement>(null);
@@ -359,24 +377,45 @@ function SegmentedDateInput({
   const [month, setMonth] = useState("");
   const [day, setDay] = useState("");
   const [year, setYear] = useState("");
+  // Time value we last emitted, so our own echo doesn't stomp typing.
+  const lastEmitted = useRef<number | null>(null);
 
+  // Sync segments only on external changes (calendar, field switch, clear),
+  // not when value just echoes back what we typed.
+  const valueTime = value ? value.getTime() : null;
   useEffect(() => {
-    if (!value) {
+    if (valueTime !== null && valueTime === lastEmitted.current) return;
+    if (valueTime === null) {
       setMonth("");
       setDay("");
       setYear("");
       return;
     }
-    setMonth(String(value.getMonth() + 1).padStart(2, "0"));
-    setDay(String(value.getDate()).padStart(2, "0"));
-    setYear(String(value.getFullYear()));
-  }, [value]);
+    const date = new Date(valueTime);
+    setMonth(String(date.getMonth() + 1).padStart(2, "0"));
+    setDay(String(date.getDate()).padStart(2, "0"));
+    setYear(String(date.getFullYear()));
+  }, [valueTime]);
 
   function emit(m: string, d: string, y: string) {
     if (!m || !d || y.length !== 4) return;
     const date = new Date(Number(y), Number(m) - 1, Number(d));
-    if (date.getMonth() === Number(m) - 1 && date.getDate() === Number(d))
+    if (date.getMonth() === Number(m) - 1 && date.getDate() === Number(d)) {
+      lastEmitted.current = date.getTime();
       onChange(date);
+    }
+  }
+
+  // Steer the calendar view from whatever month/year is typed so far,
+  // falling back to the current value for the segment left blank.
+  function navigate(m: string, y: string) {
+    const base = value ?? new Date();
+    const monthNum = Number(m);
+    const monthIdx =
+      m && monthNum >= 1 && monthNum <= 12 ? monthNum - 1 : base.getMonth();
+    const yearNum = Number(y);
+    const yearVal = y.length === 4 ? yearNum : base.getFullYear();
+    onNavigate(new Date(yearVal, monthIdx, 1));
   }
 
   function onMonth(raw: string) {
@@ -385,6 +424,7 @@ function SegmentedDateInput({
     const next = done ? digits.padStart(2, "0") : digits;
     setMonth(next);
     emit(next, day, year);
+    navigate(next, year);
     if (done && digits) {
       dayRef.current?.focus();
       dayRef.current?.select();
@@ -407,6 +447,7 @@ function SegmentedDateInput({
     const digits = raw.replace(/\D/g, "").slice(0, 4);
     setYear(digits);
     emit(month, day, digits);
+    navigate(month, digits);
   }
 
   return (
