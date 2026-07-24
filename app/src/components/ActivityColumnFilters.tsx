@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
@@ -28,17 +29,6 @@ function formatMDY(date: Date | undefined) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${month}/${day}/${date.getFullYear()}`;
-}
-
-function parseMDY(text: string) {
-  const match = text.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!match) return undefined;
-  const [, m, d, y] = match;
-  const date = new Date(Number(y), Number(m) - 1, Number(d));
-  // reject overflow like 13/40 that Date would silently roll over
-  if (date.getMonth() !== Number(m) - 1 || date.getDate() !== Number(d))
-    return undefined;
-  return date;
 }
 
 // yyyy-mm-dd in local time, which is what the URL stores
@@ -253,16 +243,10 @@ export function DateColumnFilter({
   const active =
     Boolean(search.from || search.to) || search.sort === "date_asc";
 
-  // which field the calendar is editing; null hides the calendar
+  // Which field the calendar popover is editing (null closes it).
   const [activeField, setActiveField] = useState<"from" | "to" | null>(null);
-  const [fieldText, setFieldText] = useState("");
 
-  function openField(field: "from" | "to") {
-    setActiveField(field);
-    setFieldText(formatMDY(field === "from" ? from : to));
-  }
-
-  // commit both endpoints, swapping if they ended up reversed
+  // Swap dates if end date is earlier than start date.
   function commit(nextFrom: Date | undefined, nextTo: Date | undefined) {
     let start = nextFrom;
     let end = nextTo;
@@ -270,19 +254,16 @@ export function DateColumnFilter({
     setFilters({ from: toISODate(start), to: toISODate(end) });
   }
 
-  function onPickDay(date: Date | undefined) {
-    setFieldText(formatMDY(date));
+  function onSetDate(date: Date | undefined) {
     if (activeField === "to") commit(from, date);
     else commit(date, to);
   }
 
-  function onFieldText(value: string) {
-    setFieldText(value);
-    const date = value.trim() ? parseMDY(value) : undefined;
-    if (!value.trim() || date) {
-      if (activeField === "to") commit(from, date);
-      else commit(date, to);
-    }
+  // Start date calendar click advances to the end date field, then
+  // closes on the end date click.
+  function onPickDay(date: Date | undefined) {
+    onSetDate(date);
+    setActiveField(activeField === "to" ? null : "to");
   }
 
   const activeDate = activeField === "to" ? to : from;
@@ -301,37 +282,43 @@ export function DateColumnFilter({
       className="w-auto"
     >
       <div className="text-xs font-medium">Filter by date</div>
-      <div className="flex items-center gap-2">
-        <DateField
-          active={activeField === "from"}
-          date={from}
-          onClick={() => openField("from")}
-        />
-        <span className="text-muted-foreground">and</span>
-        <DateField
-          active={activeField === "to"}
-          date={to}
-          onClick={() => openField("to")}
-        />
-      </div>
-
-      {activeField && (
-        <div className="flex flex-col gap-2">
-          <Input
-            autoFocus
-            value={fieldText}
-            onChange={(e) => onFieldText(e.target.value)}
-            placeholder="MM/DD/YYYY"
-            className="h-7"
-          />
+      <Popover
+        open={activeField !== null}
+        onOpenChange={(open) => {
+          if (!open) setActiveField(null);
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <FieldAnchor active={activeField === "from"}>
+            <DateField
+              active={activeField === "from"}
+              date={from}
+              onClick={() => setActiveField("from")}
+            />
+          </FieldAnchor>
+          <span className="text-muted-foreground">and</span>
+          <FieldAnchor active={activeField === "to"}>
+            <DateField
+              active={activeField === "to"}
+              date={to}
+              onClick={() => setActiveField("to")}
+            />
+          </FieldAnchor>
+        </div>
+        <PopoverContent
+          align="start"
+          className="w-auto gap-3 tracking-normal normal-case"
+        >
+          <SegmentedDateInput value={activeDate} onChange={onSetDate} />
           <Calendar
+            key={activeField}
             mode="single"
             selected={activeDate}
             onSelect={onPickDay}
-            defaultMonth={activeDate}
+            defaultMonth={activeDate ?? from ?? to}
           />
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
 
       <div className="flex flex-col">
         <SortRow
@@ -351,17 +338,129 @@ export function DateColumnFilter({
   );
 }
 
-function DateField({
+function SegmentedDateInput({
+  value,
+  onChange,
+}: {
+  value: Date | undefined;
+  onChange: (date: Date | undefined) => void;
+}) {
+  const monthRef = useRef<HTMLInputElement>(null);
+  const dayRef = useRef<HTMLInputElement>(null);
+  const yearRef = useRef<HTMLInputElement>(null);
+  const [month, setMonth] = useState("");
+  const [day, setDay] = useState("");
+  const [year, setYear] = useState("");
+
+  useEffect(() => {
+    if (!value) {
+      setMonth("");
+      setDay("");
+      setYear("");
+      return;
+    }
+    setMonth(String(value.getMonth() + 1).padStart(2, "0"));
+    setDay(String(value.getDate()).padStart(2, "0"));
+    setYear(String(value.getFullYear()));
+  }, [value]);
+
+  function emit(m: string, d: string, y: string) {
+    if (!m || !d || y.length !== 4) return;
+    const date = new Date(Number(y), Number(m) - 1, Number(d));
+    if (date.getMonth() === Number(m) - 1 && date.getDate() === Number(d))
+      onChange(date);
+  }
+
+  function onMonth(raw: string) {
+    const digits = raw.replace(/\D/g, "").slice(0, 2);
+    const done = digits.length === 2 || Number(digits) > 1;
+    const next = done ? digits.padStart(2, "0") : digits;
+    setMonth(next);
+    emit(next, day, year);
+    if (done && digits) {
+      dayRef.current?.focus();
+      dayRef.current?.select();
+    }
+  }
+
+  function onDay(raw: string) {
+    const digits = raw.replace(/\D/g, "").slice(0, 2);
+    const done = digits.length === 2 || Number(digits) > 3;
+    const next = done ? digits.padStart(2, "0") : digits;
+    setDay(next);
+    emit(month, next, year);
+    if (done && digits) {
+      yearRef.current?.focus();
+      yearRef.current?.select();
+    }
+  }
+
+  function onYear(raw: string) {
+    const digits = raw.replace(/\D/g, "").slice(0, 4);
+    setYear(digits);
+    emit(month, day, digits);
+  }
+
+  return (
+    <div className="flex items-center rounded-md border border-input px-2 py-1.5 text-sm focus-within:border-brand-blue">
+      <input
+        ref={monthRef}
+        value={month}
+        onChange={(e) => onMonth(e.target.value)}
+        onFocus={(e) => e.target.select()}
+        inputMode="numeric"
+        placeholder="MM"
+        className="w-7 bg-transparent text-center tabular-nums caret-transparent outline-none placeholder:font-light placeholder:text-muted-foreground focus:rounded-md focus:bg-brand-blue/15"
+      />
+      <span className="px-1 text-muted-foreground">/</span>
+      <input
+        ref={dayRef}
+        value={day}
+        onChange={(e) => onDay(e.target.value)}
+        onFocus={(e) => e.target.select()}
+        onKeyDown={(e) => {
+          if (e.key === "Backspace" && !day) monthRef.current?.focus();
+        }}
+        inputMode="numeric"
+        placeholder="DD"
+        className="w-7 bg-transparent text-center tabular-nums caret-transparent outline-none placeholder:font-light placeholder:text-muted-foreground focus:rounded-md focus:bg-brand-blue/15"
+      />
+      <span className="px-1 text-muted-foreground">/</span>
+      <input
+        ref={yearRef}
+        value={year}
+        onChange={(e) => onYear(e.target.value)}
+        onFocus={(e) => e.target.select()}
+        onKeyDown={(e) => {
+          if (e.key === "Backspace" && !year) dayRef.current?.focus();
+        }}
+        inputMode="numeric"
+        placeholder="YYYY"
+        className="w-11 bg-transparent text-center tabular-nums caret-transparent outline-none placeholder:font-light placeholder:text-muted-foreground focus:rounded-md focus:bg-brand-blue/15"
+      />
+    </div>
+  );
+}
+
+// Anchor the calendar popover to the box being edited so it left-aligns with it
+function FieldAnchor({
   active,
-  date,
-  onClick,
+  children,
 }: {
   active: boolean;
-  date: Date | undefined;
-  onClick: () => void;
+  children: React.ReactNode;
 }) {
+  if (!active) return children;
+  return <PopoverAnchor asChild>{children}</PopoverAnchor>;
+}
+
+const DateField = forwardRef<
+  HTMLButtonElement,
+  { active: boolean; date: Date | undefined; onClick: () => void }
+>(function DateFieldButton({ active, date, onClick }, ref) {
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onClick}
       className={cn(
@@ -373,4 +472,4 @@ function DateField({
       {date ? formatMDY(date) : "Select date"}
     </button>
   );
-}
+});

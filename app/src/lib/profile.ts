@@ -116,6 +116,13 @@ export type ActivityFilters = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// Parse a yyyy-mm-dd bound as local midnight, matching how the UI stores it.
+// new Date("yyyy-mm-dd") would read it as UTC and shift the window by the offset.
+function localDayMs(value: string): number {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day).getTime();
+}
+
 const SORTERS: Record<
   ActivitySort,
   (a: ActivityRow, b: ActivityRow) => number
@@ -140,9 +147,9 @@ export function filterActivity(
   const statuses = status?.length
     ? new Set(status.flatMap((s) => STATUS_BUCKETS[s]))
     : null;
-  const fromMs = from ? new Date(from).getTime() : null;
+  const fromMs = from ? localDayMs(from) : null;
   // 'to' is a whole day, so include everything before the next midnight
-  const toMs = to ? new Date(to).getTime() + DAY_MS : null;
+  const toMs = to ? localDayMs(to) + DAY_MS : null;
 
   const matched = rows.filter((row) => {
     if (types && !types.has(activityTypeKey(row))) return false;
