@@ -100,10 +100,12 @@ function ColumnFilter({
 function SortRow({
   active,
   ascending,
+  label,
   onClick,
 }: {
   active: boolean;
   ascending: boolean;
+  label: string;
   onClick: () => void;
 }) {
   return (
@@ -120,7 +122,7 @@ function SortRow({
       ) : (
         <ArrowDownIcon className="size-3.5" />
       )}
-      <span>Sort {ascending ? "Ascending" : "Descending"}</span>
+      <span>{label}</span>
     </button>
   );
 }
@@ -162,6 +164,7 @@ export function TextColumnFilter({
       <div className="flex flex-col">
         <SortRow
           ascending
+          label="Sort A - Z"
           active={colSort === "asc"}
           onClick={() =>
             setFilters({ sort: colSort === "asc" ? undefined : asc })
@@ -169,6 +172,7 @@ export function TextColumnFilter({
         />
         <SortRow
           ascending={false}
+          label="Sort Z - A"
           active={colSort === "desc"}
           onClick={() =>
             setFilters({ sort: colSort === "desc" ? undefined : desc })
@@ -324,16 +328,18 @@ export function DateColumnFilter({
 
       <div className="flex flex-col">
         <SortRow
+          ascending={false}
+          label="Sort Newest"
+          active={colSort === "desc"}
+          onClick={() => setFilters({ sort: undefined })}
+        />
+        <SortRow
           ascending
+          label="Sort Oldest"
           active={colSort === "asc"}
           onClick={() =>
             setFilters({ sort: colSort === "asc" ? undefined : "date_asc" })
           }
-        />
-        <SortRow
-          ascending={false}
-          active={colSort === "desc"}
-          onClick={() => setFilters({ sort: undefined })}
         />
       </div>
     </ColumnFilter>
