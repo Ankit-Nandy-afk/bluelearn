@@ -18,17 +18,42 @@ export async function loadProfilePage(signal?: AbortSignal) {
 export type ProfilePageData = Awaited<ReturnType<typeof loadProfilePage>>;
 type ActivityRow = ProfilePageData["activity"][number];
 
-// "Guide creation", "Variant revision", "Objective creation", "Review".
-export function activityTypeLabel(row: ActivityRow): string {
-  if (row.content_kind === "review") return "Review";
-  const noun =
-    row.content_kind === "objective"
-      ? "Objective"
-      : row.is_variant
-        ? "Variant"
-        : "Guide";
-  return `${noun} ${row.is_creation ? "creation" : "revision"}`;
+export type ActivityTypeFilter =
+  | "guide_creation"
+  | "guide_revision"
+  | "variant_creation"
+  | "variant_revision"
+  | "objective_creation"
+  | "objective_revision"
+  | "review";
+
+const TYPE_LABELS: Record<ActivityTypeFilter, string> = {
+  guide_creation: "Guide creation",
+  guide_revision: "Guide revision",
+  variant_creation: "Variant creation",
+  variant_revision: "Variant revision",
+  objective_creation: "Objective creation",
+  objective_revision: "Objective revision",
+  review: "Review",
+};
+
+// Collapse a row down to one of the labelled type buckets.
+export function activityTypeKey(row: ActivityRow): ActivityTypeFilter {
+  if (row.content_kind === "review") return "review";
+  if (row.content_kind === "objective")
+    return row.is_creation ? "objective_creation" : "objective_revision";
+  if (row.is_variant)
+    return row.is_creation ? "variant_creation" : "variant_revision";
+  return row.is_creation ? "guide_creation" : "guide_revision";
 }
+
+export function activityTypeLabel(row: ActivityRow): string {
+  return TYPE_LABELS[activityTypeKey(row)];
+}
+
+export const ACTIVITY_TYPE_FILTERS = (
+  Object.keys(TYPE_LABELS) as Array<ActivityTypeFilter>
+).map((value) => ({ value, label: TYPE_LABELS[value] }));
 
 const STATUS_LABELS: Record<ActivityRow["status"], string> = {
   draft: "Draft",
@@ -53,7 +78,6 @@ const STATUS_BUCKETS = {
 } as const satisfies Record<string, ReadonlyArray<ActivityRow["status"]>>;
 
 export type ActivityStatusFilter = keyof typeof STATUS_BUCKETS;
-export type ActivityTypeFilter = ActivityRow["content_kind"];
 
 export const ACTIVITY_STATUS_FILTERS: Array<{
   value: ActivityStatusFilter;
@@ -65,37 +89,78 @@ export const ACTIVITY_STATUS_FILTERS: Array<{
   { value: "rejected", label: "Rejected" },
 ];
 
-export const ACTIVITY_TYPE_FILTERS: Array<{
-  value: ActivityTypeFilter;
-  label: string;
-}> = [
-  { value: "guide", label: "Guides" },
-  { value: "objective", label: "Objectives" },
-  { value: "review", label: "Reviews" },
+export type ActivitySort =
+  | "title_asc"
+  | "title_desc"
+  | "summary_asc"
+  | "summary_desc"
+  | "date_asc";
+
+export const ACTIVITY_SORTS: ReadonlyArray<ActivitySort> = [
+  "title_asc",
+  "title_desc",
+  "summary_asc",
+  "summary_desc",
+  "date_asc",
 ];
 
 export type ActivityFilters = {
-  q?: string;
-  type?: ActivityTypeFilter;
-  status?: ActivityStatusFilter;
-  sort?: "oldest";
+  type?: Array<ActivityTypeFilter>;
+  status?: Array<ActivityStatusFilter>;
+  title?: string;
+  summary?: string;
+  from?: string;
+  to?: string;
+  sort?: ActivitySort;
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const SORTERS: Record<
+  ActivitySort,
+  (a: ActivityRow, b: ActivityRow) => number
+> = {
+  title_asc: (a, b) => a.title.localeCompare(b.title),
+  title_desc: (a, b) => b.title.localeCompare(a.title),
+  summary_asc: (a, b) =>
+    (a.change_summary ?? "").localeCompare(b.change_summary ?? ""),
+  summary_desc: (a, b) =>
+    (b.change_summary ?? "").localeCompare(a.change_summary ?? ""),
+  date_asc: (a, b) => +new Date(a.created_at) - +new Date(b.created_at),
 };
 
 export function filterActivity(
   rows: Array<ActivityRow>,
-  { q, type, status, sort }: ActivityFilters
+  { type, status, title, summary, from, to, sort }: ActivityFilters
 ): Array<ActivityRow> {
-  const needle = q?.trim().toLowerCase();
-  const statuses: ReadonlyArray<string> | null = status
-    ? STATUS_BUCKETS[status]
+  const titleNeedle = title?.trim().toLowerCase();
+  const summaryNeedle = summary?.trim().toLowerCase();
+  const types = type?.length ? new Set(type) : null;
+  // expand each status bucket back to the raw statuses it covers
+  const statuses = status?.length
+    ? new Set(status.flatMap((s) => STATUS_BUCKETS[s]))
     : null;
+  const fromMs = from ? new Date(from).getTime() : null;
+  // 'to' is a whole day, so include everything before the next midnight
+  const toMs = to ? new Date(to).getTime() + DAY_MS : null;
 
   const matched = rows.filter((row) => {
-    if (type && row.content_kind !== type) return false;
-    if (statuses && !statuses.includes(row.status)) return false;
-    if (needle && !row.title.toLowerCase().includes(needle)) return false;
+    if (types && !types.has(activityTypeKey(row))) return false;
+    if (statuses && !statuses.has(row.status)) return false;
+    if (titleNeedle && !row.title.toLowerCase().includes(titleNeedle))
+      return false;
+    if (
+      summaryNeedle &&
+      !(row.change_summary ?? "").toLowerCase().includes(summaryNeedle)
+    )
+      return false;
+    if (fromMs !== null || toMs !== null) {
+      const t = new Date(row.created_at).getTime();
+      if (fromMs !== null && t < fromMs) return false;
+      if (toMs !== null && t >= toMs) return false;
+    }
     return true;
   });
 
-  return sort === "oldest" ? matched.reverse() : matched;
+  return sort ? [...matched].sort(SORTERS[sort]) : matched;
 }

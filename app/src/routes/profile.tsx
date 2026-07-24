@@ -1,11 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import type {
+  ActivityFilters,
+  ActivitySort,
   ActivityStatusFilter,
   ActivityTypeFilter,
   ProfilePageData,
 } from "@/lib/profile";
 import {
+  ACTIVITY_SORTS,
   ACTIVITY_STATUS_FILTERS,
   ACTIVITY_TYPE_FILTERS,
   activityStatusLabel,
@@ -17,15 +19,12 @@ import { formatDate } from "@/lib/guideUtils";
 import { cn } from "@/lib/utils";
 import { usePagination } from "@/lib/usePagination";
 import { Pagination } from "@/components/Pagination";
-import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  ChoiceColumnFilter,
+  DateColumnFilter,
+  TextColumnFilter,
+} from "@/components/ActivityColumnFilters";
+import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -38,26 +37,50 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-type ProfileSearch = {
-  q?: string;
-  type?: ActivityTypeFilter;
-  status?: ActivityStatusFilter;
-  sort?: "oldest";
-  page?: number;
-};
+type ProfileSearch = ActivityFilters & { page?: number };
+
+function validString(value: unknown) {
+  return typeof value === "string" && value ? value : undefined;
+}
+
+function validDate(value: unknown) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? value
+    : undefined;
+}
+
+function validArray(value: unknown, allowed: ReadonlyArray<string>) {
+  const raw = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? [value]
+      : [];
+  return raw.filter(
+    (item): item is string => typeof item === "string" && allowed.includes(item)
+  );
+}
 
 export const Route = createFileRoute("/profile")({
   validateSearch: (search: Record<string, unknown>): ProfileSearch => {
     const page = Number(search.page);
+    const type = validArray(
+      search.type,
+      ACTIVITY_TYPE_FILTERS.map((f) => f.value)
+    ) as Array<ActivityTypeFilter>;
+    const status = validArray(
+      search.status,
+      ACTIVITY_STATUS_FILTERS.map((f) => f.value)
+    ) as Array<ActivityStatusFilter>;
     return {
-      q: typeof search.q === "string" && search.q ? search.q : undefined,
-      type: ACTIVITY_TYPE_FILTERS.some((f) => f.value === search.type)
-        ? (search.type as ActivityTypeFilter)
+      type: type.length ? type : undefined,
+      status: status.length ? status : undefined,
+      title: validString(search.title),
+      summary: validString(search.summary),
+      from: validDate(search.from),
+      to: validDate(search.to),
+      sort: ACTIVITY_SORTS.includes(search.sort as ActivitySort)
+        ? (search.sort as ActivitySort)
         : undefined,
-      status: ACTIVITY_STATUS_FILTERS.some((f) => f.value === search.status)
-        ? (search.status as ActivityStatusFilter)
-        : undefined,
-      sort: search.sort === "oldest" ? "oldest" : undefined,
       page: Number.isInteger(page) && page > 1 ? page : undefined,
     };
   },
@@ -102,10 +125,6 @@ function getInitials(value: string | null | undefined) {
 
 const PAGE_SIZE = 10;
 
-// Need a non-empty value to express "no filter" because Radix
-// already reserves the empty string "".
-const ALL = "all";
-
 type ActivityRow = ProfilePageData["activity"][number];
 function rowTarget(row: ActivityRow) {
   if (row.content_kind === "review")
@@ -132,7 +151,7 @@ function rowTarget(row: ActivityRow) {
 function ProfilePage({ profile, roles, stats, activity }: ProfilePageData) {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const setFilters = (next: Partial<ProfileSearch>) =>
+  const setFilters = (next: Partial<ActivityFilters>) =>
     navigate({
       to: "/profile",
       search: (prev) => ({ ...prev, ...next, page: undefined }),
@@ -140,7 +159,14 @@ function ProfilePage({ profile, roles, stats, activity }: ProfilePageData) {
     });
 
   const filtered = filterActivity(activity, search);
-  const hasFilters = Boolean(search.q || search.type || search.status);
+  const hasFilters = Boolean(
+    search.type?.length ||
+    search.status?.length ||
+    search.title ||
+    search.summary ||
+    search.from ||
+    search.to
+  );
 
   const {
     page,
@@ -230,110 +256,50 @@ function ProfilePage({ profile, roles, stats, activity }: ProfilePageData) {
 
         <Separator className="mb-8 bg-border" />
 
-        <div className="mx-auto mb-4 flex w-full max-w-5xl flex-wrap items-center gap-3 px-4">
-          <Input
-            value={search.q ?? ""}
-            onChange={(e) => setFilters({ q: e.target.value || undefined })}
-            placeholder="Search titles..."
-            className="h-8 w-full max-w-64"
-          />
-
-          <Select
-            value={search.type ?? ALL}
-            onValueChange={(value) =>
-              setFilters({
-                type: value === ALL ? undefined : (value as ActivityTypeFilter),
-              })
-            }
-          >
-            <SelectTrigger className="h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All types</SelectItem>
-              {ACTIVITY_TYPE_FILTERS.map((filter) => (
-                <SelectItem key={filter.value} value={filter.value}>
-                  {filter.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={search.status ?? ALL}
-            onValueChange={(value) =>
-              setFilters({
-                status:
-                  value === ALL ? undefined : (value as ActivityStatusFilter),
-              })
-            }
-          >
-            <SelectTrigger className="h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All statuses</SelectItem>
-              {ACTIVITY_STATUS_FILTERS.map((filter) => (
-                <SelectItem key={filter.value} value={filter.value}>
-                  {filter.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {hasFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-0 text-brand-blue hover:text-[#3166b1]"
-              onClick={() =>
-                setFilters({ q: undefined, type: undefined, status: undefined })
-              }
-            >
-              Clear filters
-            </Button>
-          )}
-        </div>
-
         <div className="overflow-x-auto">
           <Table className="mx-auto w-full max-w-5xl">
             <TableHeader>
               <TableRow>
-                {[
-                  "Type",
-                  "Title",
-                  "Change Summary",
-                  "Date",
-                  "Status",
-                  "Review Case",
-                ].map((heading) => (
-                  <TableHead
-                    key={heading}
-                    className="px-4 py-3 font-mono text-[14px] tracking-[0.08em] uppercase"
-                  >
-                    {heading === "Date" ? (
-                      <button
-                        type="button"
-                        className="flex cursor-pointer items-center gap-1 uppercase"
-                        onClick={() =>
-                          setFilters({
-                            sort:
-                              search.sort === "oldest" ? undefined : "oldest",
-                          })
-                        }
-                      >
-                        {heading}
-                        {search.sort === "oldest" ? (
-                          <ArrowUpIcon className="size-3.5" />
-                        ) : (
-                          <ArrowDownIcon className="size-3.5" />
-                        )}
-                      </button>
-                    ) : (
-                      heading
-                    )}
-                  </TableHead>
-                ))}
+                <TableHead className="px-4 py-3 font-mono text-[14px] font-bold tracking-[0.08em] uppercase">
+                  <ChoiceColumnFilter
+                    label="Type"
+                    field="type"
+                    options={ACTIVITY_TYPE_FILTERS}
+                    search={search}
+                    setFilters={setFilters}
+                  />
+                </TableHead>
+                <TableHead className="px-4 py-3 font-mono text-[14px] font-bold tracking-[0.08em] uppercase">
+                  <TextColumnFilter
+                    label="Title"
+                    field="title"
+                    search={search}
+                    setFilters={setFilters}
+                  />
+                </TableHead>
+                <TableHead className="px-4 py-3 font-mono text-[14px] font-bold tracking-[0.08em] uppercase">
+                  <TextColumnFilter
+                    label="Change Summary"
+                    field="summary"
+                    search={search}
+                    setFilters={setFilters}
+                  />
+                </TableHead>
+                <TableHead className="px-4 py-3 font-mono text-[14px] font-bold tracking-[0.08em] uppercase">
+                  <DateColumnFilter search={search} setFilters={setFilters} />
+                </TableHead>
+                <TableHead className="px-4 py-3 font-mono text-[14px] font-bold tracking-[0.08em] uppercase">
+                  <ChoiceColumnFilter
+                    label="Status"
+                    field="status"
+                    options={ACTIVITY_STATUS_FILTERS}
+                    search={search}
+                    setFilters={setFilters}
+                  />
+                </TableHead>
+                <TableHead className="px-4 py-3 font-mono text-[14px] font-bold tracking-[0.08em] uppercase">
+                  Review Case
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
