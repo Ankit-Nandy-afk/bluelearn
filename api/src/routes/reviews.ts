@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { createDecisionSchema } from "@bluelearn/schemas";
+import { createDecisionSchema, paginationSchema } from "@bluelearn/schemas";
 import { requireUser } from "../middleware/auth.middleware";
 import type { HonoEnv } from "../types";
 import {
@@ -16,10 +16,20 @@ import {
 
 export const reviewsRouter = new Hono<HonoEnv>()
   // Open cases needing action from the current reviewer
-  .get("/queue", requireUser, async (c) => {
-    const cases = await getReviewQueue(c.get("supabase"), c.get("user").id);
-    return c.json({ cases }, 200);
-  })
+  .get(
+    "/queue",
+    requireUser,
+    zValidator("query", paginationSchema),
+    async (c) => {
+      const { page, limit } = c.req.valid("query");
+      const { data, total } = await getReviewQueue(
+        c.get("supabase"),
+        c.get("user").id,
+        { page, limit }
+      );
+      return c.json({ cases: data, total }, 200);
+    }
+  )
 
   // All finished review cases (public — only returns approved/rejected)
   .get("/cases", async (c) => {
