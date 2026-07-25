@@ -5,9 +5,8 @@ export async function listObjectives({
   page = 1,
   limit = 20,
 }: { page?: number; limit?: number } = {}) {
-  const offset = (page - 1) * limit;
   const res = await client.objectives.$get({
-    query: { limit: String(limit), offset: String(offset) },
+    query: { page: String(page), limit: String(limit) },
   });
   await assertOk(res);
   return res.json() as Promise<{

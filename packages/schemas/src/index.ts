@@ -8,3 +8,4 @@ export * from "./graph";
 export * from "./media";
 export * from "./review";
 export * from "./search";
+export * from "./pagination";
