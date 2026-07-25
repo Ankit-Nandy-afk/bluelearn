@@ -8,6 +8,7 @@ import {
   castVoteSchema,
   createGuideSchema,
   createVariantSchema,
+  paginationSchema,
   rollbackRevisionSchema,
   updateRevisionSchema,
 } from "@bluelearn/schemas";
@@ -55,9 +56,13 @@ const createVariantBody = createVariantSchema.extend({
 
 export const guidesRouter = new Hono<HonoEnv>()
   // Returns published guides as { guides }.
-  .get("/", async (c) => {
-    const guides = await listPublishedGuides(c.get("supabase"));
-    return c.json({ guides });
+  .get("/", zValidator("query", paginationSchema), async (c) => {
+    const { page, limit } = c.req.valid("query");
+    const { data, total } = await listPublishedGuides(c.get("supabase"), {
+      page,
+      limit,
+    });
+    return c.json({ guides: data, total });
   })
 
   // 201 with { revision_id } for the editor route.
@@ -111,12 +116,14 @@ export const guidesRouter = new Hono<HonoEnv>()
   })
 
   // Returns the published variants as { variants }.
-  .get("/:slug/variants", async (c) => {
-    const variants = await listGuideVariants(
+  .get("/:slug/variants", zValidator("query", paginationSchema), async (c) => {
+    const { page, limit } = c.req.valid("query");
+    const { data, total } = await listGuideVariants(
       c.get("supabase"),
-      c.req.param("slug")
+      c.req.param("slug"),
+      { page, limit }
     );
-    return c.json({ variants });
+    return c.json({ variants: data, total });
   })
 
   // 201 with { revision_id } for the editor route.
@@ -195,12 +202,14 @@ export const variantsRouter = new Hono<HonoEnv>()
   )
 
   // Returns the published versions as { revisions }, newest live first.
-  .get("/:id/revisions", async (c) => {
-    const revisions = await listVariantRevisions(
+  .get("/:id/revisions", zValidator("query", paginationSchema), async (c) => {
+    const { page, limit } = c.req.valid("query");
+    const { data, total } = await listVariantRevisions(
       c.get("supabase"),
-      c.req.param("id")
+      c.req.param("id"),
+      { page, limit }
     );
-    return c.json({ revisions });
+    return c.json({ revisions: data, total });
   })
 
   // 201 with { revision_id } for the editor route.

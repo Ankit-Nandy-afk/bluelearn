@@ -6,6 +6,7 @@ import type { HonoEnv } from "../types";
 import { zValidator } from "@hono/zod-validator";
 import {
   createObjectiveSchema,
+  paginationSchema,
   rollbackRevisionSchema,
   updateObjectiveNodeSchema,
   updateObjectiveRevisionSchema,
@@ -33,9 +34,13 @@ import {
 
 export const objectivesRouter = new Hono<HonoEnv>()
   // Returns published objectives as { objectives }.
-  .get("/", async (c) => {
-    const objectives = await listPublishedObjectives(c.get("supabase"));
-    return c.json({ objectives });
+  .get("/", zValidator("query", paginationSchema), async (c) => {
+    const { page, limit } = c.req.valid("query");
+    const { data, total } = await listPublishedObjectives(c.get("supabase"), {
+      page,
+      limit,
+    });
+    return c.json({ objectives: data, total });
   })
 
   // 201 with { revision_id } for the editor route.
@@ -82,12 +87,14 @@ export const objectivesRouter = new Hono<HonoEnv>()
   )
 
   // Returns the revision history as { revisions }, newest first.
-  .get("/:slug/revisions", async (c) => {
-    const revisions = await listObjectiveRevisions(
+  .get("/:slug/revisions", zValidator("query", paginationSchema), async (c) => {
+    const { page, limit } = c.req.valid("query");
+    const { data, total } = await listObjectiveRevisions(
       c.get("supabase"),
-      c.req.param("slug")
+      c.req.param("slug"),
+      { page, limit }
     );
-    return c.json({ revisions });
+    return c.json({ revisions: data, total });
   })
 
   // 201 with { revision_id } for the new draft.
