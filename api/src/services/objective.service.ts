@@ -235,7 +235,7 @@ export async function listPublishedObjectives(
     .from("objectives")
     .select(
       `id, slug, created_by, created_at, current_revision_id, ${CURRENT_META}`,
-      { count: "exact", head: false }
+      { count: "exact" }
     )
     .eq("status", "published")
     .order("created_at", { ascending: false })
@@ -340,7 +340,6 @@ export async function listObjectiveRevisions(
     .from("objective_revisions")
     .select("id, title, change_summary, status, created_at, published_at", {
       count: "exact",
-      head: false,
     })
     .eq("objective_id", id)
     .order("created_at", { ascending: false })

@@ -1,5 +1,5 @@
 import { client } from "@/lib/api/apiClient";
-import { assertOk } from "@/lib/api/apiHelpers";
+import { assertOk, collectAll } from "@/lib/api/apiHelpers";
 
 const reviews = client.reviews;
 
@@ -15,11 +15,13 @@ type QueueCase = {
 };
 
 export async function getReviewQueue({ signal }: FetchOptions = {}) {
-  const res = await reviews.queue.$get({ query: {} }, { init: { signal } });
-  await assertOk(res);
+  return collectAll<QueueCase>(async (query) => {
+    const res = await reviews.queue.$get({ query }, { init: { signal } });
+    if (!res.ok) return assertOk(res) as Promise<never>;
 
-  const { cases } = (await res.json()) as { cases: Array<QueueCase> };
-  return cases;
+    const { cases: items, total } = await res.json();
+    return { items, total };
+  });
 }
 
 export async function getReviewCase(id: string, { signal }: FetchOptions = {}) {

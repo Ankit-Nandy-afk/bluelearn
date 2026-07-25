@@ -51,7 +51,8 @@ export async function listSubjects(
 
   const { data, count, error } = await supabase
     .from("subjects")
-    .select("id, slug, name, summary", { count: "exact", head: false })
+    .select("id, slug, name, summary", { count: "exact" })
+    .eq("status", "published")
     .range(from, to);
 
   if (error) {
@@ -198,7 +199,7 @@ export async function listSubjectGuides(
            guide_revision_subjects!inner(subject_id)
          )
        )`,
-      { count: "exact", head: false }
+      { count: "exact" }
     )
     .eq("canonical.current.guide_revision_subjects.subject_id", subject.id)
     .order("title")
@@ -236,7 +237,7 @@ export async function listSubjectObjectives(
          title, summary,
          objective_revision_subjects!inner(subject_id)
        )`,
-      { count: "exact", head: false }
+      { count: "exact" }
     )
     .eq("current.objective_revision_subjects.subject_id", subject.id)
     .eq("status", "published")

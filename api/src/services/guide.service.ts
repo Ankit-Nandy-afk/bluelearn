@@ -174,7 +174,7 @@ export async function listPublishedGuides(
            id, summary, word_count
          )
        )`,
-      { count: "exact", head: false }
+      { count: "exact" }
     )
     .eq("status", "published")
     .order("title")

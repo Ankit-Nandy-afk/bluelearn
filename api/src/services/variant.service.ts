@@ -157,7 +157,7 @@ export async function listVariantRevisions(
 
   const { data, count, error } = await supabase
     .from("guide_revisions")
-    .select("id, created_at, approved_at", { count: "exact", head: false })
+    .select("id, created_at, approved_at", { count: "exact" })
     .eq("guide_id", id)
     .not("approved_at", "is", null)
     .order("approved_at", { ascending: false })
