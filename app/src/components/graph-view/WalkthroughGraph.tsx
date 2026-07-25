@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Background, Controls, Panel, ReactFlow } from "@xyflow/react";
-import { Maximize, Minimize } from "lucide-react";
+import { Fullscreen, Minimize } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { WalkthroughNode as WalkthroughNodeComponent } from "./WalkthroughNode";
 import { useGraphLayout } from "./useGraphLayout";
@@ -118,14 +118,10 @@ export function WalkthroughGraph({
               variant="outline"
               size="icon"
               onClick={onToggleFullscreen}
-              className="h-10 w-10 border-border/50 bg-background/80 shadow-sm backdrop-blur-md"
+              className="h-8 w-8 border-border/50 bg-background/80 shadow-sm backdrop-blur-md"
               title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
             >
-              {isFullscreen ? (
-                <Minimize className="h-4 w-4" />
-              ) : (
-                <Maximize className="h-4 w-4" />
-              )}
+              {isFullscreen ? <Minimize /> : <Fullscreen />}
             </Button>
           </Panel>
         )}
@@ -138,4 +134,3 @@ export function WalkthroughGraph({
     </div>
   );
 }
-
