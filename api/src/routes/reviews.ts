@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { createDecisionSchema } from "@bluelearn/schemas";
 import { requireUser } from "../middleware/auth.middleware";
+import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
+import { MODERATION } from "../middleware/rateLimits";
 import type { HonoEnv } from "../types";
 import {
   castDecision,
@@ -37,6 +39,7 @@ export const reviewsRouter = new Hono<HonoEnv>()
   .post(
     "/cases/:id/decisions",
     requireUser,
+    rateLimitMiddleware({ ...MODERATION, bucket: "review-decision" }),
     zValidator("json", createDecisionSchema),
     async (c) => {
       const input = c.req.valid("json");
