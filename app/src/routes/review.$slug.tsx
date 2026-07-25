@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
-import type { HydratedGuide } from "@/types/guides";
+import type { Guide } from "@bluelearn/schemas";
 import { Separator } from "@/components/ui/separator";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Sidebar } from "@/components/Sidebar";
@@ -58,17 +58,16 @@ function RouteComponent() {
   });
 
   // Build a simplified guide object from the revision data for the reader.
-  const guide: HydratedGuide = {
-    title: revision.title ?? "",
-    content: revision.body ?? "",
-    summary: revision.summary ?? "",
-    author: "",
-    created_at: revision.created_at,
-    duration: 0,
-    tags: [],
-    breadcrumbs: [],
-    prerequisites: [],
+  const guide: Guide = {
     slug: "",
+    title: revision.title ?? "",
+    author: "",
+    summary: revision.summary ?? null,
+    body: revision.body ?? null,
+    duration_minutes: 0,
+    created_at: revision.created_at,
+    tags: [],
+    prerequisites: [],
   };
 
   return (

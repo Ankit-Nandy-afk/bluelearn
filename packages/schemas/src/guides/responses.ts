@@ -9,7 +9,7 @@ export const guideSchema = z.object({
   author: z.string(),
   summary: z.string().nullable(),
   body: z.string().nullable(),
-  word_count: z.number().int(),
+  duration_minutes: z.number().int(),
   created_at: z.iso.datetime(),
   tags: z.array(subjectReferenceSchema),
   prerequisites: z.array(guideReferenceSchema),

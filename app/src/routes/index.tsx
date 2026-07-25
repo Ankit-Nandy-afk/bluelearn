@@ -1,20 +1,36 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
 
-import type { HydratedObjective } from "@/types/objectives";
-
 import { Route as SubjectRoute } from "@/routes/subjects.$slug";
 import { listSubjects } from "@/lib/api/subjects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { FeaturedRow } from "@/components/FeaturedRow";
 
-import objectives from "@/data/objectives.json";
-import guides from "@/data/guides.json";
-
-import { hydrateObjectives } from "@/lib/getData";
+// Links into the seeded "About Bluelearn" guides that explain the platform.
+const CONCEPTS = [
+  {
+    slug: "what-is-bluelearn",
+    label: "What is Bluelearn?",
+    blurb: "A free, community-built knowledge base.",
+  },
+  {
+    slug: "what-is-a-guide",
+    label: "What is a Guide?",
+    blurb: "The basic unit: one article per topic.",
+  },
+  {
+    slug: "what-is-a-knowledge-graph",
+    label: "What is a Knowledge Graph?",
+    blurb: "Guides linked by prerequisite edges.",
+  },
+  {
+    slug: "what-is-an-objective",
+    label: "What is an Objective?",
+    blurb: "A curated path toward a goal.",
+  },
+];
 
 // subjects failing shouldn't take down the rest of the homepage, so the
 // failure is data instead of an errorComponent
@@ -33,10 +49,6 @@ export const Route = createFileRoute("/")({
 });
 
 function RouteComponent() {
-  const hydratedObjectives: Array<HydratedObjective> = hydrateObjectives(
-    guides,
-    objectives
-  );
   const { subjects, subjectsFailed } = Route.useLoaderData();
 
   return (
@@ -158,9 +170,36 @@ function RouteComponent() {
         )}
       </section>
 
-      {/* Featured Section */}
-      <FeaturedRow objectives={hydratedObjectives} type={"Recently Added"} />
-      <FeaturedRow objectives={hydratedObjectives} type={"Popular This Week"} />
+      {/* Learn about Bluelearn */}
+      <section className="border-b px-8 py-8 lg:px-16">
+        <div className="mb-6">
+          <p className="data-label text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
+            Learn About Bluelearn
+          </p>
+        </div>
+
+        <Separator className="mb-4 bg-border" />
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {CONCEPTS.map((concept) => (
+            <Link
+              to="/guides/$slug"
+              params={{ slug: concept.slug }}
+              key={concept.slug}
+              className="group flex flex-col gap-2 rounded-lg border p-5 transition-colors hover:bg-badge"
+            >
+              <p className="mono-micro tracking-[0.08em] uppercase">
+                {concept.label}
+              </p>
+              <p className="text-sm text-muted-foreground">{concept.blurb}</p>
+              <span className="mono-micro mt-2 inline-flex items-center tracking-[0.08em] text-muted-foreground uppercase group-hover:text-foreground">
+                Read
+                <ChevronRight className="h-3.5 w-3.5" />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
