@@ -6,6 +6,10 @@
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
   --blue-1: var(--background);
   --blue-2: var(--muted);
   --blue-3: var(--muted);
@@ -220,7 +224,6 @@
     0 4px 6px -4px rgba(0, 0, 0, 0.08) !important;
   filter: none !important;
   padding: 0.25rem !important;
-  z-index: 50 !important;
 }
 
 [class*="_selectItem"],
@@ -243,6 +246,7 @@
 }
 
 /* == DIALOGS & POPUPS == */
+
 [class*="_dialogContent"],
 [class*="_largeDialogContent"] {
   border: 1px solid var(--border) !important;
@@ -524,7 +528,6 @@ math-field {
     0 10px 15px -3px rgba(0, 0, 0, 0.08),
     0 4px 6px -4px rgba(0, 0, 0, 0.08) !important;
   padding: 0.25rem !important;
-  z-index: 50 !important;
   width: 11.5rem !important;
   display: flex !important;
   flex-direction: column !important;
@@ -582,4 +585,41 @@ math-field {
 button[title="Delete code block"],
 [class*="_iconButton_"] {
   cursor: pointer !important;
+}
+
+/* == FULL SCREEN MODE (NATIVE LAYOUT) == */
+body.editor-fullscreen header,
+body.editor-fullscreen nav,
+body.editor-fullscreen aside {
+  display: none !important;
+}
+
+body.editor-fullscreen .mx-auto {
+  max-width: none !important;
+  border: none !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  min-height: 100vh !important;
+}
+
+body.editor-fullscreen section {
+  border: none !important;
+}
+
+body.editor-fullscreen #bluelearn-editor-container {
+  height: calc(100vh - 150px) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+body.editor-fullscreen .editor-only-paper {
+  height: 100% !important;
+  max-height: none !important;
+  flex: 1 !important;
+}
+
+body.editor-fullscreen .mdxeditor-content {
+  max-height: none !important;
+  height: 100% !important;
 }

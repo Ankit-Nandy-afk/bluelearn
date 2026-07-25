@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   MDXEditor,
+  NestedLexicalEditor,
   codeBlockPlugin,
   codeMirrorPlugin,
+  directivesPlugin,
   headingsPlugin,
   imagePlugin,
   jsxPlugin,
@@ -18,14 +20,20 @@ import {
   useNestedEditorContext,
 } from "@mdxeditor/editor";
 import { toast } from "sonner";
+import { Callout } from "../../Callout";
 
-import { MathLiveComponent, mathShortcutsPlugin } from "./MathLivePlugin";
+import {
+  MathLiveComponent,
+  getIsInlineFromAttributes,
+  mathShortcutsPlugin,
+} from "./MathLivePlugin";
 import EditorToolbar from "./EditorToolbar";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import "./Editor.css";
 
 type EditorProps = {
+  id?: string;
   // Markdown to open with, e.g. when resuming a draft.
   value?: string;
   onChange?: (markdown: string) => void;
@@ -33,11 +41,21 @@ type EditorProps = {
 };
 
 export default function Editor({
+  id = "default-draft",
   value,
   onChange,
   onUploadImage,
 }: EditorProps) {
-  const [initialMarkdown] = useState<string>(() => value ?? "");
+  const autosaveKey = `bluelearn-editor-autosave-${id}`;
+
+  const [initialMarkdown] = useState<string>(() => {
+    if (value) return value;
+    try {
+      const saved = localStorage.getItem(autosaveKey);
+      if (saved) return saved;
+    } catch {}
+    return "";
+  });
 
   const editorRef = useRef<MDXEditorMethods>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -47,29 +65,66 @@ export default function Editor({
   onUploadImageRef.current = onUploadImage;
   const latestRef = useRef<string | null>(null);
 
-  // debounce so we don't re-render the flow on every keystroke
-  const handleMarkdownChange = (newMarkdown: string) => {
-    latestRef.current = newMarkdown;
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    saveTimeoutRef.current = setTimeout(() => {
-      onChangeRef.current?.(newMarkdown);
-      saveTimeoutRef.current = null;
-    }, 1000);
-  };
+  const handleMarkdownChange = useCallback(
+    (newMarkdown: string) => {
+      latestRef.current = newMarkdown;
 
-  // Force a save on a pending edit if user leaves before the debounce fires
-  useEffect(() => {
-    return () => {
+      // Save locally immediately to guarantee no keystrokes are lost
+      try {
+        localStorage.setItem(autosaveKey, newMarkdown);
+      } catch {}
+
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
-        if (latestRef.current !== null) {
-          onChangeRef.current?.(latestRef.current);
-        }
       }
-    };
+      saveTimeoutRef.current = setTimeout(() => {
+        onChangeRef.current?.(newMarkdown);
+        saveTimeoutRef.current = null;
+      }, 1000);
+    },
+    [autosaveKey]
+  );
+
+  const handleBlur = useCallback(() => {
+    // If the user clicks away (e.g., clicking "Save Draft" or "Next"),
+    // immediately flush any pending debounced state to the parent
+    // so that the button click handlers see the freshest data.
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+      if (latestRef.current !== null) {
+        setTimeout(() => {
+          onChangeRef.current?.(latestRef.current!);
+        }, 0);
+      }
+    }
   }, []);
+
+  const CalloutDirectiveDescriptor = useMemo(
+    () => ({
+      name: "callout",
+      testNode(node: any) {
+        return ["note", "tip", "danger", "info", "caution"].includes(node.name);
+      },
+      attributes: [],
+      hasChildren: true,
+      Editor: (props: any) => {
+        return (
+          <Callout type={props.mdastNode.name}>
+            <NestedLexicalEditor
+              block
+              getContent={(node) => (node as any).children}
+              getUpdatedMdastNode={(mdastNode, children) => ({
+                ...mdastNode,
+                children: children as any,
+              })}
+            />
+          </Callout>
+        );
+      },
+    }),
+    []
+  );
 
   // Stable plugins configuration to avoid rebuilding Lexical instance during state re-renders
   const plugins = useMemo(
@@ -108,6 +163,7 @@ export default function Editor({
           markdown: "Markdown",
         },
       }),
+      directivesPlugin({ directiveDescriptors: [CalloutDirectiveDescriptor] }),
       mathShortcutsPlugin(),
       jsxPlugin({
         jsxComponentDescriptors: [
@@ -123,18 +179,9 @@ export default function Editor({
               const updateMdastNode = useMdastNodeUpdater();
               const { lexicalNode } = useNestedEditorContext();
               const handleChange = (newLatex: string) => {
-                const inlineAttr = props.mdastNode.attributes.find(
-                  (a: any) => a.name === "inline"
+                const isInline = getIsInlineFromAttributes(
+                  props.mdastNode.attributes
                 );
-                const isInline =
-                  inlineAttr &&
-                  typeof inlineAttr === "object" &&
-                  "value" in inlineAttr &&
-                  inlineAttr.value != null
-                    ? inlineAttr.value === "true" ||
-                      (typeof inlineAttr.value === "object" &&
-                        (inlineAttr.value as any).value === "true")
-                    : false;
 
                 updateMdastNode({
                   attributes: [
@@ -153,18 +200,9 @@ export default function Editor({
               const latexAttr = props.mdastNode.attributes.find(
                 (a: any) => a.name === "latex"
               );
-              const inlineAttr = props.mdastNode.attributes.find(
-                (a: any) => a.name === "inline"
+              const isInline = getIsInlineFromAttributes(
+                props.mdastNode.attributes
               );
-              const isInline =
-                inlineAttr &&
-                typeof inlineAttr === "object" &&
-                "value" in inlineAttr &&
-                inlineAttr.value != null
-                  ? inlineAttr.value === "true" ||
-                    (typeof inlineAttr.value === "object" &&
-                      (inlineAttr.value as any).value === "true")
-                  : false;
 
               return (
                 <MathLiveComponent
@@ -203,12 +241,16 @@ export default function Editor({
   );
 
   return (
-    <div className="editor-only-container">
-      <div className="editor-only-paper">
+    <div
+      id="bluelearn-editor-container"
+      className="editor-only-container transition-all"
+    >
+      <div className="editor-only-paper flex flex-col">
         <MDXEditor
           ref={editorRef}
           markdown={initialMarkdown}
           onChange={handleMarkdownChange}
+          onBlur={handleBlur}
           contentEditableClassName="mdxeditor-content"
           placeholder="What will you teach the world today? Start typing here..."
           plugins={plugins}

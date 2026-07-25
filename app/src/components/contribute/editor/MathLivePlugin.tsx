@@ -144,14 +144,14 @@ export function SingletonMathEditor() {
       }
     };
 
-    const handleMoveOut = (e: any) => {
+    const handleMoveOut = () => {
       if (payload) {
-        editor.update(() => {
+        if (payload.nodeKey) {
           const node = $getNodeByKey(payload.nodeKey);
           if (node) {
             node.selectNext();
           }
-        });
+        }
         setPayload(null);
       }
     };
@@ -409,6 +409,18 @@ export function MathLiveComponent({
 }
 
 // Math Utility Functions
+export function getIsInlineFromAttributes(attributes: Array<any>): boolean {
+  const inlineAttr = attributes.find((a: any) => a.name === "inline");
+  return inlineAttr &&
+    typeof inlineAttr === "object" &&
+    "value" in inlineAttr &&
+    inlineAttr.value != null
+    ? inlineAttr.value === "true" ||
+        (typeof inlineAttr.value === "object" &&
+          inlineAttr.value.value === "true")
+    : false;
+}
+
 function isValidInlineMathEquation(equation: string): boolean {
   if (equation.length === 0) return false;
   if (equation.includes("\n")) return false;

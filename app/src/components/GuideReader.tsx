@@ -4,14 +4,17 @@ import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import remarkDirective from "remark-directive";
 
 import { Calendar, Clock, User } from "lucide-react";
 import type { SubjectReference } from "@/types/subjects";
 import type { GuideType, HydratedGuide } from "@/types/guides";
 import type { ReactElement } from "react";
+import { remarkCallout } from "@/lib/remarkCallout";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components//ui/badge";
 import { CodeBlock } from "@/components/CodeBlock";
+import { Callout } from "@/components/Callout";
 
 import { formatDuration } from "@/lib/guideUtils";
 
@@ -20,7 +23,9 @@ const sanitizeSchema = {
   attributes: {
     ...defaultSchema.attributes,
     img: [...(defaultSchema.attributes?.img ?? []), "width", "height"],
+    callout: ["type"],
   },
+  tagNames: [...(defaultSchema.tagNames ?? []), "callout"],
 };
 
 type PropTypes = {
@@ -82,7 +87,12 @@ export const GuideReader = ({ guide, guideType }: PropTypes) => {
 
       <article className="markdown">
         <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkMath]}
+          remarkPlugins={[
+            remarkGfm,
+            remarkMath,
+            remarkDirective,
+            remarkCallout,
+          ]}
           rehypePlugins={[
             rehypeRaw,
             [rehypeSanitize, sanitizeSchema],
@@ -111,6 +121,10 @@ export const GuideReader = ({ guide, guideType }: PropTypes) => {
                   {children}
                 </code>
               );
+            },
+            // @ts-expect-error custom component callout
+            callout({ node, children, ...props }: any) {
+              return <Callout type={props.type}>{children}</Callout>;
             },
           }}
         >
