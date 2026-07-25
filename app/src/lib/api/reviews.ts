@@ -5,11 +5,20 @@ const reviews = client.reviews;
 
 type FetchOptions = { signal?: AbortSignal };
 
+type QueueCase = {
+  id: string;
+  case_type: string;
+  status: string;
+  title: string | null;
+  created_at: string;
+  decision: "approved" | "rejected" | null;
+};
+
 export async function getReviewQueue({ signal }: FetchOptions = {}) {
-  const res = await reviews.queue.$get(undefined, { init: { signal } });
+  const res = await reviews.queue.$get({ query: {} }, { init: { signal } });
   await assertOk(res);
 
-  const { cases } = await res.json();
+  const { cases } = (await res.json()) as { cases: Array<QueueCase> };
   return cases;
 }
 

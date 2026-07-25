@@ -1,4 +1,5 @@
 import type { InferRequestType } from "hono/client";
+import type { GuideListItem } from "@bluelearn/schemas";
 import { client } from "@/lib/api/apiClient";
 import { assertOk } from "@/lib/api/apiHelpers";
 
@@ -7,10 +8,12 @@ const guides = client.guides;
 type FetchOptions = { signal?: AbortSignal };
 
 export async function listGuides({ signal }: FetchOptions = {}) {
-  const res = await guides.$get(undefined, { init: { signal } });
+  const res = await guides.$get({ query: {} }, { init: { signal } });
   await assertOk(res);
 
-  const { guides: data } = await res.json();
+  const { guides: data } = (await res.json()) as {
+    guides: Array<GuideListItem>;
+  };
   return data;
 }
 
