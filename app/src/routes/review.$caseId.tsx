@@ -56,23 +56,40 @@ function RouteComponent() {
     },
   ];
 
+  const validateReview = () => {
+    let fieldErrors = "";
+    if (review.decision === "reject") {
+      if (review.notes === "") fieldErrors += "Rejections require a note. \n";
+      if (review.reasons.length === 0)
+        fieldErrors += "Rejections require at least one reason. \n";
+    }
+    return fieldErrors;
+  };
+
   const submitDecision = async () => {
     abortControllerRef.current?.abort();
     const controller = new AbortController();
     abortControllerRef.current = controller;
+
+    const fieldErrors = validateReview();
+    if (fieldErrors.length > 0) {
+      setSubmitError(
+        "There were errors with your submission: \n" + fieldErrors
+      );
+      return;
+    }
 
     setSubmitting("Submitting...");
     setSubmitError(null);
 
     try {
       await castDecision(caseId, review, { signal: controller.signal });
+      setSubmitting("Submitted.");
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
-        setSubmitError("There was an unexpected error with your submission.");
-      }
-    } finally {
-      if (abortControllerRef.current === controller) {
-        setSubmitting("Submitted.");
+        setSubmitError(
+          "The server experienced an error processing your submission."
+        );
       }
     }
   };
@@ -186,7 +203,7 @@ function RouteComponent() {
               <p className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
                 {submitError === null ? submitting : ""}
               </p>
-              <p className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground text-red-500 uppercase">
+              <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
                 {submitError ?? ""}
               </p>
             </FieldGroup>

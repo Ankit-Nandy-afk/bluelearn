@@ -1,24 +1,14 @@
-import type { Review } from "@/types/reveiws";
-import type { CreateDecisionInput } from "../../../../packages/schemas/src/review";
+import type { Review } from "@/types/reviews";
+import type { InferRequestType } from "hono/client";
 import { client } from "@/lib/api/apiClient";
+import { assertOk } from "@/lib/api/apiHelpers";
 
 const reviews = client.reviews;
 
 type FetchOptions = { signal?: AbortSignal };
 
-// the same function used in subjects.ts, handles API error responses
-async function assertOk(res: Response) {
-  if (res.ok) return;
-
-  const body = (await res.json().catch(() => null)) as {
-    error?: string;
-  } | null;
-
-  throw new Error(body?.error ?? `Request failed (${res.status})`);
-}
-
 export async function getReviewQueue({ signal }: FetchOptions = {}) {
-  const res = await reviews.queue.$get({ init: { signal } });
+  const res = await reviews.queue.$get(undefined, { init: { signal } });
   await assertOk(res);
   const { cases: data } = await res.json();
 
@@ -26,7 +16,7 @@ export async function getReviewQueue({ signal }: FetchOptions = {}) {
 }
 
 export async function listReviewCases({ signal }: FetchOptions = {}) {
-  const res = await reviews.cases.$get({ init: { signal } });
+  const res = await reviews.cases.$get(undefined, { init: { signal } });
   await assertOk(res);
   const { cases: data } = await res.json();
 
@@ -46,21 +36,23 @@ export async function getReviewCase(id: string, { signal }: FetchOptions = {}) {
 
 export async function castDecision(
   id: string,
-  reveiw: Review,
+  review: Review,
   { signal }: FetchOptions = {}
 ) {
-  let payload: CreateDecisionInput;
+  let payload: InferRequestType<
+    (typeof reviews)["cases"][":id"]["decisions"]["$post"]
+  >["json"];
 
-  if (reveiw.decision == "approve") {
+  if (review.decision == "approve") {
     payload = {
       decision: "approved",
-      notes: reveiw.notes,
+      notes: review.notes,
     };
-  } else if (reveiw.decision == "reject") {
+  } else if (review.decision == "reject") {
     payload = {
       decision: "rejected",
-      notes: reveiw.notes,
-      reasons: reveiw.reasons as Array<
+      notes: review.notes,
+      reasons: review.reasons as Array<
         | "hierarchy_issue"
         | "factual_error"
         | "duplicate_content"
@@ -70,7 +62,7 @@ export async function castDecision(
       >,
     };
   } else {
-    throw new Error(`Reveiw post request made with missing body features.`);
+    throw new Error(`Review post request made with missing body features.`);
   }
   // json payload
   const res = await reviews.cases[":id"].decisions.$post(
