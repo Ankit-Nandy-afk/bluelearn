@@ -17,6 +17,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+if (typeof window !== "undefined") {
+  // @ts-ignore: MathfieldElement is added to window by mathlive, but not typed natively
+  window.MathfieldElement.fontsDirectory = "/mathlive/fonts";
+}
+
 const {
   $getSelection,
   $isRangeSelection,
@@ -265,6 +270,22 @@ export function MathLiveComponent({
   const [isSelected, setSelected, clearSelection] = useLexicalNodeSelection(
     nodeKey || "unknown"
   );
+  const [isRangeSelected, setIsRangeSelected] = useState(false);
+
+  useEffect(() => {
+    if (!nodeKey) return;
+    return editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          const nodes = selection.getNodes();
+          setIsRangeSelected(nodes.some((n) => n.getKey() === nodeKey));
+        } else {
+          setIsRangeSelected(false);
+        }
+      });
+    });
+  }, [editor, nodeKey]);
 
   useEffect(() => {
     if (containerRef.current && latex !== "") {
@@ -277,20 +298,23 @@ export function MathLiveComponent({
 
   const equation = latex;
 
+  const isNodeSelected = isSelected || isRangeSelected;
+
   const triggerClasses = inline
     ? cn(
-        "group math-node relative inline-flex cursor-pointer items-center rounded-md border px-0 py-0 align-middle transition-all duration-200 ease-in-out select-all",
+        "group math-node relative inline-flex cursor-pointer items-center rounded-md border px-0 py-0 align-middle transition-all duration-200 ease-in-out",
         equation === ""
           ? "border-dashed border-border bg-muted/30 hover:border-muted-foreground/40 hover:bg-muted/50"
           : "border-transparent bg-transparent hover:border-border hover:bg-muted/40",
-        isSelected && "!border-transparent bg-primary/5 ring-2 ring-primary/40"
+        isNodeSelected &&
+          "!border-transparent bg-primary/5 ring-2 ring-primary/40"
       )
     : cn(
-        "math-node relative mx-auto my-3 block w-fit max-w-full cursor-pointer rounded-lg px-4 py-1.5 text-center transition-all duration-200 ease-in-out select-all",
+        "math-node relative mx-auto my-3 block w-fit max-w-full cursor-pointer rounded-lg px-4 py-1.5 text-center transition-all duration-200 ease-in-out select-none",
         equation === ""
           ? "border border-dashed border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted/80"
           : "bg-transparent ring-0 hover:bg-muted/30 hover:ring-1 hover:ring-border",
-        isSelected &&
+        isNodeSelected &&
           "scale-[1.02] !border-transparent bg-primary/5 ring-2 ring-primary/40"
       );
 
@@ -317,7 +341,7 @@ export function MathLiveComponent({
     >
       {equation === "" ? (
         inline ? (
-          <span className="inline-flex items-center justify-center">
+          <span className="pointer-events-none inline-flex items-center justify-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4 text-primary/50"
@@ -334,7 +358,7 @@ export function MathLiveComponent({
             </svg>
           </span>
         ) : (
-          <div className="flex items-center justify-center gap-2.5 py-1">
+          <div className="pointer-events-none flex items-center justify-center gap-2.5 py-1">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4 text-primary/50"
@@ -359,8 +383,8 @@ export function MathLiveComponent({
           ref={containerRef}
           className={
             inline
-              ? "math-preview"
-              : "math-preview mx-auto [&>.katex-display]:m-0"
+              ? "math-preview pointer-events-none"
+              : "math-preview pointer-events-none mx-auto [&>.katex-display]:m-0"
           }
         />
       )}
@@ -379,10 +403,19 @@ function isValidInlineMathEquation(equation: string): boolean {
 function findMathInText(text: string) {
   let i = 0;
   while (i < text.length) {
+    if (text[i] === "\\" && i + 1 < text.length && text[i + 1] === "$") {
+      i += 2;
+      continue;
+    }
+
     if (text[i] === "$") {
       if (i + 1 < text.length && text[i + 1] === "$") {
         let j = i + 2;
         while (j < text.length) {
+          if (text[j] === "\\" && j + 1 < text.length && text[j + 1] === "$") {
+            j += 2;
+            continue;
+          }
           if (text[j] === "$" && j + 1 < text.length && text[j + 1] === "$") {
             const equation = text.slice(i + 2, j);
             return { isInline: false, startIdx: i, endIdx: j + 1, equation };
@@ -394,6 +427,10 @@ function findMathInText(text: string) {
       } else {
         let j = i + 1;
         while (j < text.length) {
+          if (text[j] === "\\" && j + 1 < text.length && text[j + 1] === "$") {
+            j += 2;
+            continue;
+          }
           if (text[j] === "$") {
             if (j + 1 < text.length && text[j + 1] === "$") break;
             const rawEquation = text.slice(i + 1, j);
@@ -461,7 +498,10 @@ export function MathShortcutTypeListener() {
             isInline = match.isInline;
           } else {
             const textBeforeCursor = textContent.slice(0, anchorOffset);
-            if (textBeforeCursor.endsWith("$$")) {
+            if (
+              textBeforeCursor.endsWith("$$") &&
+              !textBeforeCursor.endsWith("\\$$")
+            ) {
               startIdx = anchorOffset - 2;
               endIdx = anchorOffset - 1;
               equation = "";

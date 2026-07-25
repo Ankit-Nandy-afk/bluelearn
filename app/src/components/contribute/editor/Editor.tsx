@@ -15,6 +15,7 @@ import {
   thematicBreakPlugin,
   toolbarPlugin,
   useMdastNodeUpdater,
+  useNestedEditorContext,
 } from "@mdxeditor/editor";
 import { toast } from "sonner";
 
@@ -120,6 +121,7 @@ export default function Editor({
             hasChildren: false,
             Editor: (props) => {
               const updateMdastNode = useMdastNodeUpdater();
+              const { lexicalNode } = useNestedEditorContext();
               const handleChange = (newLatex: string) => {
                 const inlineAttr = props.mdastNode.attributes.find(
                   (a: any) => a.name === "inline"
@@ -175,6 +177,7 @@ export default function Editor({
                   }
                   inline={isInline}
                   onChange={handleChange}
+                  nodeKey={lexicalNode.getKey()}
                 />
               );
             },
