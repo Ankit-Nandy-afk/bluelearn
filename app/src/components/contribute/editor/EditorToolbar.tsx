@@ -25,6 +25,7 @@ import { InsertBlockMath, InsertInlineMath } from "./MathLivePlugin";
 import MarkdownLinkImageShortcutListener from "./MarkdownLinkImageShortcutListener";
 import H1RestrictionListener from "./H1RestrictionListener.tsx";
 import CodeBlockShortcutListener from "./CodeBlockShortcutListener";
+import TabShortcutListener from "./TabShortcutListener";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import {
   Popover,
@@ -100,6 +101,7 @@ export default function EditorToolbar({
       <MarkdownLinkImageShortcutListener />
       <H1RestrictionListener onH1Attempted={onH1Attempted} />
       <CodeBlockShortcutListener />
+      <TabShortcutListener />
       <UndoRedo />
       <div className="mdx-toolbar-divider"></div>
       <BoldItalicUnderlineToggles />
@@ -220,7 +222,7 @@ export default function EditorToolbar({
       <div className="mdx-toolbar-divider"></div>
 
       {/* Actions & Sharing Button Group */}
-      <div className="flex items-center gap-1 bg-card p-0.5">
+      <div className="ml-1 flex items-center gap-1 p-0.5">
         <button
           type="button"
           onClick={handleCopy}

@@ -144,8 +144,24 @@ export function SingletonMathEditor() {
       }
     };
 
+    const handleMoveOut = (e: any) => {
+      if (payload) {
+        editor.update(() => {
+          const node = $getNodeByKey(payload.nodeKey);
+          if (node) {
+            node.selectNext();
+          }
+        });
+        setPayload(null);
+      }
+    };
+
     mf.addEventListener("input", handleInput);
-    return () => mf.removeEventListener("input", handleInput);
+    mf.addEventListener("move-out", handleMoveOut);
+    return () => {
+      mf.removeEventListener("input", handleInput);
+      mf.removeEventListener("move-out", handleMoveOut);
+    };
   }, [payload]);
 
   // Outside click to close
