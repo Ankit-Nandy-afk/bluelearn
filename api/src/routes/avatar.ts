@@ -7,12 +7,12 @@ export const avatarRouter = new Hono<HonoEnv>()
   // same id always renders the same image, so it's safe to cache hard.
   .get("/:id", (c) => {
     const id = c.req.param("id");
-
+    // Hash loops over every char, so bound the input.
+    if (id.length > 128) return c.json({ error: "invalid id" }, 400);
     const svg = generateAvatarSVG(id);
 
     return c.body(svg, 200, {
       "Content-Type": "image/svg+xml",
-
       // Production cache: aggressively caches the image for 1 year
       "Cache-Control": "public, max-age=31536000, immutable",
     });

@@ -1,4 +1,4 @@
-// Turns an id into a little SVG constellation  avatar.
+// Turns an id into a little SVG constellation avatar.
 
 type Palette = { bg: string; line: string; node: string; fill: string };
 

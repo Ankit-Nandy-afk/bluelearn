@@ -22,7 +22,7 @@ import { subjectsRouter } from "./routes/subjects";
 import { reviewsRouter } from "./routes/reviews";
 import { mediaRouter } from "./routes/media";
 import { searchRouter } from "./routes/search";
-import { avatarRouter } from "./routes/avatar"; // 1. Added import
+import { avatarRouter } from "./routes/avatar";
 
 const app = new Hono<HonoEnv>()
   .use((c, next) => cors({ origin: c.env.APP_URL })(c, next))
@@ -42,7 +42,7 @@ const app = new Hono<HonoEnv>()
   .route("/reviews", reviewsRouter)
   .route("/media", mediaRouter)
   .route("/search", searchRouter)
-  .route("/avatar", avatarRouter); // 2. Added route mounting
+  .route("/avatar", avatarRouter);
 
 // Services throw ServiceError to signal HTTP-meaningful failures; map them to
 // JSON here so handlers stay free of repeated `if (error) return c.json(...)`.
