@@ -34,5 +34,11 @@ export const fetchWalkthrough = async (
   }
 
   const data = await res.json();
-  return data;
+  return {
+    ...data,
+    nodes: data.nodes.map((node) => ({
+      ...node,
+      is_target: node.slug === targetSlug,
+    })),
+  };
 };
