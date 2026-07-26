@@ -19,7 +19,6 @@ export type VariantContribution = {
   title: string;
   summary: string;
   baseGuide: string;
-  baseGuideId: string;
   subjects: Array<string>;
   body: string;
 };

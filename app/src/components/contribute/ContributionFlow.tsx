@@ -52,7 +52,6 @@ const createVariantContData = (): VariantContribution => ({
   title: "",
   summary: "",
   baseGuide: "",
-  baseGuideId: "",
   subjects: [],
   body: "",
 });
