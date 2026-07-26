@@ -354,8 +354,8 @@ function ProfilePage({ profile, roles, stats, activity }: ProfilePageData) {
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate({
-                                to: "/review/$slug",
-                                params: { slug: row.review_case_id! },
+                                to: "/review/$caseId",
+                                params: { caseId: row.review_case_id! },
                               });
                             }}
                           >
