@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import type { HydratedGuide } from "@/types/guides";
 import { Separator } from "@/components/ui/separator";
-import { Sidebar } from "@/components/Sidebar";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
