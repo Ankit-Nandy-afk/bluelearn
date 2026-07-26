@@ -114,12 +114,16 @@ export const VariantDetails = ({
               };
             })}
             value={variantContData.baseGuide}
-            onValueChange={(baseGuide) =>
+            onValueChange={(baseGuide) => {
+              const selectedGuide = guidesData.find(
+                (g: any) => g.slug === baseGuide
+              );
               setVariantContData((prev: any) => ({
                 ...prev,
                 baseGuide,
-              }))
-            }
+                baseGuideId: selectedGuide?.id, // error because current json guides don't have id, actual api returns id
+              }));
+            }}
           />
         </Field>
         <Field className="space-y-2">

@@ -1,11 +1,14 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
+import type { HydratedGuide } from "@/types/guides";
 import { Separator } from "@/components/ui/separator";
+import { Sidebar } from "@/components/Sidebar";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button";
+import { GuideReader } from "@/components/GuideReader";
 
 import { castDecision, getReviewCase } from "@/lib/api/reviews";
 
@@ -19,24 +22,43 @@ export type Review = {
 
 export const Route = createFileRoute("/review/$caseId")({
   loader: async ({ params, abortController }) => {
-    const data = await getReviewCase(params.caseId, {
+    const reviewData = await getReviewCase(params.caseId, {
       signal: abortController.signal,
     });
-    return data;
+    const revisionData = await getReviewCase(params.caseId, {
+      signal: abortController.signal,
+    });
+    return { reviewData, revisionData };
   },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const { caseId } = Route.useParams();
-  const data = Route.useLoaderData();
+  const { reviewData, revisionData } = Route.useLoaderData();
   const [submitting, setSubmitting] = useState<
     "Submitting..." | "Submitted." | ""
   >("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const reviewCase = data.case;
+  const reviewCase = reviewData.case;
+  const revision = revisionData.revision;
+
+  const guide: HydratedGuide | null = revision
+    ? {
+        title: revision.title ?? "",
+        content: revision.body ?? "",
+        summary: revision.summary ?? "",
+        author: "",
+        created_at: revision.created_at,
+        duration: 0,
+        tags: [],
+        breadcrumbs: [],
+        prerequisites: [],
+        slug: "",
+      }
+    : null;
 
   const [review, setReview] = useState<Review>({
     decision: "",
@@ -186,7 +208,7 @@ function RouteComponent() {
               <p className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
                 {submitError === null ? submitting : ""}
               </p>
-              <p className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground text-red-500 uppercase">
+              <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
                 {submitError ?? ""}
               </p>
             </FieldGroup>
@@ -202,49 +224,13 @@ function RouteComponent() {
           <Separator className="mb-8" />
 
           <div className="rounded-md border bg-background p-4 shadow-none transition-colors hover:bg-muted">
-            <h1 className="mb-2 text-3xl font-bold tracking-tight">
-              {reviewCase.title ?? "Untitled Guide"}
-            </h1>
-
-            {/* DATE CREATED & CREATOR */}
-            <p className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
-              {reviewCase.created_by ?? "Anonymous user"} |{" "}
-              {new Date(reviewCase.created_at).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </p>
-
-            {/* CASE INFO */}
-            <div className="space-y-2 p-2 text-sm">
-              <p>
-                <span className="font-semibold text-gray-900">Status: </span>
-                <span className="text-gray-700">
-                  {reviewCase.status
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (match) => match.toUpperCase())}
-                </span>
+            {guide ? (
+              <GuideReader guide={guide} />
+            ) : (
+              <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
+                No guide revision found to display.
               </p>
-              <p>
-                <span className="font-semibold text-gray-900">Type: </span>
-                <span className="text-gray-700">
-                  {reviewCase.case_type
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (match) => match.toUpperCase())}
-                </span>
-              </p>
-            </div>
-
-            <p className="mt-2 font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase italic">
-              (Last Updated{" "}
-              {new Date(reviewCase.created_at).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-              )
-            </p>
+            )}
           </div>
         </main>
       </section>

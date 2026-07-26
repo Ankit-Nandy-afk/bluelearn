@@ -23,3 +23,20 @@ export async function createGuide(
   const { revision_id } = await res.json();
   return revision_id;
 }
+
+export async function addGuideVariant(
+  slug: string,
+  body: InferRequestType<(typeof guides)[":slug"]["variants"]["$post"]>["json"]
+) {
+  const res = await guides[":slug"].variants.$post({
+    param: { slug },
+    json: body,
+  });
+
+  const result = await res.json();
+  if ("revision_id" in result) {
+    return result.revision_id;
+  }
+
+  throw new Error("Failed to submit guide variant.");
+}

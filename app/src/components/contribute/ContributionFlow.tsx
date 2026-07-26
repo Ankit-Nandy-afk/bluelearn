@@ -12,7 +12,7 @@ import type {
   VariantContribution,
 } from "@/types/contributions";
 import type { GuideType, HydratedGuide } from "@/types/guides";
-import { createGuide, listGuides } from "@/lib/api/guides";
+import { addGuideVariant, createGuide, listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
 import { submitRevision, updateRevision } from "@/lib/api/guideRevisions";
@@ -52,6 +52,7 @@ const createVariantContData = (): VariantContribution => ({
   title: "",
   summary: "",
   baseGuide: "",
+  baseGuideId: "",
   subjects: [],
   body: "",
 });
@@ -132,6 +133,8 @@ function Inner({
     if (type !== value) {
       setGuideContData(createGuideContData());
       setObjectiveContData(createObjectiveContData());
+      setVariantContData(createVariantContData());
+      setRevisionId(null);
       setType(value);
     }
 
@@ -239,6 +242,12 @@ function Inner({
     todoPrereqs: guideContData.todoPrereqs,
   });
 
+  const variantDraftFields = () => ({
+    title: variantContData.title,
+    summary: variantContData.summary || null,
+    body: variantContData.body || null,
+  });
+
   const creatingRef = useRef<Promise<string> | null>(null);
   const persistDraft = async () => {
     if (revisionId) {
@@ -247,11 +256,17 @@ function Inner({
     }
 
     if (!creatingRef.current) {
-      creatingRef.current = createGuide({
-        knowledge_type:
-          guideContData.type === "practical" ? "practical" : "theoretical",
-        ...draftFields(),
-      })
+      creatingRef.current = (
+        type === "guide"
+          ? createGuide({
+              knowledge_type:
+                guideContData.type === "practical"
+                  ? "practical"
+                  : "theoretical",
+              ...draftFields(),
+            })
+          : addGuideVariant(variantContData.baseGuide, variantDraftFields())
+      ) // TODO: this needs to be changed, baseGuide is a slug not an id
         .then((id) => {
           setRevisionId(id);
           return id;
