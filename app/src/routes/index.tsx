@@ -57,7 +57,7 @@ function RouteComponent() {
         <div className="grid items-center gap-12 px-8 py-16 lg:grid-cols-[1fr_320px] lg:px-16">
           {/* Left */}
           <div>
-            <p className="mb-3 font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
+            <p className="mb-3 font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
               Browse Knowledge
             </p>
             <h1 className="max-w-3xl text-4xl font-bold tracking-[-0.04em] lg:text-6xl">
@@ -119,7 +119,7 @@ function RouteComponent() {
 
       <section className="border-b px-8 py-8 lg:px-16">
         <div className="mb-6">
-          <p className="data-label text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
+          <p className="font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
             Browse Subjects
           </p>
         </div>
@@ -160,10 +160,10 @@ function RouteComponent() {
         </div>
 
         {subjects.length > 6 && (
-          <div className="mt-4 flex justify-center">
+          <div className="mt-1 flex justify-center">
             <Link
               to="/subjects"
-              className="mono-micro inline-flex items-center gap-1 rounded-md border px-4 py-3 tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:bg-muted hover:text-foreground"
+              className="mono-micro inline-flex items-center gap-1 rounded-md p-4 tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:bg-muted hover:text-foreground"
             >
               Show all subjects
               <ChevronRight className="h-3.5 w-3.5" />
@@ -175,7 +175,7 @@ function RouteComponent() {
       {/* Learn about Bluelearn */}
       <section className="border-b px-8 py-8 lg:px-16">
         <div className="mb-6">
-          <p className="data-label text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
+          <p className="font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
             Learn About Bluelearn
           </p>
         </div>
