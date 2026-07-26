@@ -121,7 +121,7 @@ export async function getReviewQueue(
        )`
     )
     .eq("member_id", userId)
-    .eq("status", "assigned");
+    .in("status", ["assigned", "completed"]);
 
   if (error) {
     console.error(error);
