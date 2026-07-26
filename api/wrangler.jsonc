@@ -3,6 +3,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-05-10",
   "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "vars": { "APP_URL": "https://blue-frontend-ch1.pages.dev" },
   "triggers": { "crons": ["* * * * *"] },
   "durable_objects": {
     "bindings": [
