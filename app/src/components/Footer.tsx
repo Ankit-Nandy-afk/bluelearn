@@ -14,7 +14,6 @@ const SITE = "https://bluelearn.org";
 const LEGAL = [
   { label: "Terms", href: `${SITE}/terms` },
   { label: "Privacy", href: `${SITE}/privacy` },
-  { label: "Cookies", href: `${SITE}/cookies` },
 ];
 
 const SOCIALS: Array<{ name: string; href: string; Icon: IconType }> = [
