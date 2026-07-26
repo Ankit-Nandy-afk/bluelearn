@@ -1,16 +1,29 @@
+import type { Review } from "@/types/reviews";
+import type { InferRequestType } from "hono/client";
 import { client } from "@/lib/api/apiClient";
-import { assertOk } from "@/lib/api/apiHelpers";
+import { assertOk, collectAll } from "@/lib/api/apiHelpers";
 
 const reviews = client.reviews;
 
 type FetchOptions = { signal?: AbortSignal };
 
-export async function getReviewQueue({ signal }: FetchOptions = {}) {
-  const res = await reviews.queue.$get(undefined, { init: { signal } });
-  await assertOk(res);
+type QueueCase = {
+  id: string;
+  case_type: string;
+  status: string;
+  title: string | null;
+  created_at: string;
+  decision: "approved" | "rejected" | null;
+};
 
-  const { cases } = await res.json();
-  return cases;
+export async function getReviewQueue({ signal }: FetchOptions = {}) {
+  return collectAll<QueueCase>(async (query) => {
+    const res = await reviews.queue.$get({ query }, { init: { signal } });
+    if (!res.ok) return assertOk(res) as Promise<never>;
+
+    const { cases: items, total } = await res.json();
+    return { items, total };
+  });
 }
 
 export async function getReviewCase(id: string, { signal }: FetchOptions = {}) {
@@ -19,6 +32,48 @@ export async function getReviewCase(id: string, { signal }: FetchOptions = {}) {
     { init: { signal } }
   );
   await assertOk(res);
+  const data = await res.json();
 
-  return await res.json();
+  return data;
+}
+
+export async function castDecision(
+  id: string,
+  review: Review,
+  { signal }: FetchOptions = {}
+) {
+  let payload: InferRequestType<
+    (typeof reviews)["cases"][":id"]["decisions"]["$post"]
+  >["json"];
+
+  if (review.decision == "approve") {
+    payload = {
+      decision: "approved",
+      notes: review.notes,
+    };
+  } else if (review.decision == "reject") {
+    payload = {
+      decision: "rejected",
+      notes: review.notes,
+      reasons: review.reasons as Array<
+        | "hierarchy_issue"
+        | "factual_error"
+        | "duplicate_content"
+        | "scope_violation"
+        | "clarity_issue"
+        | "missing_required_information"
+      >,
+    };
+  } else {
+    throw new Error(`Review post request made with missing body features.`);
+  }
+  // json payload
+  const res = await reviews.cases[":id"].decisions.$post(
+    {
+      json: payload,
+      param: { id },
+    },
+    { init: { signal } }
+  );
+  await assertOk(res);
 }
