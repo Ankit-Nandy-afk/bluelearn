@@ -256,7 +256,6 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
 
   const current = guide.canonical?.current ?? null;
   const subjects = await loadCanonicalTags(supabase, current?.id ?? null);
-
   const authorId = guide.canonical?.author_id ?? null;
   const usernames = await loadUsernames(supabase, [authorId]);
 

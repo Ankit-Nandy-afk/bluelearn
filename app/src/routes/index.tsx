@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
-// Links into the seeded "About Bluelearn" guides that explain the platform.
-const CONCEPTS = [
+const BLUE_CONCEPTS = [
   {
     slug: "what-is-bluelearn",
     label: "What is Bluelearn?",
@@ -183,7 +182,7 @@ function RouteComponent() {
         <Separator className="mb-4 bg-border" />
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {CONCEPTS.map((concept) => (
+          {BLUE_CONCEPTS.map((concept) => (
             <Link
               to="/guides/$slug"
               params={{ slug: concept.slug }}

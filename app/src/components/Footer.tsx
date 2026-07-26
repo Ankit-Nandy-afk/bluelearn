@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa6";
 import type { IconType } from "react-icons";
 
-// legal pages live on the marketing site, not this app
+// Link legal pages to marketing site.
 const SITE = "https://bluelearn.org";
 
 const LEGAL = [
