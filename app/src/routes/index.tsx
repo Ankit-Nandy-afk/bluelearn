@@ -5,7 +5,6 @@ import { Route as SubjectRoute } from "@/routes/subjects.$slug";
 import { listSubjects } from "@/lib/api/subjects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 // Links into the seeded "About Bluelearn" guides that explain the platform.
@@ -137,34 +136,37 @@ function RouteComponent() {
           <p className="text-sm text-muted-foreground">No subjects yet.</p>
         )}
 
-        <div className="flex flex-wrap gap-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[...subjects]
             .sort((a, b) => a.name.localeCompare(b.name))
-            .slice(0, 24)
+            .slice(0, 6)
             .map((subject) => (
               <Link
                 to={SubjectRoute.to}
                 params={{ slug: subject.slug }}
                 key={subject.slug}
+                className="group flex flex-col gap-1.5 rounded-lg border p-4 transition-colors hover:bg-muted"
               >
-                <Badge
-                  variant="outline"
-                  className="mono-micro rounded-full border p-4 tracking-[0.08em] transition-colors hover:bg-badge"
-                >
+                <span className="text-[15px] font-semibold tracking-[-0.01em]">
                   {subject.name}
-                </Badge>
+                </span>
+                {subject.summary && (
+                  <span className="text-[13px] leading-snug text-muted-foreground">
+                    {subject.summary}
+                  </span>
+                )}
               </Link>
             ))}
         </div>
 
-        {subjects.length > 24 && (
-          <div className="flex justify-center">
+        {subjects.length > 6 && (
+          <div className="mt-4 flex justify-center">
             <Link
               to="/subjects"
               className="mono-micro inline-flex items-center justify-center p-4 tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:text-foreground"
             >
-              Show More Subjects
-              <ChevronRight />
+              Show all subjects
+              <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         )}
@@ -186,13 +188,15 @@ function RouteComponent() {
               to="/guides/$slug"
               params={{ slug: concept.slug }}
               key={concept.slug}
-              className="group flex flex-col gap-2 rounded-lg border p-5 transition-colors hover:bg-badge"
+              className="group flex flex-col gap-2 rounded-lg border p-[18px] transition-colors hover:bg-muted"
             >
-              <p className="mono-micro tracking-[0.08em] uppercase">
+              <p className="font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
                 {concept.label}
               </p>
-              <p className="text-sm text-muted-foreground">{concept.blurb}</p>
-              <span className="mono-micro mt-2 inline-flex items-center tracking-[0.08em] text-muted-foreground uppercase group-hover:text-foreground">
+              <p className="text-[13px] leading-normal text-muted-foreground">
+                {concept.blurb}
+              </p>
+              <span className="mono-micro mt-auto inline-flex items-center tracking-[0.08em] text-muted-foreground uppercase group-hover:text-brand-blue">
                 Read
                 <ChevronRight className="h-3.5 w-3.5" />
               </span>
