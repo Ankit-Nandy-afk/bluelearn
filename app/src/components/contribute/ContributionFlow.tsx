@@ -184,6 +184,7 @@ function Inner({
 
   // Shape the in-progress form as a HydratedGuide, so the submit step can render
   // it with the same component the published page uses.
+  // The preview can be reused for a variant contribution
   const previewGuide: HydratedGuide = useMemo(() => {
     const nameBySlug = new Map(
       subjectOptions.map((s) => [s.slug, s.name] as const)
@@ -196,13 +197,9 @@ function Inner({
 
     return {
       slug: "",
-      title: guideContData.title
-        ? guideContData.title
-        : variantContData.title
-          ? variantContData.title
-          : "Untitled guide",
+      title: guideContData.title || variantContData.title || "Untitled guide",
       author: username ?? "You",
-      summary: guideContData.summary,
+      summary: guideContData.summary || variantContData.summary,
       created_at: formatDate(new Date()),
       duration: estimateReadMinutes(guideContData.body),
       breadcrumbs: [],
@@ -220,7 +217,7 @@ function Inner({
         slug,
         title: titleBySlug.get(slug) ?? slug,
       })),
-      content: guideContData.body,
+      content: guideContData.body || variantContData.body,
     };
   }, [guideContData, subjectOptions, guideOptions, username]);
 
@@ -251,7 +248,10 @@ function Inner({
   const creatingRef = useRef<Promise<string> | null>(null);
   const persistDraft = async () => {
     if (revisionId) {
-      await updateRevision(revisionId, draftFields());
+      await updateRevision(
+        revisionId,
+        type === "guide" ? draftFields() : variantDraftFields()
+      );
       return revisionId;
     }
 
@@ -357,6 +357,8 @@ function Inner({
           Stepper={Stepper}
           variantContData={variantContData}
           setVariantContData={setVariantContData}
+          guides={guideOptions}
+          subjects={subjectOptions}
           onSaveDraft={saveDraft}
           submitting={submitting}
         />
@@ -396,11 +398,12 @@ function Inner({
         <PreviewGuide
           Stepper={Stepper}
           guide={previewGuide}
-          guideType={guideType}
+          guideType={type === "guide" ? guideType : undefined}
           onSaveDraft={saveDraft}
           onPublish={publish}
           submitting={submitting}
         />
+
         <PreviewObjective
           Stepper={Stepper}
           onPublish={publish}

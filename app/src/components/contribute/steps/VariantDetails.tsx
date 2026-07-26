@@ -1,19 +1,20 @@
 import { useMemo } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { VariantContribution } from "@/types/contributions";
+import type { listGuides } from "@/lib/api/guides";
+import type { listSubjects } from "@/lib/api/subjects";
 
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Combobox } from "@/components/ui/combobox";
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
 
-import subjectsData from "@/data/subjects.json";
-import guidesData from "@/data/guides.json";
-
 type PropTypes = {
   Stepper: any;
   variantContData: VariantContribution;
   setVariantContData: Dispatch<SetStateAction<VariantContribution>>;
+  guides: Awaited<ReturnType<typeof listGuides>>;
+  subjects: Awaited<ReturnType<typeof listSubjects>>;
   onSaveDraft: () => void;
   submitting?: boolean;
 };
@@ -22,6 +23,8 @@ export const VariantDetails = ({
   Stepper,
   variantContData,
   setVariantContData,
+  guides,
+  subjects,
   onSaveDraft,
   submitting,
 }: PropTypes) => {
@@ -106,7 +109,7 @@ export const VariantDetails = ({
           </FieldLabel>
 
           <Combobox
-            items={guidesData.map((g: any) => {
+            items={guides.map((g: any) => {
               return {
                 value: g.slug,
                 label: g.title,
@@ -114,16 +117,12 @@ export const VariantDetails = ({
               };
             })}
             value={variantContData.baseGuide}
-            onValueChange={(baseGuide) => {
-              const selectedGuide = guidesData.find(
-                (g: any) => g.slug === baseGuide
-              );
+            onValueChange={(baseGuide) =>
               setVariantContData((prev: any) => ({
                 ...prev,
                 baseGuide,
-                baseGuideId: selectedGuide?.id, // error because current json guides don't have id, actual api returns id
-              }));
-            }}
+              }))
+            }
           />
         </Field>
         <Field className="space-y-2">
@@ -136,18 +135,18 @@ export const VariantDetails = ({
 
           <Combobox
             multiple
-            items={subjectsData.map((s) => {
+            items={subjects.map((s) => {
               return {
                 value: s.slug,
                 label: s.name,
-                description: s.summary,
+                description: s.summary ?? "",
               };
             })}
             value={variantContData.subjects}
-            onValueChange={(subjects) =>
+            onValueChange={(subjectsData) =>
               setVariantContData((prev: any) => ({
                 ...prev,
-                subjects,
+                subjectsData,
               }))
             }
           />
