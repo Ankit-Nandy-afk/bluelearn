@@ -1,26 +1,29 @@
 import type { Review } from "@/types/reviews";
 import type { InferRequestType } from "hono/client";
 import { client } from "@/lib/api/apiClient";
-import { assertOk } from "@/lib/api/apiHelpers";
+import { assertOk, collectAll } from "@/lib/api/apiHelpers";
 
 const reviews = client.reviews;
 
 type FetchOptions = { signal?: AbortSignal };
 
+type QueueCase = {
+  id: string;
+  case_type: string;
+  status: string;
+  title: string | null;
+  created_at: string;
+  decision: "approved" | "rejected" | null;
+};
+
 export async function getReviewQueue({ signal }: FetchOptions = {}) {
-  const res = await reviews.queue.$get(undefined, { init: { signal } });
-  await assertOk(res);
-  const { cases: data } = await res.json();
+  return collectAll<QueueCase>(async (query) => {
+    const res = await reviews.queue.$get({ query }, { init: { signal } });
+    if (!res.ok) return assertOk(res) as Promise<never>;
 
-  return data;
-}
-
-export async function listReviewCases({ signal }: FetchOptions = {}) {
-  const res = await reviews.cases.$get(undefined, { init: { signal } });
-  await assertOk(res);
-  const { cases: data } = await res.json();
-
-  return data;
+    const { cases: items, total } = await res.json();
+    return { items, total };
+  });
 }
 
 export async function getReviewCase(id: string, { signal }: FetchOptions = {}) {
