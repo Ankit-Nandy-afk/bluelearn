@@ -51,7 +51,7 @@ function RouteComponent() {
   const { subjects, subjectsFailed } = Route.useLoaderData();
 
   return (
-    <div className="bg-background">
+    <div className="mx-auto max-w-[1280px] bg-background">
       {/* Hero */}
       <section className="border-b">
         <div className="grid items-center gap-12 px-8 py-16 lg:grid-cols-[1fr_320px] lg:px-16">
@@ -163,7 +163,7 @@ function RouteComponent() {
           <div className="mt-4 flex justify-center">
             <Link
               to="/subjects"
-              className="mono-micro inline-flex items-center justify-center p-4 tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:text-foreground"
+              className="mono-micro inline-flex items-center gap-1 rounded-md border px-4 py-3 tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:bg-muted hover:text-foreground"
             >
               Show all subjects
               <ChevronRight className="h-3.5 w-3.5" />
