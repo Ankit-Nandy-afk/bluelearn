@@ -52,7 +52,7 @@ function RouteComponent() {
   return (
     <div className="mx-auto max-w-[1280px] bg-background">
       {/* Hero */}
-      <section className="border-b">
+      <section>
         <div className="grid items-center gap-12 px-8 py-16 lg:grid-cols-[1fr_320px] lg:px-16">
           {/* Left */}
           <div>
@@ -89,7 +89,10 @@ function RouteComponent() {
           </div>
         </div>
       </section>
-      <section className="border-b px-8 py-10 lg:px-16">
+
+      <Separator className="bg-border" />
+
+      <section className="px-8 py-10 lg:px-16">
         <div className="flex gap-3">
           <div className="relative flex-1 rounded-md">
             <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -116,7 +119,9 @@ function RouteComponent() {
         </div>
       </section>
 
-      <section className="border-b px-8 py-8 lg:px-16">
+      <Separator className="bg-border" />
+
+      <section className="px-8 py-8 lg:px-16">
         <div className="mb-6">
           <p className="font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
             Browse Subjects
@@ -171,8 +176,10 @@ function RouteComponent() {
         )}
       </section>
 
+      <Separator className="bg-border" />
+
       {/* Learn about Bluelearn */}
-      <section className="border-b px-8 py-8 lg:px-16">
+      <section className="px-8 py-8 lg:px-16">
         <div className="mb-6">
           <p className="font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
             Learn About Bluelearn
