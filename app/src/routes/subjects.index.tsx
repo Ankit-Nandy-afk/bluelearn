@@ -1,4 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import type {
+  SubjectListItem,
+  SubjectReference,
+  SubjectReferences,
+} from "@bluelearn/schemas";
 
 import { Separator } from "@/components/ui/separator";
 
@@ -7,15 +13,18 @@ import { Route as SubjectRoute } from "@/routes/subjects.$slug";
 
 import { listSubjects } from "@/lib/api/subjects";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+import { Combobox } from "@/components/ui/combobox";
+
+type Subjects = Array<SubjectListItem>;
+
+type SubjectsGroupedByNameFirstCharacter = Map<string, SubjectReferences>;
+
+type SubjectsProps = {
+  groupedSubjectReferences: SubjectsGroupedByNameFirstCharacter;
+};
+
+const FIRST_LETTER_NUMBER_SUBJECT_GROUP = "#";
 
 export const Route = createFileRoute("/subjects/")({
   loader: ({ abortController }) =>
@@ -52,28 +61,33 @@ function SubjectsError() {
   );
 }
 
-function SidebarMd({ subjects }: any) {
-  // return subjects.map(subject => {
-  return (
-    <CollapsibleSection
-      title={<span className="font-black">G</span>}
-      containerStyles=""
-    >
-      <ul className="ml-8 list-disc">
-        <li>Game Development</li>
-        <li>Game Development</li>
-        <li>Game Development</li>
-        <li>Game Development</li>
-      </ul>
-    </CollapsibleSection>
-  );
-  // })
+function SidebarMd({ groupedSubjectReferences }: SubjectsProps) {
+  return Array.from(groupedSubjectReferences.keys()).map((char: string) => {
+    const subjects = groupedSubjectReferences.get(char) || [];
+
+    return (
+      <CollapsibleSection
+        title={<span className="text-2xl font-black">{char}</span>}
+        containerStyles=""
+      >
+        <ul className="ml-8 list-disc">
+          {subjects.map((subject: SubjectReference) => (
+            <li>
+              <Link to={SubjectRoute.to} params={{ slug: subject.slug }}>
+                Game Development
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </CollapsibleSection>
+    );
+  });
 }
 
-function SidebarXs() {
+function SidebarXs({ groupedSubjectReferences }: SubjectsProps) {
   return (
     <div className="w-full">
-      <Select>
+      {/* <Select>
         <SelectTrigger className="mx-auto w-full max-w-96">
           <SelectValue placeholder="Select a Subject Name" />
         </SelectTrigger>
@@ -85,29 +99,42 @@ function SidebarXs() {
             <SelectItem value="geometry">Geometry</SelectItem>
           </SelectGroup>
         </SelectContent>
-      </Select>
+      </Select> */}
+      {/* <Combobox
+        multiple
+        items={subjects.map((s) => {
+          return {
+            value: s.slug,
+            label: s.name,
+          };
+        })}
+        value={guideContData.subjects}
+        onValueChange={(slugs) =>
+          setGuideContData((prev) => ({
+            ...prev,
+            subjects: slugs,
+          }))
+        }
+      /> */}
+      {/* <Combobox /> */}
     </div>
   );
 }
 
-function Sidebar({ subjects }: any) {
+function Sidebar({ groupedSubjectReferences }: SubjectsProps) {
   return (
     <>
       <div className="hidden md:block">
-        <SidebarMd />
+        <SidebarMd groupedSubjectReferences={groupedSubjectReferences} />
       </div>
       <div className="md:hidden">
-        <SidebarXs />
+        <SidebarXs groupedSubjectReferences={groupedSubjectReferences} />
       </div>
     </>
   );
 }
 
-function Subjects({ subjects }: any) {
-  if (subjects.length === 0) {
-    return <p className="text-sm text-muted-foreground">No subjects yet.</p>;
-  }
-
+function Subjects({ subjects }: { subjects: Subjects }) {
   return (
     <div className="grid grid-cols-1 gap-6 md:ml-4 lg:grid-cols-2">
       {subjects.map((subject) => {
@@ -124,14 +151,63 @@ function Subjects({ subjects }: any) {
   );
 }
 
+const getSubjectNamesGroupedByFirstLetter = (
+  subjects: Subjects
+): SubjectsGroupedByNameFirstCharacter => {
+  const subjectsGrouped: SubjectsGroupedByNameFirstCharacter = new Map();
+  const isAlphabet = /^[a-z]$/i;
+
+  if (!Array.isArray(subjects) || subjects.length === 0) return subjectsGrouped;
+
+  const subjectsSorted = Array.from(subjects).sort((subjectA, subjectB) => {
+    const a = subjectA.name.at(0) || "";
+    const b = subjectB.name.at(0) || "";
+
+    const aIsNum = /^\d+$/.test(a);
+    const bIsNum = /^\d+$/.test(b);
+
+    if (aIsNum === bIsNum) {
+      // Both numbers or both alphabets
+      return a.localeCompare(b);
+    }
+
+    return aIsNum ? -1 : 1; // Numbers first
+  });
+
+  subjectsSorted.map((subject: SubjectListItem) => {
+    const { name } = subject;
+    const firstLetter = name.at(0)?.toUpperCase() || "";
+
+    const character = isAlphabet.test(firstLetter)
+      ? firstLetter
+      : FIRST_LETTER_NUMBER_SUBJECT_GROUP;
+    const currentSubjects = subjectsGrouped.get(character) || [];
+
+    subjectsGrouped.set(firstLetter, [...currentSubjects, subject]);
+  });
+
+  // const groupedSubjectsArray: Array<Array<string>> = Array.from(groupedSubjects);
+
+  return subjectsGrouped;
+};
+
 function RouteComponent() {
-  const subjects = Route.useLoaderData();
+  const subjects: Array<SubjectListItem> = Route.useLoaderData();
+
+  const subjectsGroupedByNameFirstCharacter: SubjectsGroupedByNameFirstCharacter =
+    useMemo(() => getSubjectNamesGroupedByFirstLetter(subjects), [subjects]);
+
+  if (subjects.length === 0) {
+    return <p className="text-sm text-muted-foreground">No subjects yet.</p>;
+  }
 
   return (
     <Shell>
       <section className="grid border-b md:grid-cols-[320px_1fr]">
         <aside className="overflow-y-auto py-6 md:h-[calc(100vh-70px)] md:px-6">
-          <Sidebar subjects={subjects} />
+          <Sidebar
+            groupedSubjectReferences={subjectsGroupedByNameFirstCharacter}
+          />
         </aside>
 
         <Subjects subjects={subjects} />
