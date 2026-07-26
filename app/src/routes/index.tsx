@@ -52,7 +52,7 @@ function RouteComponent() {
   const { subjects, subjectsFailed } = Route.useLoaderData();
 
   return (
-    <div className="mx-auto max-w-[1280px] border-x bg-background">
+    <div className="bg-background">
       {/* Hero */}
       <section className="border-b">
         <div className="grid items-center gap-12 px-8 py-16 lg:grid-cols-[1fr_320px] lg:px-16">

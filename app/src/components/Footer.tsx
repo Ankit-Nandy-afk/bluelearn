@@ -40,7 +40,7 @@ const SOCIALS: Array<{ name: string; href: string; Icon: IconType }> = [
 
 export function Footer() {
   return (
-    <footer className="mx-auto max-w-[1280px] border-x border-t bg-background">
+    <footer className="border-t bg-background">
       <div className="flex flex-wrap items-center justify-between gap-4 px-8 py-6 lg:px-16">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <span>&copy; {new Date().getFullYear()} The Bluelearn Project</span>

@@ -41,9 +41,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <AuthProvider>
-          <Navbar />
-          <TooltipProvider>{children}</TooltipProvider>
-          <Footer />
+          <div className="flex min-h-screen flex-col">
+            <Navbar />
+            <TooltipProvider>
+              <main className="flex-1">{children}</main>
+            </TooltipProvider>
+            <Footer />
+          </div>
           <Toaster />
         </AuthProvider>
 
