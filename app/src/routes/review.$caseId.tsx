@@ -22,27 +22,23 @@ export type Review = {
 
 export const Route = createFileRoute("/review/$caseId")({
   loader: async ({ params, abortController }) => {
-    const reviewData = await getReviewCase(params.caseId, {
-      signal: abortController.signal,
-    });
     const revisionData = await getReviewCase(params.caseId, {
       signal: abortController.signal,
     });
-    return { reviewData, revisionData };
+    return revisionData;
   },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const { caseId } = Route.useParams();
-  const { reviewData, revisionData } = Route.useLoaderData();
+  const revisionData = Route.useLoaderData();
   const [submitting, setSubmitting] = useState<
     "Submitting..." | "Submitted." | ""
   >("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const reviewCase = reviewData.case;
   const revision = revisionData.revision;
 
   const guide: HydratedGuide | null = revision
@@ -78,29 +74,47 @@ function RouteComponent() {
     },
   ];
 
+  const validateReview = () => {
+    let missingFields = "";
+    if (review.decision == "approve") return "";
+
+    if (review.reasons.length === 0)
+      missingFields += "Rejections require at least one reason. ";
+    if (review.notes.length === 0)
+      missingFields += "Rejections require a note. ";
+
+    return missingFields;
+  };
+
   const submitDecision = async () => {
     abortControllerRef.current?.abort();
     const controller = new AbortController();
     abortControllerRef.current = controller;
+
+    const missingFields = validateReview();
+    if (missingFields.length !== 0) {
+      setSubmitError(
+        "There were errors with your submission: \n" + missingFields
+      );
+      return;
+    }
 
     setSubmitting("Submitting...");
     setSubmitError(null);
 
     try {
       await castDecision(caseId, review, { signal: controller.signal });
+      setSubmitting("Submitted.");
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
         setSubmitError("There was an unexpected error with your submission.");
-      }
-    } finally {
-      if (abortControllerRef.current === controller) {
-        setSubmitting("Submitted.");
+        setSubmitting("");
       }
     }
   };
 
   return (
-    <div className="mx-auto h-[calc(100vh-70px)] max-w-[1280px] border-x bg-background">
+    <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
       <section className="grid grid-cols-[320px_1fr] border-b">
         <aside className="h-[calc(100vh-70px)] overflow-y-auto border-r px-6 py-6">
           <CollapsibleSection
