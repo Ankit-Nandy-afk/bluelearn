@@ -23,3 +23,15 @@ export async function createGuide(
   const { revision_id } = await res.json();
   return revision_id;
 }
+
+export async function getWalkthrough(
+  slug: string,
+  { signal }: FetchOptions = {}
+) {
+  const res = await guides[":slug"].walkthrough.$get(
+    { param: { slug } },
+    { init: { signal } }
+  );
+  await assertOk(res);
+  return await res.json();
+}

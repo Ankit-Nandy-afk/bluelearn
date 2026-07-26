@@ -12,6 +12,11 @@ export const createObjectiveSchema = z.object({
   title: objectiveTitleSchema.nullish(),
   summary: objectiveSummarySchema.nullish(),
   target_ids: z.array(z.uuid()).min(1),
+  tags: z.array(subjectSlugSchema).default([]),
+});
+
+export const addObjectiveTargetSchema = z.object({
+  guide_base_id: z.uuid(),
 });
 
 // Overwrite a draft revision's metadata. Partial: send only the fields you want

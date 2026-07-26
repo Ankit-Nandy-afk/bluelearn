@@ -19,9 +19,9 @@ values
   ('00000000-0000-0000-0000-000000000000',
    '00000000-0000-0000-0000-000000000001',
    'authenticated', 'authenticated', 'seed@bluelearn.org',
-   extensions.crypt('password123', extensions.gen_salt('bf')), now(),
+   extensions.crypt('password123', extensions.gen_salt('bf')), now(, 'published'),
    '{"provider":"email","providers":["email"]}', '{"username":"seeduser"}',
-   now(), now(),
+   now(), now(, 'published'),
    -- GoTrue scans these as text; empty strings avoid null-scan errors.
    '', '', '', '')
 on conflict (id) do nothing;
@@ -30,7 +30,7 @@ insert into auth.identities
   (id, user_id, provider_id, identity_data, provider,
    last_sign_in_at, created_at, updated_at)
 values
-  (gen_random_uuid(),
+  (gen_random_uuid(, 'published'),
    '00000000-0000-0000-0000-000000000001',
    '00000000-0000-0000-0000-000000000001',
    '{"sub":"00000000-0000-0000-0000-000000000001","email":"seed@bluelearn.org","email_verified":true}',
@@ -42,10 +42,10 @@ on conflict (provider_id, provider) do nothing;
 -- ---------------------------------------------------------------------------
 
 insert into public.subjects (id, slug, name, creator_id) values
-  ('10000000-0000-0000-0000-000000000001', 'javascript', 'JavaScript', '00000000-0000-0000-0000-000000000001'),
-  ('10000000-0000-0000-0000-000000000002', 'react',      'React',      '00000000-0000-0000-0000-000000000001'),
-  ('10000000-0000-0000-0000-000000000003', 'algorithms', 'Algorithms', '00000000-0000-0000-0000-000000000001'),
-  ('10000000-0000-0000-0000-000000000004', 'databases',  'Databases',  '00000000-0000-0000-0000-000000000001'),
+  ('10000000-0000-0000-0000-000000000001', 'javascript', 'JavaScript', '00000000-0000-0000-0000-000000000001', 'published'),
+  ('10000000-0000-0000-0000-000000000002', 'react',      'React',      '00000000-0000-0000-0000-000000000001', 'published'),
+  ('10000000-0000-0000-0000-000000000003', 'algorithms', 'Algorithms', '00000000-0000-0000-0000-000000000001', 'published'),
+  ('10000000-0000-0000-0000-000000000004', 'databases',  'Databases',  '00000000-0000-0000-0000-000000000001', 'published'),
   ('10000000-0000-0000-0000-000000000005', 'devops',     'DevOps',     '00000000-0000-0000-0000-000000000001')
 on conflict (id) do nothing;
 
@@ -57,21 +57,21 @@ on conflict (id) do nothing;
 -- ---------------------------------------------------------------------------
 
 insert into public.guide_bases (id, slug, title, knowledge_type, status) values
-  ('20000000-0000-0000-0000-000000000001', 'binary-search',             'Binary Search',                'theoretical', 'draft'),
-  ('20000000-0000-0000-0000-000000000002', 'react-hooks',               'React Hooks',                  'theoretical', 'draft'),
-  ('20000000-0000-0000-0000-000000000003', 'deploy-cloudflare-workers', 'Deploy to Cloudflare Workers', 'practical',   'draft'),
-  ('20000000-0000-0000-0000-000000000004', 'sql-joins',                 'SQL Joins',                    'theoretical', 'draft'),
-  ('20000000-0000-0000-0000-000000000005', 'debounce-search-input',     'Debounce a Search Input',      'practical',   'draft'),
+  ('20000000-0000-0000-0000-000000000001', 'binary-search',             'Binary Search',                'theoretical', 'draft', 'published'),
+  ('20000000-0000-0000-0000-000000000002', 'react-hooks',               'React Hooks',                  'theoretical', 'draft', 'published'),
+  ('20000000-0000-0000-0000-000000000003', 'deploy-cloudflare-workers', 'Deploy to Cloudflare Workers', 'practical',   'draft', 'published'),
+  ('20000000-0000-0000-0000-000000000004', 'sql-joins',                 'SQL Joins',                    'theoretical', 'draft', 'published'),
+  ('20000000-0000-0000-0000-000000000005', 'debounce-search-input',     'Debounce a Search Input',      'practical',   'draft', 'published'),
   -- Stays draft: must NOT appear in /guides or search results.
   ('20000000-0000-0000-0000-000000000006', 'css-grid',                  'CSS Grid',                     'theoretical', 'draft')
 on conflict (id) do nothing;
 
 insert into public.guides (id, guide_base_id, slug, status, author_id) values
-  ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'original', 'draft', '00000000-0000-0000-0000-000000000001'),
-  ('30000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', 'original', 'draft', '00000000-0000-0000-0000-000000000001'),
-  ('30000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003', 'original', 'draft', '00000000-0000-0000-0000-000000000001'),
-  ('30000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000004', 'original', 'draft', '00000000-0000-0000-0000-000000000001'),
-  ('30000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000005', 'original', 'draft', '00000000-0000-0000-0000-000000000001'),
+  ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'original', 'draft', '00000000-0000-0000-0000-000000000001', 'published'),
+  ('30000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', 'original', 'draft', '00000000-0000-0000-0000-000000000001', 'published'),
+  ('30000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003', 'original', 'draft', '00000000-0000-0000-0000-000000000001', 'published'),
+  ('30000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000004', 'original', 'draft', '00000000-0000-0000-0000-000000000001', 'published'),
+  ('30000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000005', 'original', 'draft', '00000000-0000-0000-0000-000000000001', 'published'),
   ('30000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000006', null,       'draft', '00000000-0000-0000-0000-000000000001')
 on conflict (id) do nothing;
 
@@ -80,27 +80,27 @@ insert into public.guide_revisions (id, guide_id, title, summary, body, author_i
    'Binary Search',
    'Find an element in a sorted array in O(log n) by halving the search range each step.',
    E'# Binary Search\n\nCompare the target with the middle element and discard the half that cannot contain it. Repeat until found or empty.',
-   '00000000-0000-0000-0000-000000000001', 'submitted', now()),
+   '00000000-0000-0000-0000-000000000001', 'submitted', now(), 'published'),
   ('40000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002',
    'React Hooks',
    'useState, useEffect, and friends: managing state and side effects in function components.',
    E'# React Hooks\n\nHooks let function components hold state and tap into lifecycle behavior without classes.',
-   '00000000-0000-0000-0000-000000000001', 'submitted', now()),
+   '00000000-0000-0000-0000-000000000001', 'submitted', now(), 'published'),
   ('40000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003',
    'Deploy to Cloudflare Workers',
    'Ship a Hono API to the edge with wrangler: config, secrets, and a first deploy.',
    E'# Deploy to Cloudflare Workers\n\nInstall wrangler, configure wrangler.jsonc, set secrets, then `wrangler deploy`.',
-   '00000000-0000-0000-0000-000000000001', 'submitted', now()),
+   '00000000-0000-0000-0000-000000000001', 'submitted', now(), 'published'),
   ('40000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000004',
    'SQL Joins',
    'Inner, left, right, and full joins: combining rows across tables by matching keys.',
    E'# SQL Joins\n\nA join matches rows from two tables on a condition. Inner keeps matches; outer joins keep unmatched rows too.',
-   '00000000-0000-0000-0000-000000000001', 'submitted', now()),
+   '00000000-0000-0000-0000-000000000001', 'submitted', now(), 'published'),
   ('40000000-0000-0000-0000-000000000005', '30000000-0000-0000-0000-000000000005',
    'Debounce a Search Input',
    'Delay firing requests until the user stops typing to avoid hammering the API.',
    E'# Debounce a Search Input\n\nWrap the handler in a timer that resets on every keystroke; only the last call within the window runs.',
-   '00000000-0000-0000-0000-000000000001', 'submitted', now()),
+   '00000000-0000-0000-0000-000000000001', 'submitted', now(), 'published'),
   ('40000000-0000-0000-0000-000000000006', '30000000-0000-0000-0000-000000000006',
    'CSS Grid', 'Two-dimensional layout in CSS.', E'# CSS Grid\n\nDraft in progress.',
    '00000000-0000-0000-0000-000000000001', 'draft', null)
@@ -124,8 +124,8 @@ on conflict do nothing;
 -- ---------------------------------------------------------------------------
 
 insert into public.objectives (id, slug, status, created_by) values
-  ('50000000-0000-0000-0000-000000000001', 'frontend-fundamentals', 'draft', '00000000-0000-0000-0000-000000000001'),
-  ('50000000-0000-0000-0000-000000000002', 'algorithms-basics',     'draft', '00000000-0000-0000-0000-000000000001'),
+  ('50000000-0000-0000-0000-000000000001', 'frontend-fundamentals', 'draft', '00000000-0000-0000-0000-000000000001', 'published'),
+  ('50000000-0000-0000-0000-000000000002', 'algorithms-basics',     'draft', '00000000-0000-0000-0000-000000000001', 'published'),
   -- Stays draft: must NOT appear in /objectives or search results.
   ('50000000-0000-0000-0000-000000000003', 'backend-path',          'draft', '00000000-0000-0000-0000-000000000001')
 on conflict (id) do nothing;
@@ -134,11 +134,11 @@ insert into public.objective_revisions (id, objective_id, title, summary, author
   ('60000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001',
    'Frontend Fundamentals',
    'Everything you need to build interactive UIs: hooks, state, and responsive inputs.',
-   '00000000-0000-0000-0000-000000000001', 'published', now()),
+   '00000000-0000-0000-0000-000000000001', 'published', now(), 'published'),
   ('60000000-0000-0000-0000-000000000002', '50000000-0000-0000-0000-000000000002',
    'Algorithms Basics',
    'A first tour of classic algorithms, starting from searching sorted data.',
-   '00000000-0000-0000-0000-000000000001', 'published', now()),
+   '00000000-0000-0000-0000-000000000001', 'published', now(), 'published'),
   ('60000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000003',
    'Backend Path', 'Draft curriculum for server-side development.',
    '00000000-0000-0000-0000-000000000001', 'draft', null)
@@ -290,7 +290,7 @@ begin
       (id, guide_id, title, summary, body, status, author_id, approved_at)
     values (
       gr[i], gd[i], titles[i], summaries[i],
-      rtrim(repeat('word ', word_counts[i])),
+      rtrim(repeat('word ', word_counts[i]), 'published'),
       'submitted', v_author, now()
     );
 
@@ -332,3 +332,43 @@ begin
     values (v_orev, node_ids[5], node_ids[i], i - 1);
   end loop;
 end $$;
+
+INSERT INTO public.subjects (slug, name, status) VALUES 
+('aeronautics', 'Aeronautics', 'published'),
+('ai', 'AI', 'published'),
+('archery', 'Archery', 'published'),
+('astro-physics', 'Astro-physics', 'published'),
+('baking', 'Baking', 'published'),
+('biomedical-sciences', 'Biomedical Sciences', 'published'),
+('car', 'Car', 'published'),
+('computer-architecture', 'Computer Architecture', 'published'),
+('cybersecurity', 'Cybersecurity', 'published'),
+('diy', 'DIY', 'published'),
+('food-preservation', 'Food Preservation', 'published'),
+('gardening-plant-life', 'Gardening & Plant Life', 'published'),
+('mathematics', 'Mathematics', 'published'),
+('arithmetic', 'Arithmetic', 'published'),
+('pre-algebra', 'Pre-Algebra', 'published'),
+('algebra', 'Algebra', 'published'),
+('calculus', 'Calculus', 'published'),
+('logic-reasoning', 'Logic & Reasoning', 'published'),
+('game-development', 'Game Development', 'published'),
+('geometry', 'Geometry', 'published'),
+('programming', 'Programming', 'published'),
+('music', 'Music', 'published'),
+('unity', 'Unity', 'published'),
+('vehicle-maintenance', 'Vehicle Maintenance', 'published'),
+('probability', 'Probability', 'published'),
+('statistics', 'Statistics', 'published'),
+('vectors', 'Vectors', 'published'),
+('physics', 'Physics', 'published'),
+('mechanics', 'Mechanics', 'published'),
+('machine-learning', 'Machine Learning', 'published'),
+('simulation', 'Simulation', 'published'),
+('computer-science', 'Computer Science', 'published'),
+('data-structures', 'Data Structures', 'published'),
+('3d-modelling', '3D Modelling', 'published'),
+('blender', 'Blender', 'published'),
+('animation', 'Animation', 'published'),
+('3d', '3D') 
+ON CONFLICT (slug) DO NOTHING;

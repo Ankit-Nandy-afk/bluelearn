@@ -126,7 +126,7 @@ async function loadRevisionTags(supabase: DB, revisionId: string) {
 }
 
 // Replace a draft revision's subject tag set with the given slugs.
-async function replaceRevisionTags(
+export async function replaceRevisionTags(
   supabase: DB,
   revisionId: string,
   slugs: string[]
@@ -306,6 +306,207 @@ export async function updateObjectiveNode(
       note: node.note,
     },
   };
+}
+
+export async function addObjectiveTarget(
+  supabase: DB,
+  revisionId: string,
+  baseId: string
+) {
+  // 1. Verify revision is editable
+  const { data: rev, error: revError } = await supabase
+    .from("objective_revisions")
+    .select("status")
+    .eq("id", revisionId)
+    .maybeSingle();
+
+  if (revError || !rev) throw new ServiceError("Revision not found", 404);
+  if (rev.status !== "draft")
+    throw new ServiceError("Revision is not an editable draft", 400);
+
+  // 2. Fetch the target base to make sure it exists
+  const { data: targetBase, error: baseError } = await supabase
+    .from("guide_bases")
+    .select("id, canonical_guide_id")
+    .eq("id", baseId)
+    .maybeSingle();
+  if (baseError || !targetBase)
+    throw new ServiceError("Target guide base not found", 404);
+  if (!targetBase.canonical_guide_id)
+    throw new ServiceError("Target guide base has no canonical guide", 400);
+
+  // 3. Upsert the target base into nodes as a target
+  const { error: upsertError } = await supabase
+    .from("objective_revision_nodes")
+    .upsert(
+      {
+        revision_id: revisionId,
+        guide_base_id: targetBase.id,
+        guide_id: targetBase.canonical_guide_id as string,
+        is_target: true,
+        is_included: true,
+      },
+      { onConflict: "revision_id, guide_base_id" }
+    );
+  if (upsertError) {
+    console.error(upsertError);
+    throw new ServiceError("Failed to add target node", 500);
+  }
+
+  const visited = new Set<string>();
+  let currentLevel = [targetBase.id];
+
+  while (currentLevel.length > 0) {
+    const toFetch = currentLevel.filter((id) => !visited.has(id));
+    for (const id of toFetch) visited.add(id);
+
+    if (toFetch.length === 0) break;
+
+    const { data: edges, error: edgesError } = await supabase
+      .from("guide_edges")
+      .select("from_guide_base_id")
+      .in("to_guide_base_id", toFetch)
+      .eq("edge_type", "prerequisite")
+      .eq("is_suspended", false);
+
+    if (edgesError) {
+      console.error(edgesError);
+      throw new ServiceError("Failed to fetch prerequisites", 500);
+    }
+
+    currentLevel = (edges || []).map((e) => e.from_guide_base_id);
+  }
+
+  // Insert all missing prereq nodes
+  if (visited.size > 0) {
+    const baseIds = Array.from(visited);
+    const { data: existingNodes } = await supabase
+      .from("objective_revision_nodes")
+      .select("guide_base_id")
+      .eq("revision_id", revisionId)
+      .in("guide_base_id", baseIds);
+
+    const existingIds = new Set(
+      existingNodes?.map((n) => n.guide_base_id) || []
+    );
+    const missingIds = baseIds.filter((id) => !existingIds.has(id));
+
+    if (missingIds.length > 0) {
+      const { data: missingBases } = await supabase
+        .from("guide_bases")
+        .select("id, canonical_guide_id")
+        .in("id", missingIds);
+
+      if (missingBases && missingBases.length > 0) {
+        const validBases = missingBases.filter(
+          (b) => b.canonical_guide_id !== null
+        );
+        if (validBases.length > 0) {
+          await supabase.from("objective_revision_nodes").insert(
+            validBases.map((b) => ({
+              revision_id: revisionId,
+              guide_base_id: b.id,
+              guide_id: b.canonical_guide_id as string,
+              is_target: false,
+              is_included: true,
+            }))
+          );
+        }
+      }
+    }
+  }
+
+  return await getRevisionSnapshot(supabase, revisionId, "live");
+}
+
+export async function removeObjectiveTarget(
+  supabase: DB,
+  revisionId: string,
+  baseId: string
+) {
+  // 1. Verify revision is editable
+  const { data: rev, error: revError } = await supabase
+    .from("objective_revisions")
+    .select("status")
+    .eq("id", revisionId)
+    .maybeSingle();
+
+  if (revError || !rev) throw new ServiceError("Revision not found", 404);
+  if (rev.status !== "draft")
+    throw new ServiceError("Revision is not an editable draft", 400);
+
+  // 2. Clear the is_target flag
+  await supabase
+    .from("objective_revision_nodes")
+    .update({ is_target: false })
+    .eq("revision_id", revisionId)
+    .eq("guide_base_id", baseId);
+
+  // 3. To prune nodes kept *only* to reach it, we'd need to compute the union of
+  // all prerequisites of ALL remaining targets, and delete any nodes not in that set.
+  // Let's find all remaining targets.
+  const { data: targets } = await supabase
+    .from("objective_revision_nodes")
+    .select("guide_base_id")
+    .eq("revision_id", revisionId)
+    .eq("is_target", true);
+
+  const targetIds = (targets || []).map((t) => t.guide_base_id);
+
+  if (targetIds.length > 0) {
+    const visited = new Set<string>();
+    let currentLevel = [...targetIds];
+
+    while (currentLevel.length > 0) {
+      const toFetch = currentLevel.filter((id) => !visited.has(id));
+      for (const id of toFetch) visited.add(id);
+
+      if (toFetch.length === 0) break;
+
+      const { data: edges, error: edgesError } = await supabase
+        .from("guide_edges")
+        .select("from_guide_base_id")
+        .in("to_guide_base_id", toFetch)
+        .eq("edge_type", "prerequisite")
+        .eq("is_suspended", false);
+
+      if (edgesError) {
+        console.error(edgesError);
+        throw new ServiceError("Failed to fetch prerequisites", 500);
+      }
+
+      currentLevel = (edges || []).map((e) => e.from_guide_base_id);
+    }
+
+    // Now delete any nodes in objective_revision_nodes that are NOT in visited
+    // AND were not explicitly added/modified?
+    // Wait, the specification says "remove topics kept only to reach it". So we just delete any node not in `visited`.
+    const { data: allNodes } = await supabase
+      .from("objective_revision_nodes")
+      .select("guide_base_id")
+      .eq("revision_id", revisionId);
+
+    const nodesToDelete = (allNodes || [])
+      .map((n) => n.guide_base_id)
+      .filter((id) => !visited.has(id));
+
+    if (nodesToDelete.length > 0) {
+      await supabase
+        .from("objective_revision_nodes")
+        .delete()
+        .eq("revision_id", revisionId)
+        .in("guide_base_id", nodesToDelete);
+    }
+  } else {
+    // No targets left, delete all nodes? The UI usually requires at least one target,
+    // but if they remove the last one, we can just clear the nodes.
+    await supabase
+      .from("objective_revision_nodes")
+      .delete()
+      .eq("revision_id", revisionId);
+  }
+
+  return await getRevisionSnapshot(supabase, revisionId, "live");
 }
 
 // Publish the draft directly (no review gate): freeze its edge projection, point

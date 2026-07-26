@@ -24,6 +24,7 @@ type WalkthroughNode = {
 
 type GuideGraphProps = {
   walkthroughNodes: Array<WalkthroughNode>;
+  walkthroughEdges: Array<{ sourceSlug: string; targetSlug: string }>;
   curatedSequence: Array<string>;
   targetSlug: string;
   onToggleGuide: (slug: string, isChecked: boolean) => void;
@@ -34,6 +35,7 @@ type GuideGraphProps = {
 
 export function GuideGraph({
   walkthroughNodes,
+  walkthroughEdges,
   curatedSequence,
   targetSlug,
   onToggleGuide,
@@ -60,11 +62,13 @@ export function GuideGraph({
       .map(Number)
       .sort((a, b) => a - b);
 
+    const maxLevel = levels.length > 0 ? Math.max(...levels) : 1;
+
     const newNodes: Array<Node> = [];
-    levels.forEach((level, levelIdx) => {
+    levels.forEach((level) => {
       const nodesInLevel = grouped[level];
       if (!nodesInLevel) return;
-      const levelY = -(levelIdx * 250);
+      const levelY = (maxLevel - level) * 250;
 
       const totalWidth = nodesInLevel.length * 250;
       const startX = -totalWidth / 2;
@@ -93,14 +97,12 @@ export function GuideGraph({
     // Transitive Reduction: Build a map of valid prerequisites for each node
     const prereqMap = new Map<string, Array<string>>();
     walkthroughNodes.forEach((node) => {
-      const guide = guidesMap.get(node.slug);
-      if (guide && guide.prerequisites) {
-        const validPrereqs = guide.prerequisites.filter((p: string) =>
-          walkthroughNodes.some((n) => n.slug === p)
-        );
-        prereqMap.set(node.slug, validPrereqs);
-      } else {
-        prereqMap.set(node.slug, []);
+      prereqMap.set(node.slug, []);
+    });
+
+    walkthroughEdges.forEach((edge) => {
+      if (prereqMap.has(edge.targetSlug) && prereqMap.has(edge.sourceSlug)) {
+        prereqMap.get(edge.targetSlug)!.push(edge.sourceSlug);
       }
     });
 
@@ -158,6 +160,7 @@ export function GuideGraph({
     setEdges(newEdges);
   }, [
     walkthroughNodes,
+    walkthroughEdges,
     curatedSequence,
     targetSlug,
     guidesMap,
@@ -167,6 +170,15 @@ export function GuideGraph({
 
   // 2. Hover Update: update isDimmed and isHovered without re-layout
   useEffect(() => {
+    // Build quick lookup for adjacency
+    const prereqMap = new Map<string, Array<string>>();
+    walkthroughNodes.forEach((node) => prereqMap.set(node.slug, []));
+    walkthroughEdges.forEach((edge) => {
+      if (prereqMap.has(edge.targetSlug) && prereqMap.has(edge.sourceSlug)) {
+        prereqMap.get(edge.targetSlug)!.push(edge.sourceSlug);
+      }
+    });
+
     const highlightedNodes = new Set<string>();
     if (hoveredGuide) {
       const ancQueue = [hoveredGuide];
@@ -174,10 +186,8 @@ export function GuideGraph({
         const cur = ancQueue.shift()!;
         if (!highlightedNodes.has(cur)) {
           highlightedNodes.add(cur);
-          const guide = guidesMap.get(cur);
-          if (guide && guide.prerequisites) {
-            guide.prerequisites.forEach((p: string) => ancQueue.push(p));
-          }
+          const prereqs = prereqMap.get(cur) || [];
+          prereqs.forEach((p: string) => ancQueue.push(p));
         }
       }
       const descQueue = [hoveredGuide];
@@ -188,12 +198,8 @@ export function GuideGraph({
           visitedDesc.add(cur);
           highlightedNodes.add(cur);
           walkthroughNodes.forEach((n) => {
-            const guide = guidesMap.get(n.slug);
-            if (
-              guide &&
-              guide.prerequisites &&
-              guide.prerequisites.includes(cur)
-            ) {
+            const nPrereqs = prereqMap.get(n.slug) || [];
+            if (nPrereqs.includes(cur)) {
               descQueue.push(n.slug);
             }
           });
@@ -247,7 +253,14 @@ export function GuideGraph({
         return e;
       })
     );
-  }, [hoveredGuide, setNodes, setEdges, walkthroughNodes, guidesMap]);
+  }, [
+    hoveredGuide,
+    setNodes,
+    setEdges,
+    walkthroughNodes,
+    walkthroughEdges,
+    guidesMap,
+  ]);
 
   const onNodeClick = useCallback(
     (_: any, node: Node) => {

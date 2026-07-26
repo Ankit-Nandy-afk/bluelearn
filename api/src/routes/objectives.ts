@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { z } from "zod";
 import { requireUser } from "../middleware/auth.middleware";
 import type { HonoEnv } from "../types";
 import { zValidator } from "@hono/zod-validator";
@@ -22,6 +23,8 @@ import {
   rollbackObjectiveRevision,
   updateObjectiveRevision,
   updateObjectiveNode,
+  addObjectiveTarget,
+  removeObjectiveTarget,
 } from "../services/objective-revision.service";
 import {
   scheduleSearchSync,
@@ -114,15 +117,31 @@ export const objectiveRevisionsRouter = new Hono<HonoEnv>()
 
   // Add a target: flag a base as a goal and pull its prerequisite closure into
   // the node set. Returns the recomputed snapshot.
-  .post("/:id/targets", requireUser, (c) =>
-    c.json({ error: "Not implemented" }, 501)
+  .post(
+    "/:id/targets",
+    requireUser,
+    zValidator("json", z.object({ guide_base_id: z.uuid() })),
+    async (c) => {
+      const { guide_base_id } = c.req.valid("json");
+      const snapshot = await addObjectiveTarget(
+        c.get("supabase"),
+        c.req.param("id"),
+        guide_base_id
+      );
+      return c.json(snapshot);
+    }
   )
 
   // Remove a target: clear the flag and remove topics kept only to reach it.
   // Returns the recomputed snapshot.
-  .delete("/:id/targets/:baseId", requireUser, (c) =>
-    c.json({ error: "Not implemented" }, 501)
-  )
+  .delete("/:id/targets/:baseId", requireUser, async (c) => {
+    const snapshot = await removeObjectiveTarget(
+      c.get("supabase"),
+      c.req.param("id"),
+      c.req.param("baseId")
+    );
+    return c.json(snapshot);
+  })
 
   // Edits one node of a draft. Returns { node }; 404 if missing or not editable.
   .patch(

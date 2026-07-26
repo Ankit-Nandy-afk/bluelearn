@@ -16,6 +16,13 @@ import { createGuide, listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
 import { submitRevision, updateRevision } from "@/lib/api/guideRevisions";
+import { createObjective } from "@/lib/api/objectives";
+import {
+  addObjectiveTarget,
+  removeObjectiveTarget,
+  submitObjectiveRevision,
+  updateObjectiveRevision,
+} from "@/lib/api/objectiveRevisions";
 import { uploadMedia } from "@/lib/api/media";
 import { estimateReadMinutes, formatDate } from "@/lib/guideUtils";
 
@@ -60,8 +67,9 @@ const createObjectiveContData = (): ObjectiveContribution => ({
   title: "",
   summary: "",
   targets: [],
-  featured: "",
+  featuredSubObjective: "",
   subObjectives: [],
+  subjects: [],
 });
 
 export default function ContributionFlow({ type, setType }: PropTypes) {
@@ -152,6 +160,7 @@ function Inner({
   };
 
   const [revisionId, setRevisionId] = useState<string | null>(null);
+  const [savedTargets, setSavedTargets] = useState<Array<string>>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const [subjectOptions, setSubjectOptions] = useState<
@@ -169,9 +178,11 @@ function Inner({
     listSubjects(opts)
       .then(setSubjectOptions)
       .catch(() => {});
+
     listGuides(opts)
       .then(setGuideOptions)
       .catch(() => {});
+
     getMyIdentity(opts)
       .then((data) => setUsername(data.profile.username))
       .catch(() => {});
@@ -241,6 +252,64 @@ function Inner({
 
   const creatingRef = useRef<Promise<string> | null>(null);
   const persistDraft = async () => {
+    if (type === "objective") {
+      const target_ids = objectiveContData.targets.map((slug) => {
+        const guide = guideOptions.find((g) => g.slug === slug);
+        if (!guide) throw new Error(`Target guide not found: ${slug}`);
+        return guide.id;
+      });
+
+      if (target_ids.length === 0) {
+        throw new Error(
+          "Learning objectives require at least one target guide."
+        );
+      }
+
+      if (revisionId) {
+        await updateObjectiveRevision(revisionId, {
+          title: objectiveContData.title || undefined,
+          summary: objectiveContData.summary || undefined,
+          tags: objectiveContData.subjects,
+        });
+
+        // Handle target changes
+        const addedTargets = target_ids.filter(
+          (id) => !savedTargets.includes(id)
+        );
+        for (const id of addedTargets) {
+          await addObjectiveTarget(revisionId, id);
+        }
+
+        const removedTargets = savedTargets.filter(
+          (id) => !target_ids.includes(id)
+        );
+        for (const id of removedTargets) {
+          await removeObjectiveTarget(revisionId, id);
+        }
+
+        setSavedTargets(target_ids);
+        return revisionId;
+      }
+
+      if (!creatingRef.current) {
+        creatingRef.current = createObjective({
+          title: objectiveContData.title || undefined,
+          summary: objectiveContData.summary || undefined,
+          target_ids,
+          tags: objectiveContData.subjects,
+        })
+          .then(async (id) => {
+            setRevisionId(id);
+            setSavedTargets(target_ids);
+            return id;
+          })
+          .finally(() => {
+            creatingRef.current = null;
+          });
+      }
+      return creatingRef.current;
+    }
+
     if (revisionId) {
       await updateRevision(revisionId, draftFields());
       return revisionId;
@@ -291,7 +360,11 @@ function Inner({
     setSubmitting(true);
     try {
       const id = await persistDraft();
-      await submitRevision(id);
+      if (type === "objective") {
+        await submitObjectiveRevision(id);
+      } else {
+        await submitRevision(id);
+      }
       toast.success("Submitted for review");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not submit");
@@ -350,12 +423,19 @@ function Inner({
           Stepper={Stepper}
           objectiveContData={objectiveContData}
           setObjectiveContData={setObjectiveContData}
+          subjects={subjectOptions}
+          guides={guideOptions}
+          onSaveDraft={saveDraft}
+          submitting={submitting}
         />
 
         <OrderTargetGuides
           Stepper={Stepper}
           objectiveContData={objectiveContData}
           setObjectiveContData={setObjectiveContData}
+          onSaveDraft={saveDraft}
+          submitting={submitting}
+          guides={guideOptions}
         />
 
         <Content
@@ -376,6 +456,9 @@ function Inner({
           Stepper={Stepper}
           objectiveContData={objectiveContData}
           setObjectiveContData={setObjectiveContData}
+          onSaveDraft={saveDraft}
+          submitting={submitting}
+          guides={guideOptions}
         />
 
         <PreviewGuide
@@ -388,8 +471,12 @@ function Inner({
         />
         <PreviewObjective
           Stepper={Stepper}
+          objectiveContData={objectiveContData}
+          onSaveDraft={saveDraft}
           onPublish={publish}
           submitting={submitting}
+          guideOptions={guideOptions}
+          subjectOptions={subjectOptions}
         />
       </div>
     </div>

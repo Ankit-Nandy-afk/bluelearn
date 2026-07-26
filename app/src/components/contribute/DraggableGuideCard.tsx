@@ -60,7 +60,7 @@ export const DraggableGuideCard = ({
             </h4>
           </div>
           {/* Author, Date, & Duration under title, before description */}
-          {(guide.author || guide.created_at || guide.duration) && (
+          {(guide.author || guide.created_at || guide.duration_minutes) && (
             <div className="mt-1 ml-7 flex flex-wrap items-center gap-2.5 text-[10px] text-muted-foreground/80">
               {guide.author && (
                 <span className="flex items-center gap-1 font-mono uppercase">
@@ -71,13 +71,13 @@ export const DraggableGuideCard = ({
               {guide.created_at && (
                 <span className="flex items-center gap-1 font-mono uppercase">
                   <Calendar className="h-3 w-3 text-muted-foreground/75" />
-                  {guide.created_at}
+                  {new Date(guide.created_at).toLocaleDateString()}
                 </span>
               )}
-              {guide.duration && (
+              {guide.duration_minutes && (
                 <span className="flex items-center gap-1 font-mono font-medium uppercase">
                   <Clock className="h-3 w-3 text-muted-foreground/75" />
-                  {guide.duration}m
+                  {guide.duration_minutes}min
                 </span>
               )}
             </div>
@@ -88,13 +88,13 @@ export const DraggableGuideCard = ({
           {/* Tags below description */}
           {guide.tags.length > 0 && (
             <div className="mt-2 ml-7 flex flex-wrap gap-1">
-              {guide.tags.map((tag) => (
+              {guide.tags.map((tag: any) => (
                 <Badge
-                  key={tag}
+                  key={tag.slug || tag}
                   variant="outline"
                   className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
                 >
-                  {tag}
+                  {tag.name || tag}
                 </Badge>
               ))}
             </div>
