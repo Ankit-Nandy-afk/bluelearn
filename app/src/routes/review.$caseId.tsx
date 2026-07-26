@@ -103,13 +103,11 @@ function RouteComponent() {
 
     try {
       await castDecision(caseId, review, { signal: controller.signal });
+      setSubmitting("Submitted.");
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
         setSubmitError("There was an unexpected error with your submission.");
-      }
-    } finally {
-      if (abortControllerRef.current === controller) {
-        setSubmitting("Submitted.");
+        setSubmitting("");
       }
     }
   };
