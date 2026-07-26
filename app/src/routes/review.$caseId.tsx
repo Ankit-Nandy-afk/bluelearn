@@ -1,11 +1,13 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
+import type { HydratedGuide } from "@/types/guides";
 import { Separator } from "@/components/ui/separator";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button";
+import { GuideReader } from "@/components/GuideReader";
 
 import { castDecision, getReviewCase } from "@/lib/api/reviews";
 
@@ -19,24 +21,39 @@ export type Review = {
 
 export const Route = createFileRoute("/review/$caseId")({
   loader: async ({ params, abortController }) => {
-    const data = await getReviewCase(params.caseId, {
+    const revisionData = await getReviewCase(params.caseId, {
       signal: abortController.signal,
     });
-    return data;
+    return revisionData;
   },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const { caseId } = Route.useParams();
-  const data = Route.useLoaderData();
+  const revisionData = Route.useLoaderData();
   const [submitting, setSubmitting] = useState<
     "Submitting..." | "Submitted." | ""
   >("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const reviewCase = data.case;
+  const revision = revisionData.revision;
+
+  const guide: HydratedGuide | null = revision
+    ? {
+        title: revision.title ?? "",
+        content: revision.body ?? "",
+        summary: revision.summary ?? "",
+        author: "",
+        created_at: revision.created_at,
+        duration: 0,
+        tags: [],
+        breadcrumbs: [],
+        prerequisites: [],
+        slug: "",
+      }
+    : null;
 
   const [review, setReview] = useState<Review>({
     decision: "",
@@ -56,46 +73,29 @@ function RouteComponent() {
     },
   ];
 
-  const validateReview = () => {
-    let fieldErrors = "";
-    if (review.decision === "reject") {
-      if (review.notes === "") fieldErrors += "Rejections require a note. \n";
-      if (review.reasons.length === 0)
-        fieldErrors += "Rejections require at least one reason. \n";
-    }
-    return fieldErrors;
-  };
-
   const submitDecision = async () => {
     abortControllerRef.current?.abort();
     const controller = new AbortController();
     abortControllerRef.current = controller;
-
-    const fieldErrors = validateReview();
-    if (fieldErrors.length > 0) {
-      setSubmitError(
-        "There were errors with your submission: \n" + fieldErrors
-      );
-      return;
-    }
 
     setSubmitting("Submitting...");
     setSubmitError(null);
 
     try {
       await castDecision(caseId, review, { signal: controller.signal });
-      setSubmitting("Submitted.");
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
-        setSubmitError(
-          "The server experienced an error processing your submission."
-        );
+        setSubmitError("There was an unexpected error with your submission.");
+      }
+    } finally {
+      if (abortControllerRef.current === controller) {
+        setSubmitting("Submitted.");
       }
     }
   };
 
   return (
-    <div className="mx-auto h-[calc(100vh-70px)] max-w-[1280px] border-x bg-background">
+    <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
       <section className="grid grid-cols-[320px_1fr] border-b">
         <aside className="h-[calc(100vh-70px)] overflow-y-auto border-r px-6 py-6">
           <CollapsibleSection
@@ -219,49 +219,13 @@ function RouteComponent() {
           <Separator className="mb-8" />
 
           <div className="rounded-md border bg-background p-4 shadow-none transition-colors hover:bg-muted">
-            <h1 className="mb-2 text-3xl font-bold tracking-tight">
-              {reviewCase.title ?? "Untitled Guide"}
-            </h1>
-
-            {/* DATE CREATED & CREATOR */}
-            <p className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
-              {reviewCase.created_by ?? "Anonymous user"} |{" "}
-              {new Date(reviewCase.created_at).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </p>
-
-            {/* CASE INFO */}
-            <div className="space-y-2 p-2 text-sm">
-              <p>
-                <span className="font-semibold text-gray-900">Status: </span>
-                <span className="text-gray-700">
-                  {reviewCase.status
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (match) => match.toUpperCase())}
-                </span>
+            {guide ? (
+              <GuideReader guide={guide} />
+            ) : (
+              <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
+                No guide revision found to display.
               </p>
-              <p>
-                <span className="font-semibold text-gray-900">Type: </span>
-                <span className="text-gray-700">
-                  {reviewCase.case_type
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (match) => match.toUpperCase())}
-                </span>
-              </p>
-            </div>
-
-            <p className="mt-2 font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase italic">
-              (Last Updated{" "}
-              {new Date(reviewCase.created_at).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-              )
-            </p>
+            )}
           </div>
         </main>
       </section>
