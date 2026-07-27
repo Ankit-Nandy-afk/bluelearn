@@ -81,13 +81,10 @@ export const guidesRouter = new Hono<HonoEnv>()
     }
   )
 
-  // Returns the guide content and its subject tags.
+  // Returns the guide's canonical content, author, and subject tags.
   .get("/:slug", async (c) => {
-    const { guide, subjects } = await getGuideBySlug(
-      c.get("supabase"),
-      c.req.param("slug")
-    );
-    return c.json({ guide, subjects });
+    const guide = await getGuideBySlug(c.get("supabase"), c.req.param("slug"));
+    return c.json(guide);
   })
 
   // Archives the guide. 404 if missing or not permitted.

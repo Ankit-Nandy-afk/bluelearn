@@ -11,7 +11,8 @@ import type {
   ObjectiveContribution,
   VariantContribution,
 } from "@/types/contributions";
-import type { GuideType, HydratedGuide } from "@/types/guides";
+import type { GuideType } from "@/types/guides";
+import type { Guide } from "@bluelearn/schemas";
 import { addGuideVariant, createGuide, listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
@@ -184,7 +185,7 @@ function Inner({
   // Shape the in-progress form as a HydratedGuide, so the submit step can render
   // it with the same component the published page uses.
   // The preview can be reused for a variant contribution
-  const previewGuide: HydratedGuide = useMemo(() => {
+  const previewGuide: Guide = useMemo(() => {
     const nameBySlug = new Map(
       subjectOptions.map((s) => [s.slug, s.name] as const)
     );
@@ -196,12 +197,14 @@ function Inner({
 
     return {
       slug: "",
-      title: guideContData.title || variantContData.title || "Untitled guide",
+      title: guideContData.title || "Untitled guide",
       author: username ?? "You",
-      summary: guideContData.summary || variantContData.summary,
+      summary: guideContData.summary,
+      body: guideContData.body,
+      duration_minutes: estimateReadMinutes(
+        guideContData.body || variantContData.body
+      ),
       created_at: formatDate(new Date()),
-      duration: estimateReadMinutes(guideContData.body),
-      breadcrumbs: [],
       tags: [
         ...guideContData.subjects.map((slug) => ({
           slug,
@@ -216,9 +219,22 @@ function Inner({
         slug,
         title: titleBySlug.get(slug) ?? slug,
       })),
-      content: guideContData.body || variantContData.body,
     };
   }, [guideContData, subjectOptions, guideOptions, username]);
+
+  const previewVariant: Guide = useMemo(() => {
+    return {
+      slug: "",
+      title: variantContData.title || "Untitled guide",
+      author: username ?? "You",
+      summary: variantContData.summary,
+      body: variantContData.body,
+      created_at: formatDate(new Date()),
+      duration_minutes: estimateReadMinutes(variantContData.body),
+      tags: [],
+      prerequisites: [],
+    };
+  }, [variantContData, username]);
 
   const guideType: GuideType | undefined =
     guideContData.type === "practical" || guideContData.type === "theoretical"
@@ -396,7 +412,7 @@ function Inner({
 
         <PreviewGuide
           Stepper={Stepper}
-          guide={previewGuide}
+          guide={type === "guide" ? previewGuide : previewVariant}
           guideType={type === "guide" ? guideType : undefined}
           onSaveDraft={saveDraft}
           onPublish={publish}

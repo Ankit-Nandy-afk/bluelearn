@@ -17,6 +17,16 @@ export async function listGuides({ signal }: FetchOptions = {}) {
   });
 }
 
+export async function getGuide(slug: string, { signal }: FetchOptions = {}) {
+  const res = await guides[":slug"].$get(
+    { param: { slug } },
+    { init: { signal } }
+  );
+  if (!res.ok) return assertOk(res) as Promise<never>;
+
+  return res.json();
+}
+
 export async function createGuide(
   body: InferRequestType<typeof guides.$post>["json"]
 ) {
