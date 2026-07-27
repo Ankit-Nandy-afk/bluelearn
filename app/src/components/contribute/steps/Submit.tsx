@@ -2,14 +2,15 @@ import "katex/dist/katex.min.css";
 
 import { Save } from "lucide-react";
 
-import type { GuideType, HydratedGuide } from "@/types/guides";
+import type { Guide } from "@bluelearn/schemas";
+import type { GuideType } from "@/types/guides";
 
 import { Separator } from "@/components/ui/separator";
 import { GuideReader } from "@/components/GuideReader";
 
 type PropTypes = {
   Stepper: any;
-  guide: HydratedGuide;
+  guide: Guide;
   guideType?: GuideType;
   onSaveDraft: () => void;
   onPublish: () => void;

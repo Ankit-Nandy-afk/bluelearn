@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   CreateGuideInput,
   CreateVariantInput,
+  Guide,
   GuideListItem,
   Pagination,
   SubjectReference,
@@ -48,11 +49,13 @@ const CANONICAL_CONTENT = `
   canonical:guides!guide_bases_canonical_guide_id_fkey(
     id,
     slug,
+    author_id,
     current:guide_revisions!guides_current_revision_id_fkey(
       id,
       title,
       summary,
       body,
+      word_count,
       created_at
     )
   )
@@ -251,12 +254,24 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
   }
   if (!guide) throw new ServiceError("Guide not found", 404);
 
-  const subjects = await loadCanonicalTags(
-    supabase,
-    guide.canonical?.current?.id ?? null
-  );
+  const current = guide.canonical?.current ?? null;
+  const subjects = await loadCanonicalTags(supabase, current?.id ?? null);
+  const authorId = guide.canonical?.author_id ?? null;
+  const usernames = await loadUsernames(supabase, [authorId]);
 
-  return { guide, subjects };
+  const detail: Guide = {
+    slug: guide.slug ?? "",
+    title: guide.title ?? "",
+    author: authorId ? (usernames.get(authorId) ?? "") : "",
+    summary: current?.summary ?? null,
+    body: current?.body ?? null,
+    duration_minutes: readingMinutes(current?.word_count ?? 0),
+    created_at: guide.created_at,
+    tags: subjects.map((s) => ({ slug: s.slug, name: s.name })),
+    prerequisites: [],
+  };
+
+  return detail;
 }
 
 // Archive the guide. Per RLS this is moderator/admin-only (authors cannot move
