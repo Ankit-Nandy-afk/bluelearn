@@ -13,7 +13,7 @@ type FetchOptions = { signal?: AbortSignal };
 export async function listSubjects({ signal }: FetchOptions = {}) {
   return collectAll<SubjectListItem>(async (query) => {
     const res = await subjects.$get({ query }, { init: { signal } });
-    if (!(res.ok as boolean)) return assertOk(res) as Promise<never>;
+    if (!res.ok) return assertOk(res) as Promise<never>;
 
     const { subjects: items, total } = await res.json();
     return { items, total };
@@ -43,7 +43,7 @@ export async function listSubjectGuides(
       { query, param: { slug } },
       { init: { signal } }
     );
-    if (!(res.ok as boolean)) return assertOk(res) as Promise<never>;
+    if (!res.ok) return assertOk(res) as Promise<never>;
 
     const { guides: items, total } = await res.json();
     return { items, total };
@@ -59,7 +59,7 @@ export async function listSubjectObjectives(
       { query, param: { slug } },
       { init: { signal } }
     );
-    if (!(res.ok as boolean)) return assertOk(res) as Promise<never>;
+    if (!res.ok) return assertOk(res) as Promise<never>;
 
     const { objectives: items, total } = await res.json();
     return { items, total };

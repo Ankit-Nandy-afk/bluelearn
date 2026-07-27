@@ -19,7 +19,7 @@ type QueueCase = {
 export async function getReviewQueue({ signal }: FetchOptions = {}) {
   return collectAll<QueueCase>(async (query) => {
     const res = await reviews.queue.$get({ query }, { init: { signal } });
-    if (!(res.ok as boolean)) return assertOk(res) as Promise<never>;
+    if (!res.ok) return assertOk(res) as Promise<never>;
 
     const { cases: items, total } = await res.json();
     return { items, total };
