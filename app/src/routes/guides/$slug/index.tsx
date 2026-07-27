@@ -58,7 +58,11 @@ function useVote() {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
 
   const toggleVote = (type: "up" | "down") => {
-    setVote((current) => (current === type ? null : type));
+    const prev = vote;
+    const next = prev === type ? null : type;
+
+    // Set vote on frontend before updating database
+    setVote(next);
   };
 
   return {
