@@ -14,6 +14,7 @@ import {
   usePublisher,
 } from "@mdxeditor/editor";
 import {
+  AlertCircle,
   AlertTriangle,
   Check,
   ChevronDown,
@@ -34,6 +35,7 @@ import { InsertBlockMath, InsertInlineMath } from "./MathLivePlugin";
 import MarkdownLinkImageShortcutListener from "./MarkdownLinkImageShortcutListener";
 import H1RestrictionListener from "./H1RestrictionListener.tsx";
 import CodeBlockShortcutListener from "./CodeBlockShortcutListener";
+import CalloutShortcutListener from "./CalloutShortcutListener";
 import TabShortcutListener from "./TabShortcutListener";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import {
@@ -121,6 +123,7 @@ export default function EditorToolbar({
       <MarkdownLinkImageShortcutListener />
       <H1RestrictionListener onH1Attempted={onH1Attempted} />
       <CodeBlockShortcutListener />
+      <CalloutShortcutListener />
       <TabShortcutListener />
       <UndoRedo />
       <div className="mdx-toolbar-divider"></div>
@@ -254,11 +257,11 @@ export default function EditorToolbar({
             type="button"
             className="toolbar-popover-item"
             onClick={() =>
-              insertDirective({ type: "containerDirective", name: "caution" })
+              insertDirective({ type: "containerDirective", name: "note" })
             }
           >
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-            <span>Warning Callout</span>
+            <Info className="h-3.5 w-3.5 text-blue-500" />
+            <span>Note Callout</span>
           </button>
           <button
             type="button"
@@ -269,6 +272,36 @@ export default function EditorToolbar({
           >
             <Lightbulb className="h-3.5 w-3.5 text-green-500" />
             <span>Tip Callout</span>
+          </button>
+          <button
+            type="button"
+            className="toolbar-popover-item"
+            onClick={() =>
+              insertDirective({ type: "containerDirective", name: "caution" })
+            }
+          >
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+            <span>Caution Callout</span>
+          </button>
+          <button
+            type="button"
+            className="toolbar-popover-item"
+            onClick={() =>
+              insertDirective({ type: "containerDirective", name: "warning" })
+            }
+          >
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+            <span>Warning Callout</span>
+          </button>
+          <button
+            type="button"
+            className="toolbar-popover-item"
+            onClick={() =>
+              insertDirective({ type: "containerDirective", name: "danger" })
+            }
+          >
+            <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+            <span>Danger Callout</span>
           </button>
         </PopoverContent>
       </Popover>

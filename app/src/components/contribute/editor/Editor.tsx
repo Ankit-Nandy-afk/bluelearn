@@ -104,7 +104,9 @@ export default function Editor({
     () => ({
       name: "callout",
       testNode(node: any) {
-        return ["note", "tip", "danger", "info", "caution"].includes(node.name);
+        return ["note", "tip", "danger", "info", "caution", "warning"].includes(
+          node.name
+        );
       },
       attributes: [],
       hasChildren: true,
