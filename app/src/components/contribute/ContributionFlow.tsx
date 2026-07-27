@@ -182,9 +182,8 @@ function Inner({
     return () => controller.abort();
   }, []);
 
-  // Shape the in-progress form as a HydratedGuide, so the submit step can render
-  // it with the same component the published page uses.
-  // The preview can be reused for a variant contribution
+  // Shape the in-progress form as a Guide, so the submit step can render it with
+  // the same component the published page uses.
   const previewGuide: Guide = useMemo(() => {
     const nameBySlug = new Map(
       subjectOptions.map((s) => [s.slug, s.name] as const)
@@ -201,9 +200,7 @@ function Inner({
       author: username ?? "You",
       summary: guideContData.summary,
       body: guideContData.body,
-      duration_minutes: estimateReadMinutes(
-        guideContData.body || variantContData.body
-      ),
+      duration_minutes: estimateReadMinutes(guideContData.body),
       created_at: formatDate(new Date()),
       tags: [
         ...guideContData.subjects.map((slug) => ({
