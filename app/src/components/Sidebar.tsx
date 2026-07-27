@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { CollapsibleSection } from "./CollapsibleSection";
-import type { GuideReference, HydratedGuide } from "@/types/guides";
+import type { Guide, GuideReference } from "@bluelearn/schemas";
 import type { LucideIcon } from "lucide-react";
 import { extractHeadings } from "@/lib/guideUtils";
 
@@ -11,7 +11,7 @@ export type Action = {
 };
 
 type PropTypes = {
-  guide: HydratedGuide;
+  guide: Guide;
   slug: string;
   sidebarActions?: React.ReactNode;
   reviewSection?: React.ReactNode;
@@ -24,8 +24,8 @@ export const Sidebar = ({
   reviewSection,
 }: PropTypes) => {
   const headings = useMemo(
-    () => extractHeadings(guide.content),
-    [guide.content]
+    () => extractHeadings(guide.body ?? ""),
+    [guide.body]
   );
 
   return (

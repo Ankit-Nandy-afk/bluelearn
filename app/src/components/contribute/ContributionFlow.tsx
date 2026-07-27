@@ -11,7 +11,8 @@ import type {
   ObjectiveContribution,
   VariantContribution,
 } from "@/types/contributions";
-import type { GuideType, HydratedGuide } from "@/types/guides";
+import type { GuideType } from "@/types/guides";
+import type { Guide } from "@bluelearn/schemas";
 import { createGuide, listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
@@ -190,9 +191,9 @@ function Inner({
     return () => controller.abort();
   }, []);
 
-  // Shape the in-progress form as a HydratedGuide, so the submit step can render
-  // it with the same component the published page uses.
-  const previewGuide: HydratedGuide = useMemo(() => {
+  // Shape the in-progress form as a Guide, so the submit step can render it with
+  // the same component the published page uses.
+  const previewGuide: Guide = useMemo(() => {
     const nameBySlug = new Map(
       subjectOptions.map((s) => [s.slug, s.name] as const)
     );
@@ -211,9 +212,9 @@ function Inner({
           : "Untitled guide",
       author: username ?? "You",
       summary: guideContData.summary,
+      body: guideContData.body,
+      duration_minutes: estimateReadMinutes(guideContData.body),
       created_at: formatDate(new Date()),
-      duration: estimateReadMinutes(guideContData.body),
-      breadcrumbs: [],
       tags: [
         ...guideContData.subjects.map((slug) => ({
           slug,
@@ -228,7 +229,6 @@ function Inner({
         slug,
         title: titleBySlug.get(slug) ?? slug,
       })),
-      content: guideContData.body,
     };
   }, [guideContData, subjectOptions, guideOptions, username]);
 
