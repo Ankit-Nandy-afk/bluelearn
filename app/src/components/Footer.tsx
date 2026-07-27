@@ -42,7 +42,7 @@ export function Footer() {
     <footer className="border-t bg-background">
       <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-8 py-6 lg:px-16">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-light text-muted-foreground">
-          <span>&copy; {new Date().getFullYear()} The Bluelearn Project</span>
+          <span>&copy; {new Date().getFullYear()} Bluelearn</span>
           <nav className="flex items-center gap-6">
             {LEGAL.map((link) => (
               <a
