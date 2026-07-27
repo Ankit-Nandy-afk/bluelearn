@@ -72,9 +72,9 @@ function RouteComponent() {
           </div>
           {/* Right */}
           <div className="flex flex-col items-end">
-            <div className="aspect-[4/3] w-full overflow-hidden rounded-lg border bg-muted">
+            <div className="aspect-[4/3] w-full overflow-hidden">
               <img
-                src="/assets/hero.png"
+                src="/assets/atom/atom-dot-2.png"
                 alt="Bluelearn"
                 className="h-full w-full object-cover"
               />

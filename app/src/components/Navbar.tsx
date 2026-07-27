@@ -50,10 +50,7 @@ export function Navbar() {
           {/* LEFT */}
           <div className="flex items-center gap-10">
             <Link to="/" className="flex items-center gap-3">
-              <img src="/assets/logo.png" className="h-8 w-8" />
-              <p className="text-[17px] font-semibold tracking-tight">
-                Bluelearn
-              </p>
+              <img src="/assets/logo.svg" className="h-8" />
             </Link>
 
             <nav className="hidden items-center gap-6 md:flex">

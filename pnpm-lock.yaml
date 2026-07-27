@@ -23,6 +23,9 @@ importers:
       supabase:
         specifier: ^2.105.0
         version: 2.105.0
+      wrangler:
+        specifier: ^4.95.0
+        version: 4.95.0(@cloudflare/workers-types@4.20260531.1)
 
   api:
     dependencies:
