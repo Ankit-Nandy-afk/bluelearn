@@ -12,7 +12,6 @@ const SITE = "https://bluelearn.org";
 const LEGAL = [
   { label: "Terms of Service", href: `${SITE}/terms` },
   { label: "Privacy Policy", href: `${SITE}/privacy` },
-  { label: "Cookie Policy", href: `${SITE}/cookies` },
 ];
 
 function RouteComponent() {
@@ -32,7 +31,7 @@ function RouteComponent() {
             <li key={item.href}>
               <Link
                 to={item.href}
-                className="data-label flex items-center gap-4 px-2 py-4 underline hover:text-brand-blue"
+                className="data-label flex items-center gap-4 py-4 underline hover:text-brand-blue"
               >
                 {item.label}
               </Link>
