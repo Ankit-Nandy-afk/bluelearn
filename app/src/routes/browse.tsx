@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
+import type { GuideListItem, ObjectiveListItem } from "@bluelearn/schemas";
 import type {
   Collection,
   KnowledgeType,
@@ -14,61 +15,205 @@ import { Route as GuideRoute } from "@/routes/guides/$slug/index";
 
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { GuideCard } from "@/components/cards/GuideCard";
+import { Pagination } from "@/components/Pagination";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchFilterMenu } from "@/components/SearchFilterMenu";
 import { filtersToParams, search } from "@/lib/api/search";
+import { listGuidesPage } from "@/lib/api/guides";
+import { listObjectives } from "@/lib/api/objectives";
+import { formatDate, formatDuration } from "@/lib/guideUtils";
 
-// The filter selection lives in the URL: `type` = scope, `kind` = knowledge
-// type. Both are optional so a first visit to /browse has a clean URL.
-type BrowseSearch = { q?: string; type?: Collection; kind?: KnowledgeType };
+const PAGE_SIZE = 10;
+
+type BrowseSearch = {
+  q?: string;
+  type?: Collection;
+  kind?: KnowledgeType;
+  guidesPage?: number;
+  objectivesPage?: number;
+};
+
+type Section<T> = { found: number; items: Array<T> };
+
+function pageParam(value: unknown) {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 1 ? page : undefined;
+}
+
+async function fetchGuides(
+  { q, kind, page }: { q?: string; kind?: KnowledgeType; page: number },
+  signal: AbortSignal
+): Promise<Section<GuideListItem>> {
+  if (!q) {
+    const { guides, total } = await listGuidesPage(
+      { page, limit: PAGE_SIZE },
+      { signal }
+    );
+    return { found: total, items: guides };
+  }
+
+  const { guides } = await search(
+    {
+      q,
+      page,
+      per_page: PAGE_SIZE,
+      ...filtersToParams({ scope: "guides", knowledgeType: kind }),
+    },
+    { signal }
+  );
+  return guides;
+}
+
+async function fetchObjectives(
+  { q, page }: { q?: string; page: number },
+  signal: AbortSignal
+): Promise<Section<ObjectiveListItem>> {
+  if (!q) {
+    const { objectives, total } = await listObjectives(
+      { page, limit: PAGE_SIZE },
+      { signal }
+    );
+    return { found: total, items: objectives };
+  }
+
+  const { objectives } = await search(
+    {
+      q,
+      page,
+      per_page: PAGE_SIZE,
+      ...filtersToParams({ scope: "objectives" }),
+    },
+    { signal }
+  );
+  return objectives;
+}
 
 export const Route = createFileRoute("/browse")({
-  validateSearch: (search): BrowseSearch => {
-    const q = typeof search.q === "string" ? search.q.trim() : "";
+  validateSearch: (raw): BrowseSearch => {
+    const q = typeof raw.q === "string" ? raw.q.trim() : "";
     const type =
-      search.type === "guides" || search.type === "objectives"
-        ? search.type
-        : undefined;
+      raw.type === "guides" || raw.type === "objectives" ? raw.type : undefined;
     const kind =
-      search.kind === "theoretical" || search.kind === "practical"
-        ? search.kind
+      raw.kind === "theoretical" || raw.kind === "practical"
+        ? raw.kind
         : undefined;
+    const guidesPage = pageParam(raw.guidesPage);
+    const objectivesPage = pageParam(raw.objectivesPage);
     return {
       ...(q ? { q } : {}),
       ...(type ? { type } : {}),
-      ...(type === "guides" && kind ? { kind } : {}),
+      ...(q && type === "guides" && kind ? { kind } : {}),
+      ...(type !== "objectives" && guidesPage ? { guidesPage } : {}),
+      ...(type !== "guides" && objectivesPage ? { objectivesPage } : {}),
     };
   },
-  loaderDeps: ({ search: { q, type, kind } }) => ({ q, type, kind }),
-  // A failed search returns as data (not a thrown error) so the search bar
-  // stays mounted and the user can retry or adjust the query.
-  loader: async ({ deps: { q, type, kind }, abortController }) => {
-    if (!q) return { results: null, error: null };
+  loaderDeps: ({ search: { q, type, kind, guidesPage, objectivesPage } }) => ({
+    q,
+    type,
+    kind,
+    guidesPage,
+    objectivesPage,
+  }),
+  loader: async ({
+    deps: { q, type, kind, guidesPage = 1, objectivesPage = 1 },
+    abortController: { signal },
+  }) => {
     try {
-      const results = await search(
-        { q, ...filtersToParams({ scope: type, knowledgeType: kind }) },
-        { signal: abortController.signal }
-      );
-      return { results, error: null };
+      const [guides, objectives] = await Promise.all([
+        type !== "objectives"
+          ? fetchGuides({ q, kind, page: guidesPage }, signal)
+          : null,
+        type !== "guides"
+          ? fetchObjectives({ q, page: objectivesPage }, signal)
+          : null,
+      ]);
+      return { guides, objectives, error: null };
     } catch (e) {
       return {
-        results: null,
-        error: e instanceof Error ? e.message : "Search failed",
+        guides: null,
+        objectives: null,
+        error: e instanceof Error ? e.message : "Something went wrong",
       };
     }
   },
   component: RouteComponent,
 });
 
+function objectiveCards(items: Array<ObjectiveListItem>) {
+  return items
+    .filter((o): o is typeof o & { slug: string } => o.slug !== null)
+    .map((o) => ({
+      slug: o.slug,
+      title: o.title,
+      summary: o.summary,
+      curator: o.curator,
+      created_at: formatDate(new Date(o.created_at)),
+      featuredSubObjective: o.featured_sub_objective,
+      stats: [
+        { label: "Duration", data: formatDuration(o.duration_minutes) },
+        { label: "Guides", data: o.guides_total },
+      ] as Array<{ label: string; data: string | number }>,
+    }));
+}
+
+function guideCards(items: Array<GuideListItem>) {
+  return items
+    .filter((g): g is typeof g & { slug: string } => g.slug !== null)
+    .map((g) => ({
+      slug: g.slug,
+      title: g.title ?? "",
+      author: g.author,
+      summary: g.summary,
+      created_at: formatDate(new Date(g.created_at)),
+      tags: g.tags,
+      stats: [{ label: "Duration", data: formatDuration(g.duration_minutes) }],
+    }));
+}
+
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto max-w-7xl border-x bg-background">{children}</div>
+    <div className="mx-auto max-w-[1280px] border-x bg-background">
+      {children}
+    </div>
+  );
+}
+
+function SectionPager({
+  found,
+  page,
+  onSelect,
+}: {
+  found: number;
+  page: number;
+  onSelect: (page: number) => void;
+}) {
+  const totalPages = Math.ceil(found / PAGE_SIZE);
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="mt-8 mb-4">
+      <Pagination
+        activePageNo={page}
+        onPageSelect={onSelect}
+        toFirst={() => onSelect(1)}
+        onPrevious={() => onSelect(Math.max(1, page - 1))}
+        onNext={() => onSelect(Math.min(totalPages, page + 1))}
+        toLast={() => onSelect(totalPages)}
+        totalPages={totalPages}
+      />
+    </div>
   );
 }
 
 function RouteComponent() {
-  const { q, type, kind } = Route.useSearch();
-  const { results, error } = Route.useLoaderData();
+  const {
+    q,
+    type,
+    kind,
+    guidesPage = 1,
+    objectivesPage = 1,
+  } = Route.useSearch();
+  const { guides, objectives, error } = Route.useLoaderData();
   const navigate = useNavigate({ from: Route.fullPath });
 
   // Local field state, kept in sync with the URL so back/forward updates it.
@@ -81,14 +226,24 @@ function RouteComponent() {
   // Merge into existing params so q and the filters don't clobber each other.
   // validateSearch drops empty values, keeping the URL clean.
   const submit = (next: string) =>
-    navigate({ search: (prev) => ({ ...prev, q: next.trim() }) });
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        q: next.trim(),
+        guidesPage: undefined,
+        objectivesPage: undefined,
+      }),
+    });
   const setFilters = (f: SearchFilters) =>
     navigate({
-      search: (prev) => ({ ...prev, type: f.scope, kind: f.knowledgeType }),
+      search: (prev) => ({
+        ...prev,
+        type: f.scope,
+        kind: f.knowledgeType,
+        guidesPage: undefined,
+        objectivesPage: undefined,
+      }),
     });
-
-  const showGuides = type !== "objectives";
-  const showObjectives = type !== "guides";
 
   return (
     <Shell>
@@ -119,83 +274,84 @@ function RouteComponent() {
       </section>
 
       {error && (
-        <p className="px-8 py-10 text-sm text-destructive lg:px-16">
-          Search is unavailable right now. Try again shortly.
-        </p>
+        <p className="px-8 py-10 text-sm text-destructive lg:px-16">{error}</p>
       )}
 
-      {results && (
+      {!error && (
         <section className="px-8 py-10 lg:px-16">
           {/* Objectives */}
-          {showObjectives && (
+          {objectives && (
             <CollapsibleSection
               title={
                 <h2 className={sectionHeadingCommonClassNames}>
-                  Learning Objectives ({results.objectives.found})
+                  Learning Objectives ({objectives.found})
                 </h2>
               }
               defaultOpen={true}
             >
               <Separator className="mb-8 h-[0.5px]! bg-border" />
-              {results.objectives.items.length === 0 ? (
+              {objectives.items.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No objectives found.
+                  {q ? "No objectives found." : "No objectives yet."}
                 </p>
               ) : (
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                  {results.objectives.items.map((o) => (
+                  {objectiveCards(objectives.items).map((objective) => (
                     <ObjectiveCard
-                      key={o.id}
-                      objective={{
-                        slug: o.slug ?? "",
-                        title: o.title,
-                        summary: o.summary,
-                        curator: o.curator,
-                        created_at: o.created_at,
-                        featuredSubObjective: o.featured_sub_objective,
-                      }}
+                      key={objective.slug}
+                      objective={objective}
                       to={ObjectiveRoute.to}
                     />
                   ))}
                 </div>
               )}
+
+              <SectionPager
+                found={objectives.found}
+                page={objectivesPage}
+                onSelect={(p) =>
+                  navigate({
+                    search: (prev) => ({ ...prev, objectivesPage: p }),
+                  })
+                }
+              />
             </CollapsibleSection>
           )}
 
           {/* Guides */}
-          {showGuides && (
+          {guides && (
             <CollapsibleSection
               title={
                 <h2 className={sectionHeadingCommonClassNames}>
-                  Guides ({results.guides.found})
+                  Guides ({guides.found})
                 </h2>
               }
               defaultOpen={true}
             >
               <Separator className="mb-8 bg-border" />
-              {results.guides.items.length === 0 ? (
+              {guides.items.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No guides found.
+                  {q ? "No guides found." : "No guides yet."}
                 </p>
               ) : (
                 <div className="grid gap-6 md:grid-cols-2">
-                  {results.guides.items.map((g) => (
+                  {guideCards(guides.items).map((guide) => (
                     <GuideCard
-                      key={g.id}
-                      guide={{
-                        slug: g.slug ?? "",
-                        title: g.title ?? "",
-                        author: g.author,
-                        summary: g.summary,
-                        created_at: g.created_at,
-                        status: g.status,
-                        tags: g.tags,
-                      }}
+                      key={guide.slug}
+                      guide={guide}
                       to={GuideRoute.to}
                     />
                   ))}
                 </div>
               )}
+
+              <SectionPager
+                found={guides.found}
+                page={guidesPage}
+                onSelect={(p) =>
+                  navigate({ search: (prev) => ({ ...prev, guidesPage: p }) })
+                }
+              />
             </CollapsibleSection>
           )}
         </section>
