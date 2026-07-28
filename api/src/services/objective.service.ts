@@ -223,7 +223,8 @@ export async function buildObjectiveListItems(
 }
 
 // List published objectives as cards, newest first. RLS hides drafts from
-// non-authors.
+// non-authors. Slug-less rows are excluded in the query rather than by the
+// caller so total stays in step with the rows on the page.
 export async function listPublishedObjectives(
   supabase: DB,
   { page, limit }: Pagination = { page: 1, limit: 20 }
@@ -238,6 +239,7 @@ export async function listPublishedObjectives(
       { count: "exact" }
     )
     .eq("status", "published")
+    .not("slug", "is", null)
     .order("created_at", { ascending: false })
     .range(from, to);
 
