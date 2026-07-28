@@ -154,12 +154,6 @@ function RouteComponent() {
             className="h-10 rounded-md"
             required
             value={account.email}
-            onChange={(e) => {
-              setAccount({
-                ...account,
-                email: e.target.value,
-              });
-            }}
           />
         </Field>
 
