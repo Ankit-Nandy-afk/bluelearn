@@ -9,6 +9,7 @@ import type {
 } from "@bluelearn/schemas";
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
+import { selectInBatches } from "../lib/batch";
 import { syncDraftTagsAndEdges } from "./guide-revision.service";
 import { readingMinutes } from "../lib/reading";
 import { loadUsernames } from "./identity.service";
@@ -103,10 +104,12 @@ async function loadGuideTags(supabase: DB, revisionIds: string[]) {
   const map = new Map<string, SubjectReference[]>();
   if (revisionIds.length === 0) return map;
 
-  const { data, error } = await supabase
-    .from("guide_revision_subjects")
-    .select("guide_revision_id, subject:subjects(slug, name)")
-    .in("guide_revision_id", revisionIds);
+  const { data, error } = await selectInBatches(revisionIds, (batch) =>
+    supabase
+      .from("guide_revision_subjects")
+      .select("guide_revision_id, subject:subjects(slug, name)")
+      .in("guide_revision_id", batch)
+  );
 
   if (error) {
     console.error(error);
