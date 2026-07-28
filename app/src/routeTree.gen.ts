@@ -22,10 +22,14 @@ import { Route as ContributeRouteImport } from './routes/contribute'
 import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SubjectsIndexRouteImport } from './routes/subjects.index'
+import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as ReviewIndexRouteImport } from './routes/review.index'
 import { Route as ObjectivesIndexRouteImport } from './routes/objectives.index'
 import { Route as GuidesIndexRouteImport } from './routes/guides/index'
 import { Route as SubjectsSlugRouteImport } from './routes/subjects.$slug'
+import { Route as SettingsPoliciesRouteImport } from './routes/settings.policies'
+import { Route as SettingsAppearanceRouteImport } from './routes/settings.appearance'
+import { Route as SettingsAccountRouteImport } from './routes/settings.account'
 import { Route as ReviewCaseIdRouteImport } from './routes/review.$caseId'
 import { Route as ObjectivesSlugRouteImport } from './routes/objectives.$slug'
 import { Route as GuidesSlugRouteImport } from './routes/guides/$slug'
@@ -97,6 +101,11 @@ const SubjectsIndexRoute = SubjectsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SubjectsRoute,
 } as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const ReviewIndexRoute = ReviewIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -116,6 +125,21 @@ const SubjectsSlugRoute = SubjectsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => SubjectsRoute,
+} as any)
+const SettingsPoliciesRoute = SettingsPoliciesRouteImport.update({
+  id: '/policies',
+  path: '/policies',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsAppearanceRoute = SettingsAppearanceRouteImport.update({
+  id: '/appearance',
+  path: '/appearance',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsAccountRoute = SettingsAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => SettingsRoute,
 } as any)
 const ReviewCaseIdRoute = ReviewCaseIdRouteImport.update({
   id: '/$caseId',
@@ -154,15 +178,19 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRouteWithChildren
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/subjects': typeof SubjectsRouteWithChildren
   '/guides/$slug': typeof GuidesSlugRouteWithChildren
   '/objectives/$slug': typeof ObjectivesSlugRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
+  '/settings/account': typeof SettingsAccountRoute
+  '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/policies': typeof SettingsPoliciesRoute
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides/': typeof GuidesIndexRoute
   '/objectives/': typeof ObjectivesIndexRoute
   '/review/': typeof ReviewIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/subjects/': typeof SubjectsIndexRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug/': typeof GuidesSlugIndexRoute
@@ -175,14 +203,17 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
-  '/settings': typeof SettingsRoute
-  '/guides/$slug': typeof GuidesSlugRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/objectives/$slug': typeof ObjectivesSlugRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
+  '/settings/account': typeof SettingsAccountRoute
+  '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/policies': typeof SettingsPoliciesRoute
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides': typeof GuidesIndexRoute
   '/objectives': typeof ObjectivesIndexRoute
   '/review': typeof ReviewIndexRoute
+  '/settings': typeof SettingsIndexRoute
   '/subjects': typeof SubjectsIndexRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug': typeof GuidesSlugIndexRoute
@@ -199,15 +230,19 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRouteWithChildren
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/subjects': typeof SubjectsRouteWithChildren
   '/guides/$slug': typeof GuidesSlugRouteWithChildren
   '/objectives/$slug': typeof ObjectivesSlugRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
+  '/settings/account': typeof SettingsAccountRoute
+  '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/policies': typeof SettingsPoliciesRoute
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides/': typeof GuidesIndexRoute
   '/objectives/': typeof ObjectivesIndexRoute
   '/review/': typeof ReviewIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/subjects/': typeof SubjectsIndexRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug/': typeof GuidesSlugIndexRoute
@@ -230,10 +265,14 @@ export interface FileRouteTypes {
     | '/guides/$slug'
     | '/objectives/$slug'
     | '/review/$caseId'
+    | '/settings/account'
+    | '/settings/appearance'
+    | '/settings/policies'
     | '/subjects/$slug'
     | '/guides/'
     | '/objectives/'
     | '/review/'
+    | '/settings/'
     | '/subjects/'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug/'
@@ -246,14 +285,17 @@ export interface FileRouteTypes {
     | '/login'
     | '/profile'
     | '/register'
-    | '/settings'
-    | '/guides/$slug'
+    | '/reset-password'
     | '/objectives/$slug'
     | '/review/$caseId'
+    | '/settings/account'
+    | '/settings/appearance'
+    | '/settings/policies'
     | '/subjects/$slug'
     | '/guides'
     | '/objectives'
     | '/review'
+    | '/settings'
     | '/subjects'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug'
@@ -274,10 +316,14 @@ export interface FileRouteTypes {
     | '/guides/$slug'
     | '/objectives/$slug'
     | '/review/$caseId'
+    | '/settings/account'
+    | '/settings/appearance'
+    | '/settings/policies'
     | '/subjects/$slug'
     | '/guides/'
     | '/objectives/'
     | '/review/'
+    | '/settings/'
     | '/subjects/'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug/'
@@ -294,7 +340,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ReviewRoute: typeof ReviewRouteWithChildren
-  SettingsRoute: typeof SettingsRoute
+  SettingsRoute: typeof SettingsRouteWithChildren
   SubjectsRoute: typeof SubjectsRouteWithChildren
   GuidesSlugRoute: typeof GuidesSlugRouteWithChildren
   GuidesIndexRoute: typeof GuidesIndexRoute
@@ -393,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubjectsIndexRouteImport
       parentRoute: typeof SubjectsRoute
     }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/review/': {
       id: '/review/'
       path: '/'
@@ -420,6 +473,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/subjects/$slug'
       preLoaderRoute: typeof SubjectsSlugRouteImport
       parentRoute: typeof SubjectsRoute
+    }
+    '/settings/policies': {
+      id: '/settings/policies'
+      path: '/policies'
+      fullPath: '/settings/policies'
+      preLoaderRoute: typeof SettingsPoliciesRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/appearance': {
+      id: '/settings/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof SettingsAppearanceRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/account': {
+      id: '/settings/account'
+      path: '/account'
+      fullPath: '/settings/account'
+      preLoaderRoute: typeof SettingsAccountRouteImport
+      parentRoute: typeof SettingsRoute
     }
     '/review/$caseId': {
       id: '/review/$caseId'
@@ -486,6 +560,24 @@ const ReviewRouteChildren: ReviewRouteChildren = {
 const ReviewRouteWithChildren =
   ReviewRoute._addFileChildren(ReviewRouteChildren)
 
+interface SettingsRouteChildren {
+  SettingsAccountRoute: typeof SettingsAccountRoute
+  SettingsAppearanceRoute: typeof SettingsAppearanceRoute
+  SettingsPoliciesRoute: typeof SettingsPoliciesRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsAccountRoute: SettingsAccountRoute,
+  SettingsAppearanceRoute: SettingsAppearanceRoute,
+  SettingsPoliciesRoute: SettingsPoliciesRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
+
 interface SubjectsRouteChildren {
   SubjectsSlugRoute: typeof SubjectsSlugRoute
   SubjectsIndexRoute: typeof SubjectsIndexRoute
@@ -525,7 +617,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ReviewRoute: ReviewRouteWithChildren,
-  SettingsRoute: SettingsRoute,
+  SettingsRoute: SettingsRouteWithChildren,
   SubjectsRoute: SubjectsRouteWithChildren,
   GuidesSlugRoute: GuidesSlugRouteWithChildren,
   GuidesIndexRoute: GuidesIndexRoute,

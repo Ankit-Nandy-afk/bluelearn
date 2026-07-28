@@ -2,44 +2,30 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Separator } from "@/components/ui/separator";
-import { FieldLabel } from "@/components/ui/field";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ThemeSelector } from "@/components/theme/ThemeSelector";
 
 export const Route = createFileRoute("/settings/appearance")({
   component: RouteComponent,
 });
 
-const APPEARANCE_OPTIONS = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-];
-
 function RouteComponent() {
-  const [appearance, setAppearance] = useState("light");
-
   return (
-    <div className="mb-6">
-      <div>
-        <h1 className="data-label text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
           Appearance
         </h1>
       </div>
 
       <Separator className="mb-8 bg-border" />
 
-      <RadioGroup value={appearance} onValueChange={setAppearance}>
-        {APPEARANCE_OPTIONS.map((option) => (
-          <div key={option.value} className="flex items-center gap-2">
-            <RadioGroupItem value={option.value} id={option.value} />
-            <FieldLabel
-              htmlFor={option.value}
-              className="font-mono tracking-[0.08em] uppercase"
-            >
-              {option.label}
-            </FieldLabel>
-          </div>
-        ))}
-      </RadioGroup>
+      <h2 className="font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
+        Choose Theme
+      </h2>
+
+      <Separator className="mb-4 bg-border" />
+
+      <ThemeSelector />
     </div>
   );
 }

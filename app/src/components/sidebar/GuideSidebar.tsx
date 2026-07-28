@@ -17,7 +17,7 @@ type PropTypes = {
   reviewSection?: React.ReactNode;
 };
 
-export const Sidebar = ({
+export const GuideSidebar = ({
   guide,
   slug,
   sidebarActions,

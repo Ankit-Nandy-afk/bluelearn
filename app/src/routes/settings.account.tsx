@@ -4,7 +4,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Field, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { client } from "@/lib/api/apiClient";
 
 export const Route = createFileRoute("/settings/account")({
@@ -12,22 +17,28 @@ export const Route = createFileRoute("/settings/account")({
 });
 
 function RouteComponent() {
-  const [displayName, setDisplayName] = useState("Johnny Doeser");
-  const [username, setUsername] = useState("John_Doe99");
-  const [email, setEmail] = useState("johnny.doeser@example.com");
-  const [bio, setBio] = useState("");
+  const [account, setAccount] = useState({
+    displayName: "",
+    username: "",
+    email: "",
+    bio: "",
+  });
+
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>("");
+
+  // TODO: fetch uset data and update setAccount based on user data
 
   const handleSave = async () => {
     setSaving(true);
     setSaveError(null);
+
     try {
       const res = await client.me.$patch({
         json: {
-          username,
-          display_name: displayName || null,
-          bio: bio || null,
+          display_name: account.displayName || null,
+          username: account.username,
+          bio: account.bio || null,
         },
       });
       if (!res.ok) {
@@ -41,85 +52,158 @@ function RouteComponent() {
   };
 
   return (
-    <div className="mb-6">
-      <div>
-        <h1 className="data-label text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
           Account
         </h1>
-        <p className="font-mono text-sm text-muted-foreground">
-          Make changes to your account details
-        </p>
+
+        <div className="flex items-center">
+          {saveError && (
+            <p className="mono-micro px-4 text-destructive">{saveError}</p>
+          )}
+
+          <Button
+            className="btn-pri"
+            onClick={handleSave}
+            disabled={saving}
+            size="lg"
+          >
+            {saving ? "Saving..." : "Save"}
+          </Button>
+        </div>
       </div>
 
       <Separator className="mb-8 bg-border" />
 
-      <div className="space-y-6">
-        <Field>
-          <FieldLabel className="w-fit border-b border-foreground pb-0.5 font-mono tracking-[0.08em] uppercase">
-            Display Name
-          </FieldLabel>
-          <p className="mb-1 font-sans text-xs text-muted-foreground">
-            Publicly visible (if blank, defaults to username)
-          </p>
+      <FieldGroup>
+        <Field className="space-y-2">
+          <div className="space-y-1">
+            <FieldLabel
+              required
+              className="font-mono tracking-[0.08em] uppercase"
+            >
+              Display Name
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              Publicly visible (if blank, defaults to username)
+            </FieldDescription>
+          </div>
+
           <Input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
+            id="display-name"
+            type="text"
+            maxLength={50}
+            placeholder="..."
+            className="h-10 rounded-md"
+            required
+            value={account.displayName}
+            onChange={(e) => {
+              setAccount({
+                ...account,
+                displayName: e.target.value,
+              });
+            }}
           />
         </Field>
 
-        <Field>
-          <FieldLabel className="w-fit border-b border-foreground pb-0.5 font-mono tracking-[0.08em] uppercase">
-            Username
-          </FieldLabel>
+        <Field className="space-y-2">
+          <div className="space-y-1">
+            <FieldLabel
+              required
+              className="font-mono tracking-[0.08em] uppercase"
+            >
+              Username
+            </FieldLabel>
+          </div>
+
           <Input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            id="username"
+            type="text"
+            maxLength={50}
+            placeholder="..."
+            className="h-10 rounded-md"
+            required
+            value={account.username}
+            onChange={(e) => {
+              setAccount({
+                ...account,
+                username: e.target.value,
+              });
+            }}
           />
         </Field>
 
-        <Field>
-          <FieldLabel className="w-fit border-b border-foreground pb-0.5 font-mono tracking-[0.08em] uppercase">
-            Email
-          </FieldLabel>
-          <p className="mb-1 font-sans text-xs text-muted-foreground">
-            Contact support to change your email
-          </p>
+        <Field className="space-y-2">
+          <div className="space-y-1">
+            <FieldLabel
+              required
+              className="font-mono tracking-[0.08em] uppercase"
+            >
+              Email
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              Contact support to change your email address
+            </FieldDescription>
+          </div>
+
           <Input
+            id="email"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             disabled
+            className="h-10 rounded-md"
+            required
+            value={account.email}
+            onChange={(e) => {
+              setAccount({
+                ...account,
+                email: e.target.value,
+              });
+            }}
           />
         </Field>
 
-        <Field>
-          <FieldLabel className="w-fit border-b border-foreground pb-0.5 font-mono tracking-[0.08em] uppercase">
-            Bio
-          </FieldLabel>
-          <Input value={bio} onChange={(e) => setBio(e.target.value)} />
+        <Field className="space-y-2">
+          <div className="space-y-1">
+            <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+              Bio
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              Short bio, visible on your profile
+            </FieldDescription>
+          </div>
+
+          <textarea
+            className="h-32 w-full min-w-0 resize-none rounded-md border border-input bg-input/20 p-2 text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs/relaxed file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+            rows={3}
+            placeholder="..."
+            value={account.bio}
+            onChange={(e) => {
+              setAccount({
+                ...account,
+                bio: e.target.value,
+              });
+            }}
+          />
         </Field>
+      </FieldGroup>
 
-        {saveError && (
-          <p className="font-mono text-sm text-destructive">{saveError}</p>
-        )}
+      <div className="my-8">
+        <h2 className="font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
+          Delete Account
+        </h2>
 
-        <Button onClick={handleSave} disabled={saving} size="lg">
-          {saving ? "Saving..." : "Save"}
-        </Button>
-      </div>
+        <Separator className="mb-4 bg-border" />
 
-      <Separator className="my-8 bg-border" />
-
-      <div className="space-y-2">
+        <p className="py-2 font-mono text-xs text-destructive">
+          This action is permanent and cannot be undone.
+        </p>
         <Button
           variant="destructive"
           className="font-mono tracking-[0.08em] uppercase"
         >
           Delete Account
         </Button>
-        <p className="mt-3 font-mono text-sm tracking-[0.08em] text-destructive uppercase">
-          This action cannot be undone
-        </p>
       </div>
     </div>
   );
