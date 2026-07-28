@@ -27,7 +27,7 @@ function RouteComponent() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>("");
 
-  // TODO: fetch uset data and update setAccount based on user data
+  // TODO: fetch user data and update setAccount based on user data
 
   const handleSave = async () => {
     setSaving(true);
