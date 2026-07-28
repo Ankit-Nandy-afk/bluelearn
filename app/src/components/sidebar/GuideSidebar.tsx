@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { CollapsibleSection } from "./CollapsibleSection";
 import type { Guide, GuideReference } from "@bluelearn/schemas";
 import type { LucideIcon } from "lucide-react";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { extractHeadings } from "@/lib/guideUtils";
 
 export type Action = {

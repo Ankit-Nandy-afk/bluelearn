@@ -18,7 +18,7 @@ import {
   Users,
 } from "lucide-react";
 
-import type { Action } from "@/components/GuideSidebar";
+import type { Action } from "@/components/sidebar/GuideSidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
@@ -26,7 +26,7 @@ import { buildBreadcrumbs } from "@/lib/breadcrumbs";
 import { getGuide } from "@/lib/api/guides";
 
 import "katex/dist/katex.min.css";
-import { GuideSidebar } from "@/components/GuideSidebar";
+import { GuideSidebar } from "@/components/sidebar/GuideSidebar";
 import { GuideReader } from "@/components/GuideReader";
 import {
   DropdownMenu,
