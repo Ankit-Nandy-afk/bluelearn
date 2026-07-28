@@ -215,7 +215,9 @@ function ProfilePage({ profile, roles, stats, activity }: ProfilePageData) {
               <h2 className="text-3xl font-bold">
                 {profile.display_name ?? profile.username}
               </h2>
-              <h3 className="text-sm text-gray-600">@{profile.username}</h3>
+              <h3 className="mono-micro text-muted-foreground/80">
+                @{profile.username}
+              </h3>
 
               {roles.length > 0 && (
                 <ul className="mt-2.5 flex flex-wrap items-center gap-2">
@@ -245,10 +247,10 @@ function ProfilePage({ profile, roles, stats, activity }: ProfilePageData) {
                 key={stat.label}
                 className="flex min-w-24 flex-col items-center gap-1"
               >
-                <p className="text-2xl leading-none font-bold">{stat.value}</p>
-                <h3 className="text-sm leading-none text-muted-foreground">
-                  {stat.label}
-                </h3>
+                <h3 className="data-label leading-none">{stat.label}</h3>
+                <p className="data-value text-2xl! leading-none">
+                  {stat.value}
+                </p>
               </li>
             ))}
           </ul>
