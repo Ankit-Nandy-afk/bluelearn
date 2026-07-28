@@ -147,11 +147,13 @@ describe("GET /guides/{slug}", () => {
     expect(res.status).toBe(200);
     await expectToMatchSpec(res, "GET", "/guides/{slug}");
     const body = (await res.json()) as {
-      guide: { id: string };
-      subjects: Array<{ id: string }>;
+      slug: string;
+      body: string | null;
+      tags: Array<{ slug: string }>;
     };
-    expect(body.guide.id).toBe(base.id);
-    expect(body.subjects.map((s) => s.id)).toContain(subject.id);
+    expect(body.slug).toBe(base.slug);
+    expect(body.body).toBe("Content");
+    expect(body.tags.map((t) => t.slug)).toContain(subject.slug);
   });
 
   it("hides another author's draft guide", async () => {

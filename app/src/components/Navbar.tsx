@@ -44,15 +44,12 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50">
-      <div className="relative mx-auto max-w-[1280px] border-x border-b border-border/60 bg-background/20 backdrop-blur-xl">
-        <div className="flex h-16 items-center justify-between px-6">
+      <div className="relative border-b border-border/60 bg-background/20 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6">
           {/* LEFT */}
           <div className="flex items-center gap-10">
             <Link to="/" className="flex items-center gap-3">
-              <img src="/assets/logo.png" className="h-8 w-8" />
-              <p className="text-[17px] font-semibold tracking-tight">
-                Bluelearn
-              </p>
+              <img src="/assets/logo.svg" className="h-8" />
             </Link>
 
             <nav className="hidden items-center gap-6 md:flex">
