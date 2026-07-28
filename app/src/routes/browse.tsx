@@ -27,7 +27,7 @@ const PAGE_SIZE = 10;
 
 type BrowseSearch = {
   q?: string;
-  type?: Collection;
+  scope?: Collection;
   kind?: KnowledgeType;
   guidesPage?: number;
   objectivesPage?: number;
@@ -91,8 +91,10 @@ async function fetchObjectives(
 export const Route = createFileRoute("/browse")({
   validateSearch: (raw): BrowseSearch => {
     const q = typeof raw.q === "string" ? raw.q.trim() : "";
-    const type =
-      raw.type === "guides" || raw.type === "objectives" ? raw.type : undefined;
+    const scope =
+      raw.scope === "guides" || raw.scope === "objectives"
+        ? raw.scope
+        : undefined;
     const kind =
       raw.kind === "theoretical" || raw.kind === "practical"
         ? raw.kind
@@ -101,29 +103,29 @@ export const Route = createFileRoute("/browse")({
     const objectivesPage = pageParam(raw.objectivesPage);
     return {
       ...(q ? { q } : {}),
-      ...(type ? { type } : {}),
-      ...(q && type === "guides" && kind ? { kind } : {}),
-      ...(type !== "objectives" && guidesPage ? { guidesPage } : {}),
-      ...(type !== "guides" && objectivesPage ? { objectivesPage } : {}),
+      ...(scope ? { scope } : {}),
+      ...(q && scope === "guides" && kind ? { kind } : {}),
+      ...(scope !== "objectives" && guidesPage ? { guidesPage } : {}),
+      ...(scope !== "guides" && objectivesPage ? { objectivesPage } : {}),
     };
   },
-  loaderDeps: ({ search: { q, type, kind, guidesPage, objectivesPage } }) => ({
+  loaderDeps: ({ search: { q, scope, kind, guidesPage, objectivesPage } }) => ({
     q,
-    type,
+    scope,
     kind,
     guidesPage,
     objectivesPage,
   }),
   loader: async ({
-    deps: { q, type, kind, guidesPage = 1, objectivesPage = 1 },
+    deps: { q, scope, kind, guidesPage = 1, objectivesPage = 1 },
     abortController: { signal },
   }) => {
     try {
       const [guides, objectives] = await Promise.all([
-        type !== "objectives"
+        scope !== "objectives"
           ? fetchGuides({ q, kind, page: guidesPage }, signal)
           : null,
-        type !== "guides"
+        scope !== "guides"
           ? fetchObjectives({ q, page: objectivesPage }, signal)
           : null,
       ]);
@@ -208,7 +210,7 @@ function SectionPager({
 function RouteComponent() {
   const {
     q,
-    type,
+    scope,
     kind,
     guidesPage = 1,
     objectivesPage = 1,
@@ -238,7 +240,7 @@ function RouteComponent() {
     navigate({
       search: (prev) => ({
         ...prev,
-        type: f.scope,
+        scope: f.scope,
         kind: f.knowledgeType,
         guidesPage: undefined,
         objectivesPage: undefined,
@@ -266,7 +268,7 @@ function RouteComponent() {
           }}
           filter={
             <SearchFilterMenu
-              value={{ scope: type, knowledgeType: kind }}
+              value={{ scope, knowledgeType: kind }}
               onChange={setFilters}
             />
           }

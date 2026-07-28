@@ -22,7 +22,7 @@ export function SearchBar({
   onChange,
   onSubmit,
   onClear,
-  placeholder = "Search guides, concepts, topics...",
+  placeholder = "Search guides, objectives...",
   filter,
 }: Props) {
   return (

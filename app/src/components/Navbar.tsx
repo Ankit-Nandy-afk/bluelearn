@@ -1,10 +1,11 @@
-import { Menu, User, X } from "lucide-react";
+import { Menu, Search, User, X } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { useAuth } from "@/lib/authContext";
 import { signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,12 +30,23 @@ const profileItems = [
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const { session, roles } = useAuth();
   const navigate = useNavigate();
 
   const visibleNavItems = navItems.filter(
     (item) => !item.role || roles.includes(item.role)
   );
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+
+    setMobileOpen(false);
+    setQuery("");
+    navigate({ to: "/browse", search: { q } });
+  }
 
   async function handleSignOut() {
     await signOut();
@@ -67,6 +79,21 @@ export function Navbar() {
 
           {/* RIGHT */}
           <div className="flex items-center gap-3">
+            {/* Desktop search */}
+            <form
+              onSubmit={handleSearch}
+              className="relative hidden w-[280px] lg:block"
+            >
+              <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search guides, objectives..."
+                placeholder="Search guides, objectives..."
+                className="h-9 rounded-md border pl-9 text-xs"
+              />
+            </form>
+
             {/* Contribute Button */}
             <div className="hidden md:flex">
               <Link to="/contribute" className="btn-cta tracking-[0.08em]">
@@ -139,6 +166,18 @@ export function Navbar() {
         {mobileOpen && (
           <div className="absolute top-[65px] right-0 left-0 z-50 animate-in rounded-b-md border bg-white p-5 shadow-md fade-in slide-in-from-top-2 md:hidden">
             <div className="flex flex-col gap-y-4">
+              {/* Search */}
+              <form onSubmit={handleSearch} className="relative">
+                <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  aria-label="Search guides"
+                  placeholder="Search..."
+                  className="h-9 pl-9 text-xs"
+                />
+              </form>
+
               {/* Nav */}
               <div className="flex flex-col gap-3 py-3">
                 {visibleNavItems.map((item) => (

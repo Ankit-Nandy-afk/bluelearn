@@ -109,7 +109,7 @@ function RouteComponent() {
                 to: "/browse",
                 search: {
                   q,
-                  type: filters.scope,
+                  scope: filters.scope,
                   kind: filters.knowledgeType,
                 },
               });
