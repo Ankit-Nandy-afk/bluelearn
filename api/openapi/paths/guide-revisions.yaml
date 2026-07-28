@@ -25,7 +25,23 @@
                   type: array
                   items:
                     $ref: "../components/schemas/subjects/SubjectTag.yaml"
-              required: [revision, subjects]
+                knowledge_type:
+                  description: >
+                    The guide's knowledge type, for resuming the draft. Null when
+                    the base is hidden from the caller (non-author on a draft base).
+                  type: [string, "null"]
+                prerequisites:
+                  description: Slugs of the guide's prerequisite guides.
+                  type: array
+                  items:
+                    type: string
+                todos:
+                  description: Titles of the guide's open todo prerequisites.
+                  type: array
+                  items:
+                    type: string
+              required:
+                [revision, subjects, knowledge_type, prerequisites, todos]
       "404":
         $ref: "../components/responses/_shared.yaml#/NotFound"
   patch:
