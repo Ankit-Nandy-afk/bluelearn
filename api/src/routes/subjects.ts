@@ -1,10 +1,8 @@
 import { Hono } from "hono";
-import { requireUser } from "../middleware/auth.middleware";
-import type { HonoEnv } from "../types";
-import { createSubjectSchema } from "@bluelearn/schemas";
+import { paginationSchema } from "@bluelearn/schemas";
 import { zValidator } from "@hono/zod-validator";
+import type { HonoEnv } from "../types";
 import {
-  createSubject,
   getSubjectBySlug,
   listSubjectGuides,
   listSubjectObjectives,
@@ -13,26 +11,14 @@ import {
 
 export const subjectsRouter = new Hono<HonoEnv>()
   // List all subjects
-  .get("/", async (c) => {
-    const subjects = await listSubjects(c.get("supabase"));
-    return c.json({ subjects }, 200);
+  .get("/", zValidator("query", paginationSchema), async (c) => {
+    const { page, limit } = c.req.valid("query");
+    const { data, total } = await listSubjects(c.get("supabase"), {
+      page,
+      limit,
+    });
+    return c.json({ subjects: data, total }, 200);
   })
-
-  // Create a subject
-  .post(
-    "/",
-    requireUser,
-    zValidator("json", createSubjectSchema),
-    async (c) => {
-      const { name } = c.req.valid("json");
-      const subject = await createSubject(
-        c.get("supabase"),
-        c.get("user").id,
-        name
-      );
-      return c.json({ subject }, 201);
-    }
-  )
 
   // Subject metadata only
   .get("/:slug", async (c) => {
@@ -44,19 +30,27 @@ export const subjectsRouter = new Hono<HonoEnv>()
   })
 
   // Alphabetical list of guides carrying this subject tag
-  .get("/:slug/guides", async (c) => {
-    const guides = await listSubjectGuides(
+  .get("/:slug/guides", zValidator("query", paginationSchema), async (c) => {
+    const { page, limit } = c.req.valid("query");
+    const { data, total } = await listSubjectGuides(
       c.get("supabase"),
-      c.req.param("slug")
+      c.req.param("slug"),
+      { page, limit }
     );
-    return c.json({ guides }, 200);
+    return c.json({ guides: data, total }, 200);
   })
 
   // Alphabetical list of published objectives tagged with this subject
-  .get("/:slug/objectives", async (c) => {
-    const objectives = await listSubjectObjectives(
-      c.get("supabase"),
-      c.req.param("slug")
-    );
-    return c.json({ objectives }, 200);
-  });
+  .get(
+    "/:slug/objectives",
+    zValidator("query", paginationSchema),
+    async (c) => {
+      const { page, limit } = c.req.valid("query");
+      const { data, total } = await listSubjectObjectives(
+        c.get("supabase"),
+        c.req.param("slug"),
+        { page, limit }
+      );
+      return c.json({ objectives: data, total }, 200);
+    }
+  );

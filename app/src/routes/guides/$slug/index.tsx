@@ -18,17 +18,12 @@ import {
   Users,
 } from "lucide-react";
 
-import type { HydratedGuide } from "@/types/guides";
-
 import type { Action } from "@/components/Sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
 import { buildBreadcrumbs } from "@/lib/breadcrumbs";
-import { getGuideBySlug, hydrateGuide } from "@/lib/getData";
-
-import guides from "@/data/guides.json";
-import subjects from "@/data/subjects.json";
+import { getGuide } from "@/lib/api/guides";
 
 import "katex/dist/katex.min.css";
 import { Sidebar } from "@/components/Sidebar";
@@ -44,6 +39,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
 
 const SIDEBAR_ACTIONS: Array<Action> = [
   { icon: Replace, label: "View Variants" },
@@ -66,24 +63,26 @@ function useVote() {
   };
 }
 
-export const Route = createFileRoute("/guides/$slug")({
+export const Route = createFileRoute("/guides/$slug/")({
+  loader: async ({ params, abortController }) => {
+    try {
+      return await getGuide(params.slug, { signal: abortController.signal });
+    } catch {
+      throw notFound();
+    }
+  },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const { slug } = Route.useParams();
+  const guide = Route.useLoaderData();
 
   const { vote, upvote, downvote } = useVote();
 
   const breadcrumbOrigin = useLocation({
     select: (location) => location.state.breadcrumbOrigin,
   });
-
-  const guide = getGuideBySlug(guides, slug);
-
-  if (!guide) {
-    throw notFound();
-  }
 
   const guideMenuItems = [
     {
@@ -99,9 +98,7 @@ function RouteComponent() {
     // { label: "Report", to: "/report", <Flag className="h-4 w-4" /> },// TODO: Implement post v1
   ];
 
-  const hydratedGuide: HydratedGuide = hydrateGuide(guide, guides, subjects);
-
-  const breadcrumbs = buildBreadcrumbs(hydratedGuide.title, breadcrumbOrigin);
+  const breadcrumbs = buildBreadcrumbs(guide.title, breadcrumbOrigin);
 
   return (
     <div className="mx-auto h-[calc(100vh-70px)] max-w-[1280px] border-x bg-background">
@@ -124,7 +121,7 @@ function RouteComponent() {
               ))}
             </div>
           }
-          guide={hydratedGuide}
+          guide={guide}
           slug={slug}
         />
 
@@ -164,9 +161,20 @@ function RouteComponent() {
 
             {/* Actions */}
             <div className="flex shrink-0 items-center gap-2">
-              <Button variant="outline" className="btn-sec">
+              <Link
+                to={GuideWalkthroughRoute.to}
+                params={{ slug: slug }}
+                // state={{
+                //   breadcrumbOrigin: {
+                //     type: "objective",
+                //     title: objective.title,
+                //     path: `/objectives/${slug}`,
+                //   },
+                // }}
+                className="btn-outline"
+              >
                 View Walkthrough
-              </Button>
+              </Link>
 
               <Button variant="outline" size="lg" onClick={() => upvote()}>
                 <ArrowBigUp
@@ -213,7 +221,7 @@ function RouteComponent() {
 
           {/* Header */}
 
-          <GuideReader guide={hydratedGuide} />
+          <GuideReader guide={guide} />
         </main>
       </section>
     </div>
