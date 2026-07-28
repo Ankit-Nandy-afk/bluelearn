@@ -1,21 +1,19 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { paginationSchema } from "@bluelearn/schemas";
 
 import { Separator } from "@/components/ui/separator";
 import { ObjectiveCard } from "@/components/cards/ObjectiveCard";
 
 import { listObjectives } from "@/lib/api/objectives";
+import { formatDate, formatDuration } from "@/lib/guideUtils";
+import { Pagination } from "@/components/Pagination";
 
 import { Route as ObjectiveRoute } from "@/routes/objectives.$slug";
 
 const PAGE_SIZE = 20;
 
-const objectivesSearchSchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-});
-
 export const Route = createFileRoute("/objectives/")({
-  validateSearch: objectivesSearchSchema,
+  validateSearch: paginationSchema.pick({ page: true }),
   loaderDeps: ({ search: { page } }) => ({ page }),
   loader: async ({ deps: { page } }) => {
     const result = await listObjectives({ page, limit: PAGE_SIZE });
@@ -26,10 +24,10 @@ export const Route = createFileRoute("/objectives/")({
         title: o.title,
         summary: o.summary,
         curator: o.curator,
-        created_at: o.created_at,
+        created_at: formatDate(new Date(o.created_at)),
         featuredSubObjective: o.featured_sub_objective,
         stats: [
-          { label: "Duration", data: `${o.duration_minutes} min` },
+          { label: "Duration", data: formatDuration(o.duration_minutes) },
           { label: "Guides", data: o.guides_total },
         ] as Array<{ label: string; data: string | number }>,
       }));
@@ -43,6 +41,10 @@ export const Route = createFileRoute("/objectives/")({
 function ObjectivesIndex() {
   const { objectives, total, page } = Route.useLoaderData();
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const navigate = useNavigate();
+
+  const goToPage = (p: number) =>
+    navigate({ to: "/objectives", search: { page: p } });
 
   return (
     <div className="mx-auto max-w-[1280px] border-x bg-background">
@@ -72,70 +74,20 @@ function ObjectivesIndex() {
         )}
 
         {totalPages > 1 && (
-          <Pagination currentPage={page} totalPages={totalPages} />
+          <div className="mt-8 mb-4">
+            <Pagination
+              activePageNo={page}
+              onPageSelect={goToPage}
+              toFirst={() => goToPage(1)}
+              onPrevious={() => goToPage(Math.max(1, page - 1))}
+              onNext={() => goToPage(Math.min(totalPages, page + 1))}
+              toLast={() => goToPage(totalPages)}
+              totalPages={totalPages}
+            />
+          </div>
         )}
       </section>
     </div>
-  );
-}
-
-function Pagination({
-  currentPage,
-  totalPages,
-}: {
-  currentPage: number;
-  totalPages: number;
-}) {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-  const baseClass =
-    "px-3 py-1.5 rounded-md text-sm font-medium border border-border";
-
-  return (
-    <nav
-      aria-label="Pagination"
-      className="flex items-center justify-center gap-2 pt-6"
-    >
-      <Link
-        to="/objectives"
-        search={{ page: currentPage - 1 }}
-        disabled={currentPage <= 1}
-        className={`${baseClass} ${
-          currentPage <= 1 ? "pointer-events-none opacity-50" : "hover:bg-muted"
-        }`}
-      >
-        Previous
-      </Link>
-
-      <div className="flex items-center gap-1">
-        {pages.map((p) => (
-          <Link
-            key={p}
-            to="/objectives"
-            search={{ page: p }}
-            className={`${baseClass} ${
-              p === currentPage
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted"
-            }`}
-          >
-            {p}
-          </Link>
-        ))}
-      </div>
-
-      <Link
-        to="/objectives"
-        search={{ page: currentPage + 1 }}
-        disabled={currentPage >= totalPages}
-        className={`${baseClass} ${
-          currentPage >= totalPages
-            ? "pointer-events-none opacity-50"
-            : "hover:bg-muted"
-        }`}
-      >
-        Next
-      </Link>
-    </nav>
   );
 }
 
