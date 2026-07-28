@@ -47,7 +47,7 @@ export const SettingsSidebar = () => {
                 to={item.to}
                 className={cn(
                   "data-label flex items-center gap-4 px-2 py-4 hover:font-bold hover:text-brand-blue",
-                  active && "font-bold text-brand-blue"
+                  active && "!font-bold !text-brand-blue"
                 )}
               >
                 <item.icon className="h-4 w-4" />
