@@ -14,8 +14,6 @@ import { Route as SubjectRoute } from "@/routes/subjects.$slug";
 import { listSubjects } from "@/lib/api/subjects";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 
-import { Combobox } from "@/components/ui/combobox";
-
 type Subjects = Array<SubjectListItem>;
 
 type SubjectsGroupedByNameFirstCharacter = Map<string, SubjectReferences>;
@@ -84,51 +82,11 @@ function SidebarMd({ groupedSubjectReferences }: SubjectsProps) {
   });
 }
 
-function SidebarXs({ groupedSubjectReferences }: SubjectsProps) {
-  return (
-    <div className="w-full">
-      {/* <Select>
-        <SelectTrigger className="mx-auto w-full max-w-96">
-          <SelectValue placeholder="Select a Subject Name" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectLabel>G</SelectLabel>
-            <SelectItem value="game-development">Game Development</SelectItem>
-            <SelectItem value="algebra">Algebra</SelectItem>
-            <SelectItem value="geometry">Geometry</SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select> */}
-      {/* <Combobox
-        multiple
-        items={subjects.map((s) => {
-          return {
-            value: s.slug,
-            label: s.name,
-          };
-        })}
-        value={guideContData.subjects}
-        onValueChange={(slugs) =>
-          setGuideContData((prev) => ({
-            ...prev,
-            subjects: slugs,
-          }))
-        }
-      /> */}
-      {/* <Combobox /> */}
-    </div>
-  );
-}
-
 function Sidebar({ groupedSubjectReferences }: SubjectsProps) {
   return (
     <>
       <div className="hidden md:block">
         <SidebarMd groupedSubjectReferences={groupedSubjectReferences} />
-      </div>
-      <div className="md:hidden">
-        <SidebarXs groupedSubjectReferences={groupedSubjectReferences} />
       </div>
     </>
   );
@@ -186,8 +144,6 @@ const getSubjectNamesGroupedByFirstLetter = (
     subjectsGrouped.set(firstLetter, [...currentSubjects, subject]);
   });
 
-  // const groupedSubjectsArray: Array<Array<string>> = Array.from(groupedSubjects);
-
   return subjectsGrouped;
 };
 
@@ -198,7 +154,11 @@ function RouteComponent() {
     useMemo(() => getSubjectNamesGroupedByFirstLetter(subjects), [subjects]);
 
   if (subjects.length === 0) {
-    return <p className="text-sm text-muted-foreground">No subjects yet.</p>;
+    return (
+      <Shell>
+        <p className="text-sm text-muted-foreground">No subjects yet.</p>
+      </Shell>
+    );
   }
 
   return (
