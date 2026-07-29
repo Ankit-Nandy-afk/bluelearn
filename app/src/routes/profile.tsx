@@ -18,7 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
-import { fetchMyProfile } from "@/lib/profile";
+import { fetchMyProfile, getInitials } from "@/lib/profile";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/profile")({
@@ -31,14 +31,6 @@ const DEFAULT_STATS: ProfileStats = {
   contributions: undefined,
   reviews: undefined,
 };
-// fucntion for getting the first two letters for the user's initials
-function getInitials(value: string | null | undefined) {
-  const text = value?.trim() ?? "";
-  if (!text) return "?";
-  const parts = text.split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
 
 interface ProfilePageProps {
   profile: ProfileAPI;
@@ -72,16 +64,16 @@ function ProfilePage({
       <section className="border-b px-8 py-10 lg:px-16">
         <div className="mb-6 flex flex-col items-center justify-center gap-8 sm:flex-row sm:items-center">
           <div className="flex flex-col items-center sm:w-1/4">
-            <Avatar className="size-30 bg-gray-500">
+            <Avatar className="size-30 bg-secondary">
               <AvatarImage className="grayscale" />
-              <AvatarFallback className="bg-gray-300 text-2xl font-bold text-black">
+              <AvatarFallback className="bg-secondary text-2xl font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <h2 className="mt-3 mb-1 text-xl font-bold">
               {profile.display_name ?? profile.username}
             </h2>
-            <h3 className="text-sm text-gray-600">{roleLabel}</h3>
+            <h3 className="text-sm text-muted-foreground">{roleLabel}</h3>
           </div>
 
           <div className="w-full sm:w-1/4">

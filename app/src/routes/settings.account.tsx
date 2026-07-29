@@ -11,6 +11,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { client } from "@/lib/api/apiClient";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/profile";
 
 export const Route = createFileRoute("/settings/account")({
   component: RouteComponent,
@@ -77,6 +79,35 @@ function RouteComponent() {
       <Separator className="mb-8 bg-border" />
 
       <FieldGroup>
+        <Field className="space-y-2">
+          <div className="space-y-1">
+            <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+              Profile Photo
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              Automatically generated whe your account was created.
+            </FieldDescription>
+          </div>
+
+          <div className="flex items-end gap-4">
+            <Avatar className="size-30 bg-secondary">
+              <AvatarImage className="" />
+              <AvatarFallback className="bg-secondary text-2xl font-bold">
+                {getInitials(account.displayName || account.username)}
+              </AvatarFallback>
+            </Avatar>
+
+            <div className="cursor-not-allowed">
+              <Button variant="outline" disabled className="btn-sec" size="lg">
+                Upload
+              </Button>
+            </div>
+            <FieldDescription className="text-xs">
+              Custom profile photos coming soon!
+            </FieldDescription>
+          </div>
+        </Field>
+
         <Field className="space-y-2">
           <div className="space-y-1">
             <FieldLabel
