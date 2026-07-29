@@ -14,11 +14,6 @@ const items = [
     to: "/settings/appearance",
     icon: Palette,
   },
-  {
-    label: "Policies",
-    to: "/settings/policies",
-    icon: ScrollText,
-  },
 ];
 
 export const SettingsSidebar = () => {
