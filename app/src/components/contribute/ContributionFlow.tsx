@@ -169,7 +169,7 @@ function Inner({
   const [revisionId, setRevisionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Resume a guide draft opened from the profile.
+  // Resume a guide or variant draft opened from the profile.
   const resumedRef = useRef(false);
   useEffect(() => {
     if (!draftId || resumedRef.current) return;
@@ -177,19 +177,32 @@ function Inner({
 
     getRevision(draftId)
       .then((data) => {
-        setGuideContData({
-          type: data.knowledge_type ?? "theoretical",
-          title: data.revision.title ?? "",
-          summary: data.revision.summary ?? "",
-          body: data.revision.body ?? "",
-          subjects: data.subjects.map((s) => s.slug),
-          newSubjects: [],
-          prereqs: data.prerequisites,
-          todoPrereqs: data.todos,
-        });
+        if (data.is_variant) {
+          setVariantContData({
+            type: data.knowledge_type ?? "",
+            title: data.revision.title ?? "",
+            summary: data.revision.summary ?? "",
+            body: data.revision.body ?? "",
+            baseGuide: data.base_slug ?? "",
+            subjects: data.subjects.map((s) => s.slug),
+          });
+        } else {
+          setGuideContData({
+            type: data.knowledge_type ?? "theoretical",
+            title: data.revision.title ?? "",
+            summary: data.revision.summary ?? "",
+            body: data.revision.body ?? "",
+            subjects: data.subjects.map((s) => s.slug),
+            newSubjects: [],
+            prereqs: data.prerequisites,
+            todoPrereqs: data.todos,
+          });
+        }
         setRevisionId(draftId);
-        setType("guide");
-        requestAnimationFrame(() => stepper.goTo("guide-details"));
+        setType(data.is_variant ? "variant" : "guide");
+        requestAnimationFrame(() =>
+          stepper.goTo(data.is_variant ? "variant-details" : "guide-details")
+        );
       })
       .catch(() => {
         toast.error("Could not load draft");

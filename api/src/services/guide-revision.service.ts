@@ -202,9 +202,15 @@ export async function syncDraftTagsAndEdges(
   }
 }
 
-// Gets knowledge type, prerequisites, and todos.
+// Gets knowledge type, prerequisites, todos, and whether the guide is a variant.
 async function loadDraftContext(supabase: DB, guideId: string) {
-  const empty = { knowledge_type: null, prerequisites: [], todos: [] };
+  const empty = {
+    knowledge_type: null,
+    is_variant: false,
+    base_slug: null,
+    prerequisites: [],
+    todos: [],
+  };
   const { data: guide, error: guideError } = await supabase
     .from("guides")
     .select("guide_base_id")
@@ -220,7 +226,7 @@ async function loadDraftContext(supabase: DB, guideId: string) {
   const [baseRes, edgeRes, todoRes] = await Promise.all([
     supabase
       .from("guide_bases")
-      .select("knowledge_type")
+      .select("knowledge_type, slug, canonical_guide_id")
       .eq("id", baseId)
       .maybeSingle(),
     supabase
@@ -240,8 +246,12 @@ async function loadDraftContext(supabase: DB, guideId: string) {
     throw new ServiceError("Failed to load revision", 500);
   }
 
+  const canonical = baseRes.data?.canonical_guide_id ?? null;
+
   return {
     knowledge_type: baseRes.data?.knowledge_type ?? null,
+    is_variant: canonical != null && canonical !== guideId,
+    base_slug: baseRes.data?.slug ?? null,
     prerequisites: (edgeRes.data ?? [])
       .map((e) => e.from?.slug)
       .filter((s): s is string => s != null),
@@ -265,11 +275,17 @@ export async function getRevision(supabase: DB, id: string) {
   if (!revision) throw new ServiceError("Revision not found", 404);
 
   const subjects = await loadRevisionTags(supabase, id);
-  const { knowledge_type, prerequisites, todos } = await loadDraftContext(
-    supabase,
-    revision.guide_id
-  );
-  return { revision, subjects, knowledge_type, prerequisites, todos };
+  const { knowledge_type, is_variant, base_slug, prerequisites, todos } =
+    await loadDraftContext(supabase, revision.guide_id);
+  return {
+    revision,
+    subjects,
+    knowledge_type,
+    is_variant,
+    base_slug,
+    prerequisites,
+    todos,
+  };
 }
 
 // Overwrite a draft revision in place. RLS permits this only on the author's own
