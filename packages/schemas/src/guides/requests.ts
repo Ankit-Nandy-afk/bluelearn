@@ -37,10 +37,13 @@ export const createGuideSchema = z.object({
   todoPrereqs: z.array(guideTodoTitleSchema).default([]),
 });
 
-// Variants share the parent base's subjects, and a variant's own slug is assigned
-// at publish (it stays NULL until then), so the create payload carries only
-// its content.
-export const createVariantSchema = revisionContentSchema;
+// A variant starts as a draft like a guide does, so every field here is optional
+// and completeness is checked at submit. Its own slug is assigned at publish.
+export const createVariantSchema = revisionContentSchema.extend({
+  title: guideTitleSchema.nullish(),
+  tags: z.array(subjectSlugSchema).default([]),
+  newSubjects: z.array(newSubjectSchema).default([]),
+});
 
 // Edits to a draft revision before it goes for review. Send only the fields you
 // want to change (at least one is required).
