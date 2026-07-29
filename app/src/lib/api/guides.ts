@@ -49,3 +49,17 @@ export async function createGuide(
   const { revision_id } = await res.json();
   return revision_id;
 }
+
+export async function addGuideVariant(
+  slug: string,
+  body: InferRequestType<(typeof guides)[":slug"]["variants"]["$post"]>["json"]
+) {
+  const res = await guides[":slug"].variants.$post({
+    param: { slug },
+    json: body,
+  });
+  if (!res.ok) return assertOk(res) as Promise<never>;
+
+  const { revision_id } = await res.json();
+  return revision_id;
+}
