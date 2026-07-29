@@ -8,9 +8,6 @@ importers:
 
   .:
     devDependencies:
-      '@types/node':
-        specifier: ^22.19.19
-        version: 22.19.19
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -26,9 +23,6 @@ importers:
       supabase:
         specifier: ^2.105.0
         version: 2.105.0
-      vitest:
-        specifier: ^3.2.6
-        version: 3.2.6(@types/debug@4.1.13)(@types/node@22.19.19)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@1.8.0))(lightningcss@1.32.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))(tsx@4.23.1)(yaml@2.9.0)
       wrangler:
         specifier: ^4.95.0
         version: 4.95.0(@cloudflare/workers-types@4.20260531.1)

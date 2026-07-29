@@ -1,3 +1,5 @@
+alter table public.subjects alter column slug drop not null;
+
 -- Same as the previous close_review_panel except approved subjects now also get
 -- their slug, suffixed if the handle is already taken.
 create or replace function public.close_review_panel(p_case_id uuid)
