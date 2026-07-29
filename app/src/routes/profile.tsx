@@ -61,6 +61,7 @@ function validArray(value: unknown, allowed: ReadonlyArray<string>) {
 }
 
 export const Route = createFileRoute("/profile")({
+  ssr: false,
   validateSearch: (search: Record<string, unknown>): ProfileSearch => {
     const page = Number(search.page);
     const type = validArray(
