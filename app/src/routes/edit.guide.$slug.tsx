@@ -4,8 +4,9 @@ import { ChevronRight } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import type { Guide } from "@bluelearn/schemas";
 import type { GuideContribution } from "@/types/contributions";
-import type { GuideType, HydratedGuide } from "@/types/guides";
+import type { GuideType } from "@/types/guides";
 import { createGuide, listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
@@ -90,7 +91,7 @@ function RouteComponent() {
     return () => controller.abort();
   }, []);
 
-  const previewGuide: HydratedGuide = useMemo(() => {
+  const previewGuide: Guide = useMemo(() => {
     const nameBySlug = new Map(
       subjectOptions.map((s) => [s.slug, s.name] as const)
     );
@@ -105,9 +106,9 @@ function RouteComponent() {
       title: guideContData.title || "Untitled guide",
       author: username ?? initialGuide.author,
       summary: guideContData.summary,
+      body: guideContData.body,
+      duration_minutes: estimateReadMinutes(guideContData.body),
       created_at: initialGuide.created_at,
-      duration: estimateReadMinutes(guideContData.body),
-      breadcrumbs: initialGuide.breadcrumbs,
       tags: [
         ...guideContData.subjects.map((slug) => ({
           slug,
@@ -122,7 +123,6 @@ function RouteComponent() {
         slug,
         title: titleBySlug.get(slug) ?? slug,
       })),
-      content: guideContData.body,
     };
   }, [guideContData, subjectOptions, guideOptions, username, initialGuide]);
 

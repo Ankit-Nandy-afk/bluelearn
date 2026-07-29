@@ -6,14 +6,14 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 
 import { Calendar, Clock, User } from "lucide-react";
-import type { SubjectReference } from "@/types/subjects";
-import type { GuideType, HydratedGuide } from "@/types/guides";
+import type { Guide, SubjectReference } from "@bluelearn/schemas";
+import type { GuideType } from "@/types/guides";
 import type { ReactElement } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components//ui/badge";
 import { CodeBlock } from "@/components/CodeBlock";
 
-import { formatDuration } from "@/lib/guideUtils";
+import { formatDate, formatDuration } from "@/lib/guideUtils";
 
 const sanitizeSchema = {
   ...defaultSchema,
@@ -24,18 +24,21 @@ const sanitizeSchema = {
 };
 
 type PropTypes = {
-  guide: HydratedGuide;
+  guide: Guide;
   guideType?: GuideType;
 };
 
 export const GuideReader = ({ guide, guideType }: PropTypes) => {
+  const created = new Date(guide.created_at);
+  const createdLabel = Number.isNaN(created.getTime())
+    ? guide.created_at
+    : formatDate(created);
+
   return (
     <>
       <header className="mb-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-[-0.04em]">
-            {guide.title}
-          </h1>
+          <h1 className="text-3xl font-bold">{guide.title}</h1>
           {guideType && (
             <Badge
               key={guideType}
@@ -48,16 +51,19 @@ export const GuideReader = ({ guide, guideType }: PropTypes) => {
         </div>
 
         <div className="mono-micro my-2 flex flex-wrap items-center gap-2.5 text-muted-foreground/80">
-          <span className="flex items-center gap-1">
-            <User className="h-3 w-3 text-muted-foreground/75" />@{guide.author}
-          </span>
+          {guide.author && (
+            <span className="flex items-center gap-1">
+              <User className="h-3 w-3 text-muted-foreground/75" />@
+              {guide.author}
+            </span>
+          )}
           <span className="flex items-center gap-1">
             <Calendar className="h-3 w-3 text-muted-foreground/75" />
-            {guide.created_at}
+            {createdLabel}
           </span>
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3 text-muted-foreground/75" />
-            {formatDuration(guide.duration)}m
+            {formatDuration(guide.duration_minutes)}
           </span>
         </div>
 
@@ -71,6 +77,12 @@ export const GuideReader = ({ guide, guideType }: PropTypes) => {
               {tag.name}
             </Badge>
           ))}
+        </div>
+
+        <div>
+          <p className="py-4 text-sm whitespace-pre-line text-muted-foreground">
+            {guide.summary}
+          </p>
         </div>
       </header>
 
@@ -110,7 +122,7 @@ export const GuideReader = ({ guide, guideType }: PropTypes) => {
             },
           }}
         >
-          {guide.content}
+          {guide.body ?? ""}
         </ReactMarkdown>
       </article>
     </>
