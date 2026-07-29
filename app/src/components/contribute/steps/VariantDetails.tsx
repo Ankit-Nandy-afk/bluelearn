@@ -3,7 +3,12 @@ import type { VariantContribution } from "@/types/contributions";
 import type { listGuides } from "@/lib/api/guides";
 import type { listSubjects } from "@/lib/api/subjects";
 
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Combobox } from "@/components/ui/combobox";
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
@@ -38,12 +43,17 @@ export const VariantDetails = ({
 
       <FieldGroup>
         <Field className="space-y-2">
-          <FieldLabel
-            required
-            className="font-mono tracking-[0.08em] uppercase"
-          >
-            Title
-          </FieldLabel>
+          <div className="space-y-1">
+            <FieldLabel
+              required
+              className="font-mono tracking-[0.08em] uppercase"
+            >
+              Title
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              A clear, concise name for your variant.
+            </FieldDescription>
+          </div>
 
           <Input
             id="title"
@@ -64,12 +74,17 @@ export const VariantDetails = ({
         </Field>
 
         <Field className="space-y-2">
-          <FieldLabel
-            required
-            className="font-mono tracking-[0.08em] uppercase"
-          >
-            Summary
-          </FieldLabel>
+          <div className="space-y-1">
+            <FieldLabel
+              required
+              className="font-mono tracking-[0.08em] uppercase"
+            >
+              Summary
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              Briefly describe what makes this take on the topic different.
+            </FieldDescription>
+          </div>
 
           <textarea
             className="h-32 w-full min-w-0 resize-none rounded-md border border-input bg-input/20 p-2 text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs/relaxed file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
@@ -87,12 +102,17 @@ export const VariantDetails = ({
         </Field>
 
         <Field className="space-y-2">
-          <FieldLabel
-            required
-            className="font-mono tracking-[0.08em] uppercase"
-          >
-            Base Guide
-          </FieldLabel>
+          <div className="space-y-1">
+            <FieldLabel
+              required
+              className="font-mono tracking-[0.08em] uppercase"
+            >
+              Base Guide
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              The existing guide your variant offers a different approach to.
+            </FieldDescription>
+          </div>
 
           <Combobox
             items={guides
@@ -114,12 +134,17 @@ export const VariantDetails = ({
           />
         </Field>
         <Field className="space-y-2">
-          <FieldLabel
-            required
-            className="font-mono tracking-[0.08em] uppercase"
-          >
-            Subjects
-          </FieldLabel>
+          <div className="space-y-1">
+            <FieldLabel
+              required
+              className="font-mono tracking-[0.08em] uppercase"
+            >
+              Subjects
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              Select existing subjects. At least one is required.
+            </FieldDescription>
+          </div>
 
           <Combobox
             multiple
