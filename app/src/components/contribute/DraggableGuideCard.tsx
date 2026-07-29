@@ -1,6 +1,7 @@
 import { Calendar, Clock, GripVertical, User } from "lucide-react";
 import type { Guide } from "@/types/guides";
 import { Badge } from "@/components/ui/badge";
+import { formatDuration } from "@/lib/guideUtils";
 
 type DraggableGuideCardProps = {
   guide: Guide;
@@ -77,7 +78,7 @@ export const DraggableGuideCard = ({
               {guide.duration && (
                 <span className="flex items-center gap-1 font-mono font-medium uppercase">
                   <Clock className="h-3 w-3 text-muted-foreground/75" />
-                  {guide.duration}m
+                  {formatDuration(guide.duration)}
                 </span>
               )}
             </div>

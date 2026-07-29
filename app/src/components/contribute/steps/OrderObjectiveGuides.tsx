@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import guidesData from "@/data/guides.json";
+import { formatDuration } from "@/lib/guideUtils";
 
 // Map for O(1) guide lookup
 const guidesMap = new Map(guidesData.map((g) => [g.slug, g]));
@@ -484,7 +485,7 @@ export const OrderObjectiveGuides = ({
                           {targetGuide.duration && (
                             <span className="flex items-center gap-1 font-mono font-medium uppercase">
                               <Clock className="h-3 w-3 text-primary/70" />
-                              {targetGuide.duration}m
+                              {formatDuration(targetGuide.duration)}
                             </span>
                           )}
                         </div>
