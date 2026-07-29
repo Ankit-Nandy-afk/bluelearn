@@ -18,17 +18,12 @@ import {
   Users,
 } from "lucide-react";
 
-import type { HydratedGuide } from "@/types/guides";
-
 import type { Action } from "@/components/Sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
 import { buildBreadcrumbs } from "@/lib/breadcrumbs";
-import { getGuideBySlug, hydrateGuide } from "@/lib/getData";
-
-import guides from "@/data/guides.json";
-import subjects from "@/data/subjects.json";
+import { getGuide } from "@/lib/api/guides";
 
 import "katex/dist/katex.min.css";
 import { Sidebar } from "@/components/Sidebar";
@@ -69,23 +64,25 @@ function useVote() {
 }
 
 export const Route = createFileRoute("/guides/$slug/")({
+  loader: async ({ params, abortController }) => {
+    try {
+      return await getGuide(params.slug, { signal: abortController.signal });
+    } catch {
+      throw notFound();
+    }
+  },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const { slug } = Route.useParams();
+  const guide = Route.useLoaderData();
 
   const { vote, upvote, downvote } = useVote();
 
   const breadcrumbOrigin = useLocation({
     select: (location) => location.state.breadcrumbOrigin,
   });
-
-  const guide = getGuideBySlug(guides, slug);
-
-  if (!guide) {
-    throw notFound();
-  }
 
   const guideMenuItems = [
     {
@@ -101,12 +98,10 @@ function RouteComponent() {
     // { label: "Report", to: "/report", <Flag className="h-4 w-4" /> },// TODO: Implement post v1
   ];
 
-  const hydratedGuide: HydratedGuide = hydrateGuide(guide, guides, subjects);
-
-  const breadcrumbs = buildBreadcrumbs(hydratedGuide.title, breadcrumbOrigin);
+  const breadcrumbs = buildBreadcrumbs(guide.title, breadcrumbOrigin);
 
   return (
-    <div className="mx-auto h-[calc(100vh-70px)] max-w-[1280px] border-x bg-background">
+    <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
       <section className="grid grid-cols-[320px_1fr] border-b">
         <Sidebar
           sidebarActions={
@@ -126,7 +121,7 @@ function RouteComponent() {
               ))}
             </div>
           }
-          guide={hydratedGuide}
+          guide={guide}
           slug={slug}
         />
 
@@ -226,7 +221,7 @@ function RouteComponent() {
 
           {/* Header */}
 
-          <GuideReader guide={hydratedGuide} />
+          <GuideReader guide={guide} />
         </main>
       </section>
     </div>

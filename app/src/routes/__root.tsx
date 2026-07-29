@@ -3,6 +3,7 @@ import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { NotFound } from "@/components/NotFound";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/authContext";
@@ -40,8 +41,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <AuthProvider>
-          <Navbar />
-          <TooltipProvider>{children}</TooltipProvider>
+          <div className="flex min-h-screen flex-col">
+            <Navbar />
+            <TooltipProvider>
+              <main className="flex-1">{children}</main>
+            </TooltipProvider>
+            <Footer />
+          </div>
           <Toaster />
         </AuthProvider>
 

@@ -30,12 +30,23 @@ const profileItems = [
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const { session, roles } = useAuth();
   const navigate = useNavigate();
 
   const visibleNavItems = navItems.filter(
     (item) => !item.role || roles.includes(item.role)
   );
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+
+    setMobileOpen(false);
+    setQuery("");
+    navigate({ to: "/browse", search: { q } });
+  }
 
   async function handleSignOut() {
     await signOut();
@@ -45,15 +56,12 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50">
-      <div className="relative mx-auto max-w-[1280px] border-x border-b border-border/60 bg-background/20 backdrop-blur-xl">
-        <div className="flex h-16 items-center justify-between px-6">
+      <div className="relative border-b border-border/60 bg-background/20 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6">
           {/* LEFT */}
           <div className="flex items-center gap-10">
             <Link to="/" className="flex items-center gap-3">
-              <img src="/assets/logo.png" className="h-8 w-8" />
-              <p className="text-[17px] font-semibold tracking-tight">
-                Bluelearn
-              </p>
+              <img src="/assets/logo.svg" className="h-8" />
             </Link>
 
             <nav className="hidden items-center gap-6 md:flex">
@@ -72,13 +80,19 @@ export function Navbar() {
           {/* RIGHT */}
           <div className="flex items-center gap-3">
             {/* Desktop search */}
-            <div className="relative hidden w-[280px] lg:block">
+            <form
+              onSubmit={handleSearch}
+              className="relative hidden w-[280px] lg:block"
+            >
               <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search guides..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search guides, objectives..."
+                placeholder="Search guides, objectives..."
                 className="h-9 rounded-md border pl-9 text-xs"
               />
-            </div>
+            </form>
 
             {/* Contribute Button */}
             <div className="hidden md:flex">
@@ -153,10 +167,16 @@ export function Navbar() {
           <div className="absolute top-[65px] right-0 left-0 z-50 animate-in rounded-b-md border bg-white p-5 shadow-md fade-in slide-in-from-top-2 md:hidden">
             <div className="flex flex-col gap-y-4">
               {/* Search */}
-              <div className="relative">
+              <form onSubmit={handleSearch} className="relative">
                 <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search..." className="h-9 pl-9 text-xs" />
-              </div>
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  aria-label="Search guides"
+                  placeholder="Search..."
+                  className="h-9 pl-9 text-xs"
+                />
+              </form>
 
               {/* Nav */}
               <div className="flex flex-col gap-3 py-3">
