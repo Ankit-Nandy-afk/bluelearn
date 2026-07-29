@@ -59,6 +59,7 @@ const createVariantContData = (): VariantContribution => ({
   summary: "",
   baseGuide: "",
   subjects: [],
+  newSubjects: [],
   body: "",
 });
 
@@ -185,6 +186,7 @@ function Inner({
             body: data.revision.body ?? "",
             baseGuide: data.base_slug ?? "",
             subjects: data.subjects.map((s) => s.slug),
+            newSubjects: [],
           });
         } else {
           setGuideContData({
@@ -272,6 +274,10 @@ function Inner({
   }, [guideContData, subjectOptions, guideOptions, username]);
 
   const previewVariant: Guide = useMemo(() => {
+    const nameBySlug = new Map(
+      subjectOptions.map((s) => [s.slug, s.name] as const)
+    );
+
     return {
       slug: "",
       title: variantContData.title || "Untitled guide",
@@ -280,10 +286,19 @@ function Inner({
       body: variantContData.body,
       created_at: formatDate(new Date()),
       duration_minutes: estimateReadMinutes(variantContData.body),
-      tags: [],
+      tags: [
+        ...variantContData.subjects.map((slug) => ({
+          slug,
+          name: nameBySlug.get(slug) ?? slug,
+        })),
+        ...variantContData.newSubjects.map((s) => ({
+          slug: s.name,
+          name: s.name,
+        })),
+      ],
       prerequisites: [],
     };
-  }, [variantContData, username]);
+  }, [variantContData, subjectOptions, username]);
 
   const guideType: GuideType | undefined =
     guideContData.type === "practical" || guideContData.type === "theoretical"
@@ -308,6 +323,10 @@ function Inner({
     summary: variantContData.summary || null,
     body: variantContData.body || null,
     tags: variantContData.subjects,
+    newSubjects: variantContData.newSubjects.map((s) => ({
+      name: s.name,
+      summary: s.summary || null,
+    })),
   });
 
   const creatingRef = useRef<Promise<string> | null>(null);

@@ -374,6 +374,31 @@ describe("POST /guides/{slug}/variants", () => {
     expect(tags?.map((t) => t.subject_id)).toEqual([subject.id]);
   });
 
+  it("creates the proposed new subjects and tags the revision with them", async () => {
+    const { token } = await makeUser();
+    const { base } = await createPublishedGuide();
+    const name = `Proposed ${crypto.randomUUID().slice(0, 8)}`;
+
+    const res = await app.request(
+      `/guides/${base.slug}/variants`,
+      jsonAuth(token, "POST", {
+        title: "Another method",
+        newSubjects: [{ name, summary: "Proposed inline" }],
+      }),
+      env
+    );
+
+    expect(res.status).toBe(201);
+    const { revision_id } = (await res.json()) as { revision_id: string };
+
+    const { data: tags } = await admin
+      .from("guide_revision_subjects")
+      .select("subject:subjects(name, status)")
+      .eq("guide_revision_id", revision_id);
+    expect(tags?.map((t) => t.subject?.name)).toEqual([name]);
+    expect(tags?.[0]?.subject?.status).toBe("draft");
+  });
+
   // Submitting requires a tag on the revision itself, so a variant created with
   // one is submittable without a PATCH in between.
   it("creates a variant that can be submitted straight away", async () => {

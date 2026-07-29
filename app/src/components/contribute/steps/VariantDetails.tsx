@@ -1,3 +1,5 @@
+import { X } from "lucide-react";
+import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { VariantContribution } from "@/types/contributions";
 import type { listGuides } from "@/lib/api/guides";
@@ -10,6 +12,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
 
@@ -32,6 +36,14 @@ export const VariantDetails = ({
   onSaveDraft,
   submitting,
 }: PropTypes) => {
+  const [newSubject, setNewSubject] = useState<{
+    name: string;
+    summary: string;
+  }>({
+    name: "",
+    summary: "",
+  });
+
   return (
     <Stepper.Content step="variant-details">
       <StepperActionHeader
@@ -142,7 +154,8 @@ export const VariantDetails = ({
               Subjects
             </FieldLabel>
             <FieldDescription className="text-xs">
-              Select existing subjects. At least one is required.
+              Select existing subjects or add a new subject below. At least one
+              is required.
             </FieldDescription>
           </div>
 
@@ -164,6 +177,91 @@ export const VariantDetails = ({
             }
           />
         </Field>
+
+        <Field className="space-y-2">
+          <div className="space-y-1">
+            <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+              New Subjects
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              Create a subject if it doesn't exist yet.
+            </FieldDescription>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <Input
+              id="new-subject-name"
+              type="text"
+              maxLength={50}
+              placeholder="Enter subject name."
+              className="h-10 rounded-md"
+              value={newSubject.name}
+              onChange={(e) =>
+                setNewSubject((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                }))
+              }
+            />
+
+            <Input
+              id="new-subject-summary"
+              type="text"
+              maxLength={50}
+              placeholder="Enter summary of new subject."
+              className="h-10 rounded-md"
+              value={newSubject.summary}
+              onChange={(e) =>
+                setNewSubject((prev) => ({
+                  ...prev,
+                  summary: e.target.value,
+                }))
+              }
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="btn-sec h-10 w-24 rounded-md"
+              onClick={() => {
+                if (newSubject.name !== "" && newSubject.summary !== "") {
+                  const newSubs = [...variantContData.newSubjects, newSubject];
+                  setVariantContData((prev: any) => ({
+                    ...prev,
+                    newSubjects: newSubs,
+                  }));
+
+                  setNewSubject({ name: "", summary: "" });
+                }
+              }}
+            >
+              Add Subject
+            </Button>
+          </div>
+        </Field>
+
+        {variantContData.newSubjects.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-1">
+            {variantContData.newSubjects.map((sub, index) => (
+              <Badge key={index} variant="outline" className="gap-1.5">
+                {sub.name} - {sub.summary}
+                <button
+                  type="button"
+                  aria-label={`Remove ${sub.name}`}
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() =>
+                    setVariantContData((prev: any) => ({
+                      ...prev,
+                      newSubjects: prev.newSubjects.filter(
+                        (_: unknown, i: number) => i !== index
+                      ),
+                    }))
+                  }
+                >
+                  <X className="size-2.5" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
       </FieldGroup>
     </Stepper.Content>
   );
