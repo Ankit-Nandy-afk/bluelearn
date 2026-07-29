@@ -62,8 +62,7 @@ export const meRouter = new Hono<HonoEnv>()
   )
 
   // Permanently deletes the caller's account. Authored work is anonymized rather
-  // than removed. 204 on success, and the caller's token stays technically valid
-  // until it expires, so the client should sign out straight after.
+  // than removed. The client still holds a session, so it should sign out after.
   .delete(
     "/",
     requireUser,
