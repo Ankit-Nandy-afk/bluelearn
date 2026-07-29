@@ -40,10 +40,16 @@ async function loadRevisionTags(supabase: DB, id: string) {
   return (data ?? []).map((r) => r.subject).filter((s) => s !== null);
 }
 
-// Replace a draft revision's subject tag set with the given slugs. Resolving
-// slugs up front makes an unknown tag fail the whole write; the delete/insert
-// are RLS-gated to the author's draft. Callers confirm editability first.
-async function replaceRevisionTags(supabase: DB, id: string, slugs: string[]) {
+// Replace a draft revision's subject tag set with the given slugs, plus any ids
+// passed directly for subjects still awaiting a slug. Resolving slugs up front
+// makes an unknown tag fail the whole write; the delete/insert are RLS-gated to
+// the author's draft. Callers confirm editability first.
+async function replaceRevisionTags(
+  supabase: DB,
+  id: string,
+  slugs: string[],
+  extraIds: string[] = []
+) {
   const unique = [...new Set(slugs)];
 
   let subjectIds: string[] = [];
@@ -62,6 +68,8 @@ async function replaceRevisionTags(supabase: DB, id: string, slugs: string[]) {
     }
     subjectIds = (data ?? []).map((s) => s.id);
   }
+
+  subjectIds = [...new Set([...subjectIds, ...extraIds])];
 
   const { error: delError } = await supabase
     .from("guide_revision_subjects")
@@ -177,18 +185,21 @@ export async function syncDraftTagsAndEdges(
 ) {
   const { tags, prerequisites, newSubjects = [], todoPrereqs } = input;
 
-  const createdSlugs: string[] = [];
+  const createdIds: string[] = [];
   for (const s of newSubjects) {
     const subject = await createSubject(supabase, userId, s.name, s.summary);
-    createdSlugs.push(subject.slug);
+    createdIds.push(subject.id);
   }
 
-  if (tags !== undefined || createdSlugs.length > 0) {
-    const kept =
+  if (tags !== undefined || createdIds.length > 0) {
+    const keptIds =
       tags !== undefined
-        ? tags
-        : (await loadRevisionTags(supabase, revisionId)).map((t) => t.slug);
-    await replaceRevisionTags(supabase, revisionId, [...kept, ...createdSlugs]);
+        ? []
+        : (await loadRevisionTags(supabase, revisionId)).map((t) => t.id);
+    await replaceRevisionTags(supabase, revisionId, tags ?? [], [
+      ...keptIds,
+      ...createdIds,
+    ]);
   }
 
   if (prerequisites !== undefined || todoPrereqs !== undefined) {

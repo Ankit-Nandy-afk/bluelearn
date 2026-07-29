@@ -98,10 +98,11 @@ describe("POST /guides", () => {
 
     const { data: subject } = await admin
       .from("subjects")
-      .select("id, status")
-      .eq("slug", newName.toLowerCase().replace(" ", "-"))
+      .select("id, slug, status")
+      .eq("name", newName)
       .single();
     expect(subject?.status).toBe("draft");
+    expect(subject?.slug).toBeNull();
 
     const { data: tags } = await admin
       .from("guide_revision_subjects")
@@ -393,10 +394,11 @@ describe("POST /guides/{slug}/variants", () => {
 
     const { data: tags } = await admin
       .from("guide_revision_subjects")
-      .select("subject:subjects(name, status)")
+      .select("subject:subjects(name, slug, status)")
       .eq("guide_revision_id", revision_id);
     expect(tags?.map((t) => t.subject?.name)).toEqual([name]);
     expect(tags?.[0]?.subject?.status).toBe("draft");
+    expect(tags?.[0]?.subject?.slug).toBeNull();
   });
 
   // Submitting requires a tag on the revision itself, so a variant created with

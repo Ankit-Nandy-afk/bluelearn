@@ -76,7 +76,9 @@ async function loadCanonicalTags(supabase: DB, revisionId: string | null) {
     console.error(error);
     throw new ServiceError("Failed to load guide subjects", 500);
   }
-  return (data ?? []).map((r) => r.subjects).filter((s) => s !== null);
+  return (data ?? [])
+    .map((r) => r.subjects)
+    .filter((s): s is NonNullable<typeof s> & { slug: string } => !!s?.slug);
 }
 
 // Resolve a base slug to its id, or 404. Shared by the variant/walkthrough
@@ -117,7 +119,7 @@ async function loadGuideTags(supabase: DB, revisionIds: string[]) {
   }
   for (const row of data ?? []) {
     const subject = row.subject;
-    if (!subject) continue;
+    if (!subject?.slug) continue;
     const list = map.get(row.guide_revision_id) ?? [];
     list.push({ slug: subject.slug, name: subject.name });
     map.set(row.guide_revision_id, list);

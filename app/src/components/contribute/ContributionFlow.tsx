@@ -178,6 +178,11 @@ function Inner({
 
     getRevision(draftId)
       .then((data) => {
+        // A tagged subject still awaiting review has no slug to preselect yet.
+        const tagged = data.subjects
+          .map((s) => s.slug)
+          .filter((slug): slug is string => slug !== null);
+
         if (data.is_variant) {
           setVariantContData({
             type: data.knowledge_type ?? "",
@@ -185,7 +190,7 @@ function Inner({
             summary: data.revision.summary ?? "",
             body: data.revision.body ?? "",
             baseGuide: data.base_slug ?? "",
-            subjects: data.subjects.map((s) => s.slug),
+            subjects: tagged,
             newSubjects: [],
           });
         } else {
@@ -194,7 +199,7 @@ function Inner({
             title: data.revision.title ?? "",
             summary: data.revision.summary ?? "",
             body: data.revision.body ?? "",
-            subjects: data.subjects.map((s) => s.slug),
+            subjects: tagged,
             newSubjects: [],
             prereqs: data.prerequisites,
             todoPrereqs: data.todos,
