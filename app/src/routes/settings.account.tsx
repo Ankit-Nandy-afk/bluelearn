@@ -10,18 +10,17 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { client } from "@/lib/api/apiClient";
 
 export const Route = createFileRoute("/settings/account")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const [account, setAccount] = useState({
-    displayName: "",
-    username: "",
-    email: "",
-    bio: "",
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState({
+    old: "",
+    new: "",
+    confirmNew: "",
   });
 
   const [saving, setSaving] = useState(false);
@@ -30,7 +29,7 @@ function RouteComponent() {
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>("");
 
-  // TODO: fetch user data and update setAccount based on user data
+  // TODO: fetch account data and update data based on fields
 
   const handleSave = async () => {
     setSaving(true);
@@ -80,33 +79,6 @@ function RouteComponent() {
         <FieldGroup>
           <Field className="space-y-2">
             <div className="space-y-1">
-              <FieldLabel
-                required
-                className="font-mono tracking-[0.08em] uppercase"
-              >
-                Username
-              </FieldLabel>
-            </div>
-
-            <Input
-              id="username"
-              type="text"
-              maxLength={50}
-              placeholder="..."
-              className="h-10 rounded-md"
-              required
-              value={account.username}
-              onChange={(e) => {
-                setAccount({
-                  ...account,
-                  username: e.target.value,
-                });
-              }}
-            />
-          </Field>
-
-          <Field className="space-y-2">
-            <div className="space-y-1">
               <FieldLabel className="font-mono tracking-[0.08em] uppercase">
                 Email
               </FieldLabel>
@@ -119,7 +91,8 @@ function RouteComponent() {
               id="email"
               type="email"
               className="h-10 rounded-md"
-              value={account.email}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </Field>
         </FieldGroup>
@@ -162,7 +135,13 @@ function RouteComponent() {
               id="old-password"
               type="password"
               className="h-10 rounded-md"
-              value={account.email}
+              value={password.old}
+              onChange={(e) => {
+                setPassword({
+                  ...password,
+                  old: e.target.value,
+                });
+              }}
             />
           </Field>
 
@@ -177,7 +156,13 @@ function RouteComponent() {
               id="new-password"
               type="password"
               className="h-10 rounded-md"
-              value={account.email}
+              value={password.new}
+              onChange={(e) => {
+                setPassword({
+                  ...password,
+                  new: e.target.value,
+                });
+              }}
             />
           </Field>
 
@@ -192,7 +177,13 @@ function RouteComponent() {
               id="confirm-password"
               type="password"
               className="h-10 rounded-md"
-              value={account.email}
+              value={password.confirmNew}
+              onChange={(e) => {
+                setPassword({
+                  ...password,
+                  confirmNew: e.target.value,
+                });
+              }}
             />
           </Field>
         </FieldGroup>
