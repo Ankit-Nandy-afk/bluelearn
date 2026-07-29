@@ -72,7 +72,7 @@ function SidebarMd({ groupedSubjectReferences }: SubjectsProps) {
           {subjects.map((subject: SubjectReference) => (
             <li>
               <Link to={SubjectRoute.to} params={{ slug: subject.slug }}>
-                Game Development
+                {subject.name}
               </Link>
             </li>
           ))}
