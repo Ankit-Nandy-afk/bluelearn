@@ -41,12 +41,12 @@ on conflict (provider_id, provider) do nothing;
 -- Subjects
 -- ---------------------------------------------------------------------------
 
-insert into public.subjects (id, slug, name, creator_id) values
-  ('10000000-0000-0000-0000-000000000001', 'javascript', 'JavaScript', '00000000-0000-0000-0000-000000000001'),
-  ('10000000-0000-0000-0000-000000000002', 'react',      'React',      '00000000-0000-0000-0000-000000000001'),
-  ('10000000-0000-0000-0000-000000000003', 'algorithms', 'Algorithms', '00000000-0000-0000-0000-000000000001'),
-  ('10000000-0000-0000-0000-000000000004', 'databases',  'Databases',  '00000000-0000-0000-0000-000000000001'),
-  ('10000000-0000-0000-0000-000000000005', 'devops',     'DevOps',     '00000000-0000-0000-0000-000000000001')
+insert into public.subjects (id, slug, name, creator_id, status) values
+  ('10000000-0000-0000-0000-000000000001', 'javascript', 'JavaScript', '00000000-0000-0000-0000-000000000001', 'published'),
+  ('10000000-0000-0000-0000-000000000002', 'react',      'React',      '00000000-0000-0000-0000-000000000001', 'published'),
+  ('10000000-0000-0000-0000-000000000003', 'algorithms', 'Algorithms', '00000000-0000-0000-0000-000000000001', 'published'),
+  ('10000000-0000-0000-0000-000000000004', 'databases',  'Databases',  '00000000-0000-0000-0000-000000000001', 'published'),
+  ('10000000-0000-0000-0000-000000000005', 'devops',     'DevOps',     '00000000-0000-0000-0000-000000000001', 'published')
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------
@@ -269,13 +269,14 @@ begin
     );
   end if;
 
-  insert into public.subjects (id, slug, name, summary, creator_id)
+  insert into public.subjects (id, slug, name, summary, creator_id, status)
   values (
     v_subject,
     'game-development',
     'Game Development',
     'Build games from first principles: engines, assets, gameplay, and shipping.',
-    v_author
+    v_author,
+    'published'
   );
 
   -- Five published guides tagged with the subject.

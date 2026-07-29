@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseMiddleware } from "./middleware/auth.middleware";
+import { rateLimitMiddleware } from "./middleware/rate-limit.middleware";
+import { READ } from "./middleware/rateLimits";
 import { ServiceError } from "./lib/service-error";
 import { assemblePendingPanels } from "./services/review.service";
 import { promoteAllCanonicals } from "./services/promotion.service";
@@ -26,6 +28,7 @@ import { avatarRouter } from "./routes/avatar";
 
 const app = new Hono<HonoEnv>()
   .use((c, next) => cors({ origin: c.env.APP_URL })(c, next))
+  .use(rateLimitMiddleware({ ...READ, bucket: "global-read" }))
   .use(supabaseMiddleware())
   .get("/", (c) => c.json({ ok: true }))
 
@@ -53,15 +56,16 @@ app.onError((err, c) => {
   return c.json({ error: "Internal server error" }, 500);
 });
 
-// Scheduled trigger (schedule in wrangler.jsonc).
-async function scheduled(_event: ScheduledController, env: Bindings) {
+// Scheduled trigger (schedules in wrangler.jsonc).
+async function scheduled(event: ScheduledController, env: Bindings) {
   const supabase = createClient<Database>(
     env.SUPABASE_URL,
     env.SUPABASE_SECRET_KEY,
     { auth: { persistSession: false, autoRefreshToken: false } }
   );
-  await assemblePendingPanels(supabase);
-  await promoteAllCanonicals(supabase);
+
+  if (event.cron === "*/5 * * * *") await assemblePendingPanels(supabase);
+  if (event.cron === "0 */12 * * *") await promoteAllCanonicals(supabase);
 }
 
 // Default export doubles as the Workers handler and the cron entry: Hono serves

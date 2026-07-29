@@ -2,10 +2,14 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { updateProfileSchema } from "@bluelearn/schemas";
 import { getServiceSupabase, requireUser } from "../middleware/auth.middleware";
+import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
+import { CONTRIBUTION } from "../middleware/rateLimits";
 import type { HonoEnv } from "../types";
 import {
+  getMyActivity,
   getMyDrafts,
   getMyIdentity,
+  getMyProfileStats,
   getPublicProfile,
   updateMyProfile,
 } from "../services/identity.service";
@@ -28,10 +32,24 @@ export const meRouter = new Hono<HonoEnv>()
     return c.json(drafts);
   })
 
+  // Returns the number of caller's votes received, contributions, and reviews.
+  .get("/stats", requireUser, async (c) => {
+    const stats = await getMyProfileStats(c.get("supabase"), c.get("user").id);
+    return c.json(stats);
+  })
+
+  // The caller's activity feed, which includes authored guide and objective
+  // revisions and review cases they voted on, sorted by newest first.
+  .get("/activity", requireUser, async (c) => {
+    const activity = await getMyActivity(c.get("supabase"), c.get("user").id);
+    return c.json(activity);
+  })
+
   // Updates the caller's profile. 409 if the username is taken.
   .patch(
     "/",
     requireUser,
+    rateLimitMiddleware({ ...CONTRIBUTION, bucket: "profile-update" }),
     zValidator("json", updateProfileSchema),
     async (c) => {
       const { profile, roles } = await updateMyProfile(
