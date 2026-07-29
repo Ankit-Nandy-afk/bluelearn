@@ -12,7 +12,7 @@ export function ThemeSelector() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="grid grid-cols-2 gap-5">
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
       {themes.map((t) => {
         const selected = theme === t.id;
 

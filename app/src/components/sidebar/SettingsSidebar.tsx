@@ -22,7 +22,7 @@ export const SettingsSidebar = () => {
   });
 
   return (
-    <aside className="h-[calc(100vh-70px)] w-64 shrink-0 overflow-y-auto border-r px-6 py-6">
+    <aside className="fixed top-[70px] h-[calc(100vh-70px)] w-64 shrink-0 overflow-y-auto px-6 py-6">
       <div className="mb-6">
         <h2 className="font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
           Settings

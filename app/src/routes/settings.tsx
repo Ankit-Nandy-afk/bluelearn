@@ -11,9 +11,10 @@ function RouteComponent() {
       <div className="flex min-h-[calc(100svh_-_64px)]">
         {/* Left Sidebar Navigation */}
         <SettingsSidebar />
+        <div className="w-64" />
 
         {/* Right Content Area */}
-        <div className="flex-1 px-8 py-8 lg:px-16">
+        <div className="flex-1 border-l px-8 py-8 lg:px-16">
           <Outlet />
         </div>
       </div>

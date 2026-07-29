@@ -85,7 +85,7 @@ function RouteComponent() {
               Profile Photo
             </FieldLabel>
             <FieldDescription className="text-xs">
-              Automatically generated whe your account was created.
+              Automatically generated when your account was created.
             </FieldDescription>
           </div>
 
@@ -102,7 +102,7 @@ function RouteComponent() {
                 Upload
               </Button>
             </div>
-            <FieldDescription className="text-xs">
+            <FieldDescription className="text-xs text-primary">
               Custom profile photos coming soon!
             </FieldDescription>
           </div>
@@ -181,7 +181,6 @@ function RouteComponent() {
           <Input
             id="email"
             type="email"
-            disabled
             className="h-10 rounded-md"
             required
             value={account.email}
