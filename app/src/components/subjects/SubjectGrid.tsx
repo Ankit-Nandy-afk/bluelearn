@@ -8,7 +8,7 @@ type SubjectsGridProps = {
 
 export const SubjectsGrid = ({ subjects }: SubjectsGridProps) => {
   return (
-    <div className="grid grid-cols-1 gap-6 md:ml-4 lg:grid-cols-2">
+    <div className="my-4 grid grid-cols-1 gap-6 md:my-0 md:ml-4 lg:grid-cols-2">
       {subjects.map((subject) => {
         const s = {
           ...subject,

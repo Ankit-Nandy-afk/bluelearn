@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { SubjectsGrid } from "@/components/subjects/SubjectGrid";
 import {
@@ -11,7 +12,7 @@ import {
 import { SubjectSidebar } from "@/components/sidebar/SubjectSidebar";
 
 import { listSubjects } from "@/lib/api/subjects";
-import { getSubjectNamesGroupedByFirstLetter } from "@/lib/groupSubjects";
+import { getSubjectsGroupedByChar } from "@/lib/groupSubjects";
 
 export const Route = createFileRoute("/subjects/")({
   loader: ({ abortController }) =>
@@ -45,10 +46,23 @@ export const SubjectsPage = ({ children }: SubjectsPageProps) => {
 function RouteComponent() {
   const subjects = Route.useLoaderData();
 
-  const subjectsGroupedByNameFirstCharacter = useMemo(
-    () => getSubjectNamesGroupedByFirstLetter(subjects),
+  const groupedSubjects = useMemo(
+    () => getSubjectsGroupedByChar(subjects),
     [subjects]
   );
+
+  const letters = useMemo(
+    () => Array.from(groupedSubjects.keys()),
+    [groupedSubjects]
+  );
+
+  const [selectedLetter, setSelectedLetter] = useState("");
+
+  useEffect(() => {
+    if (!selectedLetter && letters.length > 0) {
+      setSelectedLetter(letters[0]);
+    }
+  }, [letters, selectedLetter]);
 
   if (subjects.length === 0) {
     return (
@@ -60,10 +74,32 @@ function RouteComponent() {
 
   return (
     <SubjectsPage>
-      <section className="grid md:grid-cols-[320px_1fr]">
-        <SubjectSidebar groupedSubject={subjectsGroupedByNameFirstCharacter} />
+      <section>
+        {/* Desktop */}
+        <div className="hidden md:grid md:grid-cols-[320px_1fr]">
+          <SubjectSidebar groupedSubject={groupedSubjects} />
 
-        <SubjectsGrid subjects={subjects} />
+          <SubjectsGrid subjects={subjects} />
+        </div>
+
+        {/* Mobile */}
+        <div className="md:hidden">
+          <Tabs value={selectedLetter} onValueChange={setSelectedLetter}>
+            <TabsList className="flex h-auto min-h-10 w-full justify-start gap-2 overflow-x-auto overflow-y-hidden bg-transparent p-0">
+              {letters.map((letter) => (
+                <TabsTrigger
+                  key={letter}
+                  value={letter}
+                  className="mono-micro flex h-auto shrink-0 items-center rounded-full border border-border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:ring-1 data-[state=active]:ring-primary/20"
+                >
+                  {letter}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+
+          <SubjectsGrid subjects={groupedSubjects.get(selectedLetter) ?? []} />
+        </div>
       </section>
     </SubjectsPage>
   );

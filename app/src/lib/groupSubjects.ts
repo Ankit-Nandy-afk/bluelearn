@@ -1,45 +1,44 @@
-import type { SubjectListItem, SubjectReferences } from "@bluelearn/schemas";
+import type { SubjectListItem } from "@bluelearn/schemas";
 
 type Subjects = Array<SubjectListItem>;
 
-type SubjectsGroupedByNameFirstCharacter = Map<string, SubjectReferences>;
+type SubjectsGroupedByChar = Map<string, Subjects>;
 
 const FIRST_LETTER_NUMBER_SUBJECT_GROUP = "#";
 
-export const getSubjectNamesGroupedByFirstLetter = (
+export const getSubjectsGroupedByChar = (
   subjects: Subjects
-): SubjectsGroupedByNameFirstCharacter => {
-  const subjectsGrouped: SubjectsGroupedByNameFirstCharacter = new Map();
+): SubjectsGroupedByChar => {
+  const grouped: SubjectsGroupedByChar = new Map();
   const isAlphabet = /^[a-z]$/i;
 
-  if (!Array.isArray(subjects) || subjects.length === 0) return subjectsGrouped;
+  if (subjects.length === 0) return grouped;
 
-  const subjectsSorted = Array.from(subjects).sort((subjectA, subjectB) => {
-    const a = subjectA.name.at(0) || "";
-    const b = subjectB.name.at(0) || "";
+  const sorted = [...subjects].sort((a, b) => {
+    const firstA = a.name.at(0) ?? "";
+    const firstB = b.name.at(0) ?? "";
 
-    const aIsNum = /^\d+$/.test(a);
-    const bIsNum = /^\d+$/.test(b);
+    const aIsNum = /^\d/.test(firstA);
+    const bIsNum = /^\d/.test(firstB);
 
     if (aIsNum === bIsNum) {
-      // Both numbers or both alphabets
-      return a.localeCompare(b);
+      return firstA.localeCompare(firstB);
     }
 
-    return aIsNum ? -1 : 1; // Numbers first
+    return aIsNum ? -1 : 1;
   });
 
-  subjectsSorted.map((subject: SubjectListItem) => {
-    const { name } = subject;
-    const firstLetter = name.at(0)?.toUpperCase() || "";
+  for (const subject of sorted) {
+    const first = subject.name.at(0)?.toUpperCase() ?? "";
 
-    const character = isAlphabet.test(firstLetter)
-      ? firstLetter
+    const key = isAlphabet.test(first)
+      ? first
       : FIRST_LETTER_NUMBER_SUBJECT_GROUP;
-    const currentSubjects = subjectsGrouped.get(character) || [];
 
-    subjectsGrouped.set(firstLetter, [...currentSubjects, subject]);
-  });
+    const currentSubjects = grouped.get(key) ?? [];
 
-  return subjectsGrouped;
+    grouped.set(key, [...currentSubjects, subject]);
+  }
+
+  return grouped;
 };

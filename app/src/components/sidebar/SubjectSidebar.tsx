@@ -6,10 +6,10 @@ import { CollapsibleSection } from "@/components/CollapsibleSection";
 
 import { Route as SubjectRoute } from "@/routes/subjects.$slug";
 
-type SubjectsGroupedByNameFirstCharacter = Map<string, SubjectReferences>;
+type SubjectsGroupedByChar = Map<string, SubjectReferences>;
 
 type SubjectsProps = {
-  groupedSubject: SubjectsGroupedByNameFirstCharacter;
+  groupedSubject: SubjectsGroupedByChar;
 };
 
 export const SubjectSidebar = ({ groupedSubject }: SubjectsProps) => {
