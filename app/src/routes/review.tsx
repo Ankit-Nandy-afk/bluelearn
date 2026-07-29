@@ -4,6 +4,7 @@ import { useRequireRole } from "@/lib/authContext";
 import { NotFound } from "@/components/NotFound";
 
 export const Route = createFileRoute("/review")({
+  ssr: false,
   component: RouteComponent,
 });
 
