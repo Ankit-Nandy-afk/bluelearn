@@ -291,9 +291,10 @@ function Inner({
   });
 
   const variantDraftFields = () => ({
-    title: variantContData.title,
+    title: variantContData.title || null,
     summary: variantContData.summary || null,
     body: variantContData.body || null,
+    tags: variantContData.subjects,
   });
 
   const creatingRef = useRef<Promise<string> | null>(null);
@@ -304,6 +305,10 @@ function Inner({
         type === "guide" ? draftFields() : variantDraftFields()
       );
       return revisionId;
+    }
+
+    if (type === "variant" && !variantContData.baseGuide) {
+      throw new Error("Pick a base guide before saving");
     }
 
     if (!creatingRef.current) {
@@ -317,7 +322,7 @@ function Inner({
               ...draftFields(),
             })
           : addGuideVariant(variantContData.baseGuide, variantDraftFields())
-      ) // TODO: this needs to be changed, baseGuide is a slug not an id
+      )
         .then((id) => {
           setRevisionId(id);
           return id;

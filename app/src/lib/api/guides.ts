@@ -58,11 +58,8 @@ export async function addGuideVariant(
     param: { slug },
     json: body,
   });
+  if (!res.ok) return assertOk(res) as Promise<never>;
 
-  const result = await res.json();
-  if ("revision_id" in result) {
-    return result.revision_id;
-  }
-
-  throw new Error("Failed to submit guide variant.");
+  const { revision_id } = await res.json();
+  return revision_id;
 }

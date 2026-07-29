@@ -132,6 +132,7 @@ export const guidesRouter = new Hono<HonoEnv>()
     async (c) => {
       const { revision_id } = await addGuideVariant(
         c.get("supabase"),
+        c.get("user").id,
         c.req.param("slug"),
         c.req.valid("json")
       );

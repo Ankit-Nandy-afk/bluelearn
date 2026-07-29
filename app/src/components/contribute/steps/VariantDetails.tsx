@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { VariantContribution } from "@/types/contributions";
 import type { listGuides } from "@/lib/api/guides";
@@ -28,24 +27,11 @@ export const VariantDetails = ({
   onSaveDraft,
   submitting,
 }: PropTypes) => {
-  const isNextDisabled = useMemo(() => {
-    return (
-      variantContData.title.trim() === "" ||
-      variantContData.summary.trim() === "" ||
-      variantContData.baseGuide.length === 0
-    );
-  }, [
-    variantContData.title,
-    variantContData.summary,
-    variantContData.baseGuide,
-  ]);
-
   return (
     <Stepper.Content step="variant-details">
       <StepperActionHeader
         title={"Variant Details"}
         Stepper={Stepper}
-        nextDisabled={isNextDisabled}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
       />
@@ -109,13 +95,15 @@ export const VariantDetails = ({
           </FieldLabel>
 
           <Combobox
-            items={guides.map((g: any) => {
-              return {
-                value: g.slug,
-                label: g.title,
-                description: g.summary,
-              };
-            })}
+            items={guides
+              .filter((g): g is typeof g & { slug: string } => !!g.slug)
+              .map((g) => {
+                return {
+                  value: g.slug,
+                  label: g.title ?? g.slug,
+                  description: g.summary ?? undefined,
+                };
+              })}
             value={variantContData.baseGuide}
             onValueChange={(baseGuide) =>
               setVariantContData((prev: any) => ({
@@ -143,10 +131,10 @@ export const VariantDetails = ({
               };
             })}
             value={variantContData.subjects}
-            onValueChange={(subjectsData) =>
+            onValueChange={(slugs) =>
               setVariantContData((prev: any) => ({
                 ...prev,
-                subjectsData,
+                subjects: slugs,
               }))
             }
           />

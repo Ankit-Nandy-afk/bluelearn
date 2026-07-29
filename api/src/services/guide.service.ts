@@ -346,6 +346,7 @@ export async function listGuideVariants(
 // editor.
 export async function addGuideVariant(
   supabase: DB,
+  userId: string,
   rawSlug: string,
   input: CreateVariantInput
 ) {
@@ -353,7 +354,7 @@ export async function addGuideVariant(
 
   const { data: revision_id, error } = await supabase.rpc("create_variant", {
     p_guide_base_id: baseId,
-    p_title: input.title,
+    p_title: input.title ?? undefined,
     p_summary: input.summary ?? undefined,
     p_body: input.body ?? undefined,
   });
@@ -362,6 +363,13 @@ export async function addGuideVariant(
     console.error(error);
     throw new ServiceError("Failed to add variant", 500);
   }
+
+  // Prereqs and todos aren't include because those are inherited from shared base.
+  await syncDraftTagsAndEdges(supabase, userId, revision_id, {
+    tags: input.tags,
+    newSubjects: input.newSubjects,
+  });
+
   return { revision_id };
 }
 
