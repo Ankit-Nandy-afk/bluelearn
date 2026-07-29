@@ -16,7 +16,6 @@ import type { Guide } from "@bluelearn/schemas";
 import { createGuide, listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
-import { submitRevision, updateRevision } from "@/lib/api/guideRevisions";
 import { createObjective } from "@/lib/api/objectives";
 import {
   addObjectiveTarget,
@@ -24,6 +23,11 @@ import {
   submitObjectiveRevision,
   updateObjectiveRevision,
 } from "@/lib/api/objectiveRevisions";
+import {
+  getRevision,
+  submitRevision,
+  updateRevision,
+} from "@/lib/api/guideRevisions";
 import { uploadMedia } from "@/lib/api/media";
 import { estimateReadMinutes, formatDate } from "@/lib/guideUtils";
 
@@ -42,6 +46,7 @@ import { PreviewObjective } from "@/components/contribute/steps/PreviewObjective
 type PropTypes = {
   type: ContributionType | null;
   setType: (value: ContributionType) => void;
+  draftId?: string;
 };
 
 const createGuideContData = (): GuideContribution => ({
@@ -73,7 +78,11 @@ const createObjectiveContData = (): ObjectiveContribution => ({
   subjects: [],
 });
 
-export default function ContributionFlow({ type, setType }: PropTypes) {
+export default function ContributionFlow({
+  type,
+  setType,
+  draftId,
+}: PropTypes) {
   const [guideContData, setGuideContData] =
     useState<GuideContribution>(createGuideContData);
   const [variantContData, setVariantContData] = useState<VariantContribution>(
@@ -100,6 +109,7 @@ export default function ContributionFlow({ type, setType }: PropTypes) {
           stepper={stepper}
           type={type}
           setType={setType}
+          draftId={draftId}
           guideContData={guideContData}
           setGuideContData={setGuideContData}
           variantContData={variantContData}
@@ -117,6 +127,7 @@ function Inner({
   stepper,
   type,
   setType,
+  draftId,
   guideContData,
   setGuideContData,
   variantContData,
@@ -128,6 +139,7 @@ function Inner({
   stepper: any;
   type: ContributionType | null;
   setType: (value: ContributionType) => void;
+  draftId?: string;
 
   guideContData: GuideContribution;
   setGuideContData: Dispatch<SetStateAction<GuideContribution>>;
@@ -163,6 +175,33 @@ function Inner({
   const [revisionId, setRevisionId] = useState<string | null>(null);
   const [savedTargets, setSavedTargets] = useState<Array<string>>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // Resume a guide draft opened from the profile.
+  const resumedRef = useRef(false);
+  useEffect(() => {
+    if (!draftId || resumedRef.current) return;
+    resumedRef.current = true;
+
+    getRevision(draftId)
+      .then((data) => {
+        setGuideContData({
+          type: data.knowledge_type ?? "theoretical",
+          title: data.revision.title ?? "",
+          summary: data.revision.summary ?? "",
+          body: data.revision.body ?? "",
+          subjects: data.subjects.map((s) => s.slug),
+          newSubjects: [],
+          prereqs: data.prerequisites,
+          todoPrereqs: data.todos,
+        });
+        setRevisionId(draftId);
+        setType("guide");
+        requestAnimationFrame(() => stepper.goTo("guide-details"));
+      })
+      .catch(() => {
+        toast.error("Could not load draft");
+      });
+  }, [draftId]);
 
   const [subjectOptions, setSubjectOptions] = useState<
     Awaited<ReturnType<typeof listSubjects>>
@@ -336,6 +375,7 @@ function Inner({
   const uploadGuideImage = async (file: File) => {
     try {
       const id = revisionId ?? (await persistDraft());
+      if (!id) throw new Error("Failed to save draft before uploading image");
       const { url } = await uploadMedia(file, id);
       return url;
     } catch (e) {
@@ -360,6 +400,7 @@ function Inner({
     setSubmitting(true);
     try {
       const id = await persistDraft();
+      if (!id) throw new Error("Failed to save draft before publishing");
       if (type === "objective") {
         await submitObjectiveRevision(id);
       } else {

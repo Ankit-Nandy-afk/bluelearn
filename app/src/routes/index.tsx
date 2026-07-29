@@ -1,10 +1,13 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
+import { useState } from "react";
+
+import type { SearchFilters } from "@/lib/api/search";
 
 import { Route as SubjectRoute } from "@/routes/subjects.$slug";
 import { listSubjects } from "@/lib/api/subjects";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SearchBar } from "@/components/SearchBar";
+import { SearchFilterMenu } from "@/components/SearchFilterMenu";
 import { Separator } from "@/components/ui/separator";
 
 const BLUE_CONCEPTS = [
@@ -48,6 +51,9 @@ export const Route = createFileRoute("/")({
 
 function RouteComponent() {
   const { subjects, subjectsFailed } = Route.useLoaderData();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<SearchFilters>({});
 
   return (
     <div className="mx-auto max-w-[1280px] bg-background">
@@ -93,30 +99,23 @@ function RouteComponent() {
       <Separator className="bg-border" />
 
       <section className="px-8 py-10 lg:px-16">
-        <div className="flex gap-3">
-          <div className="relative flex-1 rounded-md">
-            <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-
-            <Input
-              placeholder="Search guides, concepts, topics..."
-              className="h-14 pr-12 pl-11 text-base"
-            />
-
-            <button className="absolute top-1/2 right-3 -translate-y-1/2 p-1 text-muted-foreground hover:bg-muted">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-14 w-14 rounded-md border"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
-
-          <Button className="btn-pri h-14 px-8">Search</Button>
-        </div>
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          onSubmit={() => {
+            const q = query.trim();
+            if (q)
+              navigate({
+                to: "/browse",
+                search: {
+                  q,
+                  scope: filters.scope,
+                  kind: filters.knowledgeType,
+                },
+              });
+          }}
+          filter={<SearchFilterMenu value={filters} onChange={setFilters} />}
+        />
       </section>
 
       <Separator className="bg-border" />

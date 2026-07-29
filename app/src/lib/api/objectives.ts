@@ -6,15 +6,17 @@ const objectives = client.objectives;
 
 type FetchOptions = { signal?: AbortSignal };
 
-export async function listObjectives({ signal }: FetchOptions = {}) {
-  const res = await (objectives.$get as any)({}, { init: { signal } });
-  await assertOk(res);
+export async function listObjectives(
+  { page = 1, limit = 20 }: { page?: number; limit?: number } = {},
+  { signal }: FetchOptions = {}
+) {
+  const res = await objectives.$get(
+    { query: { page: String(page), limit: String(limit) } },
+    { init: { signal } }
+  );
+  if (!res.ok) return assertOk(res) as Promise<never>;
 
-  const data = await res.json();
-  if ("objectives" in data) {
-    return data.objectives;
-  }
-  return [];
+  return res.json();
 }
 
 export async function createObjective(
