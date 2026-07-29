@@ -1,10 +1,5 @@
 import { useMemo } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
-import type {
-  SubjectListItem,
-  SubjectReference,
-  SubjectReferences,
-} from "@bluelearn/schemas";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { Separator } from "@/components/ui/separator";
 
@@ -12,29 +7,25 @@ import { SubjectCard } from "@/components/cards/SubjectCard";
 import { Route as SubjectRoute } from "@/routes/subjects.$slug";
 
 import { listSubjects } from "@/lib/api/subjects";
-import { CollapsibleSection } from "@/components/CollapsibleSection";
-
-type Subjects = Array<SubjectListItem>;
-
-type SubjectsGroupedByNameFirstCharacter = Map<string, SubjectReferences>;
-
-type SubjectsProps = {
-  groupedSubjectReferences: SubjectsGroupedByNameFirstCharacter;
-};
-
-const FIRST_LETTER_NUMBER_SUBJECT_GROUP = "#";
+import { getSubjectNamesGroupedByFirstLetter } from "@/lib/groupSubjects";
+import { NoSubjectsError, SubjectsLoadError } from "@/components/SubjectsError";
+import { SubjectSidebar } from "@/components/sidebar/SubjectSidebar";
 
 export const Route = createFileRoute("/subjects/")({
   loader: ({ abortController }) =>
     listSubjects({ signal: abortController.signal }),
-  errorComponent: SubjectsError,
+  errorComponent: SubjectsLoadError,
   component: RouteComponent,
 });
 
-function Shell({ children }: { children: React.ReactNode }) {
+type SubjectsPageProps = {
+  children: React.ReactNode;
+};
+
+export const SubjectsPage = ({ children }: SubjectsPageProps) => {
   return (
     <div className="mx-auto max-w-[1280px] border-x bg-background">
-      <section className="border-b px-8 py-8 lg:px-16">
+      <div className="border-b px-8 py-8 lg:px-16">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
             Browse By Subjects
@@ -44,134 +35,47 @@ function Shell({ children }: { children: React.ReactNode }) {
         <Separator className="mb-4 bg-border" />
 
         {children}
-      </section>
-    </div>
-  );
-}
-
-function SubjectsError() {
-  return (
-    <Shell>
-      <p className="text-sm text-muted-foreground">
-        Subjects could not be loaded. Try again shortly.
-      </p>
-    </Shell>
-  );
-}
-
-function SidebarMd({ groupedSubjectReferences }: SubjectsProps) {
-  return Array.from(groupedSubjectReferences.keys()).map((char: string) => {
-    const subjects = groupedSubjectReferences.get(char) || [];
-
-    return (
-      <CollapsibleSection
-        title={<span className="text-2xl font-black">{char}</span>}
-        containerStyles=""
-      >
-        <ul className="ml-8 list-disc">
-          {subjects.map((subject: SubjectReference) => (
-            <li>
-              <Link to={SubjectRoute.to} params={{ slug: subject.slug }}>
-                {subject.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </CollapsibleSection>
-    );
-  });
-}
-
-function Sidebar({ groupedSubjectReferences }: SubjectsProps) {
-  return (
-    <>
-      <div className="hidden md:block">
-        <SidebarMd groupedSubjectReferences={groupedSubjectReferences} />
       </div>
-    </>
-  );
-}
-
-function Subjects({ subjects }: { subjects: Subjects }) {
-  return (
-    <div className="grid grid-cols-1 gap-6 md:ml-4 lg:grid-cols-2">
-      {subjects.map((subject) => {
-        const s = {
-          ...subject,
-          stats: [
-            { label: "Objectives", data: subject.objectives_total },
-            { label: "Guides", data: subject.guides_total },
-          ],
-        };
-        return <SubjectCard key={s.slug} subject={s} to={SubjectRoute.to} />;
-      })}
     </div>
   );
-}
-
-const getSubjectNamesGroupedByFirstLetter = (
-  subjects: Subjects
-): SubjectsGroupedByNameFirstCharacter => {
-  const subjectsGrouped: SubjectsGroupedByNameFirstCharacter = new Map();
-  const isAlphabet = /^[a-z]$/i;
-
-  if (!Array.isArray(subjects) || subjects.length === 0) return subjectsGrouped;
-
-  const subjectsSorted = Array.from(subjects).sort((subjectA, subjectB) => {
-    const a = subjectA.name.at(0) || "";
-    const b = subjectB.name.at(0) || "";
-
-    const aIsNum = /^\d+$/.test(a);
-    const bIsNum = /^\d+$/.test(b);
-
-    if (aIsNum === bIsNum) {
-      // Both numbers or both alphabets
-      return a.localeCompare(b);
-    }
-
-    return aIsNum ? -1 : 1; // Numbers first
-  });
-
-  subjectsSorted.map((subject: SubjectListItem) => {
-    const { name } = subject;
-    const firstLetter = name.at(0)?.toUpperCase() || "";
-
-    const character = isAlphabet.test(firstLetter)
-      ? firstLetter
-      : FIRST_LETTER_NUMBER_SUBJECT_GROUP;
-    const currentSubjects = subjectsGrouped.get(character) || [];
-
-    subjectsGrouped.set(firstLetter, [...currentSubjects, subject]);
-  });
-
-  return subjectsGrouped;
 };
 
 function RouteComponent() {
-  const subjects: Array<SubjectListItem> = Route.useLoaderData();
+  const subjects = Route.useLoaderData();
 
-  const subjectsGroupedByNameFirstCharacter: SubjectsGroupedByNameFirstCharacter =
-    useMemo(() => getSubjectNamesGroupedByFirstLetter(subjects), [subjects]);
+  const subjectsGroupedByNameFirstCharacter = useMemo(
+    () => getSubjectNamesGroupedByFirstLetter(subjects),
+    [subjects]
+  );
 
   if (subjects.length === 0) {
     return (
-      <Shell>
-        <p className="text-sm text-muted-foreground">No subjects yet.</p>
-      </Shell>
+      <SubjectsPage>
+        <NoSubjectsError />
+      </SubjectsPage>
     );
   }
 
   return (
-    <Shell>
-      <section className="grid border-b md:grid-cols-[320px_1fr]">
-        <aside className="overflow-y-auto py-6 md:h-[calc(100vh-70px)] md:px-6">
-          <Sidebar
-            groupedSubjectReferences={subjectsGroupedByNameFirstCharacter}
-          />
-        </aside>
+    <SubjectsPage>
+      <section className="grid md:grid-cols-[320px_1fr]">
+        <SubjectSidebar groupedSubject={subjectsGroupedByNameFirstCharacter} />
 
-        <Subjects subjects={subjects} />
+        <div className="grid grid-cols-1 gap-6 md:ml-4 lg:grid-cols-2">
+          {subjects.map((subject) => {
+            const s = {
+              ...subject,
+              stats: [
+                { label: "Objectives", data: subject.objectives_total },
+                { label: "Guides", data: subject.guides_total },
+              ],
+            };
+            return (
+              <SubjectCard key={s.slug} subject={s} to={SubjectRoute.to} />
+            );
+          })}
+        </div>
       </section>
-    </Shell>
+    </SubjectsPage>
   );
 }

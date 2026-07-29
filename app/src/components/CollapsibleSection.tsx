@@ -16,7 +16,7 @@ export const CollapsibleSection = ({
   title: React.ReactNode;
   defaultOpen?: boolean;
   children: React.ReactNode;
-  containerStyles: string;
+  containerStyles?: string;
 }) => {
   const [open, setOpen] = useState(defaultOpen ?? false);
 
