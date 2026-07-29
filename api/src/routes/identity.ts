@@ -3,9 +3,10 @@ import { zValidator } from "@hono/zod-validator";
 import { updateProfileSchema } from "@bluelearn/schemas";
 import { getServiceSupabase, requireUser } from "../middleware/auth.middleware";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
-import { CONTRIBUTION } from "../middleware/rateLimits";
+import { CONTRIBUTION, DESTRUCTIVE } from "../middleware/rateLimits";
 import type { HonoEnv } from "../types";
 import {
+  deleteMyAccount,
   getMyActivity,
   getMyDrafts,
   getMyIdentity,
@@ -57,6 +58,19 @@ export const meRouter = new Hono<HonoEnv>()
         c.req.valid("json")
       );
       return c.json({ profile, email: user.email ?? null, roles });
+    }
+  )
+
+  // Permanently deletes the caller's account. Authored work is anonymized rather
+  // than removed. 204 on success, and the caller's token stays technically valid
+  // until it expires, so the client should sign out straight after.
+  .delete(
+    "/",
+    requireUser,
+    rateLimitMiddleware({ ...DESTRUCTIVE, bucket: "account-delete" }),
+    async (c) => {
+      await deleteMyAccount(getServiceSupabase(c), c.get("user").id);
+      return c.body(null, 204);
     }
   );
 
