@@ -188,13 +188,15 @@ describe("PATCH /guide-revisions/{id}", () => {
       .eq("dependent_guide_base_id", base.id);
     expect(todos?.map((t) => t.title)).toEqual(["Learn functions"]);
 
-    // The inline subject lands as a draft, hidden until this guide is approved.
+    // The inline subject lands as a draft with no slug, hidden until this guide
+    // is approved.
     const { data: created } = await admin
       .from("subjects")
-      .select("status")
-      .eq("slug", newName.toLowerCase().replace(" ", "-"))
+      .select("status, slug")
+      .eq("name", newName)
       .single();
     expect(created?.status).toBe("draft");
+    expect(created?.slug).toBeNull();
   });
 });
 
