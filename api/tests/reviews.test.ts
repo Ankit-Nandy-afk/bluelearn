@@ -18,6 +18,7 @@ import {
   createGuideRevision,
   createPublishedGuide,
 } from "./factories/guides";
+import { createSubject, tagGuideRevision } from "./factories/subjects";
 import { expectToMatchSpec } from "./openapi";
 
 async function seedQueueCase(
@@ -368,6 +369,64 @@ describe("close_review_panel via cast decision", () => {
       .single();
     expect(b?.status).toBe("published");
     expect(b?.canonical_guide_id).toBe(guide.id);
+  });
+
+  it("assigns a slug to the subjects the approved revision proposed", async () => {
+    const base = await createGuideBase();
+    const guide = await createGuide(base.id);
+    const revision = await createGuideRevision(guide.id, { title: "Topology" });
+    const subject = await createSubject({
+      slug: null,
+      name: "Point Set Topology",
+      status: "draft",
+    });
+    await tagGuideRevision(revision.id, subject.id);
+
+    const { reviewCase, panelists } = await seedSeatedReviewCase({
+      caseType: "guide_publish",
+      seats: 3,
+      revisionId: revision.id,
+    });
+
+    await castApprove(panelists[0].token, reviewCase.id);
+    await castApprove(panelists[1].token, reviewCase.id);
+
+    const { data: s } = await admin
+      .from("subjects")
+      .select("slug, status")
+      .eq("id", subject.id)
+      .single();
+    expect(s?.status).toBe("published");
+    expect(s?.slug).toBe("point-set-topology");
+  });
+
+  it("suffixes a proposed subject slug that is already taken", async () => {
+    await createSubject({ slug: "graph-theory" });
+    const base = await createGuideBase();
+    const guide = await createGuide(base.id);
+    const revision = await createGuideRevision(guide.id, { title: "Graphs" });
+    const subject = await createSubject({
+      slug: null,
+      name: "Graph Theory",
+      status: "draft",
+    });
+    await tagGuideRevision(revision.id, subject.id);
+
+    const { reviewCase, panelists } = await seedSeatedReviewCase({
+      caseType: "guide_publish",
+      seats: 3,
+      revisionId: revision.id,
+    });
+
+    await castApprove(panelists[0].token, reviewCase.id);
+    await castApprove(panelists[1].token, reviewCase.id);
+
+    const { data: s } = await admin
+      .from("subjects")
+      .select("slug")
+      .eq("id", subject.id)
+      .single();
+    expect(s?.slug).toBe("graph-theory-2");
   });
 
   it("repoints only current_revision_id on an approved edit", async () => {

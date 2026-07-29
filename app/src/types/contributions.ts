@@ -20,6 +20,10 @@ export type VariantContribution = {
   summary: string;
   baseGuide: string;
   subjects: Array<string>;
+  newSubjects: Array<{
+    name: string;
+    summary: string;
+  }>;
   body: string;
 };
 

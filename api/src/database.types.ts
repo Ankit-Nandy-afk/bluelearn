@@ -806,7 +806,7 @@ export type Database = {
           creator_id: string | null
           id: string
           name: string
-          slug: string
+          slug: string | null
           status: Database["public"]["Enums"]["subject_status"]
           summary: string | null
         }
@@ -815,7 +815,7 @@ export type Database = {
           creator_id?: string | null
           id?: string
           name: string
-          slug: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["subject_status"]
           summary?: string | null
         }
@@ -824,7 +824,7 @@ export type Database = {
           creator_id?: string | null
           id?: string
           name?: string
-          slug?: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["subject_status"]
           summary?: string | null
         }

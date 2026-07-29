@@ -33,10 +33,7 @@ export const GuideSidebar = ({
       {sidebarActions}
 
       {/* Prerequisites */}
-      <CollapsibleSection
-        title={<p className="ml-auto">Prerequisites</p>}
-        defaultOpen={true}
-      >
+      <CollapsibleSection title={<p className="ml-auto">Prerequisites</p>}>
         <ul className="space-y-2">
           {guide.prerequisites.map((prereq: GuideReference) => (
             <li

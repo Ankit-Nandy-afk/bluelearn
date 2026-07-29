@@ -9,6 +9,7 @@ import type {
 } from "@bluelearn/schemas";
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
+import { selectInBatches } from "../lib/batch";
 import { syncDraftTagsAndEdges } from "./guide-revision.service";
 import { readingMinutes } from "../lib/reading";
 import { loadUsernames } from "./identity.service";
@@ -75,7 +76,9 @@ async function loadCanonicalTags(supabase: DB, revisionId: string | null) {
     console.error(error);
     throw new ServiceError("Failed to load guide subjects", 500);
   }
-  return (data ?? []).map((r) => r.subjects).filter((s) => s !== null);
+  return (data ?? [])
+    .map((r) => r.subjects)
+    .filter((s): s is NonNullable<typeof s> & { slug: string } => !!s?.slug);
 }
 
 // Resolve a base slug to its id, or 404. Shared by the variant/walkthrough
@@ -103,10 +106,12 @@ async function loadGuideTags(supabase: DB, revisionIds: string[]) {
   const map = new Map<string, SubjectReference[]>();
   if (revisionIds.length === 0) return map;
 
-  const { data, error } = await supabase
-    .from("guide_revision_subjects")
-    .select("guide_revision_id, subject:subjects(slug, name)")
-    .in("guide_revision_id", revisionIds);
+  const { data, error } = await selectInBatches(revisionIds, (batch) =>
+    supabase
+      .from("guide_revision_subjects")
+      .select("guide_revision_id, subject:subjects(slug, name)")
+      .in("guide_revision_id", batch)
+  );
 
   if (error) {
     console.error(error);
@@ -114,7 +119,7 @@ async function loadGuideTags(supabase: DB, revisionIds: string[]) {
   }
   for (const row of data ?? []) {
     const subject = row.subject;
-    if (!subject) continue;
+    if (!subject?.slug) continue;
     const list = map.get(row.guide_revision_id) ?? [];
     list.push({ slug: subject.slug, name: subject.name });
     map.set(row.guide_revision_id, list);
@@ -343,6 +348,7 @@ export async function listGuideVariants(
 // editor.
 export async function addGuideVariant(
   supabase: DB,
+  userId: string,
   rawSlug: string,
   input: CreateVariantInput
 ) {
@@ -350,7 +356,7 @@ export async function addGuideVariant(
 
   const { data: revision_id, error } = await supabase.rpc("create_variant", {
     p_guide_base_id: baseId,
-    p_title: input.title,
+    p_title: input.title ?? undefined,
     p_summary: input.summary ?? undefined,
     p_body: input.body ?? undefined,
   });
@@ -359,6 +365,13 @@ export async function addGuideVariant(
     console.error(error);
     throw new ServiceError("Failed to add variant", 500);
   }
+
+  // Prereqs and todos aren't include because those are inherited from shared base.
+  await syncDraftTagsAndEdges(supabase, userId, revision_id, {
+    tags: input.tags,
+    newSubjects: input.newSubjects,
+  });
+
   return { revision_id };
 }
 
