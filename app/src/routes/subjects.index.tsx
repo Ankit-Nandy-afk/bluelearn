@@ -3,13 +3,15 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { Separator } from "@/components/ui/separator";
 
-import { SubjectCard } from "@/components/cards/SubjectCard";
-import { Route as SubjectRoute } from "@/routes/subjects.$slug";
+import { SubjectsGrid } from "@/components/subjects/SubjectGrid";
+import {
+  NoSubjectsError,
+  SubjectsLoadError,
+} from "@/components/subjects/SubjectsError";
+import { SubjectSidebar } from "@/components/sidebar/SubjectSidebar";
 
 import { listSubjects } from "@/lib/api/subjects";
 import { getSubjectNamesGroupedByFirstLetter } from "@/lib/groupSubjects";
-import { NoSubjectsError, SubjectsLoadError } from "@/components/SubjectsError";
-import { SubjectSidebar } from "@/components/sidebar/SubjectSidebar";
 
 export const Route = createFileRoute("/subjects/")({
   loader: ({ abortController }) =>
@@ -61,20 +63,7 @@ function RouteComponent() {
       <section className="grid md:grid-cols-[320px_1fr]">
         <SubjectSidebar groupedSubject={subjectsGroupedByNameFirstCharacter} />
 
-        <div className="grid grid-cols-1 gap-6 md:ml-4 lg:grid-cols-2">
-          {subjects.map((subject) => {
-            const s = {
-              ...subject,
-              stats: [
-                { label: "Objectives", data: subject.objectives_total },
-                { label: "Guides", data: subject.guides_total },
-              ],
-            };
-            return (
-              <SubjectCard key={s.slug} subject={s} to={SubjectRoute.to} />
-            );
-          })}
-        </div>
+        <SubjectsGrid subjects={subjects} />
       </section>
     </SubjectsPage>
   );
