@@ -592,7 +592,7 @@ body.editor-fullscreen aside {
   display: none !important;
 }
 
-body.editor-fullscreen .mx-auto {
+body.editor-fullscreen .mx-auto:not(.math-node):not(.math-preview) {
   max-width: none !important;
   border: none !important;
   width: 100vw !important;
