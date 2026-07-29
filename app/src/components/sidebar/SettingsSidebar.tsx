@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Palette, User } from "lucide-react";
+import { Palette, Settings, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
@@ -7,6 +7,11 @@ const items = [
   {
     label: "Account",
     to: "/settings/account",
+    icon: Settings,
+  },
+  {
+    label: "Public Profile",
+    to: "/settings/profile",
     icon: User,
   },
   {

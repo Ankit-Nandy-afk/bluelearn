@@ -27,6 +27,7 @@ import { Route as ReviewIndexRouteImport } from './routes/review.index'
 import { Route as ObjectivesIndexRouteImport } from './routes/objectives.index'
 import { Route as GuidesIndexRouteImport } from './routes/guides/index'
 import { Route as SubjectsSlugRouteImport } from './routes/subjects.$slug'
+import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings.appearance'
 import { Route as SettingsAccountRouteImport } from './routes/settings.account'
 import { Route as ReviewCaseIdRouteImport } from './routes/review.$caseId'
@@ -125,6 +126,11 @@ const SubjectsSlugRoute = SubjectsSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => SubjectsRoute,
 } as any)
+const SettingsProfileRoute = SettingsProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SettingsAppearanceRoute = SettingsAppearanceRouteImport.update({
   id: '/appearance',
   path: '/appearance',
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/review/$caseId': typeof ReviewCaseIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides/': typeof GuidesIndexRoute
   '/objectives/': typeof ObjectivesIndexRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/review/$caseId': typeof ReviewCaseIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides': typeof GuidesIndexRoute
   '/objectives': typeof ObjectivesIndexRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/review/$caseId': typeof ReviewCaseIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides/': typeof GuidesIndexRoute
   '/objectives/': typeof ObjectivesIndexRoute
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/review/$caseId'
     | '/settings/account'
     | '/settings/appearance'
+    | '/settings/profile'
     | '/subjects/$slug'
     | '/guides/'
     | '/objectives/'
@@ -280,6 +290,7 @@ export interface FileRouteTypes {
     | '/review/$caseId'
     | '/settings/account'
     | '/settings/appearance'
+    | '/settings/profile'
     | '/subjects/$slug'
     | '/guides'
     | '/objectives'
@@ -307,6 +318,7 @@ export interface FileRouteTypes {
     | '/review/$caseId'
     | '/settings/account'
     | '/settings/appearance'
+    | '/settings/profile'
     | '/subjects/$slug'
     | '/guides/'
     | '/objectives/'
@@ -462,6 +474,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubjectsSlugRouteImport
       parentRoute: typeof SubjectsRoute
     }
+    '/settings/profile': {
+      id: '/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof SettingsProfileRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/appearance': {
       id: '/settings/appearance'
       path: '/appearance'
@@ -544,12 +563,14 @@ const ReviewRouteWithChildren =
 interface SettingsRouteChildren {
   SettingsAccountRoute: typeof SettingsAccountRoute
   SettingsAppearanceRoute: typeof SettingsAppearanceRoute
+  SettingsProfileRoute: typeof SettingsProfileRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsAccountRoute: SettingsAccountRoute,
   SettingsAppearanceRoute: SettingsAppearanceRoute,
+  SettingsProfileRoute: SettingsProfileRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
 
