@@ -136,10 +136,7 @@ function RouteComponent() {
 
         <Field className="space-y-2">
           <div className="space-y-1">
-            <FieldLabel
-              required
-              className="font-mono tracking-[0.08em] uppercase"
-            >
+            <FieldLabel className="font-mono tracking-[0.08em] uppercase">
               Email
             </FieldLabel>
             <FieldDescription className="text-xs">
@@ -152,7 +149,6 @@ function RouteComponent() {
             type="email"
             disabled
             className="h-10 rounded-md"
-            required
             value={account.email}
           />
         </Field>

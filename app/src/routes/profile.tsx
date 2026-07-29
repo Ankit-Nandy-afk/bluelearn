@@ -88,6 +88,7 @@ export const Route = createFileRoute("/profile")({
   component: RouteComponent,
   pendingComponent: () => <ProfileMessage>Loading profile...</ProfileMessage>,
   errorComponent: ({ error }) => (
+    // TODO: improve error component - add greyscale mascot with "X" eyes
     <ProfileMessage tone="error">{error.message}</ProfileMessage>
   ),
 });
