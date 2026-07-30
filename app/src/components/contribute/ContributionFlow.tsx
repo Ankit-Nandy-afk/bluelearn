@@ -18,6 +18,7 @@ import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
 import { createObjective } from "@/lib/api/objectives";
 import {
+  getObjectiveRevision,
   submitObjectiveRevision,
   updateObjectiveRevision,
 } from "@/lib/api/objectiveRevisions";
@@ -45,6 +46,7 @@ type PropTypes = {
   type: ContributionType | null;
   setType: (value: ContributionType) => void;
   draftId?: string;
+  draftKind?: "guide" | "objective";
 };
 
 const createGuideContData = (): GuideContribution => ({
@@ -81,6 +83,7 @@ export default function ContributionFlow({
   type,
   setType,
   draftId,
+  draftKind,
 }: PropTypes) {
   const [guideContData, setGuideContData] =
     useState<GuideContribution>(createGuideContData);
@@ -109,6 +112,7 @@ export default function ContributionFlow({
           type={type}
           setType={setType}
           draftId={draftId}
+          draftKind={draftKind}
           guideContData={guideContData}
           setGuideContData={setGuideContData}
           variantContData={variantContData}
@@ -127,6 +131,7 @@ function Inner({
   type,
   setType,
   draftId,
+  draftKind,
   guideContData,
   setGuideContData,
   variantContData,
@@ -139,6 +144,7 @@ function Inner({
   type: ContributionType | null;
   setType: (value: ContributionType) => void;
   draftId?: string;
+  draftKind?: "guide" | "objective";
 
   guideContData: GuideContribution;
   setGuideContData: Dispatch<SetStateAction<GuideContribution>>;
@@ -176,11 +182,56 @@ function Inner({
   const [revisionId, setRevisionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Resume a guide or variant draft opened from the profile.
+  // Resume a draft opened from the profile.
   const resumedRef = useRef(false);
   useEffect(() => {
     if (!draftId || resumedRef.current) return;
     resumedRef.current = true;
+
+    if (draftKind === "objective") {
+      getObjectiveRevision(draftId)
+        .then((data) => {
+          const slugByNodeId = new Map(
+            data.snapshot.nodes.map((n) => [n.id, n.slug])
+          );
+          const targetNodes = data.snapshot.nodes
+            .filter(
+              (n): n is typeof n & { slug: string } => n.is_target && !!n.slug
+            )
+            .sort(
+              (a, b) => (a.target_position ?? 0) - (b.target_position ?? 0)
+            );
+
+          setObjectiveContData({
+            title: data.revision.title ?? "",
+            summary: data.revision.summary ?? "",
+            targets: targetNodes.map((n) => n.slug),
+            featuredSubObjective:
+              targetNodes.find((n) => n.is_featured)?.slug ?? "",
+            subObjectives: targetNodes.map((n) => {
+              const sequence = data.snapshot.orders
+                .filter((o) => o.target_node_id === n.id)
+                .map((o) => slugByNodeId.get(o.node_id))
+                .filter((slug): slug is string => !!slug);
+              return {
+                targetSlug: n.slug,
+                selectedSlugs: sequence,
+                curatedSequence: sequence,
+              };
+            }),
+            subjects: data.subjects
+              .map((s) => s.slug)
+              .filter((slug): slug is string => slug !== null),
+          });
+          setRevisionId(draftId);
+          setType("objective");
+          requestAnimationFrame(() => stepper.goTo("objective-details"));
+        })
+        .catch(() => {
+          toast.error("Could not load draft");
+        });
+      return;
+    }
 
     getRevision(draftId)
       .then((data) => {
