@@ -157,7 +157,7 @@ export const OrderObjectiveGuides = ({
       return;
     }
 
-    if (!walkthroughData) return;
+    if (!walkthroughData?.nodes.some((n) => n.slug === targetSlug)) return;
 
     // Seed with all prerequisites (excluding the target guide itself) sorted by levels
     const initialPrereqs = walkthroughData.nodes

@@ -443,7 +443,10 @@ function Inner({
           target_ids,
           tags: objectiveContData.subjects,
         })
-          .then((id) => {
+          .then(async (id) => {
+            // Creation only seeds the closure, so the curation has to update
+            // before publish.
+            await updateObjectiveRevision(id, { targets: objectiveTargets() });
             setRevisionId(id);
             return id;
           })
