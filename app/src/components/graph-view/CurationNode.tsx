@@ -1,7 +1,14 @@
 import { Handle, Position } from "@xyflow/react";
+import type { GraphNodeData } from "./useGraphLayout";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export function CurationNode({ data }: { data: any }) {
+// The extras come from CurationGraph's getNodeState.
+type CurationNodeData = GraphNodeData & {
+  isChecked: boolean;
+  selectedOrder: number | null;
+};
+
+export function CurationNode({ data }: { data: CurationNodeData }) {
   const { isTarget, isChecked, title, selectedOrder, isHovered, isDimmed } =
     data;
 
@@ -43,7 +50,7 @@ export function CurationNode({ data }: { data: any }) {
         </div>
       </div>
 
-      {selectedOrder !== undefined && selectedOrder !== null && (
+      {selectedOrder !== null && (
         <div className="absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground shadow-md ring-4 shadow-primary/30 ring-card">
           {selectedOrder}
         </div>

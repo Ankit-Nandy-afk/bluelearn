@@ -1,14 +1,15 @@
 import { Handle, Position } from "@xyflow/react";
 import { Clock, Network } from "lucide-react";
+import type { GraphNodeData } from "./useGraphLayout";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-export function WalkthroughNode({ data }: { data: any }) {
+export function WalkthroughNode({ data }: { data: GraphNodeData }) {
   const {
     isTarget,
     title,
     summary,
-    duration,
+    duration_minutes,
     tags,
     level,
     isHovered,
@@ -53,23 +54,21 @@ export function WalkthroughNode({ data }: { data: any }) {
           </h3>
 
           <div className="flex items-center gap-3 pt-1.5 text-xs">
-            {duration !== undefined && (
+            {duration_minutes > 0 && (
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="h-3 w-3" />
-                {duration} min
+                {duration_minutes} min
               </div>
             )}
-            {level !== undefined && (
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Network className="h-3 w-3" />
-                Level {level}
-              </div>
-            )}
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Network className="h-3 w-3" />
+              Level {level}
+            </div>
           </div>
         </CardHeader>
 
         {/* Metadata */}
-        {(summary || (tags && tags.length > 0)) && (
+        {(summary || tags.length > 0) && (
           <CardContent className="border-t p-3">
             {summary && (
               <p className="line-clamp-2 text-xs text-muted-foreground">
@@ -77,15 +76,15 @@ export function WalkthroughNode({ data }: { data: any }) {
               </p>
             )}
 
-            {tags && tags.length > 0 && (
+            {tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-2">
-                {tags.map((tag: any) => (
+                {tags.map((tag) => (
                   <Badge
-                    key={typeof tag === "string" ? tag : tag.slug}
+                    key={tag.slug}
                     variant="outline"
                     className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
                   >
-                    {typeof tag === "string" ? tag : tag.name || tag.slug}
+                    {tag.name}
                   </Badge>
                 ))}
               </div>

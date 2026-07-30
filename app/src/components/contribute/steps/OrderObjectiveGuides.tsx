@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import type { ObjectiveContribution } from "@/types/contributions";
-import type { GraphData } from "@/lib/graphUtils";
+import type { Walkthrough } from "@bluelearn/schemas";
 import { CurationGraph } from "@/components/graph-view/CurationGraph";
-import { fetchWalkthrough } from "@/lib/graphUtils";
+import { getGuideWalkthrough } from "@/lib/api/guides";
 import { DraggableGuideCard } from "@/components/contribute/DraggableGuideCard";
 import { Badge } from "@/components/ui/badge";
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
@@ -35,7 +35,7 @@ import { Button } from "@/components/ui/button";
 
 import guides from "@/data/guides.json";
 
-const guidesMap = new Map(guides.map((g: any) => [g.slug, g]));
+const guidesMap = new Map(guides.map((g) => [g.slug, g]));
 
 type PropTypes = {
   Stepper: any;
@@ -78,14 +78,22 @@ export const OrderObjectiveGuides = ({
     return `${m}m`;
   }, [totalDuration]);
 
-  const [walkthroughData, setGraphData] = useState<GraphData | null>(null);
+  const [walkthroughData, setWalkthroughData] = useState<Walkthrough | null>(
+    null
+  );
 
   useEffect(() => {
-    if (targetSlug) {
-      fetchWalkthrough(targetSlug).then(setGraphData).catch(console.error);
-    } else {
-      setGraphData(null);
-    }
+    setWalkthroughData(null);
+    if (!targetSlug) return;
+
+    const controller = new AbortController();
+    getGuideWalkthrough(targetSlug, { signal: controller.signal })
+      .then(setWalkthroughData)
+      .catch((err) => {
+        if (!controller.signal.aborted) console.error(err);
+      });
+
+    return () => controller.abort();
   }, [targetSlug]);
 
   const updateSubObjective = (slug: string, newSeq: Array<string>) => {
@@ -133,37 +141,36 @@ export const OrderObjectiveGuides = ({
 
     if (existingSub) {
       setCuratedSequence(existingSub.curatedSequence);
-    } else {
-      fetchWalkthrough(targetSlug)
-        .then((data) => {
-          // Seed with all prerequisites (excluding the target guide itself) sorted by levels
-          const initialPrereqs = data.nodes
-            .filter((n) => n.slug !== targetSlug)
-            .sort((a, b) => a.level - b.level)
-            .map((n) => n.slug);
-
-          setCuratedSequence(initialPrereqs);
-
-          setObjectiveContData((prev) => {
-            if (prev.subObjectives.some((s) => s.targetSlug === targetSlug)) {
-              return prev;
-            }
-            return {
-              ...prev,
-              subObjectives: [
-                ...prev.subObjectives,
-                {
-                  targetSlug,
-                  selectedSlugs: initialPrereqs,
-                  curatedSequence: initialPrereqs,
-                },
-              ],
-            };
-          });
-        })
-        .catch(console.error);
+      return;
     }
-  }, [targetSlug]);
+
+    if (!walkthroughData) return;
+
+    // Seed with all prerequisites (excluding the target guide itself) sorted by levels
+    const initialPrereqs = walkthroughData.nodes
+      .filter((n) => n.slug !== targetSlug)
+      .sort((a, b) => a.level - b.level)
+      .map((n) => n.slug);
+
+    setCuratedSequence(initialPrereqs);
+
+    setObjectiveContData((prev) => {
+      if (prev.subObjectives.some((s) => s.targetSlug === targetSlug)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        subObjectives: [
+          ...prev.subObjectives,
+          {
+            targetSlug,
+            selectedSlugs: initialPrereqs,
+            curatedSequence: initialPrereqs,
+          },
+        ],
+      };
+    });
+  }, [targetSlug, walkthroughData]);
 
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const draggedIndexRef = useRef<number | null>(null);
@@ -447,7 +454,7 @@ export const OrderObjectiveGuides = ({
                       {/* Tags below description */}
                       {targetGuide.tags.length > 0 && (
                         <div className="mt-2 ml-7 flex flex-wrap gap-1">
-                          {targetGuide.tags.map((tag: string) => (
+                          {targetGuide.tags.map((tag) => (
                             <Badge
                               key={tag}
                               variant="outline"

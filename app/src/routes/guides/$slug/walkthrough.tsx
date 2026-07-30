@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
-import { Link, createFileRoute, notFound } from "@tanstack/react-router";
+import {
+  Link,
+  createFileRoute,
+  notFound,
+  useLocation,
+} from "@tanstack/react-router";
 
-import type { GraphData } from "@/lib/graphUtils";
+import type { Walkthrough } from "@bluelearn/schemas";
 import { Separator } from "@/components/ui/separator";
 
 import { Route as GuideRoute } from "@/routes/guides/$slug/index";
 
 import { getGuideBySlug } from "@/lib/getData";
 import { WalkthroughGraph } from "@/components/graph-view/WalkthroughGraph";
-import { fetchWalkthrough } from "@/lib/graphUtils";
+import { getGuideWalkthrough } from "@/lib/api/guides";
 
 import guides from "@/data/guides.json";
 
@@ -20,14 +25,45 @@ function RouteComponent() {
   const { slug } = Route.useParams();
 
   const guide = getGuideBySlug(guides, slug);
+
+  // Carried in from the reader so going back restores the trail the user came by.
+  const breadcrumbOrigin = useLocation({
+    select: (location) => location.state.breadcrumbOrigin,
+  });
+
   const [hoveredGuide, setHoveredGuide] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const [walkthroughData, setGraphData] = useState<GraphData | null>(null);
+  const [walkthroughData, setWalkthroughData] = useState<Walkthrough | null>(
+    null
+  );
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchWalkthrough(slug).then(setGraphData).catch(console.error);
+    const controller = new AbortController();
+
+    setWalkthroughData(null);
+    setError(null);
+    getGuideWalkthrough(slug, { signal: controller.signal })
+      .then(setWalkthroughData)
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        setError(err instanceof Error ? err.message : "Something went wrong");
+      });
+
+    return () => controller.abort();
   }, [slug]);
+
+  // Escape leaves fullscreen, since the toggle button is the only other way out.
+  useEffect(() => {
+    if (!isFullscreen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isFullscreen]);
 
   if (!guide) {
     throw notFound();
@@ -46,6 +82,7 @@ function RouteComponent() {
             <Link
               to={GuideRoute.to}
               params={{ slug: slug }}
+              state={{ breadcrumbOrigin }}
               className="btn-outline"
             >
               View Guide
@@ -63,7 +100,11 @@ function RouteComponent() {
               : "min-h-[600px] w-full flex-1 overflow-hidden rounded-xl border border-border bg-muted/10"
           }
         >
-          {walkthroughData && (
+          {error ? (
+            <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
+              {error}
+            </div>
+          ) : walkthroughData ? (
             <WalkthroughGraph
               walkthroughData={walkthroughData}
               targetSlug={slug}
@@ -72,6 +113,10 @@ function RouteComponent() {
               isFullscreen={isFullscreen}
               onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
             />
+          ) : (
+            <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
+              Loading walkthrough...
+            </div>
           )}
         </div>
       </section>

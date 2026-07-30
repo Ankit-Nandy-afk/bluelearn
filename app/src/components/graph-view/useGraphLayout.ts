@@ -1,148 +1,134 @@
 import { useEffect } from "react";
 import { MarkerType, useEdgesState, useNodesState } from "@xyflow/react";
 import type { Edge, Node } from "@xyflow/react";
-import type { GraphData, GraphNode } from "@/lib/graphUtils";
+import type { Walkthrough } from "@bluelearn/schemas";
+
+type WalkthroughNode = Walkthrough["nodes"][number];
+
+// What the hook writes into every xyflow node's data. id and slug are dropped
+// because xyflow keys by slug already.
+export type GraphNodeData = Omit<WalkthroughNode, "id" | "slug"> & {
+  isTarget: boolean;
+  isHovered: boolean;
+  isDimmed: boolean;
+};
+
+// Per-node state that changes without moving anything, merged into node data on
+// its own pass so a change never triggers a relayout.
+type NodeState = Record<string, unknown>;
+
+const NO_NODE_STATE = (): NodeState => ({});
+
+const LEVEL_SPACING = 350;
 
 type UseGraphLayoutProps = {
-  walkthroughData: GraphData;
-  targetSlug?: string;
+  walkthroughData: Walkthrough;
+  targetSlug: string;
   hoveredGuide: string | null;
   nodeType: string;
-  getNodeData: (node: GraphNode, isTarget: boolean) => any;
+  nodeWidth: number;
+  nodeSpacing: number;
+  getNodeState?: (slug: string) => NodeState;
 };
+
+// Maps prerequisite -> dependent edges onto slugs, which is what xyflow keys
+// nodes by. Returns both directions since hovering walks the DAG each way.
+function buildAdjacency(walkthroughData: Walkthrough) {
+  const idToSlug = new Map(walkthroughData.nodes.map((n) => [n.id, n.slug]));
+
+  const prereqs = new Map<string, Array<string>>();
+  const dependents = new Map<string, Array<string>>();
+  walkthroughData.nodes.forEach((n) => {
+    prereqs.set(n.slug, []);
+    dependents.set(n.slug, []);
+  });
+
+  walkthroughData.edges.forEach((edge) => {
+    const from = idToSlug.get(edge.from_id);
+    const to = idToSlug.get(edge.to_id);
+    if (from && to) {
+      prereqs.get(to)!.push(from);
+      dependents.get(from)!.push(to);
+    }
+  });
+
+  return { prereqs, dependents };
+}
 
 export function useGraphLayout({
   walkthroughData,
   targetSlug,
   hoveredGuide,
   nodeType,
-  getNodeData,
+  nodeWidth,
+  nodeSpacing,
+  getNodeState = NO_NODE_STATE,
 }: UseGraphLayoutProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  // 1. Initial / Dependency Update: calculate base nodes and edges
+  // 1. Layout: positions and static node data. Deliberately independent of
+  // hover and selection so those never move a node.
   useEffect(() => {
-    const { nodes: walkthroughNodes, edges: backendEdges } = walkthroughData;
-
-    // Map id to slug for easy edge conversion
-    const idToSlug = new Map<string, string>();
-    walkthroughNodes.forEach((n) => idToSlug.set(n.id, n.slug));
-
-    const visualDistances = new Map<string, number>();
-    const targetSlugs = walkthroughNodes
-      .filter(
-        (n) =>
-          n.is_target || (targetSlug !== undefined && n.slug === targetSlug)
-      )
-      .map((n) => n.slug);
-
-    targetSlugs.forEach((t) => visualDistances.set(t, 0));
-
-    let changed = true;
-    while (changed) {
-      changed = false;
-      backendEdges.forEach((edge) => {
-        const from = idToSlug.get(edge.from_id);
-        const to = idToSlug.get(edge.to_id);
-        if (from && to && visualDistances.has(to)) {
-          const currentDist = visualDistances.get(from) ?? -1;
-          const newDist = visualDistances.get(to)! + 1;
-          if (newDist > currentDist) {
-            visualDistances.set(from, newDist);
-            changed = true;
-          }
-        }
-      });
-    }
-
-    let maxDist = 0;
-    visualDistances.forEach((dist) => {
-      if (dist > maxDist) maxDist = dist;
-    });
-
-    const grouped = walkthroughNodes.reduce(
+    const grouped = walkthroughData.nodes.reduce(
       (acc, node) => {
-        const dist = visualDistances.get(node.slug) || 0;
-        const vLevel = maxDist - dist;
-        const list = acc[vLevel] ?? [];
+        const list = acc[node.level] ?? [];
         list.push(node);
-        acc[vLevel] = list;
+        acc[node.level] = list;
         return acc;
       },
-      {} as Record<number, Array<GraphNode>>
+      {} as Record<number, Array<WalkthroughNode>>
     );
 
     const levels = Object.keys(grouped)
       .map(Number)
       .sort((a, b) => a - b);
-
     const maxLevelIdx = levels.length - 1;
 
     const newNodes: Array<Node> = [];
     levels.forEach((level, levelIdx) => {
       const nodesInLevel = grouped[level];
 
-      const isWalkthrough =
-        nodeType === "walkthroughNode" || nodeType === "objectiveNode";
-      const nodeWidth = isWalkthrough ? 420 : 350;
-      const nodeSpacing = isWalkthrough ? 480 : 380;
-
-      // Target at top (y=0), primitives at bottom (y > 0)
-      const levelY = (maxLevelIdx - levelIdx) * 350;
+      // Target at top (y=0), primitives at bottom (y > 0).
+      const levelY = (maxLevelIdx - levelIdx) * LEVEL_SPACING;
 
       const totalWidth = nodesInLevel.length * nodeSpacing;
       const startX = -totalWidth / 2;
 
       nodesInLevel.forEach((node, nodeIdx) => {
-        const isTarget =
-          node.is_target ||
-          (targetSlug !== undefined && node.slug === targetSlug);
-
         const cellCenterX = startX + nodeIdx * nodeSpacing + nodeSpacing / 2;
-        const nodeX = cellCenterX - nodeWidth / 2;
 
         newNodes.push({
           id: node.slug,
           type: nodeType,
-          position: { x: nodeX, y: levelY },
+          position: { x: cellCenterX - nodeWidth / 2, y: levelY },
           data: {
-            ...getNodeData(node, isTarget),
             title: node.title,
-            isTarget,
+            summary: node.summary,
+            level: node.level,
+            duration_minutes: node.duration_minutes,
+            tags: node.tags,
+            isTarget: node.slug === targetSlug,
             isHovered: false,
             isDimmed: false,
-          },
+          } satisfies GraphNodeData,
         });
       });
     });
 
-    // Build adjacency list for edges (using slugs)
-    const prereqMap = new Map<string, Array<string>>();
-    walkthroughNodes.forEach((n) => prereqMap.set(n.slug, []));
+    const { prereqs } = buildAdjacency(walkthroughData);
 
-    backendEdges.forEach((edge) => {
-      const fromSlug = idToSlug.get(edge.from_id);
-      const toSlug = idToSlug.get(edge.to_id);
-      if (fromSlug && toSlug) {
-        // fromSlug is the prerequisite of toSlug
-        const list = prereqMap.get(toSlug) || [];
-        list.push(fromSlug);
-        prereqMap.set(toSlug, list);
-      }
-    });
-
-    // Helper to check if `ancestor` is reachable from `node` (meaning `node` transitively depends on `ancestor`)
+    // Is `ancestor` reachable from `node`, meaning `node` transitively depends
+    // on `ancestor`?
     const isAncestor = (ancestor: string, node: string): boolean => {
-      const queue = prereqMap.get(node) ? [...prereqMap.get(node)!] : [];
+      const queue = [...(prereqs.get(node) ?? [])];
       const visited = new Set<string>(queue);
 
       while (queue.length > 0) {
         const curr = queue.shift()!;
         if (curr === ancestor) return true;
 
-        const currPrereqs = prereqMap.get(curr) || [];
-        for (const p of currPrereqs) {
+        for (const p of prereqs.get(curr) ?? []) {
           if (!visited.has(p)) {
             visited.add(p);
             queue.push(p);
@@ -152,13 +138,15 @@ export function useGraphLayout({
       return false;
     };
 
+    // Transitive reduction: drop an edge when the same prerequisite is already
+    // reachable through another prerequisite of this node, so the graph shows
+    // only the closest dependency.
     const newEdges: Array<Edge> = [];
-    walkthroughNodes.forEach((node) => {
-      const prereqs = prereqMap.get(node.slug) || [];
+    walkthroughData.nodes.forEach((node) => {
+      const nodePrereqs = prereqs.get(node.slug) ?? [];
 
-      prereqs.forEach((prereqSlug) => {
-        // Check if this dependency is transient (redundant).
-        const isTransient = prereqs.some(
+      nodePrereqs.forEach((prereqSlug) => {
+        const isTransient = nodePrereqs.some(
           (otherPrereq) =>
             otherPrereq !== prereqSlug && isAncestor(prereqSlug, otherPrereq)
         );
@@ -183,66 +171,52 @@ export function useGraphLayout({
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [walkthroughData, targetSlug, setNodes, setEdges, nodeType, getNodeData]);
+  }, [
+    walkthroughData,
+    targetSlug,
+    nodeType,
+    nodeWidth,
+    nodeSpacing,
+    setNodes,
+    setEdges,
+  ]);
 
-  // 2. Hover Update: update isDimmed and isHovered without re-layout
+  // 2. State: hover highlighting plus whatever getNodeState reports, applied
+  // without re-running layout.
   useEffect(() => {
-    const { nodes: walkthroughNodes, edges: backendEdges } = walkthroughData;
-    const idToSlug = new Map<string, string>();
-    walkthroughNodes.forEach((n) => idToSlug.set(n.id, n.slug));
+    const { prereqs, dependents } = buildAdjacency(walkthroughData);
 
-    const prereqMap = new Map<string, Array<string>>();
-    const descMap = new Map<string, Array<string>>();
-    walkthroughNodes.forEach((n) => {
-      prereqMap.set(n.slug, []);
-      descMap.set(n.slug, []);
-    });
-
-    backendEdges.forEach((edge) => {
-      const fromSlug = idToSlug.get(edge.from_id);
-      const toSlug = idToSlug.get(edge.to_id);
-      if (fromSlug && toSlug) {
-        prereqMap.get(toSlug)!.push(fromSlug);
-        descMap.get(fromSlug)!.push(toSlug);
-      }
-    });
-
-    const highlightedNodes = new Set<string>();
+    // Everything upstream and downstream of the hovered node stays lit; the
+    // rest dims.
+    const highlighted = new Set<string>();
     if (hoveredGuide) {
-      const ancQueue = [hoveredGuide];
-      while (ancQueue.length > 0) {
-        const cur = ancQueue.shift()!;
-        if (!highlightedNodes.has(cur)) {
-          highlightedNodes.add(cur);
-          const prereqs = prereqMap.get(cur) || [];
-          prereqs.forEach((p) => ancQueue.push(p));
+      const walk = (adjacency: Map<string, Array<string>>) => {
+        const queue = [hoveredGuide];
+        const visited = new Set<string>();
+        while (queue.length > 0) {
+          const cur = queue.shift()!;
+          if (visited.has(cur)) continue;
+          visited.add(cur);
+          highlighted.add(cur);
+          queue.push(...(adjacency.get(cur) ?? []));
         }
-      }
-      const descQueue = [hoveredGuide];
-      const visitedDesc = new Set<string>();
-      while (descQueue.length > 0) {
-        const cur = descQueue.shift()!;
-        if (!visitedDesc.has(cur)) {
-          visitedDesc.add(cur);
-          highlightedNodes.add(cur);
-          const descs = descMap.get(cur) || [];
-          descs.forEach((d) => descQueue.push(d));
-        }
-      }
+      };
+      walk(prereqs);
+      walk(dependents);
     }
 
     setNodes((nds) =>
       nds.map((n) => {
-        const isDimmed = hoveredGuide !== null && !highlightedNodes.has(n.id);
-        const isHovered = n.id === hoveredGuide;
+        const next = {
+          ...getNodeState(n.id),
+          isDimmed: hoveredGuide !== null && !highlighted.has(n.id),
+          isHovered: n.id === hoveredGuide,
+        };
 
-        if (n.data.isDimmed !== isDimmed || n.data.isHovered !== isHovered) {
-          return {
-            ...n,
-            data: { ...n.data, isDimmed, isHovered },
-          };
-        }
-        return n;
+        const unchanged = Object.entries(next).every(
+          ([key, value]) => n.data[key] === value
+        );
+        return unchanged ? n : { ...n, data: { ...n.data, ...next } };
       })
     );
 
@@ -250,7 +224,7 @@ export function useGraphLayout({
       eds.map((e) => {
         const isDimmed =
           hoveredGuide !== null &&
-          !(highlightedNodes.has(e.source) && highlightedNodes.has(e.target));
+          !(highlighted.has(e.source) && highlighted.has(e.target));
         const strokeColor = isDimmed
           ? "#94a3b833"
           : hoveredGuide
@@ -277,7 +251,7 @@ export function useGraphLayout({
         return e;
       })
     );
-  }, [hoveredGuide, setNodes, setEdges, walkthroughData]);
+  }, [hoveredGuide, getNodeState, walkthroughData, setNodes, setEdges]);
 
   return { nodes, edges, onNodesChange, onEdgesChange, setNodes };
 }

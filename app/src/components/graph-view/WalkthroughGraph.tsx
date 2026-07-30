@@ -5,7 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { WalkthroughNode as WalkthroughNodeComponent } from "./WalkthroughNode";
 import { useGraphLayout } from "./useGraphLayout";
 import type { Node, ReactFlowInstance } from "@xyflow/react";
-import type { GraphData, GraphNode } from "@/lib/graphUtils";
+import type { Walkthrough } from "@bluelearn/schemas";
 import { Button } from "@/components/ui/button";
 import "@xyflow/react/dist/style.css";
 
@@ -13,8 +13,11 @@ const nodeTypes = {
   walkthroughNode: WalkthroughNodeComponent,
 };
 
+const NODE_WIDTH = 420;
+const NODE_SPACING = 480;
+
 type WalkthroughGraphProps = {
-  walkthroughData: GraphData;
+  walkthroughData: Walkthrough;
   targetSlug: string;
   hoveredGuide: string | null;
   onHoverGuide: (slug: string | null) => void;
@@ -32,34 +35,26 @@ export function WalkthroughGraph({
 }: WalkthroughGraphProps) {
   const navigate = useNavigate();
 
-  const getNodeData = useCallback((node: GraphNode) => {
-    return {
-      summary: node.summary,
-      level: node.level,
-      duration: Math.max(1, Math.ceil(node.word_count / 225)),
-      tags: node.tags,
-    };
-  }, []);
-
   const { nodes, edges, onNodesChange, onEdgesChange } = useGraphLayout({
     walkthroughData,
     targetSlug,
     hoveredGuide,
     nodeType: "walkthroughNode",
-    getNodeData,
+    nodeWidth: NODE_WIDTH,
+    nodeSpacing: NODE_SPACING,
   });
 
   const onNodeClick = useCallback(
-    (_: any, node: Node) => {
+    (_: React.MouseEvent, node: Node) => {
       navigate({ to: `/guides/${node.id}` });
     },
     [navigate]
   );
 
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleNodeMouseEnter = useCallback(
-    (_: any, node: Node) => {
+    (_: React.MouseEvent, node: Node) => {
       clearTimeout(hoverTimeoutRef.current);
       onHoverGuide(node.id);
     },

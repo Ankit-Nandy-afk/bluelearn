@@ -1,6 +1,7 @@
--- Materialize a topic's transitive prerequisite DAG: every guide base that must
--- be understood before the target, plus the prerequisite edges among them.
-
+-- Changes from previous compute_walkthrough function: replaces depth (hops back
+-- from the target) with level (hops forward from the base prerequisites), so
+-- nodes sort prerequisites first rather than target first. Also adds word_count
+-- and tags.
 create or replace function public.compute_walkthrough(p_guide_base_id uuid)
 returns jsonb
 language sql
@@ -19,8 +20,10 @@ as $$
      and e.edge_type = 'prerequisite'
      and not e.is_suspended
   ),
+  -- fp = forward_paths. Walks the closure from its roots, so a node's level
+  -- counts prerequisite hops behind it rather than hops back from the
+  -- target.
   forward_paths as (
-    -- Base case: nodes in the closure that have no prerequisites
     select c.node_id, 1 as level
     from closure c
     where not exists (

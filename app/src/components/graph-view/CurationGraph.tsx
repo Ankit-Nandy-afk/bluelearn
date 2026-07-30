@@ -3,15 +3,18 @@ import { Background, Controls, ReactFlow } from "@xyflow/react";
 import { CurationNode } from "./CurationNode";
 import { useGraphLayout } from "./useGraphLayout";
 import type { Node } from "@xyflow/react";
-import type { GraphData, GraphNode } from "@/lib/graphUtils";
+import type { Walkthrough } from "@bluelearn/schemas";
 import "@xyflow/react/dist/style.css";
 
 const nodeTypes = {
   curationNode: CurationNode,
 };
 
+const NODE_WIDTH = 350;
+const NODE_SPACING = 380;
+
 type CurationGraphProps = {
-  walkthroughData: GraphData;
+  walkthroughData: Walkthrough;
   curatedSequence: Array<string>;
   targetSlug: string;
   onToggleGuide: (slug: string, isChecked: boolean) => void;
@@ -27,16 +30,15 @@ export function CurationGraph({
   hoveredGuide,
   onHoverGuide,
 }: CurationGraphProps) {
-  const getNodeData = useCallback(
-    (node: GraphNode, isTarget: boolean) => {
-      const isChecked = isTarget || curatedSequence.includes(node.slug);
-      const selectedOrder = curatedSequence.indexOf(node.slug);
+  const getNodeState = useCallback(
+    (slug: string) => {
+      const selectedOrder = curatedSequence.indexOf(slug);
       return {
-        isChecked,
+        isChecked: slug === targetSlug || selectedOrder !== -1,
         selectedOrder: selectedOrder !== -1 ? selectedOrder + 1 : null,
       };
     },
-    [curatedSequence]
+    [curatedSequence, targetSlug]
   );
 
   const { nodes, edges, onNodesChange, onEdgesChange } = useGraphLayout({
@@ -44,11 +46,13 @@ export function CurationGraph({
     targetSlug,
     hoveredGuide,
     nodeType: "curationNode",
-    getNodeData,
+    nodeWidth: NODE_WIDTH,
+    nodeSpacing: NODE_SPACING,
+    getNodeState,
   });
 
   const onNodeClick = useCallback(
-    (_: any, node: Node) => {
+    (_: React.MouseEvent, node: Node) => {
       if (node.id === targetSlug) return;
       const isCurrentlyChecked = curatedSequence.includes(node.id);
       onToggleGuide(node.id, !isCurrentlyChecked);
@@ -56,10 +60,10 @@ export function CurationGraph({
     [curatedSequence, targetSlug, onToggleGuide]
   );
 
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleNodeMouseEnter = useCallback(
-    (_: any, node: Node) => {
+    (_: React.MouseEvent, node: Node) => {
       clearTimeout(hoverTimeoutRef.current);
       onHoverGuide(node.id);
     },

@@ -40,6 +40,19 @@ export async function getGuide(slug: string, { signal }: FetchOptions = {}) {
   return res.json();
 }
 
+export async function getGuideWalkthrough(
+  slug: string,
+  { signal }: FetchOptions = {}
+) {
+  const res = await guides[":slug"].walkthrough.$get(
+    { param: { slug } },
+    { init: { signal } }
+  );
+  if (!res.ok) return assertOk(res) as Promise<never>;
+
+  return res.json();
+}
+
 export async function createGuide(
   body: InferRequestType<typeof guides.$post>["json"]
 ) {
