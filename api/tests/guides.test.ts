@@ -18,13 +18,15 @@ describe("GET /guides", () => {
     const published = await createPublishedGuide({ summary: "Summary" });
     const draft = await createGuideBase(); // status defaults to draft
 
-    const res = await app.request("/guides", {}, env);
+    const res = await app.request("/guides?limit=100", {}, env);
 
     expect(res.status).toBe(200);
     await expectToMatchSpec(res, "GET", "/guides");
     const body = (await res.json()) as {
       guides: Array<{ id: string; summary: string | null }>;
+      total: number;
     };
+    expect(body.total).toBeLessThanOrEqual(100);
     const ids = body.guides.map((g) => g.id);
     expect(ids).toContain(published.base.id);
     expect(ids).not.toContain(draft.id);
@@ -216,7 +218,7 @@ describe("GET /guides/{slug}/walkthrough", () => {
     expect(res.status).toBe(200);
     await expectToMatchSpec(res, "GET", "/guides/{slug}/walkthrough");
     const body = (await res.json()) as {
-      nodes: Array<{ id: string; depth: number }>;
+      nodes: Array<{ id: string; level: number }>;
       edges: Array<{ from_id: string; to_id: string }>;
     };
     const ids = body.nodes.map((n) => n.id);
@@ -226,6 +228,10 @@ describe("GET /guides/{slug}/walkthrough", () => {
       from_id: prereq.base.id,
       to_id: target.base.id,
     });
+
+    const prereqNode = body.nodes.find((n) => n.id === prereq.base.id);
+    const targetNode = body.nodes.find((n) => n.id === target.base.id);
+    expect(prereqNode?.level).toBeLessThan(targetNode!.level);
   });
 });
 
