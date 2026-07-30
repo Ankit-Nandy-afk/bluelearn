@@ -73,11 +73,14 @@ function PathPage() {
     .filter((n) => n.is_target)
     .sort((a, b) => (a.target_position ?? 0) - (b.target_position ?? 0))
     .map((target) => {
-      const sequence = snapshot.orders
-        .filter((o) => o.target_node_id === target.id)
-        .sort((a, b) => a.position - b.position)
-        .map((o) => nodeById.get(o.node_id))
-        .filter((node) => node !== undefined);
+      const sequence = [
+        ...snapshot.orders
+          .filter((o) => o.target_node_id === target.id)
+          .sort((a, b) => a.position - b.position)
+          .map((o) => nodeById.get(o.node_id))
+          .filter((node) => node !== undefined),
+        target,
+      ];
 
       return {
         slug: target.slug ?? target.id,
