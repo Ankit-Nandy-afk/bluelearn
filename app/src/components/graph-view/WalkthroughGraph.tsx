@@ -12,8 +12,8 @@ const nodeTypes = {
   walkthroughNode: WalkthroughNodeComponent,
 };
 
-const NODE_WIDTH = 420;
-const NODE_SPACING = 480;
+const NODE_WIDTH = 320;
+const NODE_SPACING = 560;
 
 type WalkthroughGraphProps = {
   walkthroughData: Walkthrough;
@@ -48,6 +48,7 @@ export function WalkthroughGraph({
     nodeType: "walkthroughNode",
     nodeWidth: NODE_WIDTH,
     nodeSpacing: NODE_SPACING,
+    targetAtBottom: true,
     getNodeState,
   });
 

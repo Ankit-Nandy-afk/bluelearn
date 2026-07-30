@@ -11,6 +11,7 @@ export type GraphNodeData = Omit<WalkthroughNode, "id" | "slug"> & {
   isTarget: boolean;
   isHovered: boolean;
   isDimmed: boolean;
+  centerX: number;
 };
 
 // Per-node state that changes without moving anything, merged into node data on
@@ -28,6 +29,7 @@ type UseGraphLayoutProps = {
   nodeType: string;
   nodeWidth: number;
   nodeSpacing: number;
+  targetAtBottom?: boolean;
   getNodeState?: (slug: string) => NodeState;
 };
 
@@ -62,6 +64,7 @@ export function useGraphLayout({
   nodeType,
   nodeWidth,
   nodeSpacing,
+  targetAtBottom = false,
   getNodeState = NO_NODE_STATE,
 }: UseGraphLayoutProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -88,9 +91,9 @@ export function useGraphLayout({
     const newNodes: Array<Node> = [];
     levels.forEach((level, levelIdx) => {
       const nodesInLevel = grouped[level];
-
-      // Target at top (y=0), primitives at bottom (y > 0).
-      const levelY = (maxLevelIdx - levelIdx) * LEVEL_SPACING;
+      const levelY = targetAtBottom
+        ? levelIdx * LEVEL_SPACING
+        : (maxLevelIdx - levelIdx) * LEVEL_SPACING;
 
       const totalWidth = nodesInLevel.length * nodeSpacing;
       const startX = -totalWidth / 2;
@@ -111,6 +114,7 @@ export function useGraphLayout({
             isTarget: node.slug === targetSlug,
             isHovered: false,
             isDimmed: false,
+            centerX: cellCenterX,
           } satisfies GraphNodeData,
         });
       });
@@ -177,9 +181,28 @@ export function useGraphLayout({
     nodeType,
     nodeWidth,
     nodeSpacing,
+    targetAtBottom,
     setNodes,
     setEdges,
   ]);
+
+  useEffect(() => {
+    setNodes((nds) => {
+      const next = nds.map((n) => {
+        const width = n.measured?.width;
+        const { centerX } = n.data as GraphNodeData;
+        if (!width || typeof centerX !== "number") return n;
+
+        const x = centerX - width / 2;
+        if (Math.abs(n.position.x - x) < 0.5) return n;
+
+        return { ...n, position: { ...n.position, x } };
+      });
+
+      // Same refs means nothing moved, so React skips the re-render.
+      return next.some((n, i) => n !== nds[i]) ? next : nds;
+    });
+  }, [nodes, setNodes]);
 
   // 2. State: hover highlighting plus whatever getNodeState reports, applied
   // without re-running layout.
