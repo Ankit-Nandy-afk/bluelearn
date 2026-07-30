@@ -6,6 +6,7 @@ import type {
   GuideListItem,
   Pagination,
   SubjectReference,
+  Walkthrough,
 } from "@bluelearn/schemas";
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
@@ -30,17 +31,11 @@ type GuideCardRow = {
   };
 };
 
-// Shape of compute_walkthrough's jsonb payload. Narrowing the RPC's recursive
-// Json return gives the route (and the typed client) a concrete shape.
-type Walkthrough = {
-  nodes: {
-    id: string;
-    slug: string;
-    title: string;
-    summary: string | null;
-    depth: number;
-  }[];
-  edges: { from_id: string; to_id: string }[];
+type WalkthroughRPC = {
+  nodes: (Omit<Walkthrough["nodes"][number], "duration_minutes"> & {
+    word_count: number;
+  })[];
+  edges: Walkthrough["edges"];
 };
 
 // A guide's title/summary/body live on the canonical guide's current
@@ -313,7 +308,15 @@ export async function getWalkthrough(supabase: DB, rawSlug: string) {
     console.error(error);
     throw new ServiceError("Failed to compute walkthrough", 500);
   }
-  return data as unknown as Walkthrough;
+
+  const { nodes, edges } = data as unknown as WalkthroughRPC;
+  return {
+    nodes: nodes.map(({ word_count, ...node }) => ({
+      ...node,
+      duration_minutes: readingMinutes(word_count),
+    })),
+    edges,
+  } satisfies Walkthrough;
 }
 
 // List the published variants (methods/alternatives) under a guide, ranked
