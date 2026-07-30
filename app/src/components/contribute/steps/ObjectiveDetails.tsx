@@ -57,31 +57,13 @@ export const ObjectiveDetails = ({
     [guideItems, objectiveContData.targets]
   );
 
-  const isNextDisabled = useMemo(() => {
-    return (
-      objectiveContData.title.trim() === "" ||
-      objectiveContData.summary.trim() === "" ||
-      objectiveContData.targets.length === 0 ||
-      objectiveContData.subjects.length === 0 ||
-      !objectiveContData.featuredSubObjective
-    );
-  }, [
-    objectiveContData.title,
-    objectiveContData.summary,
-    objectiveContData.targets,
-    objectiveContData.subjects,
-    objectiveContData.featuredSubObjective,
-  ]);
-
   return (
     <Stepper.Content step="objective-details">
       <StepperActionHeader
         title={"Objective Details"}
         Stepper={Stepper}
-        nextDisabled={isNextDisabled}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
-        saveDisabled={objectiveContData.targets.length === 0}
       />
 
       <FieldGroup>

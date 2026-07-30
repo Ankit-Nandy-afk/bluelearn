@@ -463,19 +463,44 @@ function Inner({
     }
   };
 
+  const missingObjectiveFields = () => {
+    const missing: Array<string> = [];
+    if (!objectiveContData.title.trim()) missing.push("a title");
+    if (!objectiveContData.summary.trim()) missing.push("a summary");
+    if (objectiveContData.subjects.length === 0) missing.push("a subject");
+    if (objectiveContData.targets.length === 0) missing.push("a target guide");
+    else if (!objectiveContData.featuredSubObjective)
+      missing.push("a featured sub-objective");
+    return missing;
+  };
+
   const publish = async () => {
     setSubmitting(true);
     try {
+      if (type === "objective") {
+        const missing = missingObjectiveFields();
+        if (missing.length > 0) {
+          throw new Error(`Your objective is missing ${missing.join(", ")}`);
+        }
+      }
+
       const id = await persistDraft();
       if (!id) throw new Error("Failed to save draft before publishing");
       if (type === "objective") {
         await submitObjectiveRevision(id);
+        toast.success("Objective published");
       } else {
         await submitRevision(id);
+        toast.success("Submitted for review");
       }
-      toast.success("Submitted for review");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not submit");
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : type === "objective"
+            ? "Could not publish"
+            : "Could not submit"
+      );
     } finally {
       setSubmitting(false);
     }

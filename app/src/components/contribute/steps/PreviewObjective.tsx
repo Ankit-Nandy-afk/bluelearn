@@ -243,6 +243,7 @@ export const PreviewObjective = ({
         Stepper={Stepper}
         onSaveDraft={onSaveDraft}
         onPublish={onPublish}
+        publishLabel="Publish"
         submitting={submitting}
       />
 
