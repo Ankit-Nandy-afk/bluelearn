@@ -547,6 +547,7 @@ export const OrderObjectiveGuides = ({
                   onToggleGuide={handleToggleGuide}
                   hoveredGuide={hoveredGuide}
                   onHoverGuide={setHoveredGuide}
+                  isFullscreen={isFullscreen}
                 />
               ) : (
                 <div className="flex flex-col items-center gap-3 text-muted-foreground">
