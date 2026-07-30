@@ -93,6 +93,7 @@ function RouteComponent() {
               </div>
               {!isEmailEditing && (
                 <Button
+                  className="btn-sec"
                   variant="outline"
                   onClick={() => setIsEmailEditing(true)}
                 >
@@ -102,7 +103,7 @@ function RouteComponent() {
             </div>
 
             {isEmailEditing && (
-              <div className="space-y-4 rounded-md border p-4">
+              <div className="space-y-4 p-4">
                 <div className="space-y-2">
                   <Input
                     id="email"
@@ -121,6 +122,7 @@ function RouteComponent() {
                     <p className="mono-micro text-green-500">{saveSuccess}</p>
                   )}
                   <Button
+                    className="btn-sec"
                     variant="ghost"
                     onClick={() => {
                       setIsEmailEditing(false);
@@ -130,7 +132,11 @@ function RouteComponent() {
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleSave} disabled={saving}>
+                  <Button
+                    className="btn-pri"
+                    onClick={handleSave}
+                    disabled={saving}
+                  >
                     {saving ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
@@ -160,6 +166,7 @@ function RouteComponent() {
               </div>
               {!isPasswordEditing && (
                 <Button
+                  className="btn-sec"
                   variant="outline"
                   onClick={() => setIsPasswordEditing(true)}
                 >
@@ -229,6 +236,7 @@ function RouteComponent() {
                     <p className="mono-micro text-destructive">{updateError}</p>
                   )}
                   <Button
+                    className="btn-sec"
                     variant="ghost"
                     onClick={() => {
                       setIsPasswordEditing(false);
@@ -238,7 +246,11 @@ function RouteComponent() {
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleUpdate} disabled={updating}>
+                  <Button
+                    className="btn-sec"
+                    onClick={handleUpdate}
+                    disabled={updating}
+                  >
                     {updating ? "Updating..." : "Update Password"}
                   </Button>
                 </div>
