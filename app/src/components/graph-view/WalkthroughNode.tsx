@@ -42,7 +42,7 @@ export function WalkthroughNode({ data }: { data: WalkthroughNodeData }) {
             : isHovered || isSelected
               ? "bg-muted"
               : "bg-background"
-        } border-foreground`}
+        } ${isSelected ? "border-brand-blue" : "border-foreground"}`}
       >
         <CardHeader className="[container-type:normal] gap-1 py-3.5">
           <p className={`mono-micro ${label}`}>
