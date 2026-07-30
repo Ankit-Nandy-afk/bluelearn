@@ -1,18 +1,12 @@
 import { useEffect, useState } from "react";
-import {
-  Link,
-  createFileRoute,
-  notFound,
-  useLocation,
-} from "@tanstack/react-router";
+import { createFileRoute, notFound, useLocation } from "@tanstack/react-router";
 
 import type { Walkthrough } from "@bluelearn/schemas";
 import { Separator } from "@/components/ui/separator";
 
-import { Route as GuideRoute } from "@/routes/guides/$slug/index";
-
 import { getGuideBySlug } from "@/lib/getData";
 import { WalkthroughGraph } from "@/components/graph-view/WalkthroughGraph";
+import { WalkthroughPanel } from "@/components/graph-view/WalkthroughPanel";
 import { getGuideWalkthrough } from "@/lib/api/guides";
 
 import guides from "@/data/guides.json";
@@ -34,6 +28,10 @@ function RouteComponent() {
   const [hoveredGuide, setHoveredGuide] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Panel never sits empty: no click yet means it describes the target.
+  const [selectedGuide, setSelectedGuide] = useState<string | null>(null);
+  const selectedSlug = selectedGuide ?? slug;
+
   const [walkthroughData, setWalkthroughData] = useState<Walkthrough | null>(
     null
   );
@@ -43,6 +41,7 @@ function RouteComponent() {
     const controller = new AbortController();
 
     setWalkthroughData(null);
+    setSelectedGuide(null);
     setError(null);
     getGuideWalkthrough(slug, { signal: controller.signal })
       .then(setWalkthroughData)
@@ -69,56 +68,67 @@ function RouteComponent() {
     throw notFound();
   }
 
+  const selectedNode = walkthroughData?.nodes.find(
+    (node) => node.slug === selectedSlug
+  );
+
   return (
-    <div className="mx-auto h-[calc(100vh-70px)] max-w-[1280px] overflow-y-auto border-x bg-background">
-      <section className="flex h-full flex-col px-10 py-4 lg:px-16">
+    <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
+      <section className="grid h-full grid-cols-[320px_1fr]">
+        {selectedNode ? (
+          <WalkthroughPanel
+            node={selectedNode}
+            targetSlug={slug}
+            targetTitle={guide.title}
+            breadcrumbOrigin={breadcrumbOrigin}
+          />
+        ) : (
+          <aside className="h-full border-r px-6 py-6" />
+        )}
+
         {/* MAIN */}
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
-            Walkthrough: {guide.title}
-          </h1>
-          {/* Actions */}
-          <div className="flex shrink-0 items-center gap-2">
-            <Link
-              to={GuideRoute.to}
-              params={{ slug: slug }}
-              state={{ breadcrumbOrigin }}
-              className="btn-outline"
-            >
-              View Guide
-            </Link>
+        <section className="flex h-full min-w-0 flex-col px-10 py-6 lg:px-16">
+          <div className="mb-4">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Walkthrough
+            </h1>
+            <p className="mt-1 max-w-[46ch] text-sm text-muted-foreground">
+              Explore the recommended learning progression for this guide.
+            </p>
           </div>
-        </div>
 
-        <Separator className="mb-8" />
+          <Separator className="mb-8" />
 
-        {/* Graph */}
-        <div
-          className={
-            isFullscreen
-              ? "fixed inset-0 z-50 bg-background"
-              : "min-h-[600px] w-full flex-1 overflow-hidden rounded-xl border border-border bg-muted/10"
-          }
-        >
-          {error ? (
-            <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
-              {error}
-            </div>
-          ) : walkthroughData ? (
-            <WalkthroughGraph
-              walkthroughData={walkthroughData}
-              targetSlug={slug}
-              hoveredGuide={hoveredGuide}
-              onHoverGuide={setHoveredGuide}
-              isFullscreen={isFullscreen}
-              onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
-              Loading walkthrough...
-            </div>
-          )}
-        </div>
+          {/* Graph */}
+          <div
+            className={
+              isFullscreen
+                ? "fixed inset-0 z-50 bg-background"
+                : "min-h-[500px] w-full flex-1 overflow-hidden rounded-xl border border-border bg-muted/10"
+            }
+          >
+            {error ? (
+              <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
+                {error}
+              </div>
+            ) : walkthroughData ? (
+              <WalkthroughGraph
+                walkthroughData={walkthroughData}
+                targetSlug={slug}
+                hoveredGuide={hoveredGuide}
+                onHoverGuide={setHoveredGuide}
+                selectedGuide={selectedSlug}
+                onSelectGuide={setSelectedGuide}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
+                Loading walkthrough...
+              </div>
+            )}
+          </div>
+        </section>
       </section>
     </div>
   );

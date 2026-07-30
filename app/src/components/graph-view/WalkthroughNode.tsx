@@ -4,7 +4,10 @@ import type { GraphNodeData } from "./useGraphLayout";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-export function WalkthroughNode({ data }: { data: GraphNodeData }) {
+// isSelected comes from WalkthroughGraph's getNodeState.
+type WalkthroughNodeData = GraphNodeData & { isSelected: boolean };
+
+export function WalkthroughNode({ data }: { data: WalkthroughNodeData }) {
   const {
     isTarget,
     title,
@@ -14,6 +17,7 @@ export function WalkthroughNode({ data }: { data: GraphNodeData }) {
     level,
     isHovered,
     isDimmed,
+    isSelected,
   } = data;
 
   return (
@@ -30,11 +34,13 @@ export function WalkthroughNode({ data }: { data: GraphNodeData }) {
 
       <Card
         className={`group relative rounded-md border-2 bg-background shadow-sm ring-0 transition-colors hover:bg-muted ${
-          isHovered
-            ? "border-primary ring-2 ring-primary/20"
-            : isTarget
-              ? "border-primary/60"
-              : "border-border"
+          isSelected
+            ? "border-primary ring-4 ring-primary/30"
+            : isHovered
+              ? "border-primary ring-2 ring-primary/20"
+              : isTarget
+                ? "border-primary/60"
+                : "border-border"
         }`}
       >
         {/* Header */}

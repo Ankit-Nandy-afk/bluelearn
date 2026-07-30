@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Controls, Panel, ReactFlow } from "@xyflow/react";
 import { Fullscreen, Minimize } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
 import { WalkthroughNode as WalkthroughNodeComponent } from "./WalkthroughNode";
 import { useGraphLayout } from "./useGraphLayout";
 import type { Node, ReactFlowInstance } from "@xyflow/react";
@@ -21,6 +20,8 @@ type WalkthroughGraphProps = {
   targetSlug: string;
   hoveredGuide: string | null;
   onHoverGuide: (slug: string | null) => void;
+  selectedGuide: string;
+  onSelectGuide: (slug: string) => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
 };
@@ -30,10 +31,15 @@ export function WalkthroughGraph({
   targetSlug,
   hoveredGuide,
   onHoverGuide,
+  selectedGuide,
+  onSelectGuide,
   isFullscreen,
   onToggleFullscreen,
 }: WalkthroughGraphProps) {
-  const navigate = useNavigate();
+  const getNodeState = useCallback(
+    (slug: string) => ({ isSelected: slug === selectedGuide }),
+    [selectedGuide]
+  );
 
   const { nodes, edges, onNodesChange, onEdgesChange } = useGraphLayout({
     walkthroughData,
@@ -42,13 +48,14 @@ export function WalkthroughGraph({
     nodeType: "walkthroughNode",
     nodeWidth: NODE_WIDTH,
     nodeSpacing: NODE_SPACING,
+    getNodeState,
   });
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
-      navigate({ to: `/guides/${node.id}` });
+      onSelectGuide(node.id);
     },
-    [navigate]
+    [onSelectGuide]
   );
 
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
