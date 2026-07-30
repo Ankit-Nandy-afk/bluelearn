@@ -19,6 +19,19 @@ export async function listObjectives(
   return res.json();
 }
 
+export async function getObjective(
+  slug: string,
+  { signal }: FetchOptions = {}
+) {
+  const res = await objectives[":slug"].$get(
+    { param: { slug } },
+    { init: { signal } }
+  );
+  if (!res.ok) return assertOk(res) as Promise<never>;
+
+  return res.json();
+}
+
 export async function createObjective(
   body: InferRequestType<typeof objectives.$post>["json"]
 ) {
