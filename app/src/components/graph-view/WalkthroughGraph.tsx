@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { Background, Controls, Panel, ReactFlow } from "@xyflow/react";
+import { Controls, Panel, ReactFlow } from "@xyflow/react";
 import { Fullscreen, Minimize } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { WalkthroughNode as WalkthroughNodeComponent } from "./WalkthroughNode";
@@ -101,12 +101,6 @@ export function WalkthroughGraph({
         minZoom={0.2}
         maxZoom={1.5}
       >
-        <Background
-          color="hsl(var(--muted-foreground) / 0.2)"
-          gap={24}
-          size={2}
-        />
-
         {onToggleFullscreen && (
           <Panel position="top-right" className="m-4 flex items-center gap-2">
             <Button

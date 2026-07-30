@@ -18,7 +18,7 @@ export function WalkthroughNode({ data }: { data: GraphNodeData }) {
 
   return (
     <div
-      className={`relative max-w-[420px] min-w-[380px] transition-all duration-150 select-none ${
+      className={`relative max-w-[420px] min-w-[380px] cursor-pointer transition-all duration-150 select-none ${
         isHovered ? "z-10 scale-[1.02]" : ""
       } ${isDimmed ? "opacity-30" : ""}`}
     >
@@ -29,9 +29,13 @@ export function WalkthroughNode({ data }: { data: GraphNodeData }) {
       />
 
       <Card
-        className={`group relative rounded-md bg-background shadow-none transition-colors hover:bg-muted ${
-          isHovered ? "border-primary ring-2 ring-primary/20" : "border-border"
-        } ${isTarget ? "border-primary/50 shadow-sm" : ""}`}
+        className={`group relative rounded-md border-2 bg-background shadow-sm ring-0 transition-colors hover:bg-muted ${
+          isHovered
+            ? "border-primary ring-2 ring-primary/20"
+            : isTarget
+              ? "border-primary/60"
+              : "border-border"
+        }`}
       >
         {/* Header */}
         <CardHeader className="relative p-3">
