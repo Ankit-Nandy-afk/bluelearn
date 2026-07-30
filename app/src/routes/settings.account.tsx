@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useAuth } from "@/lib/authContext";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,16 @@ export const Route = createFileRoute("/settings/account")({
 });
 
 function RouteComponent() {
+  const { session } = useAuth();
+  const currentEmail = session?.user.email || "";
+
   const [email, setEmail] = useState<string>("");
+
+  useEffect(() => {
+    if (currentEmail && !email) {
+      setEmail(currentEmail);
+    }
+  }, [currentEmail, email]);
   const [password, setPassword] = useState({
     old: "",
     new: "",
@@ -34,13 +44,13 @@ function RouteComponent() {
 
   // TODO: fetch account data and update data based on fields
 
-  const handleSave = async () => {
+  const handleSave = () => {
     setSaving(true);
     setSaveError(null);
     setSaving(false);
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = () => {
     setUpdating(true);
     setUpdateError(null);
     setUpdating(false);
@@ -70,7 +80,7 @@ function RouteComponent() {
                 </FieldLabel>
                 {!isEmailEditing && (
                   <p className="text-sm text-muted-foreground">
-                    {email || "user@example.com"}
+                    {currentEmail || "Loading..."}
                   </p>
                 )}
               </div>
