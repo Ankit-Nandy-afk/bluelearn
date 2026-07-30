@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute, notFound, useLocation } from "@tanstack/react-router";
 
 import type { Walkthrough } from "@bluelearn/schemas";
-import { Separator } from "@/components/ui/separator";
 
 import { getGuideBySlug } from "@/lib/getData";
 import { WalkthroughGraph } from "@/components/graph-view/WalkthroughGraph";
@@ -92,12 +91,10 @@ function RouteComponent() {
             <h1 className="text-2xl font-semibold tracking-tight">
               Walkthrough
             </h1>
-            <p className="mt-1 max-w-[46ch] text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               Explore the recommended learning progression for this guide.
             </p>
           </div>
-
-          <Separator className="mb-8" />
 
           {/* Graph */}
           <div

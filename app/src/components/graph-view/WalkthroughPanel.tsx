@@ -80,7 +80,7 @@ export function WalkthroughPanel({
         to="/guides/$slug"
         params={{ slug: node.slug }}
         state={{ breadcrumbOrigin: openOrigin }}
-        className="btn-outline w-fit"
+        className="btn-pri w-full"
       >
         Open Guide
       </Link>
