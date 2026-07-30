@@ -33,14 +33,12 @@ export function WalkthroughNode({ data }: { data: WalkthroughNodeData }) {
       />
 
       <Card
-        className={`group relative rounded-md border-2 bg-background shadow-sm ring-0 transition-colors hover:bg-muted ${
+        className={`group relative rounded-md border bg-background ring-0 transition-colors hover:bg-muted ${
           isSelected
-            ? "border-primary ring-4 ring-primary/30"
+            ? "border-primary"
             : isHovered
-              ? "border-primary ring-2 ring-primary/20"
-              : isTarget
-                ? "border-primary/60"
-                : "border-border"
+              ? "border-primary/70"
+              : "border-foreground"
         }`}
       >
         {/* Header */}
@@ -79,7 +77,7 @@ export function WalkthroughNode({ data }: { data: WalkthroughNodeData }) {
 
         {/* Metadata */}
         {(summary || tags.length > 0) && (
-          <CardContent className="border-t p-3">
+          <CardContent className="border-t border-foreground p-3">
             {summary && (
               <p className="line-clamp-2 text-xs text-muted-foreground">
                 {summary}

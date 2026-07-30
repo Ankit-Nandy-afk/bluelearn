@@ -100,6 +100,7 @@ export function WalkthroughGraph({
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         nodeTypes={nodeTypes}
+        proOptions={{ hideAttribution: true }}
         fitView
         nodesDraggable={false}
         nodesConnectable={false}
@@ -123,8 +124,9 @@ export function WalkthroughGraph({
         )}
 
         <Controls
+          position="bottom-right"
           showInteractive={false}
-          className="overflow-hidden rounded-xl border-border! bg-background! shadow-md! [&>button]:border-b-border! [&>button]:text-foreground! hover:[&>button]:bg-muted!"
+          className="overflow-hidden rounded-sm border! border-foreground! bg-background! shadow-none! [&_svg]:max-h-[15px]! [&_svg]:max-w-[15px]! [&>button]:h-8! [&>button]:w-8! [&>button]:border-b-foreground! [&>button]:p-2! [&>button]:text-foreground! [&>button:hover]:bg-muted!"
         />
       </ReactFlow>
     </div>
