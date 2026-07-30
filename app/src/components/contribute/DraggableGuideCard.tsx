@@ -1,4 +1,4 @@
-import { Calendar, Clock, GripVertical, User } from "lucide-react";
+import { Calendar, Clock, GripVertical, Lock, User } from "lucide-react";
 import type { Guide } from "@/types/guides";
 import { Badge } from "@/components/ui/badge";
 
@@ -7,6 +7,7 @@ type DraggableGuideCardProps = {
   index: number;
   isDragging: boolean;
   isHovered?: boolean;
+  isBlocking?: boolean;
   onDragStart: (e: React.DragEvent, index: number) => void;
   onDragOver: (e: React.DragEvent, index: number) => void;
   onDragEnd: () => void;
@@ -20,6 +21,7 @@ export const DraggableGuideCard = ({
   index,
   isDragging,
   isHovered,
+  isBlocking,
   onDragStart,
   onDragOver,
   onDragEnd,
@@ -38,14 +40,37 @@ export const DraggableGuideCard = ({
       className={`relative flex items-center justify-between gap-3 rounded-lg border p-3 pl-12 shadow-sm transition-all duration-150 select-none ${
         isDragging
           ? "z-10 scale-[1.02] cursor-grabbing border-2 border-dashed border-primary bg-primary/10 opacity-80 ring-4 ring-primary/20"
-          : `cursor-grab border-border bg-background hover:border-primary/50 hover:ring-2 hover:ring-primary/40 ${isHovered ? "border-primary/50 ring-2 ring-primary/40" : ""}`
+          : isBlocking
+            ? "cursor-grab border-dashed border-destructive/60 bg-destructive/5"
+            : `cursor-grab border-border bg-background hover:border-primary/50 hover:ring-2 hover:ring-primary/40 ${isHovered ? "border-primary/50 ring-2 ring-primary/40" : ""}`
       }`}
+      title={
+        isBlocking
+          ? "Direct prerequisite link: the dragged guide can't cross this one"
+          : undefined
+      }
     >
       {/* Left controls column positioned absolutely with background and border separation */}
-      <div className="absolute inset-y-0 left-0 z-10 w-9 rounded-l-lg border-r border-border/70 bg-muted/40">
+      <div
+        className={`absolute inset-y-0 left-0 z-10 w-9 rounded-l-lg border-r ${
+          isBlocking
+            ? "border-destructive/40 bg-destructive/10"
+            : "border-border/70 bg-muted/40"
+        }`}
+      >
         {/* Drag Icon completely centered vertically */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-grab text-muted-foreground/60 hover:text-foreground">
-          <GripVertical className="h-4 w-4" />
+        <div
+          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${
+            isBlocking
+              ? "text-destructive/70"
+              : "cursor-grab text-muted-foreground/60 hover:text-foreground"
+          }`}
+        >
+          {isBlocking ? (
+            <Lock className="h-4 w-4" />
+          ) : (
+            <GripVertical className="h-4 w-4" />
+          )}
         </div>
       </div>
 

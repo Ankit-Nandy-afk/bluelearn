@@ -103,6 +103,38 @@ export const OrderObjectiveGuides = ({
     return () => controller.abort();
   }, [targetSlug]);
 
+  const { directPrereqs, directDependents } = useMemo(() => {
+    const prereqs = new Map<string, Set<string>>();
+    const dependents = new Map<string, Set<string>>();
+    if (!walkthroughData)
+      return { directPrereqs: prereqs, directDependents: dependents };
+
+    const slugById = new Map(walkthroughData.nodes.map((n) => [n.id, n.slug]));
+    walkthroughData.edges.forEach((edge) => {
+      const from = slugById.get(edge.from_id);
+      const to = slugById.get(edge.to_id);
+      if (!from || !to) return;
+
+      if (!prereqs.has(to)) prereqs.set(to, new Set());
+      prereqs.get(to)!.add(from);
+      if (!dependents.has(from)) dependents.set(from, new Set());
+      dependents.get(from)!.add(to);
+    });
+
+    return { directPrereqs: prereqs, directDependents: dependents };
+  }, [walkthroughData]);
+
+  const canPlaceAt = (seq: Array<string>, slug: string, index: number) => {
+    const prereqs = directPrereqs.get(slug);
+    const dependents = directDependents.get(slug);
+
+    // Dependents can't sit above the dragged guide and prereqs can't sit below.
+    return seq.every((other, i) => {
+      if (i === index) return true;
+      return i < index ? !dependents?.has(other) : !prereqs?.has(other);
+    });
+  };
+
   const updateSubObjective = (slug: string, newSeq: Array<string>) => {
     setObjectiveContData((prev) => {
       const exists = prev.subObjectives.some((s) => s.targetSlug === slug);
@@ -188,6 +220,17 @@ export const OrderObjectiveGuides = ({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const draggedIndexRef = useRef<number | null>(null);
 
+  const blockingSlugs = useMemo(() => {
+    const dragged =
+      draggedIndex === null ? undefined : curatedSequence[draggedIndex];
+    if (!dragged) return new Set<string>();
+
+    return new Set([
+      ...(directPrereqs.get(dragged) ?? []),
+      ...(directDependents.get(dragged) ?? []),
+    ]);
+  }, [draggedIndex, curatedSequence, directPrereqs, directDependents]);
+
   const handleDragStart = (e: React.DragEvent, index: number) => {
     draggedIndexRef.current = index;
     setDraggedIndex(index);
@@ -206,6 +249,7 @@ export const OrderObjectiveGuides = ({
     if (!draggedItem) return;
     newSeq.splice(currentDragged, 1);
     newSeq.splice(index, 0, draggedItem);
+    if (!canPlaceAt(newSeq, draggedItem, index)) return;
 
     setCuratedSequence(newSeq);
     updateSubObjective(targetSlug, newSeq);
@@ -224,7 +268,16 @@ export const OrderObjectiveGuides = ({
   const handleToggleGuide = (slug: string, checked: boolean) => {
     let newSeq: Array<string>;
     if (checked) {
-      newSeq = [...curatedSequence, slug];
+      const dependents = directDependents.get(slug);
+      const firstDependent = curatedSequence.findIndex((s) =>
+        dependents?.has(s)
+      );
+      newSeq = [...curatedSequence];
+      newSeq.splice(
+        firstDependent === -1 ? newSeq.length : firstDependent,
+        0,
+        slug
+      );
     } else {
       newSeq = curatedSequence.filter((s) => s !== slug);
     }
@@ -381,6 +434,7 @@ export const OrderObjectiveGuides = ({
                         guide={guide}
                         index={index}
                         isDragging={isDragging}
+                        isBlocking={blockingSlugs.has(slug)}
                         isHovered={hoveredGuide === slug}
                         onDragStart={handleDragStart}
                         onDragOver={handleDragOver}
