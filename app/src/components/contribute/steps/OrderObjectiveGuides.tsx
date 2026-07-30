@@ -13,7 +13,7 @@ import {
 import type { Dispatch, SetStateAction } from "react";
 import type { ObjectiveContribution } from "@/types/contributions";
 import type { Walkthrough } from "@bluelearn/schemas";
-import { CurationGraph } from "@/components/graph-view/CurationGraph";
+import { CurationGraph } from "@/components/graph/CurationGraph";
 import { getGuideWalkthrough } from "@/lib/api/guides";
 import { DraggableGuideCard } from "@/components/contribute/DraggableGuideCard";
 import { Badge } from "@/components/ui/badge";

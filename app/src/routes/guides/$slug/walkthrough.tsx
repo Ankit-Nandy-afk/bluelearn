@@ -4,8 +4,8 @@ import { createFileRoute, notFound, useLocation } from "@tanstack/react-router";
 import type { Walkthrough } from "@bluelearn/schemas";
 
 import { getGuideBySlug } from "@/lib/getData";
-import { WalkthroughGraph } from "@/components/graph-view/WalkthroughGraph";
-import { WalkthroughPanel } from "@/components/graph-view/WalkthroughPanel";
+import { WalkthroughGraph } from "@/components/graph/WalkthroughGraph";
+import { WalkthroughPanel } from "@/components/graph/WalkthroughPanel";
 import { getGuideWalkthrough } from "@/lib/api/guides";
 
 import guides from "@/data/guides.json";
