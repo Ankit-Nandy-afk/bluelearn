@@ -132,6 +132,7 @@ export const guidesRouter = new Hono<HonoEnv>()
     async (c) => {
       const { revision_id } = await addGuideVariant(
         c.get("supabase"),
+        c.get("user").id,
         c.req.param("slug"),
         c.req.valid("json")
       );
@@ -242,15 +243,25 @@ export const variantsRouter = new Hono<HonoEnv>()
   );
 
 export const guideRevisionsRouter = new Hono<HonoEnv>()
-  // Returns a revision snapshot, its subject tags, knowledge type, prerequisites,
-  // and todos for resuming the contribute flow.
+  // Returns a revision snapshot, its subject tags, knowledge type, whether it is
+  // a variant, its base slug, prerequisites, and todos for resuming the
+  // contribute flow.
   .get("/:id", async (c) => {
-    const { revision, subjects, knowledge_type, prerequisites, todos } =
-      await getRevision(c.get("supabase"), c.req.param("id"));
+    const {
+      revision,
+      subjects,
+      knowledge_type,
+      is_variant,
+      base_slug,
+      prerequisites,
+      todos,
+    } = await getRevision(c.get("supabase"), c.req.param("id"));
     return c.json({
       revision,
       subjects,
       knowledge_type,
+      is_variant,
+      base_slug,
       prerequisites,
       todos,
     });

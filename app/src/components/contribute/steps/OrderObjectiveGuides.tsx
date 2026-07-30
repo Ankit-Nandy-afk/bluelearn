@@ -11,9 +11,11 @@ import {
   User,
   Workflow,
 } from "lucide-react";
-import { GuideGraph } from "../graph-view/GuideGraph";
 import type { Dispatch, SetStateAction } from "react";
 import type { ObjectiveContribution } from "@/types/contributions";
+import type { Walkthrough } from "@bluelearn/schemas";
+import { CurationGraph } from "@/components/graph/CurationGraph";
+import { getGuideWalkthrough } from "@/lib/api/guides";
 import { DraggableGuideCard } from "@/components/contribute/DraggableGuideCard";
 import { Badge } from "@/components/ui/badge";
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
@@ -31,7 +33,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import { getWalkthrough } from "@/lib/api/guides";
 
 type PropTypes = {
   Stepper: any;
@@ -40,13 +41,6 @@ type PropTypes = {
   onSaveDraft?: () => void;
   submitting?: boolean;
   guides: Array<any>;
-};
-
-type WalkthroughNode = {
-  slug: string;
-  title: string;
-  summary: string;
-  level: number;
 };
 
 export const OrderObjectiveGuides = ({
@@ -69,14 +63,6 @@ export const OrderObjectiveGuides = ({
   const [hoveredGuide, setHoveredGuide] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<"sequence" | "graph">("sequence");
 
-  const [walkthroughNodes, setWalkthroughNodes] = useState<
-    Array<WalkthroughNode>
-  >([]);
-  const [walkthroughEdges, setWalkthroughEdges] = useState<
-    Array<{ sourceSlug: string; targetSlug: string }>
-  >([]);
-  const [isFetchingWalkthrough, setIsFetchingWalkthrough] = useState(false);
-
   const targetGuide = targetSlug ? guidesMap.get(targetSlug) : undefined;
 
   const totalDuration = useMemo(() => {
@@ -98,6 +84,24 @@ export const OrderObjectiveGuides = ({
     if (h > 0) return `${h}h`;
     return `${m}m`;
   }, [totalDuration]);
+
+  const [walkthroughData, setWalkthroughData] = useState<Walkthrough | null>(
+    null
+  );
+
+  useEffect(() => {
+    setWalkthroughData(null);
+    if (!targetSlug) return;
+
+    const controller = new AbortController();
+    getGuideWalkthrough(targetSlug, { signal: controller.signal })
+      .then(setWalkthroughData)
+      .catch((err) => {
+        if (!controller.signal.aborted) console.error(err);
+      });
+
+    return () => controller.abort();
+  }, [targetSlug]);
 
   const updateSubObjective = (slug: string, newSeq: Array<string>) => {
     setObjectiveContData((prev) => {
@@ -134,56 +138,9 @@ export const OrderObjectiveGuides = ({
     }
   }, [objectiveContData.targets, targetSlug]);
 
-  // Fetch walkthrough nodes from the API when target changes
-  useEffect(() => {
-    if (!targetSlug) {
-      setWalkthroughNodes([]);
-      return;
-    }
-    let isMounted = true;
-    setIsFetchingWalkthrough(true);
-
-    getWalkthrough(targetSlug)
-      .then((data) => {
-        if (!isMounted) return;
-
-        const maxDepth = Math.max(...data.nodes.map((n: any) => n.depth), 0);
-
-        const mappedNodes = data.nodes.map((n: any) => ({
-          slug: n.slug,
-          title: n.title,
-          summary: n.summary || "",
-          level: maxDepth - n.depth + 1,
-        }));
-
-        const idToSlug = new Map<string, string>(
-          data.nodes.map((n: any) => [n.id, n.slug])
-        );
-        const mappedEdges = data.edges
-          .map((e: any) => ({
-            sourceSlug: idToSlug.get(e.from_id) || "",
-            targetSlug: idToSlug.get(e.to_id) || "",
-          }))
-          .filter((e: any) => e.sourceSlug && e.targetSlug);
-
-        setWalkthroughNodes(mappedNodes);
-        setWalkthroughEdges(mappedEdges);
-      })
-      .catch((err) => {
-        console.error("Failed to load walkthrough graph", err);
-      })
-      .finally(() => {
-        if (isMounted) setIsFetchingWalkthrough(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [targetSlug]);
-
   // Sync initial curated sequence when target guide changes and walkthrough is ready
   useEffect(() => {
-    if (!targetSlug || isFetchingWalkthrough) return;
+    if (!targetSlug) return;
 
     const existingSub = objectiveContData.subObjectives.find(
       (s) => s.targetSlug === targetSlug
@@ -191,33 +148,36 @@ export const OrderObjectiveGuides = ({
 
     if (existingSub) {
       setCuratedSequence(existingSub.curatedSequence);
-    } else {
-      // Seed with all prerequisites (excluding the target guide itself) sorted by levels
-      const initialPrereqs = walkthroughNodes
-        .filter((n) => n.slug !== targetSlug)
-        .sort((a, b) => a.level - b.level)
-        .map((n) => n.slug);
-
-      setCuratedSequence(initialPrereqs);
-
-      setObjectiveContData((prev) => {
-        if (prev.subObjectives.some((s) => s.targetSlug === targetSlug)) {
-          return prev;
-        }
-        return {
-          ...prev,
-          subObjectives: [
-            ...prev.subObjectives,
-            {
-              targetSlug,
-              selectedSlugs: initialPrereqs,
-              curatedSequence: initialPrereqs,
-            },
-          ],
-        };
-      });
+      return;
     }
-  }, [targetSlug, walkthroughNodes, isFetchingWalkthrough]);
+
+    if (!walkthroughData) return;
+
+    // Seed with all prerequisites (excluding the target guide itself) sorted by levels
+    const initialPrereqs = walkthroughData.nodes
+      .filter((n) => n.slug !== targetSlug)
+      .sort((a, b) => a.level - b.level)
+      .map((n) => n.slug);
+
+    setCuratedSequence(initialPrereqs);
+
+    setObjectiveContData((prev) => {
+      if (prev.subObjectives.some((s) => s.targetSlug === targetSlug)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        subObjectives: [
+          ...prev.subObjectives,
+          {
+            targetSlug,
+            selectedSlugs: initialPrereqs,
+            curatedSequence: initialPrereqs,
+          },
+        ],
+      };
+    });
+  }, [targetSlug, walkthroughData]);
 
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const draggedIndexRef = useRef<number | null>(null);
@@ -385,18 +345,20 @@ export const OrderObjectiveGuides = ({
               </CardDescription>
             </CardHeader>
             <CardContent className="max-h-128 min-h-0 flex-1 scrollbar-thin [scrollbar-color:var(--border)_transparent] overflow-y-auto p-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent">
-              {curatedSequence.length === 0 && walkthroughNodes.length > 1 && (
-                <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
-                  <Info className="mb-2 h-8 w-8 text-muted-foreground opacity-50" />
-                  <p className="text-sm font-medium">
-                    No prerequisite guides selected.
-                  </p>
-                  <p className="mt-1 max-w-62.5 text-xs text-muted-foreground/80">
-                    Select prerequisite guides from the prerequisites on the
-                    right to add them to your curated sequence.
-                  </p>
-                </div>
-              )}
+              {curatedSequence.length === 0 &&
+                walkthroughData &&
+                walkthroughData.nodes.length > 1 && (
+                  <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
+                    <Info className="mb-2 h-8 w-8 text-muted-foreground opacity-50" />
+                    <p className="text-sm font-medium">
+                      No prerequisite guides selected.
+                    </p>
+                    <p className="mt-1 max-w-62.5 text-xs text-muted-foreground/80">
+                      Select prerequisite guides from the prerequisites on the
+                      right to add them to your curated sequence.
+                    </p>
+                  </div>
+                )}
 
               <div className="space-y-3">
                 {curatedSequence.map((slug, index) => {
@@ -571,22 +533,20 @@ export const OrderObjectiveGuides = ({
               </CardDescription>
             </CardHeader>
             <CardContent className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-0">
-              {isFetchingWalkthrough ? (
+              {walkthroughData ? (
+                <CurationGraph
+                  walkthroughData={walkthroughData}
+                  curatedSequence={curatedSequence}
+                  targetSlug={targetSlug}
+                  onToggleGuide={handleToggleGuide}
+                  hoveredGuide={hoveredGuide}
+                  onHoverGuide={setHoveredGuide}
+                />
+              ) : (
                 <div className="flex flex-col items-center gap-3 text-muted-foreground">
                   <Loader2 className="h-8 w-8 animate-spin" />
                   <span className="text-sm">Computing graph...</span>
                 </div>
-              ) : (
-                <GuideGraph
-                  walkthroughNodes={walkthroughNodes}
-                  walkthroughEdges={walkthroughEdges}
-                  curatedSequence={curatedSequence}
-                  targetSlug={targetSlug}
-                  onToggleGuide={handleToggleGuide}
-                  guidesMap={guidesMap}
-                  hoveredGuide={hoveredGuide}
-                  onHoverGuide={setHoveredGuide}
-                />
               )}
             </CardContent>
           </Card>

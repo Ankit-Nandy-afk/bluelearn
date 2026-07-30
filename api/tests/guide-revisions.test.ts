@@ -72,6 +72,48 @@ describe("GET /guide-revisions/{id}", () => {
     expect(res.status).toBe(404);
     await expectToMatchSpec(res, "GET", "/guide-revisions/{id}");
   });
+
+  it("flags a variant draft so it resumes in the variant flow", async () => {
+    const author = await makeUser();
+    const { base } = await createPublishedGuide();
+    const variant = await createGuide(base.id, { author_id: author.userId });
+    const revision = await createGuideRevision(variant.id, {
+      status: "draft",
+      author_id: author.userId,
+    });
+
+    const res = await app.request(
+      `/guide-revisions/${revision.id}`,
+      auth(author.token),
+      env
+    );
+
+    expect(res.status).toBe(200);
+    await expectToMatchSpec(res, "GET", "/guide-revisions/{id}");
+    const body = (await res.json()) as {
+      is_variant: boolean;
+      base_slug: string | null;
+    };
+    expect(body.is_variant).toBe(true);
+    expect(body.base_slug).toBe(base.slug);
+  });
+
+  it("does not flag the canonical guide's own revision", async () => {
+    const author = await makeUser();
+    const { revision } = await createPublishedGuide({
+      authorId: author.userId,
+    });
+
+    const res = await app.request(
+      `/guide-revisions/${revision.id}`,
+      auth(author.token),
+      env
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { is_variant: boolean };
+    expect(body.is_variant).toBe(false);
+  });
 });
 
 describe("PATCH /guide-revisions/{id}", () => {
@@ -146,13 +188,15 @@ describe("PATCH /guide-revisions/{id}", () => {
       .eq("dependent_guide_base_id", base.id);
     expect(todos?.map((t) => t.title)).toEqual(["Learn functions"]);
 
-    // The inline subject lands as a draft, hidden until this guide is approved.
+    // The inline subject lands as a draft with no slug, hidden until this guide
+    // is approved.
     const { data: created } = await admin
       .from("subjects")
-      .select("status")
-      .eq("slug", newName.toLowerCase().replace(" ", "-"))
+      .select("status, slug")
+      .eq("name", newName)
       .single();
     expect(created?.status).toBe("draft");
+    expect(created?.slug).toBeNull();
   });
 });
 

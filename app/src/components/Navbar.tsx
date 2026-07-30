@@ -69,7 +69,7 @@ export function Navbar() {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:scale-110"
+                  className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase transition-all duration-200 hover:scale-110"
                 >
                   {item.label}
                 </Link>

@@ -10,7 +10,8 @@ export const Route = createFileRoute("/review/")({
   loader: async ({ abortController }) => {
     try {
       return await getReviewQueue({ signal: abortController.signal });
-    } catch {
+    } catch (err) {
+      if (abortController.signal.aborted) throw err;
       return [];
     }
   },

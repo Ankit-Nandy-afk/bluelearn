@@ -18,13 +18,15 @@ describe("GET /guides", () => {
     const published = await createPublishedGuide({ summary: "Summary" });
     const draft = await createGuideBase(); // status defaults to draft
 
-    const res = await app.request("/guides", {}, env);
+    const res = await app.request("/guides?limit=100", {}, env);
 
     expect(res.status).toBe(200);
     await expectToMatchSpec(res, "GET", "/guides");
     const body = (await res.json()) as {
       guides: Array<{ id: string; summary: string | null }>;
+      total: number;
     };
+    expect(body.total).toBeLessThanOrEqual(100);
     const ids = body.guides.map((g) => g.id);
     expect(ids).toContain(published.base.id);
     expect(ids).not.toContain(draft.id);
@@ -98,10 +100,11 @@ describe("POST /guides", () => {
 
     const { data: subject } = await admin
       .from("subjects")
-      .select("id, status")
-      .eq("slug", newName.toLowerCase().replace(" ", "-"))
+      .select("id, slug, status")
+      .eq("name", newName)
       .single();
     expect(subject?.status).toBe("draft");
+    expect(subject?.slug).toBeNull();
 
     const { data: tags } = await admin
       .from("guide_revision_subjects")
@@ -215,7 +218,7 @@ describe("GET /guides/{slug}/walkthrough", () => {
     expect(res.status).toBe(200);
     await expectToMatchSpec(res, "GET", "/guides/{slug}/walkthrough");
     const body = (await res.json()) as {
-      nodes: Array<{ id: string; depth: number }>;
+      nodes: Array<{ id: string; level: number }>;
       edges: Array<{ from_id: string; to_id: string }>;
     };
     const ids = body.nodes.map((n) => n.id);
@@ -225,6 +228,10 @@ describe("GET /guides/{slug}/walkthrough", () => {
       from_id: prereq.base.id,
       to_id: target.base.id,
     });
+
+    const prereqNode = body.nodes.find((n) => n.id === prereq.base.id);
+    const targetNode = body.nodes.find((n) => n.id === target.base.id);
+    expect(prereqNode?.level).toBeLessThan(targetNode!.level);
   });
 });
 
@@ -325,6 +332,146 @@ describe("POST /guides/{slug}/variants", () => {
       .eq("id", revision_id)
       .single();
     expect(revision?.title).toBe("Another method");
+  });
+
+  it("creates an untitled draft, like an empty guide draft", async () => {
+    const { token } = await makeUser();
+    const { base } = await createPublishedGuide();
+
+    const res = await app.request(
+      `/guides/${base.slug}/variants`,
+      jsonAuth(token, "POST", { title: null }),
+      env
+    );
+
+    expect(res.status).toBe(201);
+    await expectToMatchSpec(res, "POST", "/guides/{slug}/variants");
+    const { revision_id } = (await res.json()) as { revision_id: string };
+
+    const { data: revision } = await admin
+      .from("guide_revisions")
+      .select("status, title")
+      .eq("id", revision_id)
+      .single();
+    expect(revision?.status).toBe("draft");
+    expect(revision?.title).toBeNull();
+  });
+
+  it("tags the new revision with the subjects it was given", async () => {
+    const { token } = await makeUser();
+    const { base } = await createPublishedGuide();
+    const subject = await createSubject();
+
+    const res = await app.request(
+      `/guides/${base.slug}/variants`,
+      jsonAuth(token, "POST", {
+        title: "Another method",
+        tags: [subject.slug],
+      }),
+      env
+    );
+
+    expect(res.status).toBe(201);
+    const { revision_id } = (await res.json()) as { revision_id: string };
+
+    const { data: tags } = await admin
+      .from("guide_revision_subjects")
+      .select("subject_id")
+      .eq("guide_revision_id", revision_id);
+    expect(tags?.map((t) => t.subject_id)).toEqual([subject.id]);
+  });
+
+  it("creates the proposed new subjects and tags the revision with them", async () => {
+    const { token } = await makeUser();
+    const { base } = await createPublishedGuide();
+    const name = `Proposed ${crypto.randomUUID().slice(0, 8)}`;
+
+    const res = await app.request(
+      `/guides/${base.slug}/variants`,
+      jsonAuth(token, "POST", {
+        title: "Another method",
+        newSubjects: [{ name, summary: "Proposed inline" }],
+      }),
+      env
+    );
+
+    expect(res.status).toBe(201);
+    const { revision_id } = (await res.json()) as { revision_id: string };
+
+    const { data: tags } = await admin
+      .from("guide_revision_subjects")
+      .select("subject:subjects(name, slug, status)")
+      .eq("guide_revision_id", revision_id);
+    expect(tags?.map((t) => t.subject?.name)).toEqual([name]);
+    expect(tags?.[0]?.subject?.status).toBe("draft");
+    expect(tags?.[0]?.subject?.slug).toBeNull();
+  });
+
+  // Submitting requires a tag on the revision itself, so a variant created with
+  // one is submittable without a PATCH in between.
+  it("creates a variant that can be submitted straight away", async () => {
+    const { token } = await makeUser();
+    const { base } = await createPublishedGuide();
+    const subject = await createSubject();
+
+    const created = await app.request(
+      `/guides/${base.slug}/variants`,
+      jsonAuth(token, "POST", {
+        title: "Another method",
+        summary: "A different take",
+        body: "The long version.",
+        tags: [subject.slug],
+      }),
+      env
+    );
+    expect(created.status).toBe(201);
+    const { revision_id } = (await created.json()) as { revision_id: string };
+
+    const res = await app.request(
+      `/guide-revisions/${revision_id}/submit`,
+      { method: "POST", ...auth(token) },
+      env
+    );
+
+    expect(res.status).toBe(201);
+    await expectToMatchSpec(res, "POST", "/guide-revisions/{id}/submit");
+  });
+
+  // The contribute flow saves an empty draft first and fills it in over later
+  // saves, so the whole create -> patch -> submit sequence has to hold up.
+  it("submits a variant that started out empty and was filled in by patches", async () => {
+    const { token } = await makeUser();
+    const { base } = await createPublishedGuide();
+    const subject = await createSubject();
+
+    const created = await app.request(
+      `/guides/${base.slug}/variants`,
+      jsonAuth(token, "POST", { title: null }),
+      env
+    );
+    expect(created.status).toBe(201);
+    const { revision_id } = (await created.json()) as { revision_id: string };
+
+    const patched = await app.request(
+      `/guide-revisions/${revision_id}`,
+      jsonAuth(token, "PATCH", {
+        title: "Another method",
+        summary: "A different take",
+        body: "The long version.",
+        tags: [subject.slug],
+      }),
+      env
+    );
+    expect(patched.status).toBe(200);
+
+    const res = await app.request(
+      `/guide-revisions/${revision_id}/submit`,
+      { method: "POST", ...auth(token) },
+      env
+    );
+
+    expect(res.status).toBe(201);
+    await expectToMatchSpec(res, "POST", "/guide-revisions/{id}/submit");
   });
 });
 

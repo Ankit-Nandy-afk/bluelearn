@@ -134,7 +134,7 @@
     summary: Guide walkthrough (transitive prerequisite DAG)
     description: >
       Materializes the target's transitive prerequisite closure with
-      longest-path depths, plus the prerequisite edges among the nodes.
+      longest-path levels, plus the prerequisite edges among the nodes.
     operationId: getWalkthrough
     responses:
       "200":

@@ -101,7 +101,7 @@ function RouteComponent() {
   const breadcrumbs = buildBreadcrumbs(guide.title, breadcrumbOrigin);
 
   return (
-    <div className="mx-auto h-[calc(100vh-70px)] max-w-[1280px] border-x bg-background">
+    <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
       <section className="grid grid-cols-[320px_1fr] border-b">
         <Sidebar
           sidebarActions={
@@ -164,13 +164,7 @@ function RouteComponent() {
               <Link
                 to={GuideWalkthroughRoute.to}
                 params={{ slug: slug }}
-                // state={{
-                //   breadcrumbOrigin: {
-                //     type: "objective",
-                //     title: objective.title,
-                //     path: `/objectives/${slug}`,
-                //   },
-                // }}
+                state={{ breadcrumbOrigin }}
                 className="btn-outline"
               >
                 View Walkthrough

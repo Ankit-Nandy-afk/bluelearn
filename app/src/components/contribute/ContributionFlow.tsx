@@ -13,7 +13,7 @@ import type {
 } from "@/types/contributions";
 import type { GuideType } from "@/types/guides";
 import type { Guide } from "@bluelearn/schemas";
-import { createGuide, listGuides } from "@/lib/api/guides";
+import { addGuideVariant, createGuide, listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
 import { createObjective } from "@/lib/api/objectives";
@@ -66,6 +66,7 @@ const createVariantContData = (): VariantContribution => ({
   summary: "",
   baseGuide: "",
   subjects: [],
+  newSubjects: [],
   body: "",
 });
 
@@ -153,6 +154,8 @@ function Inner({
     if (type !== value) {
       setGuideContData(createGuideContData());
       setObjectiveContData(createObjectiveContData());
+      setVariantContData(createVariantContData());
+      setRevisionId(null);
       setType(value);
     }
 
@@ -176,7 +179,7 @@ function Inner({
   const [savedTargets, setSavedTargets] = useState<Array<string>>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  // Resume a guide draft opened from the profile.
+  // Resume a guide or variant draft opened from the profile.
   const resumedRef = useRef(false);
   useEffect(() => {
     if (!draftId || resumedRef.current) return;
@@ -184,19 +187,38 @@ function Inner({
 
     getRevision(draftId)
       .then((data) => {
-        setGuideContData({
-          type: data.knowledge_type ?? "theoretical",
-          title: data.revision.title ?? "",
-          summary: data.revision.summary ?? "",
-          body: data.revision.body ?? "",
-          subjects: data.subjects.map((s) => s.slug),
-          newSubjects: [],
-          prereqs: data.prerequisites,
-          todoPrereqs: data.todos,
-        });
+        // A tagged subject still awaiting review has no slug to preselect yet.
+        const tagged = data.subjects
+          .map((s) => s.slug)
+          .filter((slug): slug is string => slug !== null);
+
+        if (data.is_variant) {
+          setVariantContData({
+            type: data.knowledge_type ?? "",
+            title: data.revision.title ?? "",
+            summary: data.revision.summary ?? "",
+            body: data.revision.body ?? "",
+            baseGuide: data.base_slug ?? "",
+            subjects: tagged,
+            newSubjects: [],
+          });
+        } else {
+          setGuideContData({
+            type: data.knowledge_type ?? "theoretical",
+            title: data.revision.title ?? "",
+            summary: data.revision.summary ?? "",
+            body: data.revision.body ?? "",
+            subjects: tagged,
+            newSubjects: [],
+            prereqs: data.prerequisites,
+            todoPrereqs: data.todos,
+          });
+        }
         setRevisionId(draftId);
-        setType("guide");
-        requestAnimationFrame(() => stepper.goTo("guide-details"));
+        setType(data.is_variant ? "variant" : "guide");
+        requestAnimationFrame(() =>
+          stepper.goTo(data.is_variant ? "variant-details" : "guide-details")
+        );
       })
       .catch(() => {
         toast.error("Could not load draft");
@@ -244,11 +266,7 @@ function Inner({
 
     return {
       slug: "",
-      title: guideContData.title
-        ? guideContData.title
-        : variantContData.title
-          ? variantContData.title
-          : "Untitled guide",
+      title: guideContData.title || "Untitled guide",
       author: username ?? "You",
       summary: guideContData.summary,
       body: guideContData.body,
@@ -271,6 +289,33 @@ function Inner({
     };
   }, [guideContData, subjectOptions, guideOptions, username]);
 
+  const previewVariant: Guide = useMemo(() => {
+    const nameBySlug = new Map(
+      subjectOptions.map((s) => [s.slug, s.name] as const)
+    );
+
+    return {
+      slug: "",
+      title: variantContData.title || "Untitled guide",
+      author: username ?? "You",
+      summary: variantContData.summary,
+      body: variantContData.body,
+      created_at: formatDate(new Date()),
+      duration_minutes: estimateReadMinutes(variantContData.body),
+      tags: [
+        ...variantContData.subjects.map((slug) => ({
+          slug,
+          name: nameBySlug.get(slug) ?? slug,
+        })),
+        ...variantContData.newSubjects.map((s) => ({
+          slug: s.name,
+          name: s.name,
+        })),
+      ],
+      prerequisites: [],
+    };
+  }, [variantContData, subjectOptions, username]);
+
   const guideType: GuideType | undefined =
     guideContData.type === "practical" || guideContData.type === "theoretical"
       ? guideContData.type
@@ -287,6 +332,17 @@ function Inner({
       summary: s.summary || null,
     })),
     todoPrereqs: guideContData.todoPrereqs,
+  });
+
+  const variantDraftFields = () => ({
+    title: variantContData.title || null,
+    summary: variantContData.summary || null,
+    body: variantContData.body || null,
+    tags: variantContData.subjects,
+    newSubjects: variantContData.newSubjects.map((s) => ({
+      name: s.name,
+      summary: s.summary || null,
+    })),
   });
 
   const creatingRef = useRef<Promise<string> | null>(null);
@@ -350,16 +406,29 @@ function Inner({
     }
 
     if (revisionId) {
-      await updateRevision(revisionId, draftFields());
+      await updateRevision(
+        revisionId,
+        type === "guide" ? draftFields() : variantDraftFields()
+      );
       return revisionId;
     }
 
+    if (type === "variant" && !variantContData.baseGuide) {
+      throw new Error("Pick a base guide before saving");
+    }
+
     if (!creatingRef.current) {
-      creatingRef.current = createGuide({
-        knowledge_type:
-          guideContData.type === "practical" ? "practical" : "theoretical",
-        ...draftFields(),
-      })
+      creatingRef.current = (
+        type === "guide"
+          ? createGuide({
+              knowledge_type:
+                guideContData.type === "practical"
+                  ? "practical"
+                  : "theoretical",
+              ...draftFields(),
+            })
+          : addGuideVariant(variantContData.baseGuide, variantDraftFields())
+      )
         .then((id) => {
           setRevisionId(id);
           return id;
@@ -456,6 +525,8 @@ function Inner({
           Stepper={Stepper}
           variantContData={variantContData}
           setVariantContData={setVariantContData}
+          guides={guideOptions}
+          subjects={subjectOptions}
           onSaveDraft={saveDraft}
           submitting={submitting}
         />
@@ -504,12 +575,13 @@ function Inner({
 
         <PreviewGuide
           Stepper={Stepper}
-          guide={previewGuide}
-          guideType={guideType}
+          guide={type === "guide" ? previewGuide : previewVariant}
+          guideType={type === "guide" ? guideType : undefined}
           onSaveDraft={saveDraft}
           onPublish={publish}
           submitting={submitting}
         />
+
         <PreviewObjective
           Stepper={Stepper}
           objectiveContData={objectiveContData}
