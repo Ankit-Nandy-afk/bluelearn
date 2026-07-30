@@ -36,29 +36,3 @@ export async function submitObjectiveRevision(id: string) {
   const { slug } = await res.json();
   return slug;
 }
-
-export async function addObjectiveTarget(
-  id: string,
-  guide_base_id: string,
-  { signal }: FetchOptions = {}
-) {
-  const res = await revisions[":id"].targets.$post(
-    { param: { id }, json: { guide_base_id } },
-    { init: { signal } }
-  );
-  await assertOk(res);
-  return res.json();
-}
-
-export async function removeObjectiveTarget(
-  id: string,
-  baseId: string,
-  { signal }: FetchOptions = {}
-) {
-  const res = await revisions[":id"].targets[":baseId"].$delete(
-    { param: { id, baseId } },
-    { init: { signal } }
-  );
-  await assertOk(res);
-  return res.json();
-}

@@ -1041,6 +1041,12 @@ export type Database = {
           title: string
         }[]
       }
+      objective_closure: {
+        Args: { p_targets: string[] }
+        Returns: {
+          guide_base_id: string
+        }[]
+      }
       project_objective_edges: {
         Args: { p_revision_id: string }
         Returns: {

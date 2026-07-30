@@ -18,8 +18,6 @@ import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
 import { createObjective } from "@/lib/api/objectives";
 import {
-  addObjectiveTarget,
-  removeObjectiveTarget,
   submitObjectiveRevision,
   updateObjectiveRevision,
 } from "@/lib/api/objectiveRevisions";
@@ -176,7 +174,6 @@ function Inner({
   };
 
   const [revisionId, setRevisionId] = useState<string | null>(null);
-  const [savedTargets, setSavedTargets] = useState<Array<string>>([]);
   const [submitting, setSubmitting] = useState(false);
 
   // Resume a guide or variant draft opened from the profile.
@@ -345,14 +342,32 @@ function Inner({
     })),
   });
 
+  // The wizard tracks guides by slug; the API keys curation on guide base ids.
+  const baseIdForSlug = (slug: string) => {
+    const guide = guideOptions.find((g) => g.slug === slug);
+    if (!guide) throw new Error(`Target guide not found: ${slug}`);
+    return guide.id;
+  };
+
+  // Target order comes from the array, so this sends them in wizard order. A
+  // target the curator has not sequenced yet goes without one, which leaves the
+  // curation under it alone rather than emptying it.
+  const objectiveTargets = () =>
+    objectiveContData.targets.map((slug) => {
+      const sub = objectiveContData.subObjectives.find(
+        (s) => s.targetSlug === slug
+      );
+      return {
+        guide_base_id: baseIdForSlug(slug),
+        is_featured: objectiveContData.featuredSubObjective === slug,
+        ...(sub ? { sequence: sub.curatedSequence.map(baseIdForSlug) } : {}),
+      };
+    });
+
   const creatingRef = useRef<Promise<string> | null>(null);
   const persistDraft = async () => {
     if (type === "objective") {
-      const target_ids = objectiveContData.targets.map((slug) => {
-        const guide = guideOptions.find((g) => g.slug === slug);
-        if (!guide) throw new Error(`Target guide not found: ${slug}`);
-        return guide.id;
-      });
+      const target_ids = objectiveContData.targets.map(baseIdForSlug);
 
       if (target_ids.length === 0) {
         throw new Error(
@@ -365,24 +380,8 @@ function Inner({
           title: objectiveContData.title || undefined,
           summary: objectiveContData.summary || undefined,
           tags: objectiveContData.subjects,
+          targets: objectiveTargets(),
         });
-
-        // Handle target changes
-        const addedTargets = target_ids.filter(
-          (id) => !savedTargets.includes(id)
-        );
-        for (const id of addedTargets) {
-          await addObjectiveTarget(revisionId, id);
-        }
-
-        const removedTargets = savedTargets.filter(
-          (id) => !target_ids.includes(id)
-        );
-        for (const id of removedTargets) {
-          await removeObjectiveTarget(revisionId, id);
-        }
-
-        setSavedTargets(target_ids);
         return revisionId;
       }
 
@@ -393,9 +392,8 @@ function Inner({
           target_ids,
           tags: objectiveContData.subjects,
         })
-          .then(async (id) => {
+          .then((id) => {
             setRevisionId(id);
-            setSavedTargets(target_ids);
             return id;
           })
           .finally(() => {

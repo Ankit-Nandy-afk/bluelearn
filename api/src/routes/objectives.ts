@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { z } from "zod";
 import { requireUser } from "../middleware/auth.middleware";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
 import { CONTRIBUTION, CREATE } from "../middleware/rateLimits";
@@ -26,8 +25,6 @@ import {
   rollbackObjectiveRevision,
   updateObjectiveRevision,
   updateObjectiveNode,
-  addObjectiveTarget,
-  removeObjectiveTarget,
 } from "../services/objective-revision.service";
 import {
   scheduleSearchSync,
@@ -115,7 +112,8 @@ export const objectiveRevisionsRouter = new Hono<HonoEnv>()
     return c.json({ revision, snapshot, subjects });
   })
 
-  // Overwrites a draft's metadata and/or tags. Returns { revision, subjects }; 404 if not an editable draft.
+  // Overwrites a draft's metadata, tags, and/or target curation. Returns
+  // { revision, subjects }; 404 if not an editable draft.
   .patch(
     "/:id",
     requireUser,
@@ -127,40 +125,13 @@ export const objectiveRevisionsRouter = new Hono<HonoEnv>()
     async (c) => {
       const { revision, subjects } = await updateObjectiveRevision(
         c.get("supabase"),
+        c.get("user").id,
         c.req.param("id"),
         c.req.valid("json")
       );
       return c.json({ revision, subjects });
     }
   )
-
-  // Add a target: flag a base as a goal and pull its prerequisite closure into
-  // the node set. Returns the recomputed snapshot.
-  .post(
-    "/:id/targets",
-    requireUser,
-    zValidator("json", z.object({ guide_base_id: z.uuid() })),
-    async (c) => {
-      const { guide_base_id } = c.req.valid("json");
-      const snapshot = await addObjectiveTarget(
-        c.get("supabase"),
-        c.req.param("id"),
-        guide_base_id
-      );
-      return c.json(snapshot);
-    }
-  )
-
-  // Remove a target: clear the flag and remove topics kept only to reach it.
-  // Returns the recomputed snapshot.
-  .delete("/:id/targets/:baseId", requireUser, async (c) => {
-    const snapshot = await removeObjectiveTarget(
-      c.get("supabase"),
-      c.req.param("id"),
-      c.req.param("baseId")
-    );
-    return c.json(snapshot);
-  })
 
   // Edits one node of a draft. Returns { node }; 404 if missing or not editable.
   .patch(
