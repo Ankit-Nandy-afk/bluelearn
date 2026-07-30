@@ -3,7 +3,6 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import type { HydratedObjective } from "@/types/objectives";
 
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 
 import { getPathBySlug, hydrateObjectives } from "@/lib/getData";
 import { formatDuration } from "@/lib/guideUtils";
@@ -61,10 +60,6 @@ function PathPage() {
             Objective: {objective.title} ({objective.levels.length} levels |{" "}
             {formatDuration(objective.duration)} total)
           </h1>
-
-          <Button variant="outline" className="btn-sec" size="lg">
-            See Graph View
-          </Button>
         </div>
 
         <Separator className="mb-4 bg-border" />

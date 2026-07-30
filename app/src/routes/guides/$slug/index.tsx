@@ -164,13 +164,7 @@ function RouteComponent() {
               <Link
                 to={GuideWalkthroughRoute.to}
                 params={{ slug: slug }}
-                // state={{
-                //   breadcrumbOrigin: {
-                //     type: "objective",
-                //     title: objective.title,
-                //     path: `/objectives/${slug}`,
-                //   },
-                // }}
+                state={{ breadcrumbOrigin }}
                 className="btn-outline"
               >
                 View Walkthrough

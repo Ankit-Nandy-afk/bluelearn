@@ -10,9 +10,11 @@ import {
   User,
   Workflow,
 } from "lucide-react";
-import { GuideGraph } from "../graph-view/GuideGraph";
 import type { Dispatch, SetStateAction } from "react";
 import type { ObjectiveContribution } from "@/types/contributions";
+import type { Walkthrough } from "@bluelearn/schemas";
+import { CurationGraph } from "@/components/graph/CurationGraph";
+import { getGuideWalkthrough } from "@/lib/api/guides";
 import { DraggableGuideCard } from "@/components/contribute/DraggableGuideCard";
 import { Badge } from "@/components/ui/badge";
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
@@ -30,75 +32,15 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import guidesData from "@/data/guides.json";
 
-// Map for O(1) guide lookup
-const guidesMap = new Map(guidesData.map((g) => [g.slug, g]));
+import guides from "@/data/guides.json";
+
+const guidesMap = new Map(guides.map((g) => [g.slug, g]));
 
 type PropTypes = {
   Stepper: any;
   objectiveContData: ObjectiveContribution;
   setObjectiveContData: Dispatch<SetStateAction<ObjectiveContribution>>;
-};
-
-type WalkthroughNode = {
-  slug: string;
-  title: string;
-  summary: string;
-  level: number;
-};
-
-const computeWalkthrough = (targetSlug: string): Array<WalkthroughNode> => {
-  // 1. Find all nodes in the transitive prerequisite closure
-  const closure = new Set<string>();
-  const queue = [targetSlug];
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    if (!closure.has(current)) {
-      closure.add(current);
-      const guide = guidesMap.get(current);
-      if (guide) {
-        for (const prereq of guide.prerequisites) {
-          queue.push(prereq);
-        }
-      }
-    }
-  }
-
-  // 2. Compute levels for each node in the closure based on longest path depth
-  const memo: Record<string, number> = {};
-
-  const getLevel = (slug: string): number => {
-    if (slug in memo) return memo[slug];
-
-    const guide = guidesMap.get(slug);
-    if (!guide || guide.prerequisites.length === 0) {
-      memo[slug] = 1;
-      return 1;
-    }
-
-    const maxPrereqLevel = Math.max(
-      ...guide.prerequisites.map((p: string) => getLevel(p))
-    );
-
-    memo[slug] = maxPrereqLevel + 1;
-    return maxPrereqLevel + 1;
-  };
-
-  const result: Array<WalkthroughNode> = [];
-  for (const slug of closure) {
-    const guide = guidesMap.get(slug);
-    if (guide) {
-      result.push({
-        slug,
-        title: guide.title,
-        summary: guide.summary,
-        level: getLevel(slug),
-      });
-    }
-  }
-
-  return result;
 };
 
 export const OrderObjectiveGuides = ({
@@ -136,9 +78,22 @@ export const OrderObjectiveGuides = ({
     return `${m}m`;
   }, [totalDuration]);
 
-  // Compute walkthrough nodes for the target
-  const walkthroughNodes = useMemo(() => {
-    return targetSlug ? computeWalkthrough(targetSlug) : [];
+  const [walkthroughData, setWalkthroughData] = useState<Walkthrough | null>(
+    null
+  );
+
+  useEffect(() => {
+    setWalkthroughData(null);
+    if (!targetSlug) return;
+
+    const controller = new AbortController();
+    getGuideWalkthrough(targetSlug, { signal: controller.signal })
+      .then(setWalkthroughData)
+      .catch((err) => {
+        if (!controller.signal.aborted) console.error(err);
+      });
+
+    return () => controller.abort();
   }, [targetSlug]);
 
   const updateSubObjective = (slug: string, newSeq: Array<string>) => {
@@ -186,34 +141,36 @@ export const OrderObjectiveGuides = ({
 
     if (existingSub) {
       setCuratedSequence(existingSub.curatedSequence);
-    } else {
-      const nodes = computeWalkthrough(targetSlug);
-      // Seed with all prerequisites (excluding the target guide itself) sorted by levels
-      const initialPrereqs = nodes
-        .filter((n) => n.slug !== targetSlug)
-        .sort((a, b) => a.level - b.level)
-        .map((n) => n.slug);
-
-      setCuratedSequence(initialPrereqs);
-
-      setObjectiveContData((prev) => {
-        if (prev.subObjectives.some((s) => s.targetSlug === targetSlug)) {
-          return prev;
-        }
-        return {
-          ...prev,
-          subObjectives: [
-            ...prev.subObjectives,
-            {
-              targetSlug,
-              selectedSlugs: initialPrereqs,
-              curatedSequence: initialPrereqs,
-            },
-          ],
-        };
-      });
+      return;
     }
-  }, [targetSlug]);
+
+    if (!walkthroughData) return;
+
+    // Seed with all prerequisites (excluding the target guide itself) sorted by levels
+    const initialPrereqs = walkthroughData.nodes
+      .filter((n) => n.slug !== targetSlug)
+      .sort((a, b) => a.level - b.level)
+      .map((n) => n.slug);
+
+    setCuratedSequence(initialPrereqs);
+
+    setObjectiveContData((prev) => {
+      if (prev.subObjectives.some((s) => s.targetSlug === targetSlug)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        subObjectives: [
+          ...prev.subObjectives,
+          {
+            targetSlug,
+            selectedSlugs: initialPrereqs,
+            curatedSequence: initialPrereqs,
+          },
+        ],
+      };
+    });
+  }, [targetSlug, walkthroughData]);
 
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const draggedIndexRef = useRef<number | null>(null);
@@ -376,18 +333,20 @@ export const OrderObjectiveGuides = ({
               </CardDescription>
             </CardHeader>
             <CardContent className="max-h-128 min-h-0 flex-1 scrollbar-thin [scrollbar-color:var(--border)_transparent] overflow-y-auto p-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent">
-              {curatedSequence.length === 0 && walkthroughNodes.length > 1 && (
-                <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
-                  <Info className="mb-2 h-8 w-8 text-muted-foreground opacity-50" />
-                  <p className="text-sm font-medium">
-                    No prerequisite guides selected.
-                  </p>
-                  <p className="mt-1 max-w-62.5 text-xs text-muted-foreground/80">
-                    Select prerequisite guides from the prerequisites on the
-                    right to add them to your curated sequence.
-                  </p>
-                </div>
-              )}
+              {curatedSequence.length === 0 &&
+                walkthroughData &&
+                walkthroughData.nodes.length > 1 && (
+                  <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
+                    <Info className="mb-2 h-8 w-8 text-muted-foreground opacity-50" />
+                    <p className="text-sm font-medium">
+                      No prerequisite guides selected.
+                    </p>
+                    <p className="mt-1 max-w-62.5 text-xs text-muted-foreground/80">
+                      Select prerequisite guides from the prerequisites on the
+                      right to add them to your curated sequence.
+                    </p>
+                  </div>
+                )}
 
               <div className="space-y-3">
                 {curatedSequence.map((slug, index) => {
@@ -560,15 +519,16 @@ export const OrderObjectiveGuides = ({
               </CardDescription>
             </CardHeader>
             <CardContent className="relative min-h-0 flex-1 overflow-hidden p-0">
-              <GuideGraph
-                walkthroughNodes={walkthroughNodes}
-                curatedSequence={curatedSequence}
-                targetSlug={targetSlug}
-                onToggleGuide={handleToggleGuide}
-                guidesMap={guidesMap}
-                hoveredGuide={hoveredGuide}
-                onHoverGuide={setHoveredGuide}
-              />
+              {walkthroughData && (
+                <CurationGraph
+                  walkthroughData={walkthroughData}
+                  curatedSequence={curatedSequence}
+                  targetSlug={targetSlug}
+                  onToggleGuide={handleToggleGuide}
+                  hoveredGuide={hoveredGuide}
+                  onHoverGuide={setHoveredGuide}
+                />
+              )}
             </CardContent>
           </Card>
         </div>
