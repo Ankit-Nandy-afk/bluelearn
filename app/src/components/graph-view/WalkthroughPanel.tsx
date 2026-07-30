@@ -17,9 +17,7 @@ export function WalkthroughPanel({
   targetTitle,
   breadcrumbOrigin,
 }: WalkthroughPanelProps) {
-  const back = breadcrumbOrigin
-    ? { label: breadcrumbOrigin.title, path: breadcrumbOrigin.path }
-    : { label: targetTitle, path: `/guides/${targetSlug}` };
+  const back = { label: targetTitle, path: `/guides/${targetSlug}` };
 
   // Opening the target keeps the trail the user arrived by; opening a
   // prerequisite makes the target the origin, since that is what led here.
@@ -32,6 +30,7 @@ export function WalkthroughPanel({
     <aside className="flex flex-col gap-6 overflow-y-auto border-t px-6 py-6 md:h-full md:border-t-0 md:border-r">
       <Link
         to={back.path}
+        state={{ breadcrumbOrigin }}
         className="mono-micro flex items-center gap-2 text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
