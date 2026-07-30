@@ -23,9 +23,9 @@ export function WalkthroughNode({ data }: { data: WalkthroughNodeData }) {
 
   return (
     <div
-      className={`relative w-max min-w-[260px] cursor-pointer transition-all duration-150 select-none ${
-        isHovered ? "z-10 scale-[1.02]" : ""
-      } ${isDimmed ? "opacity-30" : ""}`}
+      className={`relative w-max min-w-[260px] cursor-pointer transition-opacity duration-150 select-none ${
+        isDimmed ? "opacity-30" : ""
+      }`}
     >
       <Handle
         type="target"
@@ -36,15 +36,13 @@ export function WalkthroughNode({ data }: { data: WalkthroughNodeData }) {
       <Card
         className={`group relative gap-0 rounded-md border py-0 ring-0 transition-colors ${
           isTarget
-            ? "bg-brand-dk-blue text-white"
-            : "bg-background hover:bg-muted"
-        } ${
-          isSelected
-            ? "border-primary"
-            : isHovered
-              ? "border-primary/70"
-              : "border-foreground"
-        }`}
+            ? isHovered
+              ? "bg-brand-dk-blue/90 text-white"
+              : "bg-brand-dk-blue text-white"
+            : isHovered || isSelected
+              ? "bg-muted"
+              : "bg-background"
+        } border-foreground`}
       >
         <CardHeader className="[container-type:normal] gap-1 py-3.5">
           <p className={`mono-micro ${label}`}>
