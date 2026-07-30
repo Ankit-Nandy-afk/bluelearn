@@ -199,12 +199,20 @@ export function useGraphLayout({
         return { ...n, position: { ...n.position, x } };
       });
 
-      // Same refs means nothing moved, so React skips the re-render.
       return next.some((n, i) => n !== nds[i]) ? next : nds;
     });
   }, [nodes, setNodes]);
+  const isLayoutSettled =
+    nodes.length > 0 &&
+    nodes.every((n) => {
+      const width = n.measured?.width;
+      const { centerX } = n.data as GraphNodeData;
+      if (!width) return false;
 
-  // 2. State: hover highlighting plus whatever getNodeState reports, applied
+      return Math.abs(n.position.x - (centerX - width / 2)) < 0.5;
+    });
+
+  // State: hover highlighting plus whatever getNodeState reports, applied
   // without re-running layout.
   useEffect(() => {
     const { prereqs, dependents } = buildAdjacency(walkthroughData);
@@ -276,5 +284,12 @@ export function useGraphLayout({
     );
   }, [hoveredGuide, getNodeState, walkthroughData, setNodes, setEdges]);
 
-  return { nodes, edges, onNodesChange, onEdgesChange, setNodes };
+  return {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    setNodes,
+    isLayoutSettled,
+  };
 }

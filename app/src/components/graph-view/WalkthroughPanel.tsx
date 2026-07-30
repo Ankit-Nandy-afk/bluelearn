@@ -29,7 +29,7 @@ export function WalkthroughPanel({
       : { type: "guide", title: targetTitle, path: `/guides/${targetSlug}` };
 
   return (
-    <aside className="flex h-full flex-col gap-6 overflow-y-auto border-r px-6 py-6">
+    <aside className="flex flex-col gap-6 overflow-y-auto border-t px-6 py-6 md:h-full md:border-t-0 md:border-r">
       <Link
         to={back.path}
         className="mono-micro flex items-center gap-2 text-muted-foreground hover:text-foreground"

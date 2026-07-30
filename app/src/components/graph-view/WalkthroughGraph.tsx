@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useRef } from "react";
-import { Controls, Panel, ReactFlow } from "@xyflow/react";
+import {
+  Controls,
+  Panel,
+  ReactFlow,
+  ReactFlowProvider,
+  useReactFlow,
+} from "@xyflow/react";
 import { Fullscreen, Minimize } from "lucide-react";
 import { WalkthroughNode as WalkthroughNodeComponent } from "./WalkthroughNode";
 import { useGraphLayout } from "./useGraphLayout";
-import type { Node, ReactFlowInstance } from "@xyflow/react";
+import type { Node } from "@xyflow/react";
 import type { Walkthrough } from "@bluelearn/schemas";
 import { Button } from "@/components/ui/button";
 import "@xyflow/react/dist/style.css";
@@ -26,7 +32,17 @@ type WalkthroughGraphProps = {
   onToggleFullscreen?: () => void;
 };
 
-export function WalkthroughGraph({
+// The provider hoists the xyflow store above the graph, so fitView is callable
+// from the first render instead of waiting on onInit.
+export function WalkthroughGraph(props: WalkthroughGraphProps) {
+  return (
+    <ReactFlowProvider>
+      <Graph {...props} />
+    </ReactFlowProvider>
+  );
+}
+
+function Graph({
   walkthroughData,
   targetSlug,
   hoveredGuide,
@@ -41,16 +57,17 @@ export function WalkthroughGraph({
     [selectedGuide]
   );
 
-  const { nodes, edges, onNodesChange, onEdgesChange } = useGraphLayout({
-    walkthroughData,
-    targetSlug,
-    hoveredGuide,
-    nodeType: "walkthroughNode",
-    nodeWidth: NODE_WIDTH,
-    nodeSpacing: NODE_SPACING,
-    targetAtBottom: true,
-    getNodeState,
-  });
+  const { nodes, edges, onNodesChange, onEdgesChange, isLayoutSettled } =
+    useGraphLayout({
+      walkthroughData,
+      targetSlug,
+      hoveredGuide,
+      nodeType: "walkthroughNode",
+      nodeWidth: NODE_WIDTH,
+      nodeSpacing: NODE_SPACING,
+      targetAtBottom: true,
+      getNodeState,
+    });
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -76,22 +93,32 @@ export function WalkthroughGraph({
     }, 50);
   }, [onHoverGuide]);
 
-  const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
+  const { fitView } = useReactFlow();
+  const layoutSignature = isLayoutSettled
+    ? nodes.map((n) => `${n.id}:${n.position.x}:${n.measured?.width}`).join("|")
+    : null;
 
   useEffect(() => {
-    if (reactFlowInstance.current) {
-      setTimeout(() => {
-        reactFlowInstance.current?.fitView({ duration: 300 });
-      }, 50);
-    }
-  }, [isFullscreen]);
+    if (!layoutSignature) return;
+
+    void fitView();
+  }, [layoutSignature, fitView]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      void fitView({ duration: 300 });
+    }, 50);
+
+    return () => clearTimeout(timeout);
+  }, [isFullscreen, fitView]);
 
   return (
-    <div className="relative h-full min-h-[500px] w-full">
+    <div
+      className={`relative h-full min-h-[500px] w-full transition-opacity duration-150 ${
+        layoutSignature ? "opacity-100" : "opacity-0"
+      }`}
+    >
       <ReactFlow
-        onInit={(instance) => {
-          reactFlowInstance.current = instance;
-        }}
         key={targetSlug}
         nodes={nodes}
         edges={edges}

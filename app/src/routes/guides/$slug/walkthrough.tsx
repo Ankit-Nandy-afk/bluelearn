@@ -72,8 +72,9 @@ function RouteComponent() {
   );
 
   return (
-    <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
-      <section className="grid h-full grid-cols-[320px_1fr]">
+    <div className="mx-auto max-w-7xl border-x bg-background md:h-[calc(100vh-70px)]">
+      {/* Panel sits under the graph on small screens, beside it from md up. */}
+      <section className="flex h-full flex-col-reverse md:grid md:grid-cols-[320px_1fr]">
         {selectedNode ? (
           <WalkthroughPanel
             node={selectedNode}
@@ -82,11 +83,11 @@ function RouteComponent() {
             breadcrumbOrigin={breadcrumbOrigin}
           />
         ) : (
-          <aside className="h-full border-r px-6 py-6" />
+          <aside className="hidden h-full border-r px-6 py-6 md:block" />
         )}
 
         {/* MAIN */}
-        <section className="flex h-full min-w-0 flex-col px-10 py-6 lg:px-16">
+        <section className="flex h-full min-w-0 flex-col px-4 py-6 md:px-10 lg:px-16">
           <div className="mb-4">
             <h1 className="text-2xl font-semibold tracking-tight">
               Walkthrough
@@ -101,7 +102,7 @@ function RouteComponent() {
             className={
               isFullscreen
                 ? "fixed inset-0 z-50 bg-background"
-                : "min-h-[500px] w-full flex-1 overflow-hidden rounded-xl border border-border bg-muted/10"
+                : "h-[500px] w-full overflow-hidden rounded-xl border border-border bg-muted/10 md:h-auto md:min-h-[500px] md:flex-1"
             }
           >
             {error ? (
