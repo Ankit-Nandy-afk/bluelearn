@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, notFound, useLocation } from "@tanstack/react-router";
+import { createFileRoute, useLocation } from "@tanstack/react-router";
 
 import type { Walkthrough } from "@bluelearn/schemas";
 
-import { getGuideBySlug } from "@/lib/getData";
 import { WalkthroughGraph } from "@/components/graph/WalkthroughGraph";
 import { WalkthroughPanel } from "@/components/graph/WalkthroughPanel";
 import { getGuideWalkthrough } from "@/lib/api/guides";
-
-import guides from "@/data/guides.json";
 
 export const Route = createFileRoute("/guides/$slug/walkthrough")({
   component: RouteComponent,
@@ -16,8 +13,6 @@ export const Route = createFileRoute("/guides/$slug/walkthrough")({
 
 function RouteComponent() {
   const { slug } = Route.useParams();
-
-  const guide = getGuideBySlug(guides, slug);
 
   // Carried in from the reader so going back restores the trail the user came by.
   const breadcrumbOrigin = useLocation({
@@ -63,13 +58,11 @@ function RouteComponent() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isFullscreen]);
 
-  if (!guide) {
-    throw notFound();
-  }
-
   const selectedNode = walkthroughData?.nodes.find(
     (node) => node.slug === selectedSlug
   );
+  const targetTitle =
+    walkthroughData?.nodes.find((node) => node.slug === slug)?.title ?? "";
 
   return (
     <div className="mx-auto max-w-7xl border-x bg-background md:h-[calc(100vh-70px)]">
@@ -79,7 +72,7 @@ function RouteComponent() {
           <WalkthroughPanel
             node={selectedNode}
             targetSlug={slug}
-            targetTitle={guide.title}
+            targetTitle={targetTitle}
             breadcrumbOrigin={breadcrumbOrigin}
           />
         ) : (
