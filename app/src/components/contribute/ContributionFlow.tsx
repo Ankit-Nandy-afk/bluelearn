@@ -208,16 +208,21 @@ function Inner({
             targets: targetNodes.map((n) => n.slug),
             featuredSubObjective:
               targetNodes.find((n) => n.is_featured)?.slug ?? "",
-            subObjectives: targetNodes.map((n) => {
+            // An uncurated target is left out, so the order step still seeds it
+            // on draft resume.
+            subObjectives: targetNodes.flatMap((n) => {
               const sequence = data.snapshot.orders
                 .filter((o) => o.target_node_id === n.id)
                 .map((o) => slugByNodeId.get(o.node_id))
                 .filter((slug): slug is string => !!slug);
-              return {
-                targetSlug: n.slug,
-                selectedSlugs: sequence,
-                curatedSequence: sequence,
-              };
+              if (sequence.length === 0) return [];
+              return [
+                {
+                  targetSlug: n.slug,
+                  selectedSlugs: sequence,
+                  curatedSequence: sequence,
+                },
+              ];
             }),
             subjects: data.subjects
               .map((s) => s.slug)
