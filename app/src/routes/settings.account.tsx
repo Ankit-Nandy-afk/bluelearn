@@ -29,6 +29,9 @@ function RouteComponent() {
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>("");
 
+  const [isEmailEditing, setIsEmailEditing] = useState(false);
+  const [isPasswordEditing, setIsPasswordEditing] = useState(false);
+
   // TODO: fetch account data and update data based on fields
 
   const handleSave = async () => {
@@ -52,139 +55,174 @@ function RouteComponent() {
       <Separator className="mb-8 bg-border" />
 
       <div className="my-8">
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
-            Update Details
-          </h2>
-
-          <div className="flex items-center">
-            {saveError && (
-              <p className="mono-micro px-4 text-destructive">{saveError}</p>
-            )}
-
-            <Button
-              variant={"outline"}
-              className="btn-sec"
-              onClick={handleSave}
-              disabled={saving}
-              size="lg"
-            >
-              {saving ? "Updating..." : "Update"}
-            </Button>
-          </div>
-        </div>
+        <h2 className="mb-2 font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
+          Account Details
+        </h2>
 
         <Separator className="mb-4 bg-border" />
 
         <FieldGroup>
-          <Field className="space-y-2">
-            <div className="space-y-1">
-              <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                Email
-              </FieldLabel>
-              <FieldDescription className="text-xs">
-                Contact support to change your email address
-              </FieldDescription>
+          <Field className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+                  Email
+                </FieldLabel>
+                {!isEmailEditing && (
+                  <p className="text-sm text-muted-foreground">
+                    {email || "user@example.com"}
+                  </p>
+                )}
+              </div>
+              {!isEmailEditing && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEmailEditing(true)}
+                >
+                  Change Email
+                </Button>
+              )}
             </div>
 
-            <Input
-              id="email"
-              type="email"
-              className="h-10 rounded-md"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            {isEmailEditing && (
+              <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-2">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="New email address"
+                    className="h-10 rounded-md"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center justify-end space-x-2">
+                  {saveError && (
+                    <p className="mono-micro text-destructive">{saveError}</p>
+                  )}
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setIsEmailEditing(false);
+                      setSaveError(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSave} disabled={saving}>
+                    {saving ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </Field>
         </FieldGroup>
       </div>
 
       <div className="my-8">
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
-            Change Password
-          </h2>
-
-          <div className="flex items-center">
-            {updateError && (
-              <p className="mono-micro px-4 text-destructive">{updateError}</p>
-            )}
-
-            <Button
-              variant={"outline"}
-              className="btn-sec"
-              onClick={handleUpdate}
-              disabled={updating}
-              size="lg"
-            >
-              {updating ? "Updating..." : "Change"}
-            </Button>
-          </div>
-        </div>
+        <h2 className="mb-2 font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
+          Security
+        </h2>
 
         <Separator className="mb-4 bg-border" />
 
         <FieldGroup>
-          <Field className="space-y-2">
-            <div className="space-y-1">
-              <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                Old Password
-              </FieldLabel>
+          <Field className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+                  Password
+                </FieldLabel>
+                {!isPasswordEditing && (
+                  <p className="text-sm text-muted-foreground">********</p>
+                )}
+              </div>
+              {!isPasswordEditing && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsPasswordEditing(true)}
+                >
+                  Change Password
+                </Button>
+              )}
             </div>
 
-            <Input
-              id="old-password"
-              type="password"
-              className="h-10 rounded-md"
-              value={password.old}
-              onChange={(e) => {
-                setPassword({
-                  ...password,
-                  old: e.target.value,
-                });
-              }}
-            />
-          </Field>
+            {isPasswordEditing && (
+              <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-2">
+                  <FieldLabel className="font-mono text-xs tracking-[0.08em] uppercase">
+                    Old Password
+                  </FieldLabel>
+                  <Input
+                    id="old-password"
+                    type="password"
+                    className="h-10 rounded-md"
+                    value={password.old}
+                    onChange={(e) => {
+                      setPassword({
+                        ...password,
+                        old: e.target.value,
+                      });
+                    }}
+                  />
+                </div>
 
-          <Field className="space-y-2">
-            <div className="space-y-1">
-              <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                New Password
-              </FieldLabel>
-            </div>
+                <div className="space-y-2">
+                  <FieldLabel className="font-mono text-xs tracking-[0.08em] uppercase">
+                    New Password
+                  </FieldLabel>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    className="h-10 rounded-md"
+                    value={password.new}
+                    onChange={(e) => {
+                      setPassword({
+                        ...password,
+                        new: e.target.value,
+                      });
+                    }}
+                  />
+                </div>
 
-            <Input
-              id="new-password"
-              type="password"
-              className="h-10 rounded-md"
-              value={password.new}
-              onChange={(e) => {
-                setPassword({
-                  ...password,
-                  new: e.target.value,
-                });
-              }}
-            />
-          </Field>
+                <div className="space-y-2">
+                  <FieldLabel className="font-mono text-xs tracking-[0.08em] uppercase">
+                    Confirm New Password
+                  </FieldLabel>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    className="h-10 rounded-md"
+                    value={password.confirmNew}
+                    onChange={(e) => {
+                      setPassword({
+                        ...password,
+                        confirmNew: e.target.value,
+                      });
+                    }}
+                  />
+                </div>
 
-          <Field className="space-y-2">
-            <div className="space-y-1">
-              <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                Confirm New Password
-              </FieldLabel>
-            </div>
-
-            <Input
-              id="confirm-password"
-              type="password"
-              className="h-10 rounded-md"
-              value={password.confirmNew}
-              onChange={(e) => {
-                setPassword({
-                  ...password,
-                  confirmNew: e.target.value,
-                });
-              }}
-            />
+                <div className="flex items-center justify-end space-x-2 pt-2">
+                  {updateError && (
+                    <p className="mono-micro text-destructive">{updateError}</p>
+                  )}
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setIsPasswordEditing(false);
+                      setUpdateError(null);
+                      setPassword({ old: "", new: "", confirmNew: "" });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleUpdate} disabled={updating}>
+                    {updating ? "Updating..." : "Update Password"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </Field>
         </FieldGroup>
       </div>
