@@ -15,7 +15,6 @@ export const guideSchema = z.object({
   prerequisites: z.array(guideReferenceSchema),
 });
 
-// depth is the longest-chain distance from the target (depth 0).
 export const walkthroughSchema = z.object({
   nodes: z.array(
     z.object({
@@ -23,7 +22,9 @@ export const walkthroughSchema = z.object({
       slug: z.string(),
       title: z.string(),
       summary: z.string().nullable(),
-      depth: z.number().int(),
+      level: z.number().int(),
+      duration_minutes: z.number().int(),
+      tags: z.array(subjectReferenceSchema),
     })
   ),
   edges: z.array(

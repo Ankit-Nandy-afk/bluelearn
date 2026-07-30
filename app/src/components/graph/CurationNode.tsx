@@ -1,13 +1,20 @@
 import { Handle, Position } from "@xyflow/react";
+import type { GraphNodeData } from "./useGraphLayout";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export function GuideNode({ data }: { data: any }) {
+// The extras come from CurationGraph's getNodeState.
+type CurationNodeData = GraphNodeData & {
+  isChecked: boolean;
+  selectedOrder: number | null;
+};
+
+export function CurationNode({ data }: { data: CurationNodeData }) {
   const { isTarget, isChecked, title, selectedOrder, isHovered, isDimmed } =
     data;
 
   return (
     <div
-      className={`relative flex min-w-[200px] flex-col gap-2 rounded-xl border-2 bg-card p-3 transition-all duration-150 select-none ${
+      className={`relative flex max-w-[350px] min-w-[300px] flex-col gap-2 rounded-xl border-2 bg-card p-3 transition-all duration-150 select-none ${
         isHovered
           ? "z-10 scale-105 border-primary shadow-md ring-4 ring-primary/40"
           : ""
@@ -43,7 +50,7 @@ export function GuideNode({ data }: { data: any }) {
         </div>
       </div>
 
-      {selectedOrder !== undefined && selectedOrder !== null && (
+      {selectedOrder !== null && (
         <div className="absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground shadow-md ring-4 shadow-primary/30 ring-card">
           {selectedOrder}
         </div>
