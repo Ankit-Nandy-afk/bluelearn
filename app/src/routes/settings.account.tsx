@@ -2,15 +2,11 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useAuth } from "@/lib/authContext";
+import { updateEmail } from "@/lib/auth";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 
 export const Route = createFileRoute("/settings/account")({
   component: RouteComponent,
@@ -35,6 +31,7 @@ function RouteComponent() {
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>("");
+  const [saveSuccess, setSaveSuccess] = useState<string | null>("");
 
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>("");
@@ -44,9 +41,19 @@ function RouteComponent() {
 
   // TODO: fetch account data and update data based on fields
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
     setSaveError(null);
+    setSaveSuccess(null);
+
+    const { error } = await updateEmail(email);
+
+    if (error) {
+      setSaveError(error.message);
+    } else {
+      setSaveSuccess("Verification emails sent. Please check your inbox.");
+    }
+
     setSaving(false);
   };
 
@@ -110,11 +117,15 @@ function RouteComponent() {
                   {saveError && (
                     <p className="mono-micro text-destructive">{saveError}</p>
                   )}
+                  {saveSuccess && (
+                    <p className="mono-micro text-green-500">{saveSuccess}</p>
+                  )}
                   <Button
                     variant="ghost"
                     onClick={() => {
                       setIsEmailEditing(false);
                       setSaveError(null);
+                      setSaveSuccess(null);
                     }}
                   >
                     Cancel
