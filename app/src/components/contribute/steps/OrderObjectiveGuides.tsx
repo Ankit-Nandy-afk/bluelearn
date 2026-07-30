@@ -138,6 +138,12 @@ export const OrderObjectiveGuides = ({
     }
   }, [objectiveContData.targets, targetSlug]);
 
+  // Reordering targets in the previous step needs new load on order guides page.
+  const firstTarget = objectiveContData.targets[0] || "";
+  useEffect(() => {
+    setTargetSlug(firstTarget);
+  }, [firstTarget]);
+
   // Sync initial curated sequence when target guide changes and walkthrough is ready
   useEffect(() => {
     if (!targetSlug) return;
