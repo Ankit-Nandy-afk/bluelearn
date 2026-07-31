@@ -1,27 +1,23 @@
+import type {
+  GuideListItem,
+  ObjectiveListItem,
+  SubjectListItem,
+} from "@bluelearn/schemas";
 import { client } from "@/lib/api/apiClient";
+import { assertOk, collectAll } from "@/lib/api/apiHelpers";
 
 const subjects = client.subjects;
 
 type FetchOptions = { signal?: AbortSignal };
 
-// The API answers failures with `{ error: string }`; surface that message so
-// callers can render it, and fall back to the status when the body isn't JSON.
-async function assertOk(res: Response) {
-  if (res.ok) return;
-
-  const body = (await res.json().catch(() => null)) as {
-    error?: string;
-  } | null;
-
-  throw new Error(body?.error ?? `Request failed (${res.status})`);
-}
-
 export async function listSubjects({ signal }: FetchOptions = {}) {
-  const res = await subjects.$get(undefined, { init: { signal } });
-  await assertOk(res);
+  return collectAll<SubjectListItem>(async (query) => {
+    const res = await subjects.$get({ query }, { init: { signal } });
+    if (!res.ok) return assertOk(res) as Promise<never>;
 
-  const { subjects: data } = await res.json();
-  return data;
+    const { subjects: items, total } = await res.json();
+    return { items, total };
+  });
 }
 
 export async function getSubjectBySlug(
@@ -42,26 +38,30 @@ export async function listSubjectGuides(
   slug: string,
   { signal }: FetchOptions = {}
 ) {
-  const res = await subjects[":slug"].guides.$get(
-    { param: { slug } },
-    { init: { signal } }
-  );
-  await assertOk(res);
+  return collectAll<GuideListItem>(async (query) => {
+    const res = await subjects[":slug"].guides.$get(
+      { query, param: { slug } },
+      { init: { signal } }
+    );
+    if (!res.ok) return assertOk(res) as Promise<never>;
 
-  const { guides } = await res.json();
-  return guides;
+    const { guides: items, total } = await res.json();
+    return { items, total };
+  });
 }
 
 export async function listSubjectObjectives(
   slug: string,
   { signal }: FetchOptions = {}
 ) {
-  const res = await subjects[":slug"].objectives.$get(
-    { param: { slug } },
-    { init: { signal } }
-  );
-  await assertOk(res);
+  return collectAll<ObjectiveListItem>(async (query) => {
+    const res = await subjects[":slug"].objectives.$get(
+      { query, param: { slug } },
+      { init: { signal } }
+    );
+    if (!res.ok) return assertOk(res) as Promise<never>;
 
-  const { objectives } = await res.json();
-  return objectives;
+    const { objectives: items, total } = await res.json();
+    return { items, total };
+  });
 }

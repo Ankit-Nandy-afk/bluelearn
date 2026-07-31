@@ -1,12 +1,14 @@
 import { Hono } from "hono";
 import { requireUser } from "../middleware/auth.middleware";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
+import { CONTRIBUTION, CREATE, MODERATION } from "../middleware/rateLimits";
 import type { HonoEnv } from "../types";
 import { zValidator } from "@hono/zod-validator";
 import {
   castVoteSchema,
   createGuideSchema,
   createVariantSchema,
+  paginationSchema,
   rollbackRevisionSchema,
   updateRevisionSchema,
 } from "@bluelearn/schemas";
@@ -36,6 +38,10 @@ import {
   submitRevision,
   updateRevision,
 } from "../services/guide-revision.service";
+import {
+  scheduleSearchSync,
+  syncGuideDocument,
+} from "../services/search.service";
 
 // Normalize a blank summary to NULL to match the create_guide RPC defaults.
 const createGuideBody = createGuideSchema.extend({
@@ -50,41 +56,52 @@ const createVariantBody = createVariantSchema.extend({
 
 export const guidesRouter = new Hono<HonoEnv>()
   // Returns published guides as { guides }.
-  .get("/", async (c) => {
-    const guides = await listPublishedGuides(c.get("supabase"));
-    return c.json({ guides });
+  .get("/", zValidator("query", paginationSchema), async (c) => {
+    const { page, limit } = c.req.valid("query");
+    const { data, total } = await listPublishedGuides(c.get("supabase"), {
+      page,
+      limit,
+    });
+    return c.json({ guides: data, total });
   })
 
-  // 201 with { revision_id } for the editor route. Rate-limited to 15
-  // guide creations per 24h per user to prevent spam.
+  // 201 with { revision_id } for the editor route.
   .post(
     "/",
     requireUser,
-    rateLimitMiddleware({ windowSeconds: 86_400, max: 15 }),
+    rateLimitMiddleware({ ...CREATE, bucket: "guide-create" }),
     zValidator("json", createGuideBody),
     async (c) => {
       const { revision_id } = await createGuide(
         c.get("supabase"),
+        c.get("user").id,
         c.req.valid("json")
       );
       return c.json({ revision_id }, 201);
     }
   )
 
-  // Returns the guide content and its subject tags.
+  // Returns the guide's canonical content, author, and subject tags.
   .get("/:slug", async (c) => {
-    const { guide, subjects } = await getGuideBySlug(
-      c.get("supabase"),
-      c.req.param("slug")
-    );
-    return c.json({ guide, subjects });
+    const guide = await getGuideBySlug(c.get("supabase"), c.req.param("slug"));
+    return c.json(guide);
   })
 
   // Archives the guide. 404 if missing or not permitted.
-  .delete("/:slug", requireUser, async (c) => {
-    const guide = await archiveGuide(c.get("supabase"), c.req.param("slug"));
-    return c.json({ guide });
-  })
+  .delete(
+    "/:slug",
+    requireUser,
+    rateLimitMiddleware({ ...CONTRIBUTION, bucket: "guide-archive" }),
+    async (c) => {
+      const guide = await archiveGuide(c.get("supabase"), c.req.param("slug"));
+      // Drop the archived guide from the search index (best-effort).
+      scheduleSearchSync(
+        c,
+        syncGuideDocument(c.env, c.get("supabase"), guide.id)
+      );
+      return c.json({ guide });
+    }
+  )
 
   // Returns the transitive prerequisite graph as { nodes, edges }.
   .get("/:slug/walkthrough", async (c) => {
@@ -96,22 +113,26 @@ export const guidesRouter = new Hono<HonoEnv>()
   })
 
   // Returns the published variants as { variants }.
-  .get("/:slug/variants", async (c) => {
-    const variants = await listGuideVariants(
+  .get("/:slug/variants", zValidator("query", paginationSchema), async (c) => {
+    const { page, limit } = c.req.valid("query");
+    const { data, total } = await listGuideVariants(
       c.get("supabase"),
-      c.req.param("slug")
+      c.req.param("slug"),
+      { page, limit }
     );
-    return c.json({ variants });
+    return c.json({ variants: data, total });
   })
 
   // 201 with { revision_id } for the editor route.
   .post(
     "/:slug/variants",
     requireUser,
+    rateLimitMiddleware({ ...CONTRIBUTION, bucket: "variant-create" }),
     zValidator("json", createVariantBody),
     async (c) => {
       const { revision_id } = await addGuideVariant(
         c.get("supabase"),
+        c.get("user").id,
         c.req.param("slug"),
         c.req.valid("json")
       );
@@ -137,15 +158,24 @@ export const variantsRouter = new Hono<HonoEnv>()
   })
 
   // Archives the variant. 404 if missing or not permitted.
-  .delete("/:id", requireUser, async (c) => {
-    const variant = await archiveVariant(c.get("supabase"), c.req.param("id"));
-    return c.json({ variant });
-  })
+  .delete(
+    "/:id",
+    requireUser,
+    rateLimitMiddleware({ ...CONTRIBUTION, bucket: "variant-archive" }),
+    async (c) => {
+      const variant = await archiveVariant(
+        c.get("supabase"),
+        c.req.param("id")
+      );
+      return c.json({ variant });
+    }
+  )
 
   // Stores the caller's vote; returns { vote }.
   .put(
     "/:id/vote",
     requireUser,
+    rateLimitMiddleware({ ...MODERATION, bucket: "vote-cast" }),
     zValidator("json", castVoteSchema),
     async (c) => {
       const { vote } = await castVote(
@@ -159,34 +189,47 @@ export const variantsRouter = new Hono<HonoEnv>()
   )
 
   // 204 once the caller's vote is gone.
-  .delete("/:id/vote", requireUser, async (c) => {
-    await retractVote(c.get("supabase"), c.get("user").id, c.req.param("id"));
-    return c.body(null, 204);
-  })
+  .delete(
+    "/:id/vote",
+    requireUser,
+    rateLimitMiddleware({ ...MODERATION, bucket: "vote-retract" }),
+    async (c) => {
+      await retractVote(c.get("supabase"), c.get("user").id, c.req.param("id"));
+      return c.body(null, 204);
+    }
+  )
 
   // Returns the published versions as { revisions }, newest live first.
-  .get("/:id/revisions", async (c) => {
-    const revisions = await listVariantRevisions(
+  .get("/:id/revisions", zValidator("query", paginationSchema), async (c) => {
+    const { page, limit } = c.req.valid("query");
+    const { data, total } = await listVariantRevisions(
       c.get("supabase"),
-      c.req.param("id")
+      c.req.param("id"),
+      { page, limit }
     );
-    return c.json({ revisions });
+    return c.json({ revisions: data, total });
   })
 
   // 201 with { revision_id } for the editor route.
-  .post("/:id/revisions", requireUser, async (c) => {
-    const { revision_id } = await createVariantRevision(
-      c.get("supabase"),
-      c.get("user").id,
-      c.req.param("id")
-    );
-    return c.json({ revision_id }, 201);
-  })
+  .post(
+    "/:id/revisions",
+    requireUser,
+    rateLimitMiddleware({ ...CONTRIBUTION, bucket: "variant-revision-create" }),
+    async (c) => {
+      const { revision_id } = await createVariantRevision(
+        c.get("supabase"),
+        c.get("user").id,
+        c.req.param("id")
+      );
+      return c.json({ revision_id }, 201);
+    }
+  )
 
   // 201 with { revision_id } for the restored snapshot's new revision.
   .post(
     "/:id/rollback",
     requireUser,
+    rateLimitMiddleware({ ...CONTRIBUTION, bucket: "variant-rollback" }),
     zValidator("json", rollbackRevisionSchema),
     async (c) => {
       const { revision_id } = await rollbackVariant(
@@ -200,23 +243,40 @@ export const variantsRouter = new Hono<HonoEnv>()
   );
 
 export const guideRevisionsRouter = new Hono<HonoEnv>()
-  // Returns one revision snapshot and its subject tags as { revision, subjects }.
+  // Returns a revision snapshot, its subject tags, knowledge type, whether it is
+  // a variant, its base slug, prerequisites, and todos for resuming the
+  // contribute flow.
   .get("/:id", async (c) => {
-    const { revision, subjects } = await getRevision(
-      c.get("supabase"),
-      c.req.param("id")
-    );
-    return c.json({ revision, subjects });
+    const {
+      revision,
+      subjects,
+      knowledge_type,
+      is_variant,
+      base_slug,
+      prerequisites,
+      todos,
+    } = await getRevision(c.get("supabase"), c.req.param("id"));
+    return c.json({
+      revision,
+      subjects,
+      knowledge_type,
+      is_variant,
+      base_slug,
+      prerequisites,
+      todos,
+    });
   })
 
   // Overwrites a draft revision in place; returns { revision, subjects }. 404 once submitted.
   .patch(
     "/:id",
     requireUser,
+    rateLimitMiddleware({ ...CONTRIBUTION, bucket: "guide-revision-update" }),
     zValidator("json", updateRevisionSchema),
     async (c) => {
       const { revision, subjects } = await updateRevision(
         c.get("supabase"),
+        c.get("user").id,
         c.req.param("id"),
         c.req.valid("json")
       );
@@ -225,13 +285,18 @@ export const guideRevisionsRouter = new Hono<HonoEnv>()
   )
 
   // 201 with { review_case_id } once the revision is submitted and its case opened.
-  .post("/:id/submit", requireUser, async (c) => {
-    const { review_case_id } = await submitRevision(
-      c.get("supabase"),
-      c.req.param("id")
-    );
-    return c.json({ review_case_id }, 201);
-  })
+  .post(
+    "/:id/submit",
+    requireUser,
+    rateLimitMiddleware({ ...CONTRIBUTION, bucket: "guide-revision-submit" }),
+    async (c) => {
+      const { review_case_id } = await submitRevision(
+        c.get("supabase"),
+        c.req.param("id")
+      );
+      return c.json({ review_case_id }, 201);
+    }
+  )
 
   // Returns the diff against the previous approved revision as { from, to, fields }.
   .get("/:id/diff/prev", async (c) => {

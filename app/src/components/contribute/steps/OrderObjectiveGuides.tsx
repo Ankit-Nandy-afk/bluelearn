@@ -2,21 +2,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Calendar,
   Clock,
-  GripVertical,
   Info,
   ListOrdered,
+  Loader2,
   Maximize,
   Minimize,
   Replace,
   User,
   Workflow,
 } from "lucide-react";
-import { GuideGraph } from "../graph-view/GuideGraph";
 import type { Dispatch, SetStateAction } from "react";
 import type { ObjectiveContribution } from "@/types/contributions";
+import type { Walkthrough } from "@bluelearn/schemas";
+import { CurationGraph } from "@/components/graph/CurationGraph";
+import { getGuideWalkthrough } from "@/lib/api/guides";
+import { DraggableGuideCard } from "@/components/contribute/DraggableGuideCard";
 import { Badge } from "@/components/ui/badge";
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
-import { Combobox } from "@/components/ui/combobox";
 import {
   Card,
   CardContent,
@@ -31,101 +33,48 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import guidesData from "@/data/guides.json";
-
-// Map for O(1) guide lookup
-const guidesMap = new Map(guidesData.map((g) => [g.slug, g]));
 
 type PropTypes = {
   Stepper: any;
   objectiveContData: ObjectiveContribution;
   setObjectiveContData: Dispatch<SetStateAction<ObjectiveContribution>>;
-};
-
-type WalkthroughNode = {
-  slug: string;
-  title: string;
-  summary: string;
-  level: number;
-};
-
-const computeWalkthrough = (targetSlug: string): Array<WalkthroughNode> => {
-  // 1. Find all nodes in the transitive prerequisite closure
-  const closure = new Set<string>();
-  const queue = [targetSlug];
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    if (!closure.has(current)) {
-      closure.add(current);
-      const guide = guidesMap.get(current);
-      if (guide) {
-        for (const prereq of guide.prerequisites) {
-          queue.push(prereq);
-        }
-      }
-    }
-  }
-
-  // 2. Compute levels for each node in the closure based on longest path depth
-  const memo: Record<string, number> = {};
-
-  const getLevel = (slug: string): number => {
-    if (slug in memo) return memo[slug];
-
-    const guide = guidesMap.get(slug);
-    if (!guide || guide.prerequisites.length === 0) {
-      memo[slug] = 1;
-      return 1;
-    }
-
-    const maxPrereqLevel = Math.max(
-      ...guide.prerequisites.map((p: string) => getLevel(p))
-    );
-
-    memo[slug] = maxPrereqLevel + 1;
-    return maxPrereqLevel + 1;
-  };
-
-  const result: Array<WalkthroughNode> = [];
-  for (const slug of closure) {
-    const guide = guidesMap.get(slug);
-    if (guide) {
-      result.push({
-        slug,
-        title: guide.title,
-        summary: guide.summary,
-        level: getLevel(slug),
-      });
-    }
-  }
-
-  return result;
+  onSaveDraft?: () => void;
+  submitting?: boolean;
+  guides: Array<any>;
 };
 
 export const OrderObjectiveGuides = ({
   Stepper,
   objectiveContData,
   setObjectiveContData,
+  onSaveDraft,
+  submitting,
+  guides,
 }: PropTypes) => {
+  const guidesMap = useMemo(
+    () => new Map(guides.map((g) => [g.slug, g])),
+    [guides]
+  );
   const [targetSlug, setTargetSlug] = useState<string>(
     objectiveContData.targets[0] || ""
   );
   const [curatedSequence, setCuratedSequence] = useState<Array<string>>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hoveredGuide, setHoveredGuide] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState<"sequence" | "graph">("sequence");
 
   const targetGuide = targetSlug ? guidesMap.get(targetSlug) : undefined;
 
   const totalDuration = useMemo(() => {
-    let mins = targetGuide?.duration || 0;
+    let mins = targetGuide?.duration_minutes || 0;
     curatedSequence.forEach((slug) => {
       const guide = guidesMap.get(slug);
-      if (guide && guide.duration) {
-        mins += guide.duration;
+      if (guide && guide.duration_minutes) {
+        mins += guide.duration_minutes;
       }
     });
     return mins;
-  }, [curatedSequence, targetGuide]);
+  }, [curatedSequence, targetGuide, guidesMap]);
 
   const formattedDuration = useMemo(() => {
     if (totalDuration === 0) return "0m";
@@ -136,14 +85,55 @@ export const OrderObjectiveGuides = ({
     return `${m}m`;
   }, [totalDuration]);
 
-  const selectedGuidesList = guidesData.filter((g) =>
-    objectiveContData.targets.includes(g.slug)
+  const [walkthroughData, setWalkthroughData] = useState<Walkthrough | null>(
+    null
   );
 
-  // Compute walkthrough nodes for the target
-  const walkthroughNodes = useMemo(() => {
-    return targetSlug ? computeWalkthrough(targetSlug) : [];
+  useEffect(() => {
+    setWalkthroughData(null);
+    if (!targetSlug) return;
+
+    const controller = new AbortController();
+    getGuideWalkthrough(targetSlug, { signal: controller.signal })
+      .then(setWalkthroughData)
+      .catch((err) => {
+        if (!controller.signal.aborted) console.error(err);
+      });
+
+    return () => controller.abort();
   }, [targetSlug]);
+
+  const { directPrereqs, directDependents } = useMemo(() => {
+    const prereqs = new Map<string, Set<string>>();
+    const dependents = new Map<string, Set<string>>();
+    if (!walkthroughData)
+      return { directPrereqs: prereqs, directDependents: dependents };
+
+    const slugById = new Map(walkthroughData.nodes.map((n) => [n.id, n.slug]));
+    walkthroughData.edges.forEach((edge) => {
+      const from = slugById.get(edge.from_id);
+      const to = slugById.get(edge.to_id);
+      if (!from || !to) return;
+
+      if (!prereqs.has(to)) prereqs.set(to, new Set());
+      prereqs.get(to)!.add(from);
+      if (!dependents.has(from)) dependents.set(from, new Set());
+      dependents.get(from)!.add(to);
+    });
+
+    return { directPrereqs: prereqs, directDependents: dependents };
+  }, [walkthroughData]);
+
+  const canPlaceAt = (seq: Array<string>, slug: string, index: number) => {
+    const prereqs = directPrereqs.get(slug);
+    const dependents = directDependents.get(slug);
+
+    // Dependents can't sit above the dragged guide and prereqs can't sit below.
+    return seq.every((other, i) => {
+      if (i === index) return true;
+      return i < index ? !dependents?.has(other) : !prereqs?.has(other);
+    });
+  };
 
   const updateSubObjective = (slug: string, newSeq: Array<string>) => {
     setObjectiveContData((prev) => {
@@ -180,7 +170,13 @@ export const OrderObjectiveGuides = ({
     }
   }, [objectiveContData.targets, targetSlug]);
 
-  // Sync initial curated sequence when target guide changes
+  // Reordering targets in the previous step needs new load on order guides page.
+  const firstTarget = objectiveContData.targets[0] || "";
+  useEffect(() => {
+    setTargetSlug(firstTarget);
+  }, [firstTarget]);
+
+  // Sync initial curated sequence when target guide changes and walkthrough is ready
   useEffect(() => {
     if (!targetSlug) return;
 
@@ -190,37 +186,50 @@ export const OrderObjectiveGuides = ({
 
     if (existingSub) {
       setCuratedSequence(existingSub.curatedSequence);
-    } else {
-      const nodes = computeWalkthrough(targetSlug);
-      // Seed with all prerequisites (excluding the target guide itself) sorted by levels
-      const initialPrereqs = nodes
-        .filter((n) => n.slug !== targetSlug)
-        .sort((a, b) => a.level - b.level)
-        .map((n) => n.slug);
-
-      setCuratedSequence(initialPrereqs);
-
-      setObjectiveContData((prev) => {
-        if (prev.subObjectives.some((s) => s.targetSlug === targetSlug)) {
-          return prev;
-        }
-        return {
-          ...prev,
-          subObjectives: [
-            ...prev.subObjectives,
-            {
-              targetSlug,
-              selectedSlugs: initialPrereqs,
-              curatedSequence: initialPrereqs,
-            },
-          ],
-        };
-      });
+      return;
     }
-  }, [targetSlug]);
+
+    if (!walkthroughData?.nodes.some((n) => n.slug === targetSlug)) return;
+
+    // Seed with all prerequisites (excluding the target guide itself) sorted by levels
+    const initialPrereqs = walkthroughData.nodes
+      .filter((n) => n.slug !== targetSlug)
+      .sort((a, b) => a.level - b.level)
+      .map((n) => n.slug);
+
+    setCuratedSequence(initialPrereqs);
+
+    setObjectiveContData((prev) => {
+      if (prev.subObjectives.some((s) => s.targetSlug === targetSlug)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        subObjectives: [
+          ...prev.subObjectives,
+          {
+            targetSlug,
+            selectedSlugs: initialPrereqs,
+            curatedSequence: initialPrereqs,
+          },
+        ],
+      };
+    });
+  }, [targetSlug, walkthroughData]);
 
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const draggedIndexRef = useRef<number | null>(null);
+
+  const blockingSlugs = useMemo(() => {
+    const dragged =
+      draggedIndex === null ? undefined : curatedSequence[draggedIndex];
+    if (!dragged) return new Set<string>();
+
+    return new Set([
+      ...(directPrereqs.get(dragged) ?? []),
+      ...(directDependents.get(dragged) ?? []),
+    ]);
+  }, [draggedIndex, curatedSequence, directPrereqs, directDependents]);
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     draggedIndexRef.current = index;
@@ -240,6 +249,7 @@ export const OrderObjectiveGuides = ({
     if (!draggedItem) return;
     newSeq.splice(currentDragged, 1);
     newSeq.splice(index, 0, draggedItem);
+    if (!canPlaceAt(newSeq, draggedItem, index)) return;
 
     setCuratedSequence(newSeq);
     updateSubObjective(targetSlug, newSeq);
@@ -258,7 +268,16 @@ export const OrderObjectiveGuides = ({
   const handleToggleGuide = (slug: string, checked: boolean) => {
     let newSeq: Array<string>;
     if (checked) {
-      newSeq = [...curatedSequence, slug];
+      const dependents = directDependents.get(slug);
+      const firstDependent = curatedSequence.findIndex((s) =>
+        dependents?.has(s)
+      );
+      newSeq = [...curatedSequence];
+      newSeq.splice(
+        firstDependent === -1 ? newSeq.length : firstDependent,
+        0,
+        slug
+      );
     } else {
       newSeq = curatedSequence.filter((s) => s !== slug);
     }
@@ -267,173 +286,166 @@ export const OrderObjectiveGuides = ({
   };
 
   return (
-    <Stepper.Content step="objective-ordering">
-      <StepperActionHeader title={"Order Guides"} Stepper={Stepper} />
+    <Stepper.Content
+      step="objective-ordering"
+      className="flex min-h-0 w-full flex-1 flex-col"
+    >
+      <StepperActionHeader
+        title={"Order Guides"}
+        Stepper={Stepper}
+        onSaveDraft={onSaveDraft}
+        submitting={submitting}
+      />
 
-      <FieldGroup className="space-y-6">
-        {/* Dropdown: Pick Target Guide */}
-        <Field className="max-w-3xl space-y-2">
-          <FieldLabel className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
-            Target Guide
-          </FieldLabel>
-          <div className="flex items-center gap-4">
-            <div className="w-75 shrink-0">
-              <Combobox
-                items={selectedGuidesList.map((g) => ({
-                  value: g.slug,
-                  label: g.title,
-                  description: g.summary,
-                }))}
-                value={targetSlug}
-                onValueChange={(val) => setTargetSlug(val)}
-              />
-            </div>
-            <div className="self-stretch border-l border-border/80" />
-            <FieldDescription className="mt-0 max-w-xs text-[11px] leading-normal text-muted-foreground/75">
-              Select which guide represents the final endpoint (target) of this
-              sub-objective.
+      <FieldGroup className="mt-0 flex min-h-0 flex-1 flex-col">
+        {/* Target Guide Sequence */}
+        <Field className="mb-0 min-w-0 shrink-0 space-y-2">
+          <div className="flex items-baseline gap-4">
+            <FieldLabel className="mono-micro">
+              Target Guide Sequence
+            </FieldLabel>
+            <FieldDescription className="m-0 text-[11px] text-muted-foreground/75">
+              Select a target guide from your sequence to curate its
+              prerequisites.
             </FieldDescription>
           </div>
+          <div className="flex scrollbar-thin [scrollbar-color:var(--border)_transparent] items-center gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent">
+            {objectiveContData.targets.map((slug, index) => {
+              const guide = guidesMap.get(slug);
+              if (!guide) return null;
+
+              const isActive = slug === targetSlug;
+
+              return (
+                <div key={slug} className="flex shrink-0 items-center gap-2">
+                  {index > 0 && <div className="h-px w-4 bg-border/60" />}
+                  <button
+                    type="button"
+                    onClick={() => setTargetSlug(slug)}
+                    className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/20"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-5 w-5 items-center justify-center rounded-full text-xs ${
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted-foreground/20 text-muted-foreground"
+                      }`}
+                    >
+                      {index + 1}
+                    </span>
+                    {guide.title}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </Field>
+
+        {/* Mobile Tab Switcher */}
+        <div className="mb-4 flex w-full shrink-0 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileTab("sequence")}
+            className={`inline-flex flex-1 items-center justify-center rounded-sm px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-all ${
+              mobileTab === "sequence"
+                ? "bg-background text-foreground shadow-sm"
+                : "hover:bg-muted-foreground/10 hover:text-foreground"
+            }`}
+          >
+            Sequence
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("graph")}
+            className={`inline-flex flex-1 items-center justify-center rounded-sm px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-all ${
+              mobileTab === "graph"
+                ? "bg-background text-foreground shadow-sm"
+                : "hover:bg-muted-foreground/10 hover:text-foreground"
+            }`}
+          >
+            Graph
+          </button>
+        </div>
 
         <div
           className={
             isFullscreen
-              ? "fixed inset-0 z-50 grid animate-in grid-cols-1 items-stretch gap-6 bg-background/95 p-6 backdrop-blur-md fade-in lg:grid-cols-12"
-              : "grid h-[calc(100vh-450px)] min-h-87.5 w-full grid-cols-1 items-stretch gap-6 lg:grid-cols-12"
+              ? "fixed inset-0 z-50 grid animate-in grid-cols-1 items-stretch gap-6 bg-background/95 p-6 backdrop-blur-md fade-in lg:grid-cols-12 lg:grid-rows-1"
+              : "grid min-h-0 w-full flex-1 grid-cols-1 items-stretch gap-6 lg:grid-cols-12 lg:grid-rows-1"
           }
         >
           {/* Left Pane: Curated Sequence */}
-          <Card
-            className={`flex h-full max-h-full flex-col overflow-hidden rounded-lg border border-border bg-card/35 shadow-none backdrop-blur-sm ${
-              isFullscreen ? "lg:col-span-4" : "lg:col-span-7"
-            }`}
+          <div
+            className={`relative min-h-0 w-full ${
+              mobileTab === "sequence" ? "block" : "hidden lg:block"
+            } ${isFullscreen ? "lg:col-span-4" : "lg:col-span-5"}`}
           >
-            <CardHeader className="border-b pb-4">
-              <div className="flex w-full items-center justify-between">
-                <div className="flex items-center gap-2 text-primary">
-                  <ListOrdered className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-base font-semibold">
-                    Create a Curated Sequence
-                  </CardTitle>
+            <Card className="flex min-h-0 w-full flex-col overflow-hidden rounded-lg border border-border bg-card/35 shadow-none backdrop-blur-sm lg:absolute lg:inset-0">
+              <CardHeader className="border-b pb-4">
+                <div className="flex w-full items-center justify-between">
+                  <div className="flex items-center gap-2 text-primary">
+                    <ListOrdered className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-base font-semibold">
+                      Curate Guide Sequence
+                    </CardTitle>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 pr-3 select-none">
+                    <Clock className="h-3 w-3 text-primary" />
+                    <span className="font-mono text-[10px] font-bold tracking-wider text-primary uppercase">
+                      Total Time: {formattedDuration}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 pr-3 select-none">
-                  <Clock className="h-3 w-3 text-primary" />
-                  <span className="font-mono text-[10px] font-bold tracking-wider text-primary uppercase">
-                    Total Time: {formattedDuration}
-                  </span>
-                </div>
-              </div>
-              <CardDescription>
-                Build the sequential learning plan by ordering selected guides.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto p-4">
-              {curatedSequence.length === 0 && walkthroughNodes.length > 1 && (
-                <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
-                  <Info className="mb-2 h-8 w-8 text-muted-foreground opacity-50" />
-                  <p className="text-sm font-medium">
-                    No prerequisite guides selected.
-                  </p>
-                  <p className="mt-1 max-w-62.5 text-xs text-muted-foreground/80">
-                    Select prerequisite guides from the prerequisites on the
-                    right to add them to your curated sequence.
-                  </p>
-                </div>
-              )}
+                <CardDescription>
+                  Build the sequential learning plan by ordering selected
+                  guides.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="max-h-128 min-h-0 flex-1 scrollbar-thin [scrollbar-color:var(--border)_transparent] overflow-y-auto p-4 lg:max-h-none [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent">
+                {curatedSequence.length === 0 &&
+                  walkthroughData &&
+                  walkthroughData.nodes.length > 1 && (
+                    <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
+                      <Info className="mb-2 h-8 w-8 text-muted-foreground opacity-50" />
+                      <p className="text-sm font-medium">
+                        No prerequisite guides selected.
+                      </p>
+                      <p className="mt-1 max-w-62.5 text-xs text-muted-foreground/80">
+                        Select prerequisite guides from the prerequisites on the
+                        right to add them to your curated sequence.
+                      </p>
+                    </div>
+                  )}
 
-              <div className="space-y-3">
-                {curatedSequence.map((slug, index) => {
-                  const guide = guidesMap.get(slug);
-                  if (!guide) return null;
+                <div className="space-y-3">
+                  {curatedSequence.map((slug, index) => {
+                    const guide = guidesMap.get(slug);
+                    if (!guide) return null;
 
-                  const isDragging = index === draggedIndex;
+                    const isDragging = index === draggedIndex;
 
-                  return (
-                    <div
-                      key={slug}
-                      draggable={true}
-                      onDragStart={(e) => handleDragStart(e, index)}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDragEnd={handleDragEnd}
-                      className={`relative flex items-center justify-between gap-3 rounded-lg border p-3 pl-12 shadow-sm transition-all duration-150 select-none ${
-                        isDragging
-                          ? "z-10 scale-[1.02] cursor-grabbing border-2 border-dashed border-primary bg-primary/10 opacity-80 ring-4 ring-primary/20"
-                          : "cursor-grab border-border bg-background hover:border-primary/30"
-                      } ${hoveredGuide === slug ? "border-primary/50 ring-2 ring-primary/40" : ""}`}
-                      onMouseEnter={() => {
-                        if (draggedIndex === null) setHoveredGuide(slug);
-                      }}
-                      onMouseLeave={() => {
-                        if (draggedIndex === null) setHoveredGuide(null);
-                      }}
-                    >
-                      {/* Left controls column positioned absolutely with background and border separation */}
-                      <div className="absolute inset-y-0 left-0 z-10 w-9 rounded-l-lg border-r border-border/70 bg-muted/40">
-                        {/* Drag Icon completely centered vertically */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-grab text-muted-foreground/60 hover:text-foreground">
-                          <GripVertical className="h-4 w-4" />
-                        </div>
-                      </div>
-
-                      <div className="flex min-w-0 flex-1 items-start gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-xs font-semibold text-primary">
-                              {index + 1}
-                            </span>
-                            <h4 className="truncate text-sm font-medium text-foreground">
-                              {guide.title}
-                            </h4>
-                          </div>
-                          {/* Author, Date, & Duration under title, before description */}
-                          {(guide.author ||
-                            guide.created_at ||
-                            guide.duration) && (
-                            <div className="mt-1 ml-8 flex flex-wrap items-center gap-2.5 text-[10px] text-muted-foreground/80">
-                              {guide.author && (
-                                <span className="flex items-center gap-1">
-                                  <User className="h-3 w-3 text-muted-foreground/75" />
-                                  @{guide.author}
-                                </span>
-                              )}
-                              {guide.created_at && (
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3 text-muted-foreground/75" />
-                                  {guide.created_at}
-                                </span>
-                              )}
-                              {guide.duration && (
-                                <span className="flex items-center gap-1 font-medium">
-                                  <Clock className="h-3 w-3 text-muted-foreground/75" />
-                                  {guide.duration}m
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          <p className="mt-1.5 ml-8 text-xs text-muted-foreground">
-                            {guide.summary}
-                          </p>
-                          {/* Tags below description */}
-                          {guide.tags.length > 0 && (
-                            <div className="mt-2 ml-8 flex flex-wrap gap-1">
-                              {guide.tags.map((tag) => (
-                                <Badge
-                                  key={tag}
-                                  variant="outline"
-                                  className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
-                                >
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Right controls column: Remove (top-right) and Swap Variant (bottom-right) */}
-                      <div className="flex shrink-0 flex-col items-center justify-between gap-3 self-stretch">
-                        {/* Remove Button in the upper right */}
+                    return (
+                      <DraggableGuideCard
+                        key={slug}
+                        guide={guide}
+                        index={index}
+                        isDragging={isDragging}
+                        isBlocking={blockingSlugs.has(slug)}
+                        isHovered={hoveredGuide === slug}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDragEnd={handleDragEnd}
+                        onMouseEnter={() => {
+                          if (draggedIndex === null) setHoveredGuide(slug);
+                        }}
+                        onMouseLeave={() => {
+                          if (draggedIndex === null) setHoveredGuide(null);
+                        }}
+                      >
                         <Button
                           variant="ghost"
                           size="icon"
@@ -444,7 +456,95 @@ export const OrderObjectiveGuides = ({
                           <span className="text-lg leading-none">&times;</span>
                         </Button>
 
-                        {/* Swap Variant Button in the bottom right */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled
+                          className="h-8 w-8 cursor-not-allowed border-none p-0 text-muted-foreground/40 hover:bg-transparent"
+                          title="Variants Coming Soon"
+                        >
+                          <Replace className="h-5 w-5" />
+                        </Button>
+                      </DraggableGuideCard>
+                    );
+                  })}
+
+                  {/* Automatically Pinned Target Guide */}
+                  {targetGuide && (
+                    <div
+                      className={`flex items-start gap-3 rounded-lg border border-primary bg-primary/5 p-3 shadow-sm transition-all duration-150 ${
+                        hoveredGuide === targetGuide.slug
+                          ? "shadow-md ring-2 ring-primary/40"
+                          : "hover:shadow-md hover:ring-2 hover:ring-primary/40"
+                      }`}
+                      onMouseEnter={() => {
+                        if (draggedIndex === null)
+                          setHoveredGuide(targetGuide.slug);
+                      }}
+                      onMouseLeave={() => {
+                        if (draggedIndex === null) setHoveredGuide(null);
+                      }}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary font-mono text-xs font-semibold text-primary-foreground">
+                            {curatedSequence.length + 1}
+                          </span>
+                          <h4 className="truncate text-sm font-semibold text-foreground">
+                            {targetGuide.title}
+                          </h4>
+                          <span className="inline-flex items-center rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-primary uppercase">
+                            Target
+                          </span>
+                        </div>
+                        {/* Target Guide Author, Date, & Duration under title, before description */}
+                        {(targetGuide.author ||
+                          targetGuide.created_at ||
+                          targetGuide.duration_minutes) && (
+                          <div className="mt-1 ml-7 flex flex-wrap items-center gap-2.5 text-[10px] text-muted-foreground/80">
+                            {targetGuide.author && (
+                              <span className="flex items-center gap-1 font-mono uppercase">
+                                <User className="h-3 w-3 text-primary/70" />@
+                                {targetGuide.author}
+                              </span>
+                            )}
+                            {targetGuide.created_at && (
+                              <span className="flex items-center gap-1 font-mono uppercase">
+                                <Calendar className="h-3 w-3 text-primary/70" />
+                                {new Date(
+                                  targetGuide.created_at
+                                ).toLocaleDateString()}
+                              </span>
+                            )}
+                            {targetGuide.duration_minutes && (
+                              <span className="flex items-center gap-1 font-mono font-medium uppercase">
+                                <Clock className="h-3 w-3 text-primary/70" />
+                                {targetGuide.duration_minutes}min
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <p className="mt-1.5 ml-7 text-xs text-muted-foreground">
+                          {targetGuide.summary}
+                        </p>
+                        {/* Tags below description */}
+                        {targetGuide.tags.length > 0 && (
+                          <div className="mt-2 ml-7 flex flex-wrap gap-1">
+                            {targetGuide.tags.map((tag: any) => (
+                              <Badge
+                                key={tag.slug || tag}
+                                variant="outline"
+                                className="mono-micro rounded-full border border-primary/20 bg-primary/5 tracking-[0.08em] text-primary"
+                              >
+                                {tag.name || tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right controls column: Swap Variant (bottom-right) */}
+                      <div className="flex shrink-0 flex-col items-center justify-end self-stretch">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -456,104 +556,17 @@ export const OrderObjectiveGuides = ({
                         </Button>
                       </div>
                     </div>
-                  );
-                })}
-
-                {/* Automatically Pinned Target Guide */}
-                {targetGuide && (
-                  <div
-                    className={`flex items-start gap-3 rounded-lg border border-primary bg-primary/5 p-3 shadow-sm transition-all duration-150 ${
-                      hoveredGuide === targetGuide.slug
-                        ? "shadow-md ring-2 ring-primary/40"
-                        : ""
-                    }`}
-                    onMouseEnter={() => {
-                      if (draggedIndex === null)
-                        setHoveredGuide(targetGuide.slug);
-                    }}
-                    onMouseLeave={() => {
-                      if (draggedIndex === null) setHoveredGuide(null);
-                    }}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary font-mono text-xs font-semibold text-primary-foreground">
-                          {curatedSequence.length + 1}
-                        </span>
-                        <h4 className="truncate text-sm font-semibold text-foreground">
-                          {targetGuide.title}
-                        </h4>
-                        <span className="inline-flex items-center rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-primary uppercase">
-                          Target
-                        </span>
-                      </div>
-                      {/* Target Guide Author, Date, & Duration under title, before description */}
-                      {(targetGuide.author ||
-                        targetGuide.created_at ||
-                        targetGuide.duration) && (
-                        <div className="mt-1 ml-7 flex flex-wrap items-center gap-2.5 text-[10px] text-muted-foreground/80">
-                          {targetGuide.author && (
-                            <span className="flex items-center gap-1">
-                              <User className="h-3 w-3 text-primary/70" />@
-                              {targetGuide.author}
-                            </span>
-                          )}
-                          {targetGuide.created_at && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3 text-primary/70" />
-                              {targetGuide.created_at}
-                            </span>
-                          )}
-                          {targetGuide.duration && (
-                            <span className="flex items-center gap-1 font-medium">
-                              <Clock className="h-3 w-3 text-primary/70" />
-                              {targetGuide.duration}m
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      <p className="mt-1.5 ml-7 text-xs text-muted-foreground">
-                        {targetGuide.summary}
-                      </p>
-                      {/* Tags below description */}
-                      {targetGuide.tags.length > 0 && (
-                        <div className="mt-2 ml-7 flex flex-wrap gap-1">
-                          {targetGuide.tags.map((tag) => (
-                            <Badge
-                              key={tag}
-                              variant="outline"
-                              className="mono-micro rounded-full border border-primary/20 bg-primary/5 tracking-[0.08em] text-primary"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Right controls column: Swap Variant (bottom-right) */}
-                    <div className="flex shrink-0 flex-col items-center justify-end self-stretch">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled
-                        className="h-8 w-8 cursor-not-allowed border-none p-0 text-muted-foreground/40 hover:bg-transparent"
-                        title="Variants Coming Soon"
-                      >
-                        <Replace className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Right Pane: Generated Walkthrough by Level */}
           <Card
-            className={`flex h-full max-h-full flex-col overflow-hidden rounded-lg border border-border bg-muted/10 shadow-none ${
-              isFullscreen ? "lg:col-span-8" : "lg:col-span-5"
-            }`}
+            className={`h-full max-h-full min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-muted/10 shadow-none ${
+              mobileTab === "graph" ? "flex" : "hidden lg:flex"
+            } ${isFullscreen ? "lg:col-span-8" : "lg:col-span-7"}`}
           >
             <CardHeader className="border-b pb-4">
               <div className="flex w-full items-center justify-between">
@@ -582,16 +595,23 @@ export const OrderObjectiveGuides = ({
                 include in your curation.
               </CardDescription>
             </CardHeader>
-            <CardContent className="relative flex-1 overflow-hidden p-0">
-              <GuideGraph
-                walkthroughNodes={walkthroughNodes}
-                curatedSequence={curatedSequence}
-                targetSlug={targetSlug}
-                onToggleGuide={handleToggleGuide}
-                guidesMap={guidesMap}
-                hoveredGuide={hoveredGuide}
-                onHoverGuide={setHoveredGuide}
-              />
+            <CardContent className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-0">
+              {walkthroughData ? (
+                <CurationGraph
+                  walkthroughData={walkthroughData}
+                  curatedSequence={curatedSequence}
+                  targetSlug={targetSlug}
+                  onToggleGuide={handleToggleGuide}
+                  hoveredGuide={hoveredGuide}
+                  onHoverGuide={setHoveredGuide}
+                  isFullscreen={isFullscreen}
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <span className="text-sm">Computing graph...</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

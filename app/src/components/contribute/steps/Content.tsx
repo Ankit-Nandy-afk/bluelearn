@@ -5,9 +5,23 @@ const Editor = lazy(() => import("../editor/Editor"));
 
 type PropTypes = {
   Stepper: any;
+  body: string;
+  onBodyChange: (body: string) => void;
+  onUploadImage?: (file: File) => Promise<string>;
+  onSaveDraft: () => void;
+  submitting?: boolean;
+  title?: string;
 };
 
-export const Content = ({ Stepper }: PropTypes) => {
+export const Content = ({
+  Stepper,
+  body,
+  onBodyChange,
+  onUploadImage,
+  onSaveDraft,
+  submitting,
+  title = "Content",
+}: PropTypes) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -16,7 +30,12 @@ export const Content = ({ Stepper }: PropTypes) => {
 
   return (
     <Stepper.Content step="content">
-      <StepperActionHeader title={"Content"} Stepper={Stepper} />
+      <StepperActionHeader
+        title={title}
+        Stepper={Stepper}
+        onSaveDraft={onSaveDraft}
+        submitting={submitting}
+      />
 
       {mounted && (
         <Suspense
@@ -26,7 +45,11 @@ export const Content = ({ Stepper }: PropTypes) => {
             </div>
           }
         >
-          <Editor />
+          <Editor
+            value={body}
+            onChange={onBodyChange}
+            onUploadImage={onUploadImage}
+          />
         </Suspense>
       )}
     </Stepper.Content>

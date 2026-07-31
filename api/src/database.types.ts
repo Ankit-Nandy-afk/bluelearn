@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -403,6 +423,7 @@ export type Database = {
           is_target: boolean
           note: string | null
           revision_id: string
+          target_position: number | null
         }
         Insert: {
           guide_base_id: string
@@ -413,6 +434,7 @@ export type Database = {
           is_target?: boolean
           note?: string | null
           revision_id: string
+          target_position?: number | null
         }
         Update: {
           guide_base_id?: string
@@ -423,6 +445,7 @@ export type Database = {
           is_target?: boolean
           note?: string | null
           revision_id?: string
+          target_position?: number | null
         }
         Relationships: [
           {
@@ -803,7 +826,8 @@ export type Database = {
           creator_id: string | null
           id: string
           name: string
-          slug: string
+          slug: string | null
+          status: Database["public"]["Enums"]["subject_status"]
           summary: string | null
         }
         Insert: {
@@ -811,7 +835,8 @@ export type Database = {
           creator_id?: string | null
           id?: string
           name: string
-          slug: string
+          slug?: string | null
+          status?: Database["public"]["Enums"]["subject_status"]
           summary?: string | null
         }
         Update: {
@@ -819,7 +844,8 @@ export type Database = {
           creator_id?: string | null
           id?: string
           name?: string
-          slug?: string
+          slug?: string | null
+          status?: Database["public"]["Enums"]["subject_status"]
           summary?: string | null
         }
         Relationships: [
@@ -1006,6 +1032,21 @@ export type Database = {
         Args: { check_role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
+      list_guide_variants_by_score: {
+        Args: { p_guide_base_id: string; p_z?: number }
+        Returns: {
+          id: string
+          slug: string
+          summary: string
+          title: string
+        }[]
+      }
+      objective_closure: {
+        Args: { p_targets: string[] }
+        Returns: {
+          guide_base_id: string
+        }[]
+      }
       project_objective_edges: {
         Args: { p_revision_id: string }
         Returns: {
@@ -1066,6 +1107,7 @@ export type Database = {
       review_outcome: "approved" | "rejected"
       revision_status: "draft" | "submitted"
       seat_status: "assigned" | "recused" | "replaced" | "completed"
+      subject_status: "draft" | "published"
       todo_status: "open" | "resolved"
       vote_direction: "up" | "down"
     }
@@ -1193,6 +1235,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["verifier", "moderator", "curator", "admin"],
@@ -1223,8 +1268,10 @@ export const Constants = {
       review_outcome: ["approved", "rejected"],
       revision_status: ["draft", "submitted"],
       seat_status: ["assigned", "recused", "replaced", "completed"],
+      subject_status: ["draft", "published"],
       todo_status: ["open", "resolved"],
       vote_direction: ["up", "down"],
     },
   },
 } as const
+

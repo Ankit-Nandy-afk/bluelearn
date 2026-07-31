@@ -7,6 +7,9 @@
     operationId: getReviewQueue
     security:
       - bearerAuth: []
+    parameters:
+      - $ref: "../components/parameters/pagination.yaml#/Page"
+      - $ref: "../components/parameters/pagination.yaml#/Limit"
     responses:
       "200":
         description: Open cases
@@ -19,8 +22,11 @@
                 cases:
                   type: array
                   items:
-                    $ref: "../components/schemas/reviews/ReviewCaseListItem.yaml"
-              required: [cases]
+                    $ref: "../components/schemas/reviews/ReviewQueueItem.yaml"
+                total:
+                  type: integer
+                  minimum: 0
+              required: [cases, total]
       "401":
         $ref: "../components/responses/_shared.yaml#/Unauthorized"
 
@@ -74,7 +80,11 @@
                   type: array
                   items:
                     $ref: "../components/schemas/reviews/ReviewDecision.yaml"
-              required: [case, panel, decisions]
+                revision:
+                  oneOf:
+                    - $ref: "../components/schemas/reviews/GuideRevisionSummary.yaml"
+                    - type: "null"
+              required: [case, panel, decisions, revision]
       "404":
         $ref: "../components/responses/_shared.yaml#/NotFound"
 

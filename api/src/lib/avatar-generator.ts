@@ -1,6 +1,8 @@
 import wasmModule from "@resvg/resvg-wasm/index_bg.wasm";
 import { initWasm, Resvg } from "@resvg/resvg-wasm";
 
+// Turns an id into a little SVG constellation avatar.
+
 type Palette = { bg: string; line: string; node: string; fill: string };
 
 const PALETTES: Palette[] = [

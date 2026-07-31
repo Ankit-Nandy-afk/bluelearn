@@ -9,6 +9,12 @@ export const env: Bindings = {
   SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY!,
   SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY!,
   APP_URL: process.env.APP_URL ?? "http://localhost:3000",
+  // Search sync is best-effort and logs instead of failing when Typesense
+  // isn't running, so tests don't need a live instance.
+  TYPESENSE_HOST: process.env.TYPESENSE_HOST ?? "127.0.0.1",
+  TYPESENSE_PORT: process.env.TYPESENSE_PORT ?? "8108",
+  TYPESENSE_PROTOCOL: process.env.TYPESENSE_PROTOCOL ?? "http",
+  TYPESENSE_API_KEY: process.env.TYPESENSE_API_KEY ?? "xyz-dev-key",
 };
 
 // Refuses to run against anything but a local Supabase.
@@ -72,18 +78,35 @@ export async function makeUser(): Promise<{ token: string; userId: string }> {
   return { token: session.session.access_token, userId: created.user.id };
 }
 
-// Shorthand for the Authorization header bundle most requests need.
-export function auth(token: string) {
-  return { headers: { Authorization: `Bearer ${token}` } };
+export function clientIp(): string {
+  const octet = () => Math.floor(Math.random() * 256);
+  return `${octet()}.${octet()}.${octet()}.${octet()}`;
+}
+
+// Shorthand for the Authorization header bundle most requests need. Pass an
+// ip to pin the request to its own rate-limit bucket.
+export function auth(token: string, ip?: string) {
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(ip ? { "CF-Connecting-IP": ip } : {}),
+    },
+  };
 }
 
 // Shorthand for an authorized JSON request init.
-export function jsonAuth(token: string, method: string, body: unknown) {
+export function jsonAuth(
+  token: string,
+  method: string,
+  body: unknown,
+  ip?: string
+) {
   return {
     method,
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      ...(ip ? { "CF-Connecting-IP": ip } : {}),
     },
     body: JSON.stringify(body),
   };

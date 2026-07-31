@@ -3,54 +3,79 @@ import type { Dispatch, SetStateAction } from "react";
 import type { ObjectiveContribution } from "@/types/contributions";
 
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Combobox } from "@/components/ui/combobox";
 
-import guidesData from "@/data/guides.json";
+type SubjectOption = { id: string; name: string };
+type GuideOption = {
+  slug: string | null;
+  title: string | null;
+  summary: string | null;
+};
 
 type PropTypes = {
   Stepper: any;
   objectiveContData: ObjectiveContribution;
   setObjectiveContData: Dispatch<SetStateAction<ObjectiveContribution>>;
+  subjects: Array<SubjectOption>;
+  guides: Array<GuideOption>;
+  onSaveDraft?: () => void;
+  submitting?: boolean;
 };
 
 export const ObjectiveDetails = ({
   Stepper,
   objectiveContData,
   setObjectiveContData,
+  subjects,
+  guides,
+  onSaveDraft,
+  submitting,
 }: PropTypes) => {
-  const guides = guidesData.map((g) => {
-    return {
-      value: g.slug,
-      label: g.title,
-      description: g.summary,
-    };
-  });
+  const guideItems = guides
+    .filter((g): g is GuideOption & { slug: string } => !!g.slug)
+    .map((g) => {
+      return {
+        value: g.slug,
+        label: g.title ?? g.slug,
+        description: g.summary ?? undefined,
+      };
+    });
 
   const targs = useMemo(
     () =>
-      guides.filter((item) => objectiveContData.targets.includes(item.value)),
-    [guides, objectiveContData.targets]
+      guideItems.filter((item) =>
+        objectiveContData.targets.includes(item.value)
+      ),
+    [guideItems, objectiveContData.targets]
   );
-
-  const isNextDisabled = useMemo(() => {
-    return objectiveContData.targets.length === 0;
-  }, [objectiveContData.targets]);
 
   return (
     <Stepper.Content step="objective-details">
       <StepperActionHeader
         title={"Objective Details"}
         Stepper={Stepper}
-        nextDisabled={isNextDisabled}
+        onSaveDraft={onSaveDraft}
+        submitting={submitting}
       />
 
       <FieldGroup>
         <Field className="space-y-2">
-          <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-            Title
-          </FieldLabel>
+          <div className="space-y-1">
+            <FieldLabel required className="mono-micro">
+              Title
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              A clear, concise name for this learning objective.
+            </FieldDescription>
+          </div>
 
           <Input
             id="title"
@@ -71,13 +96,20 @@ export const ObjectiveDetails = ({
         </Field>
 
         <Field className="space-y-2">
-          <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-            Summary
-          </FieldLabel>
+          <div className="space-y-1">
+            <FieldLabel required className="mono-micro">
+              Summary
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              Briefly describe what the learner will achieve by completing this
+              objective.
+            </FieldDescription>
+          </div>
 
-          <textarea
-            className="h-32 w-full min-w-0 resize-none rounded-md border border-input bg-input/20 p-2 text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs/relaxed file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+          <Textarea
+            className="h-32 w-full min-w-0 resize-none"
             rows={4}
+            maxLength={250}
             placeholder="Write a summary for the objective."
             required
             value={objectiveContData.summary}
@@ -91,18 +123,54 @@ export const ObjectiveDetails = ({
         </Field>
 
         <Field className="space-y-2">
-          <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-            Target Guides
-          </FieldLabel>
+          <div className="space-y-1">
+            <FieldLabel required className="mono-micro">
+              Subjects
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              Select existing subjects for this learning objective.
+            </FieldDescription>
+          </div>
 
           <Combobox
             multiple
-            items={guides}
+            items={subjects.map((s) => {
+              return {
+                value: s.id,
+                label: s.name,
+              };
+            })}
+            value={objectiveContData.subjects}
+            onValueChange={(ids) =>
+              setObjectiveContData((prev) => ({
+                ...prev,
+                subjects: ids,
+              }))
+            }
+          />
+        </Field>
+
+        <Field className="space-y-2">
+          <div className="space-y-1">
+            <FieldLabel required className="mono-micro">
+              Target Guides
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              Select the guides you think would be appropriate for this learning
+              objective.
+            </FieldDescription>
+          </div>
+
+          <Combobox
+            multiple
+            items={guideItems}
             value={objectiveContData.targets}
             onValueChange={(targets) => {
               setObjectiveContData((prev) => {
-                const featured = targets.includes(prev.featured)
-                  ? prev.featured
+                const featuredSubObjective = targets.includes(
+                  prev.featuredSubObjective
+                )
+                  ? prev.featuredSubObjective
                   : "";
                 const subObjectives = prev.subObjectives.filter((sub) =>
                   targets.includes(sub.targetSlug)
@@ -110,7 +178,7 @@ export const ObjectiveDetails = ({
                 return {
                   ...prev,
                   targets,
-                  featured,
+                  featuredSubObjective,
                   subObjectives,
                 };
               });
@@ -119,17 +187,25 @@ export const ObjectiveDetails = ({
         </Field>
 
         <Field className="space-y-2">
-          <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-            Featured Guide
-          </FieldLabel>
+          <div className="space-y-1">
+            <FieldLabel required className="mono-micro">
+              Featured Sub-Objective
+            </FieldLabel>
+            <FieldDescription className="text-xs">
+              {targs.length === 0
+                ? "Select at least one Target Guide above first."
+                : "The primary target guide to showcase on the objective card."}
+            </FieldDescription>
+          </div>
 
           <Combobox
+            disabled={targs.length === 0}
             items={targs}
-            value={objectiveContData.featured}
-            onValueChange={(featured) =>
+            value={objectiveContData.featuredSubObjective}
+            onValueChange={(featuredSubObjective) =>
               setObjectiveContData((prev) => ({
                 ...prev,
-                featured,
+                featuredSubObjective,
               }))
             }
           />
