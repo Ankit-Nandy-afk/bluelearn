@@ -7,9 +7,6 @@ import { readingMinutes } from "../lib/reading";
 
 type DB = SupabaseClient<Database>;
 type ReviewOutcome = Database["public"]["Enums"]["review_outcome"];
-
-// -- Internal row shapes for single top-level casts --
-
 type QueueRow = {
   id: string;
   panel_id: string;
@@ -334,6 +331,26 @@ export async function getReviewCase(
   const latestPanel = data.review_panels[0] ?? null;
   const members = latestPanel?.panel_members ?? [];
 
+  const mapDecision = (
+    d: NonNullable<
+      CaseDetailRow["review_panels"][number]["panel_members"][number]["review_decisions"]
+    >
+  ) => ({
+    id: d.id,
+    decision: d.decision,
+    notes: d.notes,
+    reasons: d.review_decision_reasons?.map((r) => r.reason) ?? [],
+    created_at: d.created_at,
+  });
+
+  // Lets the reviewer come back to a review decision with their own data reseeded
+  // (vote, note, and reason).
+  const viewerVote =
+    viewerId === null
+      ? null
+      : (members.find((pm) => pm.member_id === viewerId)?.review_decisions ??
+        null);
+
   // A finished case is a public record, so its proposed graph goes public with
   // it. While the case is open only the author and the seats can see that much.
   const closed = data.status === "approved" || data.status === "rejected";
@@ -368,16 +385,8 @@ export async function getReviewCase(
     })),
     decisions: members
       .filter((pm) => pm.review_decisions)
-      .map((pm) => {
-        const d = pm.review_decisions!;
-        return {
-          id: d.id,
-          decision: d.decision,
-          notes: d.notes,
-          reasons: d.review_decision_reasons?.map((r) => r.reason) ?? [],
-          created_at: d.created_at,
-        };
-      }),
+      .map((pm) => mapDecision(pm.review_decisions!)),
+    viewer_decision: viewerVote ? mapDecision(viewerVote) : null,
     revision: revision
       ? {
           id: revision.id,

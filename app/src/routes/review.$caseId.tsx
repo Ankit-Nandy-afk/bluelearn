@@ -119,10 +119,18 @@ function RouteComponent() {
 
   const subjects = revision?.tags ?? [];
 
+  // Reviewers can revote while the case is open, so start from their last vote.
+  const priorDecision = revisionData.viewer_decision;
+
   const [review, setReview] = useState<Review>({
-    decision: "",
-    notes: "",
-    reasons: [],
+    decision:
+      priorDecision === null
+        ? ""
+        : priorDecision.decision === "approved"
+          ? "approve"
+          : "reject",
+    notes: priorDecision?.notes ?? "",
+    reasons: priorDecision?.reasons ?? [],
   });
 
   const REASONS = [

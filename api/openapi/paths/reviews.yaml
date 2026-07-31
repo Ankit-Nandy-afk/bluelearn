@@ -80,6 +80,14 @@
                   type: array
                   items:
                     $ref: "../components/schemas/reviews/ReviewDecision.yaml"
+                viewer_decision:
+                  description: >
+                    The caller's own vote on this case, so an editable decision
+                    can be reseeded. Null when the caller holds no seat or has
+                    not voted yet.
+                  oneOf:
+                    - $ref: "../components/schemas/reviews/ReviewDecision.yaml"
+                    - type: "null"
                 revision:
                   oneOf:
                     - $ref: "../components/schemas/reviews/GuideRevisionSummary.yaml"
@@ -99,7 +107,16 @@
                     Gated the same way as prerequisites.
                   items:
                     $ref: "../components/schemas/reviews/SubmittedTodo.yaml"
-              required: [case, panel, decisions, revision, prerequisites, todos]
+              required:
+                [
+                  case,
+                  panel,
+                  decisions,
+                  viewer_decision,
+                  revision,
+                  prerequisites,
+                  todos,
+                ]
       "404":
         $ref: "../components/responses/_shared.yaml#/NotFound"
 
