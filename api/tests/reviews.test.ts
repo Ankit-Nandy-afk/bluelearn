@@ -19,6 +19,7 @@ import {
   createPublishedGuide,
 } from "./factories/guides";
 import { createSubject, tagGuideRevision } from "./factories/subjects";
+import { createPrerequisite, createTodo } from "./factories/graph";
 import { expectToMatchSpec } from "./openapi";
 
 async function seedQueueCase(
@@ -44,6 +45,50 @@ async function seedQueueCase(
   }
   await createGuideReviewCase(reviewCase.id, revision.id);
   return reviewCase;
+}
+
+type SubmissionBody = {
+  revision: { tags: Array<{ id: string; status: string }> } | null;
+  prerequisites: Array<{ slug: string; title: string | null }>;
+  todos: Array<{ id: string; title: string }>;
+};
+
+// A first-time contribution: draft base and guide, one published tag, one
+// subject proposed inline, one prerequisite, one todo.
+async function seedSubmissionCase(
+  panelistId: string,
+  status: Insert<"review_cases">["status"] = "pending"
+) {
+  const base = await createGuideBase();
+  const guide = await createGuide(base.id);
+  const revision = await createGuideRevision(guide.id, { title: "Topology" });
+
+  const published = await createSubject();
+  const proposed = await createSubject({ slug: null, status: "draft" });
+  await tagGuideRevision(revision.id, published.id);
+  await tagGuideRevision(revision.id, proposed.id);
+
+  const prereq = await createPublishedGuide({ title: "Set Theory" });
+  await createPrerequisite(prereq.base.id, base.id);
+  const todo = await createTodo(base.id, { title: "Metric Spaces" });
+
+  const reviewCase = await createReviewCase(panelistId, {
+    case_type: "guide_publish",
+    status,
+  });
+  const panel = await createReviewPanel(reviewCase.id, {
+    target_seat_count: 1,
+  });
+  await createPanelMember(panel.id, panelistId);
+  await createGuideReviewCase(reviewCase.id, revision.id);
+
+  return {
+    reviewCase,
+    published: published.id,
+    proposed: proposed.id,
+    prereqSlug: prereq.base.slug!,
+    todoTitle: todo.title,
+  };
 }
 
 describe("GET /reviews/queue", () => {
@@ -115,6 +160,54 @@ describe("GET /reviews/cases/{id}", () => {
     await expectToMatchSpec(res, "GET", "/reviews/cases/{id}");
     const body = (await res.json()) as { case: { id: string } };
     expect(body.case.id).toBe(reviewCase.id);
+  });
+
+  it("hides the proposed graph from an outsider while the case is open", async () => {
+    const { userId: panelist } = await makeUser();
+    const { reviewCase, published } = await seedSubmissionCase(panelist);
+
+    const res = await app.request(`/reviews/cases/${reviewCase.id}`, {}, env);
+
+    expect(res.status).toBe(200);
+    await expectToMatchSpec(res, "GET", "/reviews/cases/{id}");
+    const body = (await res.json()) as SubmissionBody;
+    expect(body.prerequisites).toEqual([]);
+    expect(body.todos).toEqual([]);
+    expect(body.revision?.tags.map((t) => t.id)).toEqual([published]);
+  });
+
+  it("shows the proposed graph to a seated panelist", async () => {
+    const { token, userId: panelist } = await makeUser();
+    const { reviewCase, proposed, prereqSlug, todoTitle } =
+      await seedSubmissionCase(panelist);
+
+    const res = await app.request(
+      `/reviews/cases/${reviewCase.id}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+      env
+    );
+
+    expect(res.status).toBe(200);
+    await expectToMatchSpec(res, "GET", "/reviews/cases/{id}");
+    const body = (await res.json()) as SubmissionBody;
+    expect(body.prerequisites.map((p) => p.slug)).toEqual([prereqSlug]);
+    expect(body.todos.map((t) => t.title)).toEqual([todoTitle]);
+    expect(body.revision?.tags.map((t) => t.id)).toContain(proposed);
+  });
+
+  it("shows the proposed graph to everyone once the case closes", async () => {
+    const { userId: panelist } = await makeUser();
+    const { reviewCase, proposed, prereqSlug, todoTitle } =
+      await seedSubmissionCase(panelist, "approved");
+
+    const res = await app.request(`/reviews/cases/${reviewCase.id}`, {}, env);
+
+    expect(res.status).toBe(200);
+    await expectToMatchSpec(res, "GET", "/reviews/cases/{id}");
+    const body = (await res.json()) as SubmissionBody;
+    expect(body.prerequisites.map((p) => p.slug)).toEqual([prereqSlug]);
+    expect(body.todos.map((t) => t.title)).toEqual([todoTitle]);
+    expect(body.revision?.tags.map((t) => t.id)).toContain(proposed);
   });
 });
 

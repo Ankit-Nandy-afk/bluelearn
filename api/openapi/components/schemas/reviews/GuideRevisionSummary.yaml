@@ -25,7 +25,8 @@ properties:
     type: array
     description: >
       Subjects the revision is tagged with, identified by id because a subject
-      proposed alongside the revision has no slug until it is published.
+      proposed alongside the revision has no slug until it is published. Draft
+      subjects are only present for a viewer who can see the submission.
     items:
       type: object
       additionalProperties: false
@@ -35,5 +36,9 @@ properties:
         name:
           type: string
           example: Topology
-      required: [id, name]
+        status:
+          type: string
+          enum: [draft, published]
+          example: draft
+      required: [id, name, status]
 required: [id, status, created_at, duration_minutes, tags]

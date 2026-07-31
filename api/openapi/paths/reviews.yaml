@@ -84,7 +84,22 @@
                   oneOf:
                     - $ref: "../components/schemas/reviews/GuideRevisionSummary.yaml"
                     - type: "null"
-              required: [case, panel, decisions, revision]
+                prerequisites:
+                  type: array
+                  description: >
+                    Published guides the submission declares as prerequisites.
+                    Empty unless the case has closed or the caller is the author
+                    or a seated panelist.
+                  items:
+                    $ref: "../components/schemas/reviews/SubmittedPrerequisite.yaml"
+                todos:
+                  type: array
+                  description: >
+                    Prerequisite topics the submission says are still missing.
+                    Gated the same way as prerequisites.
+                  items:
+                    $ref: "../components/schemas/reviews/SubmittedTodo.yaml"
+              required: [case, panel, decisions, revision, prerequisites, todos]
       "404":
         $ref: "../components/responses/_shared.yaml#/NotFound"
 
