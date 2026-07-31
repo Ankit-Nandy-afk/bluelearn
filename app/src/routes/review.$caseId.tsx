@@ -36,10 +36,10 @@ function ChangeSection({
   return (
     <div className="space-y-2">
       <p className="font-mono text-xs/relaxed font-bold tracking-[0.08em] uppercase">
-        {label} ({count})
+        {label}
       </p>
       {count === 0 ? (
-        <p className="pl-3 text-xs text-muted-foreground">{empty}</p>
+        <p className="text-xs text-muted-foreground">{empty}</p>
       ) : (
         <ul className="space-y-3">{children}</ul>
       )}
@@ -55,7 +55,7 @@ function ChangeRow({
   badge?: React.ReactNode;
 }) {
   return (
-    <li className="flex items-center justify-between gap-2 pl-3 text-xs">
+    <li className="flex items-center justify-between gap-2 text-xs">
       <span className="min-w-0 truncate">{label}</span>
       {badge}
     </li>
@@ -201,30 +201,6 @@ function RouteComponent() {
               <Button
                 variant="outline"
                 className={cn(
-                  "h-9 border-green-600/40 text-green-700 hover:bg-green-600/10 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
-                  review.decision == "approve" && "bg-green-600/10"
-                )}
-                onClick={() => {
-                  if (review.decision == "approve") {
-                    setReview((prev) => ({
-                      ...prev,
-                      decision: "",
-                    }));
-                  } else {
-                    setReview((prev) => ({
-                      ...prev,
-                      decision: "approve",
-                    }));
-                  }
-                }}
-                disabled={review.decision == "reject"}
-              >
-                <Check />
-                Approve
-              </Button>
-              <Button
-                variant="outline"
-                className={cn(
                   "h-9 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400",
                   review.decision == "reject" && "bg-red-500/10"
                 )}
@@ -241,10 +217,32 @@ function RouteComponent() {
                     }));
                   }
                 }}
-                disabled={review.decision == "approve"}
               >
                 <X />
                 Reject
+              </Button>
+              <Button
+                variant="outline"
+                className={cn(
+                  "h-9 border-green-600/40 text-green-700 hover:bg-green-600/10 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
+                  review.decision == "approve" && "bg-green-600/10"
+                )}
+                onClick={() => {
+                  if (review.decision == "approve") {
+                    setReview((prev) => ({
+                      ...prev,
+                      decision: "",
+                    }));
+                  } else {
+                    setReview((prev) => ({
+                      ...prev,
+                      decision: "approve",
+                    }));
+                  }
+                }}
+              >
+                <Check />
+                Approve
               </Button>
             </div>
 

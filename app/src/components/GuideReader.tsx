@@ -73,23 +73,25 @@ export const GuideReader = ({ guide, guideType }: PropTypes) => {
           </span>
         </div>
 
-        <div className="my-4 flex gap-2">
-          {guide.tags.map((tag: ReaderTag) => (
-            <Badge
-              key={tag.id ?? tag.slug ?? tag.name}
-              variant="outline"
-              className="mono-micro rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
-            >
-              {tag.name}
-            </Badge>
-          ))}
-        </div>
+        {guide.tags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {guide.tags.map((tag: ReaderTag) => (
+              <Badge
+                key={tag.id ?? tag.slug ?? tag.name}
+                variant="outline"
+                className="mono-micro rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
+              >
+                {tag.name}
+              </Badge>
+            ))}
+          </div>
+        )}
 
-        <div>
-          <p className="py-4 text-sm whitespace-pre-line text-muted-foreground">
+        {guide.summary && (
+          <p className="mt-3 text-sm whitespace-pre-line text-muted-foreground">
             {guide.summary}
           </p>
-        </div>
+        )}
       </header>
 
       <Separator className="mb-8" />
