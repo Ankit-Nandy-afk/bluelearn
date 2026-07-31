@@ -325,31 +325,43 @@ function RouteComponent() {
                 Delete account
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Delete your account?</DialogTitle>
-                <DialogDescription>
-                  This removes your profile and sign-in details from Bluelearn.
-                  Guides you wrote stay published without your name. You cannot
-                  undo this.
+            <DialogContent className="gap-0 p-0 sm:max-w-md">
+              <DialogHeader className="gap-2 p-5 pb-0">
+                <span className="mono-micro text-destructive">
+                  Permanent action
+                </span>
+                <DialogTitle className="editorial-heading text-lg">
+                  Delete account
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
+                  Deleting your account signs you out and closes it for good.
+                  Contributions you authored stay published without your name.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-2 py-4">
+
+              <div className="space-y-2 p-5">
                 <FieldLabel
                   htmlFor="delete-confirm"
-                  className="font-mono text-xs tracking-[0.08em] uppercase"
+                  className="mono-micro text-muted-foreground"
                 >
-                  Type <span className="font-bold">{username}</span> to confirm
+                  Type <span className="text-foreground">{username}</span> to
+                  confirm
                 </FieldLabel>
                 <Input
                   id="delete-confirm"
-                  className="h-10 rounded-md"
+                  className="h-10 rounded-md font-mono placeholder:text-muted-foreground/50"
+                  autoComplete="off"
+                  aria-invalid={
+                    deleteConfirmText.length > 0 &&
+                    deleteConfirmText !== username
+                  }
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder={`Type "${username}"`}
+                  placeholder={username}
                 />
               </div>
-              <DialogFooter>
+
+              <DialogFooter className="p-5 pt-0">
                 <DialogClose asChild>
                   <Button variant="outline" size="lg" className="btn-sec">
                     Cancel
