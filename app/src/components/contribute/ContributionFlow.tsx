@@ -319,6 +319,7 @@ function Inner({
 
     return {
       slug: "",
+      variant_slug: null,
       title: guideContData.title || "Untitled guide",
       author: username ?? "You",
       summary: guideContData.summary,
@@ -349,6 +350,7 @@ function Inner({
 
     return {
       slug: "",
+      variant_slug: null,
       title: variantContData.title || "Untitled guide",
       author: username ?? "You",
       summary: variantContData.summary,

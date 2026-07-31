@@ -9,72 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as BrowseRouteImport } from './routes/browse'
-import { Route as ContributeRouteImport } from './routes/contribute'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ObjectivesRouteImport } from './routes/objectives'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as ReviewRouteImport } from './routes/review'
 import { Route as SubjectsRouteImport } from './routes/subjects'
-import { Route as GuidesIndexRouteImport } from './routes/guides/index'
-import { Route as GuidesSlugRouteImport } from './routes/guides/$slug'
-import { Route as ObjectivesIndexRouteImport } from './routes/objectives.index'
-import { Route as ObjectivesSlugRouteImport } from './routes/objectives.$slug'
-import { Route as ReviewIndexRouteImport } from './routes/review.index'
-import { Route as ReviewCaseIdRouteImport } from './routes/review.$caseId'
+import { Route as ReviewRouteImport } from './routes/review'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ObjectivesRouteImport } from './routes/objectives'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as ContributeRouteImport } from './routes/contribute'
+import { Route as BrowseRouteImport } from './routes/browse'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as SubjectsIndexRouteImport } from './routes/subjects.index'
+import { Route as ReviewIndexRouteImport } from './routes/review.index'
+import { Route as ObjectivesIndexRouteImport } from './routes/objectives.index'
+import { Route as GuidesIndexRouteImport } from './routes/guides/index'
 import { Route as SubjectsSlugRouteImport } from './routes/subjects.$slug'
-import { Route as EditGuideSlugRouteImport } from './routes/edit.guide.$slug'
+import { Route as ReviewCaseIdRouteImport } from './routes/review.$caseId'
+import { Route as ObjectivesSlugRouteImport } from './routes/objectives.$slug'
+import { Route as GuidesSlugRouteImport } from './routes/guides/$slug'
 import { Route as GuidesSlugIndexRouteImport } from './routes/guides/$slug/index'
 import { Route as GuidesSlugWalkthroughRouteImport } from './routes/guides/$slug/walkthrough'
+import { Route as GuidesSlugVariantSlugEditRouteImport } from './routes/guides/$slug/$variantSlug/edit'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BrowseRoute = BrowseRouteImport.update({
-  id: '/browse',
-  path: '/browse',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContributeRoute = ContributeRouteImport.update({
-  id: '/contribute',
-  path: '/contribute',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ObjectivesRoute = ObjectivesRouteImport.update({
-  id: '/objectives',
-  path: '/objectives',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const SubjectsRoute = SubjectsRouteImport.update({
+  id: '/subjects',
+  path: '/subjects',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReviewRoute = ReviewRouteImport.update({
@@ -82,54 +42,89 @@ const ReviewRoute = ReviewRouteImport.update({
   path: '/review',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SubjectsRoute = SubjectsRouteImport.update({
-  id: '/subjects',
-  path: '/subjects',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuidesIndexRoute = GuidesIndexRouteImport.update({
-  id: '/guides/',
-  path: '/guides/',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuidesSlugRoute = GuidesSlugRouteImport.update({
-  id: '/guides/$slug',
-  path: '/guides/$slug',
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ObjectivesIndexRoute = ObjectivesIndexRouteImport.update({
+const ObjectivesRoute = ObjectivesRouteImport.update({
+  id: '/objectives',
+  path: '/objectives',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContributeRoute = ContributeRouteImport.update({
+  id: '/contribute',
+  path: '/contribute',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrowseRoute = BrowseRouteImport.update({
+  id: '/browse',
+  path: '/browse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => ObjectivesRoute,
-} as any)
-const ObjectivesSlugRoute = ObjectivesSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => ObjectivesRoute,
-} as any)
-const ReviewIndexRoute = ReviewIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ReviewRoute,
-} as any)
-const ReviewCaseIdRoute = ReviewCaseIdRouteImport.update({
-  id: '/$caseId',
-  path: '/$caseId',
-  getParentRoute: () => ReviewRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SubjectsIndexRoute = SubjectsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SubjectsRoute,
 } as any)
+const ReviewIndexRoute = ReviewIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ReviewRoute,
+} as any)
+const ObjectivesIndexRoute = ObjectivesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ObjectivesRoute,
+} as any)
+const GuidesIndexRoute = GuidesIndexRouteImport.update({
+  id: '/guides/',
+  path: '/guides/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SubjectsSlugRoute = SubjectsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => SubjectsRoute,
 } as any)
-const EditGuideSlugRoute = EditGuideSlugRouteImport.update({
-  id: '/edit/guide/$slug',
-  path: '/edit/guide/$slug',
+const ReviewCaseIdRoute = ReviewCaseIdRouteImport.update({
+  id: '/$caseId',
+  path: '/$caseId',
+  getParentRoute: () => ReviewRoute,
+} as any)
+const ObjectivesSlugRoute = ObjectivesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ObjectivesRoute,
+} as any)
+const GuidesSlugRoute = GuidesSlugRouteImport.update({
+  id: '/guides/$slug',
+  path: '/guides/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuidesSlugIndexRoute = GuidesSlugIndexRouteImport.update({
@@ -142,6 +137,12 @@ const GuidesSlugWalkthroughRoute = GuidesSlugWalkthroughRouteImport.update({
   path: '/walkthrough',
   getParentRoute: () => GuidesSlugRoute,
 } as any)
+const GuidesSlugVariantSlugEditRoute =
+  GuidesSlugVariantSlugEditRouteImport.update({
+    id: '/$variantSlug/edit',
+    path: '/$variantSlug/edit',
+    getParentRoute: () => GuidesSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -163,9 +164,9 @@ export interface FileRoutesByFullPath {
   '/objectives/': typeof ObjectivesIndexRoute
   '/review/': typeof ReviewIndexRoute
   '/subjects/': typeof SubjectsIndexRoute
-  '/edit/guide/$slug': typeof EditGuideSlugRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug/': typeof GuidesSlugIndexRoute
+  '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -183,9 +184,9 @@ export interface FileRoutesByTo {
   '/objectives': typeof ObjectivesIndexRoute
   '/review': typeof ReviewIndexRoute
   '/subjects': typeof SubjectsIndexRoute
-  '/edit/guide/$slug': typeof EditGuideSlugRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug': typeof GuidesSlugIndexRoute
+  '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -208,9 +209,9 @@ export interface FileRoutesById {
   '/objectives/': typeof ObjectivesIndexRoute
   '/review/': typeof ReviewIndexRoute
   '/subjects/': typeof SubjectsIndexRoute
-  '/edit/guide/$slug': typeof EditGuideSlugRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug/': typeof GuidesSlugIndexRoute
+  '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -234,9 +235,9 @@ export interface FileRouteTypes {
     | '/objectives/'
     | '/review/'
     | '/subjects/'
-    | '/edit/guide/$slug'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug/'
+    | '/guides/$slug/$variantSlug/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -254,9 +255,9 @@ export interface FileRouteTypes {
     | '/objectives'
     | '/review'
     | '/subjects'
-    | '/edit/guide/$slug'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug'
+    | '/guides/$slug/$variantSlug/edit'
   id:
     | '__root__'
     | '/'
@@ -278,9 +279,9 @@ export interface FileRouteTypes {
     | '/objectives/'
     | '/review/'
     | '/subjects/'
-    | '/edit/guide/$slug'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug/'
+    | '/guides/$slug/$variantSlug/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -297,72 +298,15 @@ export interface RootRouteChildren {
   SubjectsRoute: typeof SubjectsRouteWithChildren
   GuidesSlugRoute: typeof GuidesSlugRouteWithChildren
   GuidesIndexRoute: typeof GuidesIndexRoute
-  EditGuideSlugRoute: typeof EditGuideSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/browse': {
-      id: '/browse'
-      path: '/browse'
-      fullPath: '/browse'
-      preLoaderRoute: typeof BrowseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contribute': {
-      id: '/contribute'
-      path: '/contribute'
-      fullPath: '/contribute'
-      preLoaderRoute: typeof ContributeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/objectives': {
-      id: '/objectives'
-      path: '/objectives'
-      fullPath: '/objectives'
-      preLoaderRoute: typeof ObjectivesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
+    '/subjects': {
+      id: '/subjects'
+      path: '/subjects'
+      fullPath: '/subjects'
+      preLoaderRoute: typeof SubjectsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/review': {
@@ -372,54 +316,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/subjects': {
-      id: '/subjects'
-      path: '/subjects'
-      fullPath: '/subjects'
-      preLoaderRoute: typeof SubjectsRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/guides/': {
-      id: '/guides/'
-      path: '/guides'
-      fullPath: '/guides/'
-      preLoaderRoute: typeof GuidesIndexRouteImport
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/guides/$slug': {
-      id: '/guides/$slug'
-      path: '/guides/$slug'
-      fullPath: '/guides/$slug'
-      preLoaderRoute: typeof GuidesSlugRouteImport
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/objectives/': {
-      id: '/objectives/'
+    '/objectives': {
+      id: '/objectives'
+      path: '/objectives'
+      fullPath: '/objectives'
+      preLoaderRoute: typeof ObjectivesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contribute': {
+      id: '/contribute'
+      path: '/contribute'
+      fullPath: '/contribute'
+      preLoaderRoute: typeof ContributeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/browse': {
+      id: '/browse'
+      path: '/browse'
+      fullPath: '/browse'
+      preLoaderRoute: typeof BrowseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
       path: '/'
-      fullPath: '/objectives/'
-      preLoaderRoute: typeof ObjectivesIndexRouteImport
-      parentRoute: typeof ObjectivesRoute
-    }
-    '/objectives/$slug': {
-      id: '/objectives/$slug'
-      path: '/$slug'
-      fullPath: '/objectives/$slug'
-      preLoaderRoute: typeof ObjectivesSlugRouteImport
-      parentRoute: typeof ObjectivesRoute
-    }
-    '/review/': {
-      id: '/review/'
-      path: '/'
-      fullPath: '/review/'
-      preLoaderRoute: typeof ReviewIndexRouteImport
-      parentRoute: typeof ReviewRoute
-    }
-    '/review/$caseId': {
-      id: '/review/$caseId'
-      path: '/$caseId'
-      fullPath: '/review/$caseId'
-      preLoaderRoute: typeof ReviewCaseIdRouteImport
-      parentRoute: typeof ReviewRoute
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/subjects/': {
       id: '/subjects/'
@@ -428,6 +386,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubjectsIndexRouteImport
       parentRoute: typeof SubjectsRoute
     }
+    '/review/': {
+      id: '/review/'
+      path: '/'
+      fullPath: '/review/'
+      preLoaderRoute: typeof ReviewIndexRouteImport
+      parentRoute: typeof ReviewRoute
+    }
+    '/objectives/': {
+      id: '/objectives/'
+      path: '/'
+      fullPath: '/objectives/'
+      preLoaderRoute: typeof ObjectivesIndexRouteImport
+      parentRoute: typeof ObjectivesRoute
+    }
+    '/guides/': {
+      id: '/guides/'
+      path: '/guides'
+      fullPath: '/guides/'
+      preLoaderRoute: typeof GuidesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/subjects/$slug': {
       id: '/subjects/$slug'
       path: '/$slug'
@@ -435,11 +414,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubjectsSlugRouteImport
       parentRoute: typeof SubjectsRoute
     }
-    '/edit/guide/$slug': {
-      id: '/edit/guide/$slug'
-      path: '/edit/guide/$slug'
-      fullPath: '/edit/guide/$slug'
-      preLoaderRoute: typeof EditGuideSlugRouteImport
+    '/review/$caseId': {
+      id: '/review/$caseId'
+      path: '/$caseId'
+      fullPath: '/review/$caseId'
+      preLoaderRoute: typeof ReviewCaseIdRouteImport
+      parentRoute: typeof ReviewRoute
+    }
+    '/objectives/$slug': {
+      id: '/objectives/$slug'
+      path: '/$slug'
+      fullPath: '/objectives/$slug'
+      preLoaderRoute: typeof ObjectivesSlugRouteImport
+      parentRoute: typeof ObjectivesRoute
+    }
+    '/guides/$slug': {
+      id: '/guides/$slug'
+      path: '/guides/$slug'
+      fullPath: '/guides/$slug'
+      preLoaderRoute: typeof GuidesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guides/$slug/': {
@@ -454,6 +447,13 @@ declare module '@tanstack/react-router' {
       path: '/walkthrough'
       fullPath: '/guides/$slug/walkthrough'
       preLoaderRoute: typeof GuidesSlugWalkthroughRouteImport
+      parentRoute: typeof GuidesSlugRoute
+    }
+    '/guides/$slug/$variantSlug/edit': {
+      id: '/guides/$slug/$variantSlug/edit'
+      path: '/$variantSlug/edit'
+      fullPath: '/guides/$slug/$variantSlug/edit'
+      preLoaderRoute: typeof GuidesSlugVariantSlugEditRouteImport
       parentRoute: typeof GuidesSlugRoute
     }
   }
@@ -503,11 +503,13 @@ const SubjectsRouteWithChildren = SubjectsRoute._addFileChildren(
 interface GuidesSlugRouteChildren {
   GuidesSlugWalkthroughRoute: typeof GuidesSlugWalkthroughRoute
   GuidesSlugIndexRoute: typeof GuidesSlugIndexRoute
+  GuidesSlugVariantSlugEditRoute: typeof GuidesSlugVariantSlugEditRoute
 }
 
 const GuidesSlugRouteChildren: GuidesSlugRouteChildren = {
   GuidesSlugWalkthroughRoute: GuidesSlugWalkthroughRoute,
   GuidesSlugIndexRoute: GuidesSlugIndexRoute,
+  GuidesSlugVariantSlugEditRoute: GuidesSlugVariantSlugEditRoute,
 }
 
 const GuidesSlugRouteWithChildren = GuidesSlugRoute._addFileChildren(
@@ -528,8 +530,16 @@ const rootRouteChildren: RootRouteChildren = {
   SubjectsRoute: SubjectsRouteWithChildren,
   GuidesSlugRoute: GuidesSlugRouteWithChildren,
   GuidesIndexRoute: GuidesIndexRoute,
-  EditGuideSlugRoute: EditGuideSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

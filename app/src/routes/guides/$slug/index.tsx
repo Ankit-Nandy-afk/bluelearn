@@ -87,7 +87,7 @@ function RouteComponent() {
   const guideMenuItems = [
     {
       label: "Edit Guide",
-      to: `/edit/guide/${slug}`,
+      to: `/guides/${slug}/${guide.variant_slug}/edit`,
       icon: <Pencil className="h-4 w-4" />,
     },
     {

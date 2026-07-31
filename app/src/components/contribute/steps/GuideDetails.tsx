@@ -31,6 +31,7 @@ type PropTypes = {
   guides: Array<GuideOption>;
   onSaveDraft: () => void;
   submitting?: boolean;
+  showBaseFields?: boolean;
 };
 
 export const GuideDetails = ({
@@ -41,6 +42,9 @@ export const GuideDetails = ({
   guides,
   onSaveDraft,
   submitting,
+  // Prerequisites and todos live on the guide base, so they're only
+  // authorable while the base is still a draft.
+  showBaseFields = true,
 }: PropTypes) => {
   const [todoPrereq, setTodoPrereq] = useState<string>("");
   const [newSubject, setNewSubject] = useState<{
@@ -61,55 +65,59 @@ export const GuideDetails = ({
       />
 
       <FieldGroup>
-        <div className="space-y-1">
-          <FieldLabel
-            required
-            className="font-mono tracking-[0.08em] uppercase"
-          >
-            Type
-          </FieldLabel>
-          <FieldDescription className="text-xs">
-            Choose whether this guide explains a concept or teaches a process
-            for accomplishing a goal.
-          </FieldDescription>
-        </div>
-        <Field className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
-          <button
-            className="mono-micro rounded-full border border-badge-border p-4 tracking-[0.08em] text-badge-foreground"
-            style={{
-              backgroundColor:
-                guideContData.type == "theoretical"
-                  ? "var(--badge-bg)"
-                  : "var(--muted-bg)",
-            }}
-            onClick={() =>
-              setGuideContData((prev) => ({
-                ...prev,
-                type: "theoretical",
-              }))
-            }
-          >
-            Theoretical
-          </button>
+        {showBaseFields && (
+          <>
+            <div className="space-y-1">
+              <FieldLabel
+                required
+                className="font-mono tracking-[0.08em] uppercase"
+              >
+                Type
+              </FieldLabel>
+              <FieldDescription className="text-xs">
+                Choose whether this guide explains a concept or teaches a
+                process for accomplishing a goal.
+              </FieldDescription>
+            </div>
+            <Field className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
+              <button
+                className="mono-micro rounded-full border border-badge-border p-4 tracking-[0.08em] text-badge-foreground"
+                style={{
+                  backgroundColor:
+                    guideContData.type == "theoretical"
+                      ? "var(--badge-bg)"
+                      : "var(--muted-bg)",
+                }}
+                onClick={() =>
+                  setGuideContData((prev) => ({
+                    ...prev,
+                    type: "theoretical",
+                  }))
+                }
+              >
+                Theoretical
+              </button>
 
-          <button
-            className="mono-micro rounded-full border border-badge-border p-4 tracking-[0.08em] text-badge-foreground"
-            style={{
-              backgroundColor:
-                guideContData.type == "practical"
-                  ? "var(--badge-bg)"
-                  : "var(--muted-bg)",
-            }}
-            onClick={() =>
-              setGuideContData((prev) => ({
-                ...prev,
-                type: "practical",
-              }))
-            }
-          >
-            Practical
-          </button>
-        </Field>
+              <button
+                className="mono-micro rounded-full border border-badge-border p-4 tracking-[0.08em] text-badge-foreground"
+                style={{
+                  backgroundColor:
+                    guideContData.type == "practical"
+                      ? "var(--badge-bg)"
+                      : "var(--muted-bg)",
+                }}
+                onClick={() =>
+                  setGuideContData((prev) => ({
+                    ...prev,
+                    type: "practical",
+                  }))
+                }
+              >
+                Practical
+              </button>
+            </Field>
+          </>
+        )}
         <Field className="space-y-2">
           <div className="space-y-1">
             <FieldLabel
@@ -285,100 +293,104 @@ export const GuideDetails = ({
           </div>
         )}
 
-        <Field className="space-y-2">
-          <div className="space-y-1">
-            <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-              Prerequsite Guides
-            </FieldLabel>
-            <FieldDescription className="text-xs">
-              Existing guides a reader should understand first.
-            </FieldDescription>
-          </div>
+        {showBaseFields && (
+          <>
+            <Field className="space-y-2">
+              <div className="space-y-1">
+                <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+                  Prerequsite Guides
+                </FieldLabel>
+                <FieldDescription className="text-xs">
+                  Existing guides a reader should understand first.
+                </FieldDescription>
+              </div>
 
-          <Combobox
-            multiple
-            items={guides
-              .filter((g): g is GuideOption & { slug: string } => !!g.slug)
-              .map((g) => {
-                return {
-                  value: g.slug,
-                  label: g.title ?? g.slug,
-                  description: g.summary ?? undefined,
-                };
-              })}
-            value={guideContData.prereqs}
-            onValueChange={(prereqs) =>
-              setGuideContData((prev) => ({
-                ...prev,
-                prereqs,
-              }))
-            }
-          />
-        </Field>
-
-        <Field className="space-y-2">
-          <div className="space-y-1">
-            <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-              Todo Prerequsite Guides
-            </FieldLabel>
-            <FieldDescription className="text-xs">
-              Note missing prerequisite guides that don't exist yet.
-            </FieldDescription>
-          </div>
-
-          <div className="flex items-center justify-between gap-4">
-            <Input
-              id="todo-prereqs"
-              type="text"
-              maxLength={50}
-              placeholder="Enter title of missing prerequsite guide."
-              className="h-10 rounded-md"
-              value={todoPrereq}
-              onChange={(e) => setTodoPrereq(e.target.value)}
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="btn-sec h-10 w-24 rounded-md"
-              onClick={() => {
-                if (todoPrereq !== "") {
-                  const todos = [...guideContData.todoPrereqs, todoPrereq];
+              <Combobox
+                multiple
+                items={guides
+                  .filter((g): g is GuideOption & { slug: string } => !!g.slug)
+                  .map((g) => {
+                    return {
+                      value: g.slug,
+                      label: g.title ?? g.slug,
+                      description: g.summary ?? undefined,
+                    };
+                  })}
+                value={guideContData.prereqs}
+                onValueChange={(prereqs) =>
                   setGuideContData((prev) => ({
                     ...prev,
-                    todoPrereqs: todos,
-                  }));
-
-                  setTodoPrereq("");
+                    prereqs,
+                  }))
                 }
-              }}
-            >
-              Add Guide
-            </Button>
-          </div>
-        </Field>
-        {guideContData.todoPrereqs.length > 0 && (
-          <div className="flex flex-wrap gap-2 px-1">
-            {guideContData.todoPrereqs.map((todo, index) => (
-              <Badge key={index} variant="outline" className="gap-1.5">
-                {todo}
-                <button
-                  type="button"
-                  aria-label={`Remove ${todo}`}
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={() =>
-                    setGuideContData((prev) => ({
-                      ...prev,
-                      todoPrereqs: prev.todoPrereqs.filter(
-                        (_, i) => i !== index
-                      ),
-                    }))
-                  }
+              />
+            </Field>
+
+            <Field className="space-y-2">
+              <div className="space-y-1">
+                <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+                  Todo Prerequsite Guides
+                </FieldLabel>
+                <FieldDescription className="text-xs">
+                  Note missing prerequisite guides that don't exist yet.
+                </FieldDescription>
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <Input
+                  id="todo-prereqs"
+                  type="text"
+                  maxLength={50}
+                  placeholder="Enter title of missing prerequsite guide."
+                  className="h-10 rounded-md"
+                  value={todoPrereq}
+                  onChange={(e) => setTodoPrereq(e.target.value)}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="btn-sec h-10 w-24 rounded-md"
+                  onClick={() => {
+                    if (todoPrereq !== "") {
+                      const todos = [...guideContData.todoPrereqs, todoPrereq];
+                      setGuideContData((prev) => ({
+                        ...prev,
+                        todoPrereqs: todos,
+                      }));
+
+                      setTodoPrereq("");
+                    }
+                  }}
                 >
-                  <X className="size-2.5" />
-                </button>
-              </Badge>
-            ))}
-          </div>
+                  Add Guide
+                </Button>
+              </div>
+            </Field>
+            {guideContData.todoPrereqs.length > 0 && (
+              <div className="flex flex-wrap gap-2 px-1">
+                {guideContData.todoPrereqs.map((todo, index) => (
+                  <Badge key={index} variant="outline" className="gap-1.5">
+                    {todo}
+                    <button
+                      type="button"
+                      aria-label={`Remove ${todo}`}
+                      className="text-muted-foreground hover:text-foreground"
+                      onClick={() =>
+                        setGuideContData((prev) => ({
+                          ...prev,
+                          todoPrereqs: prev.todoPrereqs.filter(
+                            (_, i) => i !== index
+                          ),
+                        }))
+                      }
+                    >
+                      <X className="size-2.5" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </FieldGroup>
     </Stepper.Content>

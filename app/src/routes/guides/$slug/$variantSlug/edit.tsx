@@ -7,13 +7,17 @@ import { toast } from "sonner";
 import type { Guide } from "@bluelearn/schemas";
 import type { GuideContribution } from "@/types/contributions";
 import type { GuideType } from "@/types/guides";
-import { createGuide, listGuides } from "@/lib/api/guides";
+import { listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
-import { submitRevision, updateRevision } from "@/lib/api/guideRevisions";
+import {
+  getRevision,
+  submitRevision,
+  updateRevision,
+} from "@/lib/api/guideRevisions";
+import { createVariantRevision, getVariantBySlug } from "@/lib/api/variants";
 import { uploadMedia } from "@/lib/api/media";
 import { estimateReadMinutes } from "@/lib/guideUtils";
-import { getGuideBySlug } from "@/lib/getData";
 
 import guidesData from "@/data/guides.json";
 import subjectsData from "@/data/subjects.json";
@@ -22,13 +26,14 @@ import { GuideDetails } from "@/components/contribute/steps/GuideDetails";
 import { Content } from "@/components/contribute/steps/Content";
 import { Submit } from "@/components/contribute/steps/Submit";
 
-export const Route = createFileRoute("/edit/guide/$slug")({
-  loader: ({ params }) => {
-    const guide = getGuideBySlug(guidesData, params.slug);
-    if (!guide) {
-      throw notFound();
-    }
-    return { guide };
+export const Route = createFileRoute("/guides/$slug/$variantSlug/edit")({
+  loader: async ({ params }) => {
+    const variant = await getVariantBySlug(params.slug, params.variantSlug);
+    // A variant with nothing published has no snapshot to revise.
+    if (!variant.current) throw notFound();
+
+    const snapshot = await getRevision(variant.current.id);
+    return { variant, current: variant.current, snapshot };
   },
   component: RouteComponent,
 });
@@ -40,18 +45,20 @@ const StepperInstance = defineStepper([
 ]);
 
 function RouteComponent() {
-  const { guide: initialGuide } = Route.useLoaderData();
+  const { variant, current, snapshot } = Route.useLoaderData();
   const { Stepper } = StepperInstance;
 
   const [guideContData, setGuideContData] = useState<GuideContribution>(() => ({
-    type: initialGuide.level ? "practical" : "theoretical",
-    title: initialGuide.title,
-    summary: initialGuide.summary,
-    body: initialGuide.content,
-    subjects: initialGuide.tags,
+    type: snapshot.knowledge_type === "practical" ? "practical" : "theoretical",
+    title: snapshot.revision.title ?? "",
+    summary: snapshot.revision.summary ?? "",
+    body: snapshot.revision.body ?? "",
+    subjects: snapshot.subjects
+      .map((s) => s.slug)
+      .filter((slug): slug is string => slug !== null),
     newSubjects: [],
-    prereqs: initialGuide.prerequisites,
-    todoPrereqs: [],
+    prereqs: snapshot.prerequisites,
+    todoPrereqs: snapshot.todos,
   }));
 
   const [revisionId, setRevisionId] = useState<string | null>(null);
@@ -102,13 +109,14 @@ function RouteComponent() {
     );
 
     return {
-      slug: initialGuide.slug,
+      slug: snapshot.base_slug ?? "",
+      variant_slug: variant.slug,
       title: guideContData.title || "Untitled guide",
-      author: username ?? initialGuide.author,
+      author: username ?? "",
       summary: guideContData.summary,
       body: guideContData.body,
       duration_minutes: estimateReadMinutes(guideContData.body),
-      created_at: initialGuide.created_at,
+      created_at: current.created_at,
       tags: [
         ...guideContData.subjects.map((slug) => ({
           slug,
@@ -124,24 +132,33 @@ function RouteComponent() {
         title: titleBySlug.get(slug) ?? slug,
       })),
     };
-  }, [guideContData, subjectOptions, guideOptions, username, initialGuide]);
+  }, [
+    guideContData,
+    subjectOptions,
+    guideOptions,
+    username,
+    snapshot,
+    variant,
+    current,
+  ]);
 
   const guideType: GuideType | undefined =
-    guideContData.type === "practical" || guideContData.type === "theoretical"
-      ? guideContData.type
+    snapshot.knowledge_type === "practical" ||
+    snapshot.knowledge_type === "theoretical"
+      ? snapshot.knowledge_type
       : undefined;
 
+  // Type, prerequisites and todos belong to the guide base, so a revision
+  // can't carry them.
   const draftFields = () => ({
     title: guideContData.title || null,
     summary: guideContData.summary || null,
     body: guideContData.body || null,
     tags: guideContData.subjects,
-    prerequisites: guideContData.prereqs,
     newSubjects: guideContData.newSubjects.map((s) => ({
       name: s.name,
       summary: s.summary || null,
     })),
-    todoPrereqs: guideContData.todoPrereqs,
   });
 
   const creatingRef = useRef<Promise<string> | null>(null);
@@ -153,13 +170,10 @@ function RouteComponent() {
     }
 
     if (!creatingRef.current) {
-      creatingRef.current = createGuide({
-        knowledge_type:
-          guideContData.type === "practical" ? "practical" : "theoretical",
-        ...draftFields(),
-      })
-        .then((id) => {
+      creatingRef.current = createVariantRevision(variant.id)
+        .then(async (id) => {
           setRevisionId(id);
+          await updateRevision(id, draftFields());
           return id;
         })
         .finally(() => {
@@ -244,6 +258,7 @@ function RouteComponent() {
                   guides={guideOptions}
                   onSaveDraft={saveDraft}
                   submitting={submitting}
+                  showBaseFields={false}
                 />
 
                 <Content
