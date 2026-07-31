@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
@@ -30,13 +30,8 @@ function RouteComponent() {
   const { email: initialEmail } = Route.useLoaderData();
   const currentEmail = initialEmail || "";
 
-  const [email, setEmail] = useState<string>("");
+  const [email, setEmail] = useState<string>(currentEmail);
 
-  useEffect(() => {
-    if (currentEmail && !email) {
-      setEmail(currentEmail);
-    }
-  }, [currentEmail, email]);
   const [password, setPassword] = useState({
     old: "",
     new: "",
@@ -183,7 +178,10 @@ function RouteComponent() {
                     variant="outline"
                     size="lg"
                     className="btn-sec"
-                    onClick={() => setIsEmailEditing(false)}
+                    onClick={() => {
+                      setIsEmailEditing(false);
+                      setEmail(currentEmail);
+                    }}
                   >
                     Cancel
                   </Button>
