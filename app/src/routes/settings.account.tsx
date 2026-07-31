@@ -193,7 +193,7 @@ function RouteComponent() {
                   )}
                   <Button
                     className="btn-sec"
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => {
                       setIsEmailEditing(false);
                       setSaveError(null);
@@ -307,7 +307,7 @@ function RouteComponent() {
                   )}
                   <Button
                     className="btn-sec"
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => {
                       setIsPasswordEditing(false);
                       setUpdateError(null);
