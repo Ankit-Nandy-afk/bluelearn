@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { GuideReader } from "@/components/GuideReader";
 import { cn } from "@/lib/utils";
 
+import { ApiError } from "@/lib/api/apiHelpers";
 import { castDecision, getReviewCase } from "@/lib/api/reviews";
 
 import "katex/dist/katex.min.css";
@@ -86,10 +87,16 @@ function ChangeBadge({
 
 export const Route = createFileRoute("/review/$caseId")({
   loader: async ({ params, abortController }) => {
-    const revisionData = await getReviewCase(params.caseId, {
-      signal: abortController.signal,
-    });
-    return revisionData;
+    try {
+      return await getReviewCase(params.caseId, {
+        signal: abortController.signal,
+      });
+    } catch (err) {
+      // The API decides who may read a case, so treat a refusal as a dead link
+      if (err instanceof ApiError && (err.status === 403 || err.status === 404))
+        throw notFound();
+      throw err;
+    }
   },
   component: RouteComponent,
 });
@@ -121,6 +128,11 @@ function RouteComponent() {
 
   // Reviewers can revote while the case is open, so start from their last vote.
   const priorDecision = revisionData.viewer_decision;
+
+  const caseOpen =
+    revisionData.case.status !== "approved" &&
+    revisionData.case.status !== "rejected";
+  const canVote = revisionData.viewer_role === "panelist" && caseOpen;
 
   const [review, setReview] = useState<Review>({
     decision:
@@ -192,117 +204,121 @@ function RouteComponent() {
     <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
       <section className="grid grid-cols-[320px_1fr] border-b">
         <aside className="h-[calc(100vh-70px)] space-y-4 overflow-y-auto border-r px-6 py-6">
-          <section className="space-y-4">
-            <p className="font-mono text-xs/relaxed font-bold tracking-[0.08em] uppercase">
-              Review Actions
-            </p>
+          {canVote && (
+            <>
+              <section className="space-y-4">
+                <p className="font-mono text-xs/relaxed font-bold tracking-[0.08em] uppercase">
+                  Review Actions
+                </p>
 
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className={cn(
-                  "h-9 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400",
-                  review.decision == "reject" && "bg-red-500/10"
-                )}
-                onClick={() => {
-                  if (review.decision == "reject") {
-                    setReview((prev) => ({
-                      ...prev,
-                      decision: "",
-                    }));
-                  } else {
-                    setReview((prev) => ({
-                      ...prev,
-                      decision: "reject",
-                    }));
-                  }
-                }}
-              >
-                <X />
-                Reject
-              </Button>
-              <Button
-                variant="outline"
-                className={cn(
-                  "h-9 border-green-600/40 text-green-700 hover:bg-green-600/10 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
-                  review.decision == "approve" && "bg-green-600/10"
-                )}
-                onClick={() => {
-                  if (review.decision == "approve") {
-                    setReview((prev) => ({
-                      ...prev,
-                      decision: "",
-                    }));
-                  } else {
-                    setReview((prev) => ({
-                      ...prev,
-                      decision: "approve",
-                    }));
-                  }
-                }}
-              >
-                <Check />
-                Approve
-              </Button>
-            </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400",
+                      review.decision == "reject" && "bg-red-500/10"
+                    )}
+                    onClick={() => {
+                      if (review.decision == "reject") {
+                        setReview((prev) => ({
+                          ...prev,
+                          decision: "",
+                        }));
+                      } else {
+                        setReview((prev) => ({
+                          ...prev,
+                          decision: "reject",
+                        }));
+                      }
+                    }}
+                  >
+                    <X />
+                    Reject
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 border-green-600/40 text-green-700 hover:bg-green-600/10 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
+                      review.decision == "approve" && "bg-green-600/10"
+                    )}
+                    onClick={() => {
+                      if (review.decision == "approve") {
+                        setReview((prev) => ({
+                          ...prev,
+                          decision: "",
+                        }));
+                      } else {
+                        setReview((prev) => ({
+                          ...prev,
+                          decision: "approve",
+                        }));
+                      }
+                    }}
+                  >
+                    <Check />
+                    Approve
+                  </Button>
+                </div>
 
-            <Separator />
+                <Separator />
 
-            <FieldGroup className="gap-4">
-              <Field className="space-y-2">
-                <FieldLabel className="font-mono font-bold tracking-[0.08em] uppercase">
-                  Notes
-                </FieldLabel>
+                <FieldGroup className="gap-4">
+                  <Field className="space-y-2">
+                    <FieldLabel className="font-mono font-bold tracking-[0.08em] uppercase">
+                      Notes
+                    </FieldLabel>
 
-                <textarea
-                  className="h-32 w-full min-w-0 resize-none rounded-md border border-input bg-input/20 p-2 text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs/relaxed file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
-                  rows={4}
-                  placeholder="Add notes to explain your decision..."
-                  required
-                  value={review.notes}
-                  onChange={(e) =>
-                    setReview((prev) => ({
-                      ...prev,
-                      notes: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
+                    <textarea
+                      className="h-32 w-full min-w-0 resize-none rounded-md border border-input bg-input/20 p-2 text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs/relaxed file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+                      rows={4}
+                      placeholder="Add notes to explain your decision..."
+                      required
+                      value={review.notes}
+                      onChange={(e) =>
+                        setReview((prev) => ({
+                          ...prev,
+                          notes: e.target.value,
+                        }))
+                      }
+                    />
+                  </Field>
 
-              {review.decision == "reject" && (
-                <Field className="space-y-2">
-                  <FieldLabel className="font-mono font-bold tracking-[0.08em] uppercase">
-                    Reasons
-                  </FieldLabel>
+                  {review.decision == "reject" && (
+                    <Field className="space-y-2">
+                      <FieldLabel className="font-mono font-bold tracking-[0.08em] uppercase">
+                        Reasons
+                      </FieldLabel>
 
-                  <Combobox
-                    multiple
-                    items={REASONS}
-                    value={review.reasons}
-                    onValueChange={(reasons) =>
-                      setReview((prev) => ({
-                        ...prev,
-                        reasons,
-                      }))
-                    }
-                  />
-                </Field>
-              )}
-            </FieldGroup>
+                      <Combobox
+                        multiple
+                        items={REASONS}
+                        value={review.reasons}
+                        onValueChange={(reasons) =>
+                          setReview((prev) => ({
+                            ...prev,
+                            reasons,
+                          }))
+                        }
+                      />
+                    </Field>
+                  )}
+                </FieldGroup>
 
-            <Button
-              className="btn-pri w-full py-2.5"
-              size="lg"
-              disabled={submitting}
-              onClick={() => {
-                submitDecision();
-              }}
-            >
-              Submit Decision
-            </Button>
-          </section>
+                <Button
+                  className="btn-pri w-full py-2.5"
+                  size="lg"
+                  disabled={submitting}
+                  onClick={() => {
+                    submitDecision();
+                  }}
+                >
+                  Submit Decision
+                </Button>
+              </section>
 
-          <Separator />
+              <Separator />
+            </>
+          )}
 
           <section className="space-y-6">
             <ChangeSection

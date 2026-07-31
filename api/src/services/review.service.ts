@@ -351,16 +351,22 @@ export async function getReviewCase(
       : (members.find((pm) => pm.member_id === viewerId)?.review_decisions ??
         null);
 
+  const closed = data.status === "approved" || data.status === "rejected";
+  const isAuthor = viewerId !== null && revision?.author_id === viewerId;
+  const isPanelist =
+    viewerId !== null &&
+    data.review_panels.some((p) =>
+      p.panel_members.some((pm) => pm.member_id === viewerId)
+    );
+  const viewerRole = isPanelist ? "panelist" : isAuthor ? "author" : "public";
+
+  // An open case can only be seen by its author and its panel members.
+  if (viewerRole === "public" && !closed)
+    throw new ServiceError("You cannot view this review case", 403);
+
   // Tags and edges are made public on closed cases, but while the case is open,
   // only the author and the seats can see them.
-  const closed = data.status === "approved" || data.status === "rejected";
-  const canSeeTagsAndEdges =
-    closed ||
-    (viewerId !== null &&
-      (revision?.author_id === viewerId ||
-        data.review_panels.some((p) =>
-          p.panel_members.some((pm) => pm.member_id === viewerId)
-        )));
+  const canSeeTagsAndEdges = closed || isAuthor || isPanelist;
 
   const tagsAndEdges =
     canSeeTagsAndEdges && revision
@@ -387,6 +393,7 @@ export async function getReviewCase(
       .filter((pm) => pm.review_decisions)
       .map((pm) => mapDecision(pm.review_decisions!)),
     viewer_decision: viewerVote ? mapDecision(viewerVote) : null,
+    viewer_role: viewerRole,
     revision: revision
       ? {
           id: revision.id,

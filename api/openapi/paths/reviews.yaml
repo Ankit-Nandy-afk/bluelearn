@@ -80,6 +80,14 @@
                   type: array
                   items:
                     $ref: "../components/schemas/reviews/ReviewDecision.yaml"
+                viewer_role:
+                  type: string
+                  enum: [author, panelist, public]
+                  description: >
+                    The caller's standing on this case. public is only ever
+                    returned once the case has closed; an open case is 403 to
+                    everyone but its author and its seats.
+                  example: panelist
                 viewer_decision:
                   description: >
                     The caller's own vote on this case, so an editable decision
@@ -112,11 +120,14 @@
                   case,
                   panel,
                   decisions,
+                  viewer_role,
                   viewer_decision,
                   revision,
                   prerequisites,
                   todos,
                 ]
+      "403":
+        $ref: "../components/responses/_shared.yaml#/Forbidden"
       "404":
         $ref: "../components/responses/_shared.yaml#/NotFound"
 

@@ -51,17 +51,22 @@ type SubmissionBody = {
   revision: { tags: Array<{ id: string; status: string }> } | null;
   prerequisites: Array<{ slug: string; title: string | null }>;
   todos: Array<{ id: string; title: string }>;
+  viewer_role: string;
 };
 
 // A first-time contribution: draft base and guide, one published tag, one
 // subject proposed inline, one prerequisite, one todo.
 async function seedSubmissionCase(
   panelistId: string,
-  status: Insert<"review_cases">["status"] = "pending"
+  status: Insert<"review_cases">["status"] = "pending",
+  authorId?: string
 ) {
   const base = await createGuideBase();
   const guide = await createGuide(base.id);
-  const revision = await createGuideRevision(guide.id, { title: "Topology" });
+  const revision = await createGuideRevision(guide.id, {
+    title: "Topology",
+    author_id: authorId,
+  });
 
   const published = await createSubject();
   const proposed = await createSubject({ slug: null, status: "draft" });
@@ -151,29 +156,56 @@ describe("GET /reviews/cases", () => {
 
 describe("GET /reviews/cases/{id}", () => {
   it("returns a case with its panel and decisions", async () => {
-    const { userId } = await makeUser();
+    const { token, userId } = await makeUser();
     const reviewCase = await seedQueueCase(userId, "Statistics");
 
-    const res = await app.request(`/reviews/cases/${reviewCase.id}`, {}, env);
+    const res = await app.request(
+      `/reviews/cases/${reviewCase.id}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+      env
+    );
 
     expect(res.status).toBe(200);
     await expectToMatchSpec(res, "GET", "/reviews/cases/{id}");
-    const body = (await res.json()) as { case: { id: string } };
+    const body = (await res.json()) as {
+      case: { id: string };
+      viewer_role: string;
+    };
     expect(body.case.id).toBe(reviewCase.id);
+    expect(body.viewer_role).toBe("panelist");
   });
 
-  it("hides the proposed graph from an outsider while the case is open", async () => {
+  it("403s an outsider while the case is open", async () => {
     const { userId: panelist } = await makeUser();
-    const { reviewCase, published } = await seedSubmissionCase(panelist);
+    const { reviewCase } = await seedSubmissionCase(panelist);
 
     const res = await app.request(`/reviews/cases/${reviewCase.id}`, {}, env);
+
+    expect(res.status).toBe(403);
+    await expectToMatchSpec(res, "GET", "/reviews/cases/{id}");
+  });
+
+  it("shows an open case to the revision author", async () => {
+    const { token, userId: author } = await makeUser();
+    const { userId: panelist } = await makeUser();
+    const { reviewCase, prereqSlug, todoTitle } = await seedSubmissionCase(
+      panelist,
+      "pending",
+      author
+    );
+
+    const res = await app.request(
+      `/reviews/cases/${reviewCase.id}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+      env
+    );
 
     expect(res.status).toBe(200);
     await expectToMatchSpec(res, "GET", "/reviews/cases/{id}");
     const body = (await res.json()) as SubmissionBody;
-    expect(body.prerequisites).toEqual([]);
-    expect(body.todos).toEqual([]);
-    expect(body.revision?.tags.map((t) => t.id)).toEqual([published]);
+    expect(body.viewer_role).toBe("author");
+    expect(body.prerequisites.map((p) => p.slug)).toEqual([prereqSlug]);
+    expect(body.todos.map((t) => t.title)).toEqual([todoTitle]);
   });
 
   it("shows the proposed graph to a seated panelist", async () => {
