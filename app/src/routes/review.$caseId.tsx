@@ -215,7 +215,7 @@ function RouteComponent() {
                   <Button
                     variant="outline"
                     className={cn(
-                      "h-9 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400",
+                      "h-9 border-red-500/40 font-mono text-xs font-bold text-red-600 uppercase transition-colors hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400",
                       review.decision == "reject" && "bg-red-500/10"
                     )}
                     onClick={() => {
@@ -238,7 +238,7 @@ function RouteComponent() {
                   <Button
                     variant="outline"
                     className={cn(
-                      "h-9 border-green-600/40 text-green-700 hover:bg-green-600/10 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
+                      "h-9 border-green-600/40 font-mono text-xs font-bold text-green-700 uppercase transition-colors hover:bg-green-600/10 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
                       review.decision == "approve" && "bg-green-600/10"
                     )}
                     onClick={() => {
