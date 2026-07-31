@@ -112,7 +112,7 @@ function RouteComponent() {
             <div className="flex flex-col items-start gap-2">
               <Badge
                 variant="outline"
-                className="mono-micro rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
+                className="mono-micro rounded-full border border-[#cfe4f7] bg-[#d9e7f8] tracking-[0.08em] text-[#161a1e] dark:border-[#cfe4f7] dark:bg-[#d9e7f8] dark:text-[#161a1e]"
               >
                 Custom profile photos coming soon!
               </Badge>

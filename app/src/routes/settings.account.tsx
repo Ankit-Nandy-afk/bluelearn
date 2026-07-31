@@ -344,8 +344,11 @@ function RouteComponent() {
                   htmlFor="delete-confirm"
                   className="mono-micro text-muted-foreground"
                 >
-                  Type <span className="text-foreground">{username}</span> to
-                  confirm
+                  Type{" "}
+                  <span className="text-foreground normal-case">
+                    "{username}"
+                  </span>{" "}
+                  to confirm
                 </FieldLabel>
                 <Input
                   id="delete-confirm"
