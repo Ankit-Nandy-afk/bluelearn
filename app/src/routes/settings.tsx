@@ -2,6 +2,7 @@ import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { SettingsSidebar } from "@/components/sidebar/SettingsSidebar";
 
 export const Route = createFileRoute("/settings")({
+  ssr: false,
   component: RouteComponent,
 });
 
