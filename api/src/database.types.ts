@@ -43,7 +43,6 @@ export type Database = {
           knowledge_type: Database["public"]["Enums"]["knowledge_type"]
           slug: string | null
           status: Database["public"]["Enums"]["node_status"]
-          title: string | null
           updated_at: string
         }
         Insert: {
@@ -54,7 +53,6 @@ export type Database = {
           knowledge_type: Database["public"]["Enums"]["knowledge_type"]
           slug?: string | null
           status?: Database["public"]["Enums"]["node_status"]
-          title?: string | null
           updated_at?: string
         }
         Update: {
@@ -65,7 +63,6 @@ export type Database = {
           knowledge_type?: Database["public"]["Enums"]["knowledge_type"]
           slug?: string | null
           status?: Database["public"]["Enums"]["node_status"]
-          title?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -81,6 +78,13 @@ export type Database = {
             columns: ["forked_from_guide_base_id"]
             isOneToOne: false
             referencedRelation: "guide_bases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_bases_forked_from_guide_base_id_fkey"
+            columns: ["forked_from_guide_base_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
             referencedColumns: ["id"]
           },
         ]
@@ -122,10 +126,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "guide_edges_from_guide_base_id_fkey"
+            columns: ["from_guide_base_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "guide_edges_to_guide_base_id_fkey"
             columns: ["to_guide_base_id"]
             isOneToOne: false
             referencedRelation: "guide_bases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_edges_to_guide_base_id_fkey"
+            columns: ["to_guide_base_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
             referencedColumns: ["id"]
           },
         ]
@@ -158,6 +176,13 @@ export type Database = {
             referencedRelation: "guide_revisions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "guide_review_cases_guide_revision_id_fkey"
+            columns: ["guide_revision_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
+            referencedColumns: ["revision_id"]
+          },
         ]
       }
       guide_revision_subjects: {
@@ -180,6 +205,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "guide_revisions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_revision_subjects_guide_revision_id_fkey"
+            columns: ["guide_revision_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
+            referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "guide_revision_subjects_subject_id_fkey"
@@ -251,6 +283,13 @@ export type Database = {
             referencedRelation: "guides"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "guide_revisions_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
+            referencedColumns: ["guide_id"]
+          },
         ]
       }
       guides: {
@@ -304,6 +343,13 @@ export type Database = {
             columns: ["guide_base_id"]
             isOneToOne: false
             referencedRelation: "guide_bases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guides_guide_base_id_fkey"
+            columns: ["guide_base_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
             referencedColumns: ["id"]
           },
         ]
@@ -818,6 +864,13 @@ export type Database = {
             referencedRelation: "guide_revisions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "revision_assets_revision_id_fkey"
+            columns: ["revision_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
+            referencedColumns: ["revision_id"]
+          },
         ]
       }
       subjects: {
@@ -892,10 +945,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "todo_prerequisites_dependent_guide_base_id_fkey"
+            columns: ["dependent_guide_base_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "todo_prerequisites_resolved_guide_base_id_fkey"
             columns: ["resolved_guide_base_id"]
             isOneToOne: false
             referencedRelation: "guide_bases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_prerequisites_resolved_guide_base_id_fkey"
+            columns: ["resolved_guide_base_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
             referencedColumns: ["id"]
           },
         ]
@@ -963,6 +1030,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "votes_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
+            referencedColumns: ["guide_id"]
+          },
+          {
             foreignKeyName: "votes_voter_id_fkey"
             columns: ["voter_id"]
             isOneToOne: false
@@ -985,6 +1059,39 @@ export type Database = {
             columns: ["guide_id"]
             isOneToOne: false
             referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
+            referencedColumns: ["guide_id"]
+          },
+        ]
+      }
+      published_guides: {
+        Row: {
+          author_id: string | null
+          base_slug: string | null
+          created_at: string | null
+          guide_id: string | null
+          guide_slug: string | null
+          id: string | null
+          knowledge_type: Database["public"]["Enums"]["knowledge_type"] | null
+          revision_id: string | null
+          status: Database["public"]["Enums"]["node_status"] | null
+          subject_ids: string[] | null
+          summary: string | null
+          title: string | null
+          word_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guides_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

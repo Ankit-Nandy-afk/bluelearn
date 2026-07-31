@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 
 import { Calendar, Clock, User } from "lucide-react";
-import type { Guide, SubjectReference } from "@bluelearn/schemas";
+import type { Guide } from "@bluelearn/schemas";
 import type { GuideType } from "@/types/guides";
 import type { ReactElement } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -23,8 +23,14 @@ const sanitizeSchema = {
   },
 };
 
+// Tags only render as a name badge here, and a guide under review can carry
+// subjects whose slug is not minted yet, so either identifier will do.
+type ReaderTag = { id?: string; slug?: string; name: string };
+
+export type ReaderGuide = Omit<Guide, "tags"> & { tags: Array<ReaderTag> };
+
 type PropTypes = {
-  guide: Guide;
+  guide: ReaderGuide;
   guideType?: GuideType;
 };
 
@@ -63,27 +69,29 @@ export const GuideReader = ({ guide, guideType }: PropTypes) => {
           </span>
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3 text-muted-foreground/75" />
-            {formatDuration(guide.duration_minutes)}min
+            {formatDuration(guide.duration_minutes)}
           </span>
         </div>
 
-        <div className="my-4 flex gap-2">
-          {guide.tags.map((tag: SubjectReference) => (
-            <Badge
-              key={tag.slug}
-              variant="outline"
-              className="mono-micro rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
-            >
-              {tag.name}
-            </Badge>
-          ))}
-        </div>
+        {guide.tags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {guide.tags.map((tag: ReaderTag) => (
+              <Badge
+                key={tag.id ?? tag.slug ?? tag.name}
+                variant="outline"
+                className="mono-micro rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
+              >
+                {tag.name}
+              </Badge>
+            ))}
+          </div>
+        )}
 
-        <div>
-          <p className="py-4 text-sm whitespace-pre-line text-muted-foreground">
+        {guide.summary && (
+          <p className="mt-3 text-sm whitespace-pre-line text-muted-foreground">
             {guide.summary}
           </p>
-        </div>
+        )}
       </header>
 
       <Separator className="mb-8" />

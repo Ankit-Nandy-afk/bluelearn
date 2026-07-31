@@ -322,7 +322,8 @@ function findEarliestRevisionByParent<
   return earliest;
 }
 
-// A case is only openable once the panel has finished it.
+// A panelist's own row only links out once the panel has finished. Authors can
+// open their case at any point, since the review page admits them while it runs.
 const RESOLVED_CASE_STATUSES = new Set<string>(["approved", "rejected"]);
 
 // The caller's activites, which include guide and objective revisions they
@@ -426,7 +427,7 @@ export async function getMyActivity(
         status,
         target_slug: guide?.slug ?? null,
         base_slug: guide ? (slugByBase.get(guide.guide_base_id) ?? null) : null,
-        review_case_id: RESOLVED_CASE_STATUSES.has(caseStatus) ? caseId : null,
+        review_case_id: caseId,
         revision_id: rev.id,
       });
     }

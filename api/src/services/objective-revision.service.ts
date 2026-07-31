@@ -51,7 +51,12 @@ export async function getRevisionSnapshot(
   if (baseIds.length > 0) {
     const { data: bases, error: baseError } = await supabase
       .from("guide_bases")
-      .select("id, slug, title")
+      .select(
+        `id, slug,
+         canonical:guides!guide_bases_canonical_guide_id_fkey(
+           current:guide_revisions!guides_current_revision_id_fkey(title)
+         )`
+      )
       .in("id", baseIds);
 
     if (baseError) {
@@ -59,7 +64,10 @@ export async function getRevisionSnapshot(
       throw new ServiceError("Failed to load revision", 500);
     }
     for (const b of bases ?? [])
-      baseMeta.set(b.id, { slug: b.slug, title: b.title });
+      baseMeta.set(b.id, {
+        slug: b.slug,
+        title: b.canonical?.current?.title ?? null,
+      });
   }
 
   const nodes = (nodeRows ?? []).map((n) => ({
@@ -307,7 +315,12 @@ export async function updateObjectiveNode(
 
   const { data: base, error: baseError } = await supabase
     .from("guide_bases")
-    .select("slug, title")
+    .select(
+      `slug,
+       canonical:guides!guide_bases_canonical_guide_id_fkey(
+         current:guide_revisions!guides_current_revision_id_fkey(title)
+       )`
+    )
     .eq("id", node.guide_base_id)
     .maybeSingle();
 
@@ -322,7 +335,7 @@ export async function updateObjectiveNode(
       guide_base_id: node.guide_base_id,
       guide_id: node.guide_id,
       slug: base?.slug ?? null,
-      title: base?.title ?? null,
+      title: base?.canonical?.current?.title ?? null,
       is_target: node.is_target,
       is_included: node.is_included,
       is_featured: node.is_featured,
