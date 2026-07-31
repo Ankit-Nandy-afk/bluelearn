@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useAuth } from "@/lib/authContext";
-import { updateEmail } from "@/lib/auth";
+import { signIn, updateEmail, updatePassword } from "@/lib/auth";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,9 +57,47 @@ function RouteComponent() {
     setSaving(false);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     setUpdating(true);
     setUpdateError(null);
+
+    if (password.new.length < 6) {
+      setUpdateError("New password must be at least 6 characters long.");
+      setUpdating(false);
+      return;
+    }
+
+    if (password.new !== password.confirmNew) {
+      setUpdateError("New passwords do not match.");
+      setUpdating(false);
+      return;
+    }
+
+    if (!currentEmail) {
+      setUpdateError("No user email found.");
+      setUpdating(false);
+      return;
+    }
+
+    // Verify old password by attempting to sign in
+    const { error: signInError } = await signIn(currentEmail, password.old);
+
+    if (signInError) {
+      setUpdateError("Incorrect old password.");
+      setUpdating(false);
+      return;
+    }
+
+    // Update to new password
+    const { error: updateAuthError } = await updatePassword(password.new);
+
+    if (updateAuthError) {
+      setUpdateError(updateAuthError.message);
+    } else {
+      setIsPasswordEditing(false);
+      setPassword({ old: "", new: "", confirmNew: "" });
+    }
+
     setUpdating(false);
   };
 
