@@ -13,6 +13,7 @@ import {
   activityStatusLabel,
   activityTypeLabel,
   filterActivity,
+  getInitials,
   loadProfilePage,
 } from "@/lib/profile";
 import { formatDate } from "@/lib/guideUtils";
@@ -35,6 +36,7 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+
 import { Badge } from "@/components/ui/badge";
 
 type ProfileSearch = ActivityFilters & { page?: number };
@@ -89,6 +91,7 @@ export const Route = createFileRoute("/profile")({
   component: RouteComponent,
   pendingComponent: () => <ProfileMessage>Loading profile...</ProfileMessage>,
   errorComponent: ({ error }) => (
+    // TODO: improve error component - add greyscale mascot with "X" eyes
     <ProfileMessage tone="error">{error.message}</ProfileMessage>
   ),
 });
@@ -113,15 +116,6 @@ function ProfileMessage({
       </p>
     </div>
   );
-}
-
-// first two letters for the user's initials
-function getInitials(value: string | null | undefined) {
-  const text = value?.trim() ?? "";
-  if (!text) return "?";
-  const parts = text.split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 const PAGE_SIZE = 10;
@@ -227,9 +221,9 @@ function ProfilePage({ profile, roles, stats, activity }: ProfilePageData) {
       <section className="border-b px-8 py-10 lg:px-16">
         <div className="mx-auto mb-6 flex w-full max-w-5xl flex-col items-center gap-8 px-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-5">
-            <Avatar className="size-28 shrink-0 bg-gray-500">
-              <AvatarImage className="grayscale" />
-              <AvatarFallback className="bg-gray-300 text-2xl font-bold text-black">
+            <Avatar className="size-28 shrink-0 bg-muted">
+              <AvatarImage />
+              <AvatarFallback className="bg-muted text-2xl font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
