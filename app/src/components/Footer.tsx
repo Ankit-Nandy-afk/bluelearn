@@ -12,8 +12,8 @@ import type { IconType } from "react-icons";
 const SITE = "https://bluelearn.org";
 
 const LEGAL = [
-  { label: "Terms", href: `${SITE}/terms` },
-  { label: "Privacy", href: `${SITE}/privacy` },
+  { label: "Terms of Service", href: `${SITE}/terms` },
+  { label: "Privacy Policy", href: `${SITE}/privacy` },
 ];
 
 const SOCIALS: Array<{ name: string; href: string; Icon: IconType }> = [
