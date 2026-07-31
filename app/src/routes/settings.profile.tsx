@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/field";
 import { client } from "@/lib/api/apiClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/profile";
 
 export const Route = createFileRoute("/settings/profile")({
@@ -91,7 +92,7 @@ function RouteComponent() {
             </FieldDescription>
           </div>
 
-          <div className="flex items-end gap-4">
+          <div className="flex items-center gap-4">
             <Avatar className="size-30 bg-secondary">
               <AvatarImage className="" />
               <AvatarFallback className="bg-secondary text-2xl font-bold">
@@ -99,14 +100,24 @@ function RouteComponent() {
               </AvatarFallback>
             </Avatar>
 
-            <div className="cursor-not-allowed">
-              <Button variant="outline" disabled className="btn-sec" size="lg">
-                Upload
-              </Button>
+            <div className="flex flex-col items-start gap-2">
+              <Badge
+                variant="outline"
+                className="mono-micro rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
+              >
+                Custom profile photos coming soon!
+              </Badge>
+              <div className="cursor-not-allowed">
+                <Button
+                  variant="outline"
+                  disabled
+                  className="btn-sec"
+                  size="lg"
+                >
+                  Upload
+                </Button>
+              </div>
             </div>
-            <FieldDescription className="text-xs text-primary">
-              Custom profile photos coming soon!
-            </FieldDescription>
           </div>
         </Field>
 
