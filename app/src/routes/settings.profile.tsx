@@ -10,6 +10,13 @@ import { client } from "@/lib/api/apiClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/profile";
+import {
+  MAX_BIO_LENGTH,
+  MAX_DISPLAY_NAME_LENGTH,
+  MAX_USERNAME_LENGTH,
+  MIN_USERNAME_LENGTH,
+  USERNAME_PATTERN,
+} from "@/lib/authValidation";
 
 export const Route = createFileRoute("/settings/profile")({
   component: RouteComponent,
@@ -29,6 +36,19 @@ function RouteComponent() {
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
+    if (profile.username.length < MIN_USERNAME_LENGTH) {
+      toast.error(
+        `Username must be at least ${MIN_USERNAME_LENGTH} characters`
+      );
+      return;
+    }
+    if (!USERNAME_PATTERN.test(profile.username)) {
+      toast.error(
+        "Username may only contain letters, numbers, hyphens, and underscores"
+      );
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -127,7 +147,7 @@ function RouteComponent() {
             id="display-name"
             name="display-name"
             type="text"
-            maxLength={50}
+            maxLength={MAX_DISPLAY_NAME_LENGTH}
             className="h-10 rounded-md"
             value={profile.displayName}
             onChange={(e) => {
@@ -157,7 +177,7 @@ function RouteComponent() {
             id="username"
             name="username"
             type="text"
-            maxLength={50}
+            maxLength={MAX_USERNAME_LENGTH}
             className="h-10 rounded-md"
             required
             value={profile.username}
@@ -186,6 +206,7 @@ function RouteComponent() {
           <textarea
             id="bio"
             name="bio"
+            maxLength={MAX_BIO_LENGTH}
             className="h-32 w-full min-w-0 resize-none rounded-md border border-input bg-input/20 p-2 text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs/relaxed file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
             rows={3}
             value={profile.bio}
