@@ -16,6 +16,7 @@ import { ApiError } from "@/lib/api/apiHelpers";
 import { castDecision, getReviewCase } from "@/lib/api/reviews";
 
 import "katex/dist/katex.min.css";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 
 export type Review = {
   decision: string;
@@ -36,9 +37,9 @@ function ChangeSection({
 }) {
   return (
     <div className="space-y-2">
-      <p className="font-mono text-xs/relaxed font-bold tracking-[0.08em] uppercase">
+      {/* <p className="font-mono text-xs/relaxed font-bold tracking-[0.08em] uppercase">
         {label}
-      </p>
+      </p> */}
       {count === 0 ? (
         <p className="text-xs text-muted-foreground">{empty}</p>
       ) : (
@@ -210,66 +211,71 @@ function RouteComponent() {
       <section className="grid grid-cols-[320px_1fr] border-b">
         <aside className="h-[calc(100vh-70px)] space-y-4 overflow-y-auto border-r px-6 py-6">
           {canVote && (
-            <>
+            <CollapsibleSection
+              defaultOpen={true}
+              title={<p className="ml-auto">Review Decision</p>}
+            >
               <section className="space-y-4">
-                <p className="font-mono text-xs/relaxed font-bold tracking-[0.08em] uppercase">
-                  Review Actions
-                </p>
+                <FieldGroup>
+                  <Field className="space-y-4">
+                    <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+                      Vote
+                    </FieldLabel>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "h-9 border-red-500/40 font-mono text-xs font-bold text-red-600 uppercase transition-colors hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400",
-                      review.decision == "reject" && "bg-red-500/10"
-                    )}
-                    onClick={() => {
-                      if (review.decision == "reject") {
-                        setReview((prev) => ({
-                          ...prev,
-                          decision: "",
-                        }));
-                      } else {
-                        setReview((prev) => ({
-                          ...prev,
-                          decision: "reject",
-                        }));
-                      }
-                    }}
-                  >
-                    <X />
-                    Reject
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "h-9 border-green-600/40 font-mono text-xs font-bold text-green-700 uppercase transition-colors hover:bg-green-600/10 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
-                      review.decision == "approve" && "bg-green-600/10"
-                    )}
-                    onClick={() => {
-                      if (review.decision == "approve") {
-                        setReview((prev) => ({
-                          ...prev,
-                          decision: "",
-                        }));
-                      } else {
-                        setReview((prev) => ({
-                          ...prev,
-                          decision: "approve",
-                        }));
-                      }
-                    }}
-                  >
-                    <Check />
-                    Approve
-                  </Button>
-                </div>
-
-                <Separator />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "h-9 border-red-500/40 font-mono text-xs font-bold text-red-600 uppercase transition-colors hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400",
+                          review.decision == "reject" && "bg-red-500/10"
+                        )}
+                        onClick={() => {
+                          if (review.decision == "reject") {
+                            setReview((prev) => ({
+                              ...prev,
+                              decision: "",
+                            }));
+                          } else {
+                            setReview((prev) => ({
+                              ...prev,
+                              decision: "reject",
+                            }));
+                          }
+                        }}
+                      >
+                        <X />
+                        Reject
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "h-9 border-green-600/40 font-mono text-xs font-bold text-green-700 uppercase transition-colors hover:bg-green-600/10 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
+                          review.decision == "approve" && "bg-green-600/10"
+                        )}
+                        onClick={() => {
+                          if (review.decision == "approve") {
+                            setReview((prev) => ({
+                              ...prev,
+                              decision: "",
+                            }));
+                          } else {
+                            setReview((prev) => ({
+                              ...prev,
+                              decision: "approve",
+                            }));
+                          }
+                        }}
+                      >
+                        <Check />
+                        Approve
+                      </Button>
+                    </div>
+                  </Field>
+                </FieldGroup>
 
                 <FieldGroup className="gap-4">
                   <Field className="space-y-2">
-                    <FieldLabel className="font-mono font-bold tracking-[0.08em] uppercase">
+                    <FieldLabel className="font-mono tracking-[0.08em] uppercase">
                       Notes
                     </FieldLabel>
 
@@ -320,55 +326,68 @@ function RouteComponent() {
                   Submit Decision
                 </Button>
               </section>
-
-              <Separator />
-            </>
+            </CollapsibleSection>
           )}
 
-          <section className="space-y-6">
-            <ChangeSection
-              label="Proposed Subjects"
-              count={subjects.length}
-              empty="None proposed."
+          <section className="space-y-2">
+            <CollapsibleSection
+              defaultOpen={true}
+              title={<p className="ml-auto">Proposed Subjects</p>}
             >
-              {subjects.map((s) => (
-                <ChangeRow
-                  key={s.id}
-                  label={s.name}
-                  badge={
-                    s.status === "draft" ? (
-                      <ChangeBadge tone="new">New</ChangeBadge>
-                    ) : (
-                      <ChangeBadge tone="existing">Existing</ChangeBadge>
-                    )
-                  }
-                />
-              ))}
-            </ChangeSection>
+              <ChangeSection
+                label="Proposed Subjects"
+                count={subjects.length}
+                empty="None proposed."
+              >
+                {subjects.map((s) => (
+                  <ChangeRow
+                    key={s.id}
+                    label={s.name}
+                    badge={
+                      s.status === "draft" ? (
+                        <ChangeBadge tone="new">New</ChangeBadge>
+                      ) : (
+                        <ChangeBadge tone="existing">Existing</ChangeBadge>
+                      )
+                    }
+                  />
+                ))}
+              </ChangeSection>
+            </CollapsibleSection>
 
-            <Separator />
+            {/* <Separator /> */}
 
-            <ChangeSection
-              label="Prerequisites"
-              count={revisionData.prerequisites.length}
-              empty="None declared."
+            <CollapsibleSection
+              defaultOpen={true}
+              title={<p className="ml-auto">Prerequisites</p>}
             >
-              {revisionData.prerequisites.map((p) => (
-                <ChangeRow key={p.slug} label={p.title ?? p.slug} />
-              ))}
-            </ChangeSection>
+              <ChangeSection
+                label="Prerequisites"
+                count={revisionData.prerequisites.length}
+                empty="None declared."
+              >
+                {revisionData.prerequisites.map((p) => (
+                  <ChangeRow key={p.slug} label={p.title ?? p.slug} />
+                ))}
+              </ChangeSection>
+            </CollapsibleSection>
 
-            <Separator />
+            {/* <Separator /> */}
 
-            <ChangeSection
-              label="Todos"
-              count={revisionData.todos.length}
-              empty="None declared."
+            <CollapsibleSection
+              defaultOpen={true}
+              title={<p className="ml-auto">Todos</p>}
             >
-              {revisionData.todos.map((t) => (
-                <ChangeRow key={t.id} label={t.title} />
-              ))}
-            </ChangeSection>
+              <ChangeSection
+                label="Todos"
+                count={revisionData.todos.length}
+                empty="None declared."
+              >
+                {revisionData.todos.map((t) => (
+                  <ChangeRow key={t.id} label={t.title} />
+                ))}
+              </ChangeSection>
+            </CollapsibleSection>
           </section>
         </aside>
 
