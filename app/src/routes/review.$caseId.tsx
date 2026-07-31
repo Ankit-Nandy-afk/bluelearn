@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
@@ -109,20 +109,25 @@ function RouteComponent() {
 
   const revision = revisionData.revision;
 
-  const guide: ReaderGuide | null = revision
-    ? {
-        slug: "",
-        variant_slug: null,
-        title: revision.title ?? "",
-        author: "",
-        summary: revision.summary ?? null,
-        body: revision.body ?? null,
-        duration_minutes: revision.duration_minutes,
-        created_at: revision.created_at,
-        tags: revision.tags,
-        prerequisites: [],
-      }
-    : null;
+  // Prevent guide content from re-rendering on each review action change.
+  const guideContent = useMemo(() => {
+    if (!revision) return null;
+
+    const guide: ReaderGuide = {
+      slug: "",
+      variant_slug: null,
+      title: revision.title ?? "",
+      author: "",
+      summary: revision.summary ?? null,
+      body: revision.body ?? null,
+      duration_minutes: revision.duration_minutes,
+      created_at: revision.created_at,
+      tags: revision.tags,
+      prerequisites: [],
+    };
+
+    return <GuideReader guide={guide} />;
+  }, [revision]);
 
   const subjects = revision?.tags ?? [];
 
@@ -369,9 +374,7 @@ function RouteComponent() {
 
         {/* MAIN */}
         <main className="h-[calc(100vh-70px)] min-w-0 overflow-y-auto px-10 py-6 lg:px-16">
-          {guide ? (
-            <GuideReader guide={guide} />
-          ) : (
+          {guideContent ?? (
             <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
               No guide revision found to display.
             </p>
