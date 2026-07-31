@@ -78,7 +78,7 @@ export function Combobox({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="w-[300px] justify-between"
+          className="w-full justify-between"
           disabled={disabled}
         >
           <div className="flex flex-wrap gap-1">
@@ -104,7 +104,7 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-[500px] p-0">
+      <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
         <Command>
           <CommandInput placeholder="Search..." />
           <CommandList>
@@ -117,6 +117,7 @@ export function Combobox({
                 return (
                   <CommandItem
                     key={item.value}
+                    className="cursor-pointer"
                     value={item.label} // searchable text
                     onSelect={() => toggle(item.value)}
                   >
