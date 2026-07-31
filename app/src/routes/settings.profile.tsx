@@ -32,11 +32,9 @@ function RouteComponent() {
   });
 
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>("");
 
   const handleSave = async () => {
     setSaving(true);
-    setSaveError(null);
 
     try {
       const res = await client.me.$patch({
@@ -54,7 +52,7 @@ function RouteComponent() {
       }
       toast.success("Profile saved successfully.");
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Save failed");
+      toast.error(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSaving(false);
     }
@@ -68,10 +66,6 @@ function RouteComponent() {
         </h1>
 
         <div className="flex items-center">
-          {saveError && (
-            <p className="mono-micro px-4 text-destructive">{saveError}</p>
-          )}
-
           <Button
             variant="default"
             className="btn-pri"

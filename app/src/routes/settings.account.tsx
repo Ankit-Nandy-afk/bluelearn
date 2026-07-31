@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 
 import { signIn, signOut, updateEmail, updatePassword } from "@/lib/auth";
 import { deleteMyAccount, getMyIdentity } from "@/lib/api/identity";
@@ -43,11 +44,7 @@ function RouteComponent() {
   });
 
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>("");
-  const [saveSuccess, setSaveSuccess] = useState<string | null>("");
-
   const [updating, setUpdating] = useState(false);
-  const [updateError, setUpdateError] = useState<string | null>("");
 
   const [isEmailEditing, setIsEmailEditing] = useState(false);
   const [isPasswordEditing, setIsPasswordEditing] = useState(false);
@@ -56,34 +53,30 @@ function RouteComponent() {
 
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== "delete account") return;
 
     setIsDeleting(true);
-    setDeleteError(null);
     try {
       await deleteMyAccount();
       await signOut();
       navigate({ to: "/" });
     } catch (err: any) {
-      setDeleteError(err.message || "Failed to delete account");
+      toast.error(err.message || "Failed to delete account");
       setIsDeleting(false);
     }
   };
 
   const handleSave = async () => {
     setSaving(true);
-    setSaveError(null);
-    setSaveSuccess(null);
 
     const { error } = await updateEmail(email);
 
     if (error) {
-      setSaveError(error.message);
+      toast.error(error.message);
     } else {
-      setSaveSuccess("Verification emails sent. Please check your inbox.");
+      toast.success("Verification emails sent. Please check your inbox.");
     }
 
     setSaving(false);
@@ -91,22 +84,21 @@ function RouteComponent() {
 
   const handleUpdate = async () => {
     setUpdating(true);
-    setUpdateError(null);
 
     if (password.new.length < 6) {
-      setUpdateError("New password must be at least 6 characters long.");
+      toast.error("New password must be at least 6 characters long.");
       setUpdating(false);
       return;
     }
 
     if (password.new !== password.confirmNew) {
-      setUpdateError("New passwords do not match.");
+      toast.error("New passwords do not match.");
       setUpdating(false);
       return;
     }
 
     if (!currentEmail) {
-      setUpdateError("No user email found.");
+      toast.error("No user email found.");
       setUpdating(false);
       return;
     }
@@ -115,7 +107,7 @@ function RouteComponent() {
     const { error: signInError } = await signIn(currentEmail, password.old);
 
     if (signInError) {
-      setUpdateError("Incorrect old password.");
+      toast.error("Incorrect old password.");
       setUpdating(false);
       return;
     }
@@ -124,8 +116,9 @@ function RouteComponent() {
     const { error: updateAuthError } = await updatePassword(password.new);
 
     if (updateAuthError) {
-      setUpdateError(updateAuthError.message);
+      toast.error(updateAuthError.message);
     } else {
+      toast.success("Password updated.");
       setIsPasswordEditing(false);
       setPassword({ old: "", new: "", confirmNew: "" });
     }
@@ -186,21 +179,11 @@ function RouteComponent() {
                   />
                 </div>
                 <div className="flex items-center justify-end space-x-2">
-                  {saveError && (
-                    <p className="mono-micro text-destructive">{saveError}</p>
-                  )}
-                  {saveSuccess && (
-                    <p className="mono-micro text-green-500">{saveSuccess}</p>
-                  )}
                   <Button
                     variant="outline"
                     size="lg"
                     className="btn-sec"
-                    onClick={() => {
-                      setIsEmailEditing(false);
-                      setSaveError(null);
-                      setSaveSuccess(null);
-                    }}
+                    onClick={() => setIsEmailEditing(false)}
                   >
                     Cancel
                   </Button>
@@ -307,16 +290,12 @@ function RouteComponent() {
                 </div>
 
                 <div className="flex items-center justify-end space-x-2 pt-2">
-                  {updateError && (
-                    <p className="mono-micro text-destructive">{updateError}</p>
-                  )}
                   <Button
                     variant="outline"
                     size="lg"
                     className="btn-sec"
                     onClick={() => {
                       setIsPasswordEditing(false);
-                      setUpdateError(null);
                       setPassword({ old: "", new: "", confirmNew: "" });
                     }}
                   >
@@ -382,9 +361,6 @@ function RouteComponent() {
                   placeholder={'type "Delete Account"'}
                 />
               </div>
-              {deleteError && (
-                <p className="mono-micro text-destructive">{deleteError}</p>
-              )}
             </div>
             <DialogFooter>
               <DialogClose asChild>
