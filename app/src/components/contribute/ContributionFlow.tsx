@@ -79,6 +79,16 @@ const createObjectiveContData = (): ObjectiveContribution => ({
   subjects: [],
 });
 
+type NewSubject = { id?: string; name: string; summary: string };
+
+const existingTagIds = (newSubjects: Array<NewSubject>) =>
+  newSubjects.map((s) => s.id).filter((id): id is string => !!id);
+
+const unsavedSubjects = (newSubjects: Array<NewSubject>) =>
+  newSubjects
+    .filter((s) => !s.id)
+    .map((s) => ({ name: s.name, summary: s.summary || null }));
+
 export default function ContributionFlow({
   type,
   setType,
@@ -224,9 +234,7 @@ function Inner({
                 },
               ];
             }),
-            subjects: data.subjects
-              .map((s) => s.slug)
-              .filter((slug): slug is string => slug !== null),
+            subjects: data.subjects.map((s) => s.id),
           });
           setRevisionId(draftId);
           setType("objective");
@@ -240,10 +248,14 @@ function Inner({
 
     getRevision(draftId)
       .then((data) => {
-        // A tagged subject still awaiting review has no slug to preselect yet.
+        // A tag still awaiting approval is not pickable yet, so it resumes in
+        // the new-subject list rather than the picker.
         const tagged = data.subjects
-          .map((s) => s.slug)
-          .filter((slug): slug is string => slug !== null);
+          .filter((s) => s.status === "published")
+          .map((s) => s.id);
+        const pending = data.subjects
+          .filter((s) => s.status !== "published")
+          .map((s) => ({ id: s.id, name: s.name, summary: s.summary ?? "" }));
 
         if (data.is_variant) {
           setVariantContData({
@@ -253,7 +265,7 @@ function Inner({
             body: data.revision.body ?? "",
             baseGuide: data.base_slug ?? "",
             subjects: tagged,
-            newSubjects: [],
+            newSubjects: pending,
           });
         } else {
           setGuideContData({
@@ -262,7 +274,7 @@ function Inner({
             summary: data.revision.summary ?? "",
             body: data.revision.body ?? "",
             subjects: tagged,
-            newSubjects: [],
+            newSubjects: pending,
             prereqs: data.prerequisites,
             todoPrereqs: data.todos,
           });
@@ -308,8 +320,8 @@ function Inner({
   // Shape the in-progress form as a Guide, so the submit step can render it with
   // the same component the published page uses.
   const previewGuide: Guide = useMemo(() => {
-    const nameBySlug = new Map(
-      subjectOptions.map((s) => [s.slug, s.name] as const)
+    const nameById = new Map(
+      subjectOptions.map((s) => [s.id, s.name] as const)
     );
     const titleBySlug = new Map(
       guideOptions
@@ -327,9 +339,9 @@ function Inner({
       duration_minutes: estimateReadMinutes(guideContData.body),
       created_at: formatDate(new Date()),
       tags: [
-        ...guideContData.subjects.map((slug) => ({
-          slug,
-          name: nameBySlug.get(slug) ?? slug,
+        ...guideContData.subjects.map((id) => ({
+          slug: id,
+          name: nameById.get(id) ?? id,
         })),
         ...guideContData.newSubjects.map((s) => ({
           slug: s.name,
@@ -344,8 +356,8 @@ function Inner({
   }, [guideContData, subjectOptions, guideOptions, username]);
 
   const previewVariant: Guide = useMemo(() => {
-    const nameBySlug = new Map(
-      subjectOptions.map((s) => [s.slug, s.name] as const)
+    const nameById = new Map(
+      subjectOptions.map((s) => [s.id, s.name] as const)
     );
 
     return {
@@ -358,9 +370,9 @@ function Inner({
       created_at: formatDate(new Date()),
       duration_minutes: estimateReadMinutes(variantContData.body),
       tags: [
-        ...variantContData.subjects.map((slug) => ({
-          slug,
-          name: nameBySlug.get(slug) ?? slug,
+        ...variantContData.subjects.map((id) => ({
+          slug: id,
+          name: nameById.get(id) ?? id,
         })),
         ...variantContData.newSubjects.map((s) => ({
           slug: s.name,
@@ -380,12 +392,12 @@ function Inner({
     title: guideContData.title || null,
     summary: guideContData.summary || null,
     body: guideContData.body || null,
-    tags: guideContData.subjects,
+    tags: [
+      ...guideContData.subjects,
+      ...existingTagIds(guideContData.newSubjects),
+    ],
     prerequisites: guideContData.prereqs,
-    newSubjects: guideContData.newSubjects.map((s) => ({
-      name: s.name,
-      summary: s.summary || null,
-    })),
+    newSubjects: unsavedSubjects(guideContData.newSubjects),
     todoPrereqs: guideContData.todoPrereqs,
   });
 
@@ -393,11 +405,11 @@ function Inner({
     title: variantContData.title || null,
     summary: variantContData.summary || null,
     body: variantContData.body || null,
-    tags: variantContData.subjects,
-    newSubjects: variantContData.newSubjects.map((s) => ({
-      name: s.name,
-      summary: s.summary || null,
-    })),
+    tags: [
+      ...variantContData.subjects,
+      ...existingTagIds(variantContData.newSubjects),
+    ],
+    newSubjects: unsavedSubjects(variantContData.newSubjects),
   });
 
   // The wizard tracks guides by slug; the API keys curation on guide base ids.

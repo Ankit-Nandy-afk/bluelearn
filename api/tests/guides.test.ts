@@ -54,7 +54,7 @@ describe("POST /guides", () => {
         title: "Limits",
         summary: "A first look at limits.",
         body: "A first look at limits.",
-        tags: [subject.slug],
+        tags: [subject.id],
       }),
       env
     );
@@ -377,7 +377,7 @@ describe("POST /guides/{slug}/variants", () => {
       `/guides/${base.slug}/variants`,
       jsonAuth(token, "POST", {
         title: "Another method",
-        tags: [subject.slug],
+        tags: [subject.id],
       }),
       env
     );
@@ -431,7 +431,7 @@ describe("POST /guides/{slug}/variants", () => {
         title: "Another method",
         summary: "A different take",
         body: "The long version.",
-        tags: [subject.slug],
+        tags: [subject.id],
       }),
       env
     );
@@ -469,7 +469,7 @@ describe("POST /guides/{slug}/variants", () => {
         title: "Another method",
         summary: "A different take",
         body: "The long version.",
-        tags: [subject.slug],
+        tags: [subject.id],
       }),
       env
     );

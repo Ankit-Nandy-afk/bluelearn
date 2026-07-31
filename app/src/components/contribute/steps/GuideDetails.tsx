@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 
-type SubjectOption = { slug: string; name: string };
+type SubjectOption = { id: string; name: string };
 type GuideOption = {
   slug: string | null;
   title: string | null;
@@ -221,19 +221,20 @@ export const GuideDetails = ({
             multiple
             items={subjects.map((s) => {
               return {
-                value: s.slug,
+                value: s.id,
                 label: s.name,
               };
             })}
             value={guideContData.subjects}
-            onValueChange={(slugs) =>
+            onValueChange={(ids) =>
               setGuideContData((prev) => ({
                 ...prev,
-                subjects: slugs,
+                subjects: ids,
               }))
             }
           />
         </Field>
+
         <Field className="space-y-2">
           <div className="space-y-1">
             <FieldLabel className="font-mono tracking-[0.08em] uppercase">
@@ -298,7 +299,7 @@ export const GuideDetails = ({
           <div className="flex flex-wrap gap-2 px-1">
             {guideContData.newSubjects.map((sub, index) => (
               <Badge key={index} variant="outline" className="gap-1.5">
-                {sub.name} - {sub.summary}
+                {sub.summary ? `${sub.name} - ${sub.summary}` : sub.name}
                 <button
                   type="button"
                   aria-label={`Remove ${sub.name}`}

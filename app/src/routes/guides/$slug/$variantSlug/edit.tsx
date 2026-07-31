@@ -1,5 +1,5 @@
 import { defineStepper } from "@stepperize/react";
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -20,7 +20,6 @@ import { uploadMedia } from "@/lib/api/media";
 import { estimateReadMinutes } from "@/lib/guideUtils";
 
 import guidesData from "@/data/guides.json";
-import subjectsData from "@/data/subjects.json";
 
 import { GuideDetails } from "@/components/contribute/steps/GuideDetails";
 import { Content } from "@/components/contribute/steps/Content";
@@ -57,16 +56,24 @@ const StepperInstance = defineStepper([
 function RouteComponent() {
   const { variant, current, snapshot, draftId } = Route.useLoaderData();
   const { Stepper } = StepperInstance;
+  const router = useRouter();
+
+  // A tag still awaiting approval is not pickable yet, so it resumes in the
+  // new-subject list rather than the picker.
+  const approved = snapshot.subjects.filter((s) => s.status === "published");
+  const pending = snapshot.subjects.filter((s) => s.status !== "published");
 
   const [guideContData, setGuideContData] = useState<GuideContribution>(() => ({
     type: snapshot.knowledge_type === "practical" ? "practical" : "theoretical",
     title: snapshot.revision.title ?? "",
     summary: snapshot.revision.summary ?? "",
     body: snapshot.revision.body ?? "",
-    subjects: snapshot.subjects
-      .map((s) => s.slug)
-      .filter((slug): slug is string => slug !== null),
-    newSubjects: [],
+    subjects: approved.map((s) => s.id),
+    newSubjects: pending.map((s) => ({
+      id: s.id,
+      name: s.name,
+      summary: s.summary ?? "",
+    })),
     prereqs: snapshot.prerequisites,
     todoPrereqs: snapshot.todos,
   }));
@@ -78,8 +85,9 @@ function RouteComponent() {
   const [revisionId, setRevisionId] = useState<string | null>(draftId);
   const [submitting, setSubmitting] = useState(false);
 
-  const [subjectOptions, setSubjectOptions] =
-    useState<Array<{ slug: string; name: string }>>(subjectsData);
+  const [subjectOptions, setSubjectOptions] = useState<
+    Array<{ id: string; name: string }>
+  >(() => approved.map((s) => ({ id: s.id, name: s.name })));
 
   const [guideOptions, setGuideOptions] = useState<
     Array<{
@@ -97,7 +105,10 @@ function RouteComponent() {
 
     listSubjects(opts)
       .then((data) => {
-        if (data.length > 0) setSubjectOptions(data);
+        setSubjectOptions((prev) => {
+          const listed = new Set(data.map((s) => s.id));
+          return [...data, ...prev.filter((s) => !listed.has(s.id))];
+        });
       })
       .catch(() => {});
     listGuides(opts)
@@ -113,8 +124,8 @@ function RouteComponent() {
   }, []);
 
   const previewGuide: Guide = useMemo(() => {
-    const nameBySlug = new Map(
-      subjectOptions.map((s) => [s.slug, s.name] as const)
+    const nameById = new Map(
+      subjectOptions.map((s) => [s.id, s.name] as const)
     );
     const titleBySlug = new Map(
       guideOptions
@@ -132,9 +143,9 @@ function RouteComponent() {
       duration_minutes: estimateReadMinutes(guideContData.body),
       created_at: current.created_at,
       tags: [
-        ...guideContData.subjects.map((slug) => ({
-          slug,
-          name: nameBySlug.get(slug) ?? slug,
+        ...guideContData.subjects.map((id) => ({
+          slug: id,
+          name: nameById.get(id) ?? id,
         })),
         ...guideContData.newSubjects.map((s) => ({
           slug: s.name,
@@ -169,11 +180,18 @@ function RouteComponent() {
     summary: guideContData.summary || null,
     body: guideContData.body || null,
     change_summary: changeSummary || null,
-    tags: guideContData.subjects,
-    newSubjects: guideContData.newSubjects.map((s) => ({
-      name: s.name,
-      summary: s.summary || null,
-    })),
+    tags: [
+      ...guideContData.subjects,
+      ...guideContData.newSubjects
+        .map((s) => s.id)
+        .filter((id): id is string => !!id),
+    ],
+    newSubjects: guideContData.newSubjects
+      .filter((s) => !s.id)
+      .map((s) => ({
+        name: s.name,
+        summary: s.summary || null,
+      })),
   });
 
   const creatingRef = useRef<Promise<string> | null>(null);
@@ -213,6 +231,8 @@ function RouteComponent() {
     setSubmitting(true);
     try {
       await persistDraft();
+      // Refresh the cached snapshot so coming back here reseeds from the save.
+      await router.invalidate();
       toast.success("Draft saved");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save draft");
@@ -226,6 +246,7 @@ function RouteComponent() {
     try {
       const id = await persistDraft();
       await submitRevision(id);
+      await router.invalidate();
       toast.success("Submitted for review");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not submit");

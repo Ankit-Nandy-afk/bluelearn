@@ -115,6 +115,44 @@ describe("GET /guide-revisions/{id}", () => {
     const body = (await res.json()) as { is_variant: boolean };
     expect(body.is_variant).toBe(false);
   });
+
+  it("marks a tag proposed inline as still draft", async () => {
+    const author = await makeUser();
+    const { revision } = await createDraftRevision(author.userId);
+    const published = await createSubject();
+    const newName = `Fresh ${crypto.randomUUID().slice(0, 8)}`;
+
+    await app.request(
+      `/guide-revisions/${revision.id}`,
+      jsonAuth(author.token, "PATCH", {
+        tags: [published.id],
+        newSubjects: [{ name: newName, summary: "A pending subject" }],
+      }),
+      env
+    );
+
+    const res = await app.request(
+      `/guide-revisions/${revision.id}`,
+      auth(author.token),
+      env
+    );
+
+    expect(res.status).toBe(200);
+    await expectToMatchSpec(res, "GET", "/guide-revisions/{id}");
+    const body = (await res.json()) as {
+      subjects: Array<{
+        name: string;
+        summary: string | null;
+        status: string;
+      }>;
+    };
+    const pending = body.subjects.find((s) => s.name === newName);
+    expect(pending?.status).toBe("draft");
+    expect(pending?.summary).toBe("A pending subject");
+    expect(body.subjects.find((s) => s.name === published.name)?.status).toBe(
+      "published"
+    );
+  });
 });
 
 describe("PATCH /guide-revisions/{id}", () => {
@@ -159,7 +197,7 @@ describe("PATCH /guide-revisions/{id}", () => {
     const res = await app.request(
       `/guide-revisions/${revision.id}`,
       jsonAuth(author.token, "PATCH", {
-        tags: [existing.slug],
+        tags: [existing.id],
         prerequisites: [prereq.slug],
         newSubjects: [{ name: newName }],
         todoPrereqs: ["Learn functions"],
@@ -198,6 +236,47 @@ describe("PATCH /guide-revisions/{id}", () => {
       .single();
     expect(created?.status).toBe("draft");
     expect(created?.slug).toBeNull();
+  });
+
+  it("keeps a subject that has no slug yet tagged across saves", async () => {
+    const author = await makeUser();
+    const { revision } = await createDraftRevision(author.userId);
+    const existing = await createSubject();
+    const newName = `Fresh ${crypto.randomUUID().slice(0, 8)}`;
+
+    await app.request(
+      `/guide-revisions/${revision.id}`,
+      jsonAuth(author.token, "PATCH", {
+        tags: [existing.id],
+        newSubjects: [{ name: newName }],
+      }),
+      env
+    );
+
+    const { data: pending } = await admin
+      .from("subjects")
+      .select("id")
+      .eq("name", newName)
+      .single();
+
+    const res = await app.request(
+      `/guide-revisions/${revision.id}`,
+      jsonAuth(author.token, "PATCH", {
+        tags: [existing.id, pending!.id],
+      }),
+      env
+    );
+
+    expect(res.status).toBe(200);
+    await expectToMatchSpec(res, "PATCH", "/guide-revisions/{id}");
+
+    const { data: tags } = await admin
+      .from("guide_revision_subjects")
+      .select("subject_id")
+      .eq("guide_revision_id", revision.id);
+    expect(tags?.map((t) => t.subject_id).sort()).toEqual(
+      [existing.id, pending!.id].sort()
+    );
   });
 
   it("refuses prerequisite edits once the base is published", async () => {

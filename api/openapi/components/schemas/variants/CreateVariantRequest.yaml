@@ -17,10 +17,10 @@ properties:
     type: [string, "null"]
   tags:
     type: array
-    description: Existing subject slugs to tag the variant with.
+    description: Ids of existing subjects to tag the variant with.
     items:
       type: string
-    example: [calculus, algebra]
+      format: uuid
   newSubjects:
     type: array
     description: Subjects the author is proposing inline. Created as drafts.
