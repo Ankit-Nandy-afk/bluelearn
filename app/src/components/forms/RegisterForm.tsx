@@ -185,7 +185,7 @@ export function RegisterForm({
 
                   <FieldContent>
                     <FieldLabel htmlFor="policies-checkbox">
-                      Accept Terms of Service and Privacy Policy
+                      I accept the Terms of Service and Privacy Policy
                     </FieldLabel>
 
                     <FieldDescription className="font-mono">
