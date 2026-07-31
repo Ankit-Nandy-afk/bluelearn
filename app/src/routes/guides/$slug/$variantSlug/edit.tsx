@@ -71,6 +71,10 @@ function RouteComponent() {
     todoPrereqs: snapshot.todos,
   }));
 
+  const [changeSummary, setChangeSummary] = useState(
+    snapshot.revision.change_summary ?? ""
+  );
+
   const [revisionId, setRevisionId] = useState<string | null>(draftId);
   const [submitting, setSubmitting] = useState(false);
 
@@ -164,6 +168,7 @@ function RouteComponent() {
     title: guideContData.title || null,
     summary: guideContData.summary || null,
     body: guideContData.body || null,
+    change_summary: changeSummary || null,
     tags: guideContData.subjects,
     newSubjects: guideContData.newSubjects.map((s) => ({
       name: s.name,
@@ -269,6 +274,8 @@ function RouteComponent() {
                   onSaveDraft={saveDraft}
                   submitting={submitting}
                   showBaseFields={false}
+                  changeSummary={changeSummary}
+                  onChangeSummaryChange={setChangeSummary}
                 />
 
                 <Content
