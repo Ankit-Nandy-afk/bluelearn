@@ -140,9 +140,9 @@ export const PreviewObjective = ({
     return guide ? guide.title : slug;
   };
 
-  const getSubjectName = (slug: string) => {
-    const subject = subjectOptions.find((s) => s.slug === slug);
-    return subject ? subject.name : slug;
+  const getSubjectName = (id: string) => {
+    const subject = subjectOptions.find((s) => s.id === id);
+    return subject ? subject.name : id;
   };
 
   const getGuideDuration = (slug: string) => {
@@ -230,9 +230,9 @@ export const PreviewObjective = ({
         data: totalGuides,
       },
     ],
-    tags: objectiveContData.subjects.map((slug) => ({
-      slug,
-      name: getSubjectName(slug),
+    tags: objectiveContData.subjects.map((id) => ({
+      slug: id,
+      name: getSubjectName(id),
     })),
   };
 
