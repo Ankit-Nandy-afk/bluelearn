@@ -8,8 +8,11 @@ import type {
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 import { readingMinutes } from "../lib/reading";
+import {
+  getRevisionSnapshot,
+  replaceRevisionTags,
+} from "./objective-revision.service";
 import { selectInBatches } from "../lib/batch";
-import { getRevisionSnapshot } from "./objective-revision.service";
 import { loadUsernames } from "./identity.service";
 
 type DB = SupabaseClient<Database>;
@@ -281,6 +284,11 @@ export async function createObjective(
     console.error(error);
     throw new ServiceError("Failed to create objective", 500);
   }
+
+  if (input.tags && input.tags.length > 0) {
+    await replaceRevisionTags(supabase, revision_id, input.tags);
+  }
+
   return { revision_id };
 }
 

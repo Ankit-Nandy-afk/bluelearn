@@ -63,7 +63,7 @@ export const GuideReader = ({ guide, guideType }: PropTypes) => {
           </span>
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3 text-muted-foreground/75" />
-            {formatDuration(guide.duration_minutes)}
+            {formatDuration(guide.duration_minutes)}min
           </span>
         </div>
 
