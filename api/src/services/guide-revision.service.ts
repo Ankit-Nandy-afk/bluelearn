@@ -26,11 +26,12 @@ const REVISION_DETAIL =
 const DIFF_REVISION_DETAIL =
   "id, author_id, title, summary, body, change_summary, created_at";
 
-// The revision's subject tags, resolved to {slug, name} references for the editor.
+// The revision's subject tags for the editor. Status comes along so the editor
+// can keep a tag that is still awaiting approval out of the picker.
 async function loadRevisionTags(supabase: DB, id: string) {
   const { data, error } = await supabase
     .from("guide_revision_subjects")
-    .select("subject:subjects(id, slug, name)")
+    .select("subject:subjects(id, slug, name, summary, status)")
     .eq("guide_revision_id", id);
 
   if (error) {
@@ -40,36 +41,18 @@ async function loadRevisionTags(supabase: DB, id: string) {
   return (data ?? []).map((r) => r.subject).filter((s) => s !== null);
 }
 
-// Replace a draft revision's subject tag set with the given slugs, plus any ids
-// passed directly for subjects still awaiting a slug. Resolving slugs up front
-// makes an unknown tag fail the whole write; the delete/insert are RLS-gated to
-// the author's draft. Callers confirm editability first.
+// Replace a draft revision's subject tag set. Tags are keyed by subject id, not
+// slug, because a subject proposed inline has no slug until it is approved.
+// Checking existence up front makes an unknown tag fail the whole write; the
+// delete/insert are RLS-gated to the author's draft. Callers confirm
+// editability first.
 async function replaceRevisionTags(
   supabase: DB,
   id: string,
-  slugs: string[],
+  ids: string[],
   extraIds: string[] = []
 ) {
-  const unique = [...new Set(slugs)];
-
-  let subjectIds: string[] = [];
-  if (unique.length > 0) {
-    const { data, error } = await supabase
-      .from("subjects")
-      .select("id")
-      .in("slug", unique);
-
-    if (error) {
-      console.error(error);
-      throw new ServiceError("Failed to resolve subjects", 500);
-    }
-    if ((data ?? []).length !== unique.length) {
-      throw new ServiceError("Unknown subject tag", 400);
-    }
-    subjectIds = (data ?? []).map((s) => s.id);
-  }
-
-  subjectIds = [...new Set([...subjectIds, ...extraIds])];
+  const subjectIds = await resolveSubjectIds(supabase, [...ids, ...extraIds]);
 
   const { error: delError } = await supabase
     .from("guide_revision_subjects")
@@ -95,6 +78,25 @@ async function replaceRevisionTags(
   }
 }
 
+async function resolveSubjectIds(supabase: DB, ids: string[]) {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("subjects")
+    .select("id")
+    .in("id", unique);
+
+  if (error) {
+    console.error(error);
+    throw new ServiceError("Failed to resolve subjects", 500);
+  }
+  if ((data ?? []).length !== unique.length) {
+    throw new ServiceError("Unknown subject tag", 400);
+  }
+  return unique;
+}
+
 async function resolveRevisionBase(supabase: DB, revisionId: string) {
   const { data: rev, error } = await supabase
     .from("guide_revisions")
@@ -109,14 +111,19 @@ async function resolveRevisionBase(supabase: DB, revisionId: string) {
 
   const { data: guide, error: guideError } = await supabase
     .from("guides")
-    .select("guide_base_id")
+    // Explicit fkey: guide_bases.canonical_guide_id points back at guides, so a
+    // bare embed is ambiguous.
+    .select("guide_base_id, guide_bases!guides_guide_base_id_fkey(status)")
     .eq("id", rev.guide_id)
     .single();
   if (guideError) {
     console.error(guideError);
     throw new ServiceError("Failed to resolve guide base", 500);
   }
-  return guide.guide_base_id;
+  return {
+    id: guide.guide_base_id,
+    status: guide.guide_bases.status,
+  };
 }
 
 // Wipe the base's prerequisite edges and re-add them from the given guide slugs.
@@ -203,12 +210,20 @@ export async function syncDraftTagsAndEdges(
   }
 
   if (prerequisites !== undefined || todoPrereqs !== undefined) {
-    const baseId = await resolveRevisionBase(supabase, revisionId);
+    const base = await resolveRevisionBase(supabase, revisionId);
+    // Guide revisions cannot edit prerequisites or todos because those
+    // belong to the guide base.
+    if (base.status !== "draft") {
+      throw new ServiceError(
+        "Prerequisites and todos can't be changed from a revision once the guide is published",
+        422
+      );
+    }
     if (prerequisites !== undefined) {
-      await replacePrerequisites(supabase, baseId, prerequisites);
+      await replacePrerequisites(supabase, base.id, prerequisites);
     }
     if (todoPrereqs !== undefined) {
-      await replaceTodos(supabase, baseId, todoPrereqs);
+      await replaceTodos(supabase, base.id, todoPrereqs);
     }
   }
 }

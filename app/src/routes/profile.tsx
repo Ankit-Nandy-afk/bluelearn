@@ -123,15 +123,28 @@ const PAGE_SIZE = 10;
 type ActivityRow = ProfilePageData["activity"][number];
 function rowTarget(row: ActivityRow) {
   if (row.content_kind === "review")
-    return row.target_slug
-      ? { to: "/guides/$slug", params: { slug: row.target_slug } }
+    return row.base_slug
+      ? { to: "/guides/$slug", params: { slug: row.base_slug } }
       : null;
   if (
     row.content_kind === "guide" &&
     row.status === "published" &&
+    row.base_slug
+  )
+    return { to: "/guides/$slug", params: { slug: row.base_slug } };
+  // A draft on a guide that is already published is an edit, not a new guide.
+  if (
+    row.content_kind === "guide" &&
+    row.status === "draft" &&
+    row.revision_id &&
+    row.base_slug &&
     row.target_slug
   )
-    return { to: "/guides/$slug", params: { slug: row.target_slug } };
+    return {
+      to: "/guides/$slug/$variantSlug/edit",
+      params: { slug: row.base_slug, variantSlug: row.target_slug },
+      search: { draft: row.revision_id },
+    };
   if (row.content_kind === "guide" && row.status === "draft" && row.revision_id)
     return { to: "/contribute", search: { draft: row.revision_id } };
   if (
@@ -140,6 +153,15 @@ function rowTarget(row: ActivityRow) {
     row.target_slug
   )
     return { to: "/objectives/$slug", params: { slug: row.target_slug } };
+  if (
+    row.content_kind === "objective" &&
+    row.status === "draft" &&
+    row.revision_id
+  )
+    return {
+      to: "/contribute",
+      search: { draft: row.revision_id, kind: "objective" as const },
+    };
   return null;
 }
 

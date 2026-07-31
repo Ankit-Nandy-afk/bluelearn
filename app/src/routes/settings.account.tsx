@@ -1,20 +1,33 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { useAuth } from "@/lib/authContext";
-import { updateEmail } from "@/lib/auth";
+import { signIn, signOut, updateEmail, updatePassword } from "@/lib/auth";
+import { deleteMyAccount, getMyIdentity } from "@/lib/api/identity";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/settings/account")({
   component: RouteComponent,
+  loader: async ({ abortController }) => {
+    return getMyIdentity({ signal: abortController.signal });
+  },
 });
 
 function RouteComponent() {
-  const { session } = useAuth();
-  const currentEmail = session?.user.email || "";
+  const { email: initialEmail } = Route.useLoaderData();
+  const currentEmail = initialEmail || "";
 
   const [email, setEmail] = useState<string>("");
 
@@ -39,7 +52,26 @@ function RouteComponent() {
   const [isEmailEditing, setIsEmailEditing] = useState(false);
   const [isPasswordEditing, setIsPasswordEditing] = useState(false);
 
-  // TODO: fetch account data and update data based on fields
+  const navigate = useNavigate();
+
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "delete account") return;
+
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteMyAccount();
+      await signOut();
+      navigate({ to: "/" });
+    } catch (err: any) {
+      setDeleteError(err.message || "Failed to delete account");
+      setIsDeleting(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -57,9 +89,47 @@ function RouteComponent() {
     setSaving(false);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     setUpdating(true);
     setUpdateError(null);
+
+    if (password.new.length < 6) {
+      setUpdateError("New password must be at least 6 characters long.");
+      setUpdating(false);
+      return;
+    }
+
+    if (password.new !== password.confirmNew) {
+      setUpdateError("New passwords do not match.");
+      setUpdating(false);
+      return;
+    }
+
+    if (!currentEmail) {
+      setUpdateError("No user email found.");
+      setUpdating(false);
+      return;
+    }
+
+    // Verify old password by attempting to sign in
+    const { error: signInError } = await signIn(currentEmail, password.old);
+
+    if (signInError) {
+      setUpdateError("Incorrect old password.");
+      setUpdating(false);
+      return;
+    }
+
+    // Update to new password
+    const { error: updateAuthError } = await updatePassword(password.new);
+
+    if (updateAuthError) {
+      setUpdateError(updateAuthError.message);
+    } else {
+      setIsPasswordEditing(false);
+      setPassword({ old: "", new: "", confirmNew: "" });
+    }
+
     setUpdating(false);
   };
 
@@ -93,6 +163,7 @@ function RouteComponent() {
               </div>
               {!isEmailEditing && (
                 <Button
+                  className="btn-sec"
                   variant="outline"
                   onClick={() => setIsEmailEditing(true)}
                 >
@@ -102,7 +173,7 @@ function RouteComponent() {
             </div>
 
             {isEmailEditing && (
-              <div className="space-y-4 rounded-md border p-4">
+              <div className="space-y-4 p-4">
                 <div className="space-y-2">
                   <Input
                     id="email"
@@ -121,6 +192,7 @@ function RouteComponent() {
                     <p className="mono-micro text-green-500">{saveSuccess}</p>
                   )}
                   <Button
+                    className="btn-sec"
                     variant="ghost"
                     onClick={() => {
                       setIsEmailEditing(false);
@@ -130,7 +202,11 @@ function RouteComponent() {
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleSave} disabled={saving}>
+                  <Button
+                    className="btn-pri"
+                    onClick={handleSave}
+                    disabled={saving}
+                  >
                     {saving ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
@@ -160,6 +236,7 @@ function RouteComponent() {
               </div>
               {!isPasswordEditing && (
                 <Button
+                  className="btn-sec"
                   variant="outline"
                   onClick={() => setIsPasswordEditing(true)}
                 >
@@ -169,7 +246,7 @@ function RouteComponent() {
             </div>
 
             {isPasswordEditing && (
-              <div className="space-y-4 rounded-md border p-4">
+              <div className="space-y-4 p-4">
                 <div className="space-y-2">
                   <FieldLabel className="font-mono text-xs tracking-[0.08em] uppercase">
                     Old Password
@@ -229,6 +306,7 @@ function RouteComponent() {
                     <p className="mono-micro text-destructive">{updateError}</p>
                   )}
                   <Button
+                    className="btn-sec"
                     variant="ghost"
                     onClick={() => {
                       setIsPasswordEditing(false);
@@ -238,7 +316,11 @@ function RouteComponent() {
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleUpdate} disabled={updating}>
+                  <Button
+                    className="btn-pri"
+                    onClick={handleUpdate}
+                    disabled={updating}
+                  >
                     {updating ? "Updating..." : "Update Password"}
                   </Button>
                 </div>
@@ -258,12 +340,57 @@ function RouteComponent() {
         <p className="py-2 font-mono text-xs text-destructive">
           This action is permanent and cannot be undone.
         </p>
-        <Button
-          variant="destructive"
-          className="font-mono tracking-[0.08em] uppercase"
-        >
-          Delete Account
-        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              variant="destructive"
+              className="font-mono tracking-[0.08em] uppercase"
+            >
+              Delete Account
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Are you absolutely sure?</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. This will permanently delete your
+                account and remove your data from our servers.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <FieldLabel
+                  htmlFor="delete-confirm"
+                  className="font-mono text-xs tracking-[0.08em] uppercase"
+                >
+                  Type <span className="font-bold">delete account</span> to
+                  confirm
+                </FieldLabel>
+                <Input
+                  id="delete-confirm"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={'type "Delete Account"'}
+                />
+              </div>
+              {deleteError && (
+                <p className="mono-micro text-destructive">{deleteError}</p>
+              )}
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button
+                variant="destructive"
+                disabled={deleteConfirmText !== "Delete Account" || isDeleting}
+                onClick={handleDeleteAccount}
+              >
+                {isDeleting ? "Deleting..." : "Delete Account"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { getMyIdentity } from "@/lib/api/identity";
 
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -16,19 +18,21 @@ import { getInitials } from "@/lib/profile";
 
 export const Route = createFileRoute("/settings/profile")({
   component: RouteComponent,
+  loader: async ({ abortController }) => {
+    return getMyIdentity({ signal: abortController.signal });
+  },
 });
 
 function RouteComponent() {
+  const { profile: initialProfile } = Route.useLoaderData();
   const [profile, setProfile] = useState({
-    displayName: "",
-    username: "",
-    bio: "",
+    displayName: initialProfile.display_name || "",
+    username: initialProfile.username || "",
+    bio: initialProfile.bio || "",
   });
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>("");
-
-  // TODO: fetch user data and update setProfile based on user data
 
   const handleSave = async () => {
     setSaving(true);
@@ -43,8 +47,12 @@ function RouteComponent() {
         },
       });
       if (!res.ok) {
+        if (res.status === 409) {
+          throw new Error("Username already taken");
+        }
         throw new Error(`Save failed: ${res.status}`);
       }
+      toast.success("Profile saved successfully.");
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -109,10 +117,7 @@ function RouteComponent() {
 
         <Field className="space-y-2">
           <div className="space-y-1">
-            <FieldLabel
-              required
-              className="font-mono tracking-[0.08em] uppercase"
-            >
+            <FieldLabel className="font-mono tracking-[0.08em] uppercase">
               Display Name
             </FieldLabel>
             <FieldDescription className="text-xs">
@@ -126,7 +131,6 @@ function RouteComponent() {
             maxLength={50}
             placeholder="..."
             className="h-10 rounded-md"
-            required
             value={profile.displayName}
             onChange={(e) => {
               setProfile({

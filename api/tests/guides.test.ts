@@ -54,7 +54,7 @@ describe("POST /guides", () => {
         title: "Limits",
         summary: "A first look at limits.",
         body: "A first look at limits.",
-        tags: [subject.slug],
+        tags: [subject.id],
       }),
       env
     );
@@ -157,6 +157,17 @@ describe("GET /guides/{slug}", () => {
     expect(body.slug).toBe(base.slug);
     expect(body.body).toBe("Content");
     expect(body.tags.map((t) => t.slug)).toContain(subject.slug);
+  });
+
+  it("names the canonical variant so callers can build its permalink", async () => {
+    const { base } = await createPublishedGuide({ variantSlug: "original" });
+
+    const res = await app.request(`/guides/${base.slug}`, {}, env);
+
+    expect(res.status).toBe(200);
+    await expectToMatchSpec(res, "GET", "/guides/{slug}");
+    const body = (await res.json()) as { variant_slug: string | null };
+    expect(body.variant_slug).toBe("original");
   });
 
   it("hides another author's draft guide", async () => {
@@ -366,7 +377,7 @@ describe("POST /guides/{slug}/variants", () => {
       `/guides/${base.slug}/variants`,
       jsonAuth(token, "POST", {
         title: "Another method",
-        tags: [subject.slug],
+        tags: [subject.id],
       }),
       env
     );
@@ -420,7 +431,7 @@ describe("POST /guides/{slug}/variants", () => {
         title: "Another method",
         summary: "A different take",
         body: "The long version.",
-        tags: [subject.slug],
+        tags: [subject.id],
       }),
       env
     );
@@ -458,7 +469,7 @@ describe("POST /guides/{slug}/variants", () => {
         title: "Another method",
         summary: "A different take",
         body: "The long version.",
-        tags: [subject.slug],
+        tags: [subject.id],
       }),
       env
     );
