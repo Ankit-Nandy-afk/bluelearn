@@ -79,11 +79,11 @@ export function RegisterForm({
 
                 <div className="space-y-2">
                   <CardTitle className="text-2xl font-semibold tracking-tight">
-                    Welcome back
+                    Get started
                   </CardTitle>
 
                   <CardDescription className="text-sm text-muted-foreground">
-                    Sign in to start sharing knowledge.
+                    Create an account to start sharing knowledge.
                   </CardDescription>
                 </div>
               </CardHeader>
