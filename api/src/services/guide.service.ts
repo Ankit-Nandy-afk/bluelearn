@@ -6,6 +6,7 @@ import type {
   GuideListItem,
   Pagination,
   SubjectReference,
+  Walkthrough,
 } from "@bluelearn/schemas";
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
@@ -30,17 +31,11 @@ type GuideCardRow = {
   };
 };
 
-// Shape of compute_walkthrough's jsonb payload. Narrowing the RPC's recursive
-// Json return gives the route (and the typed client) a concrete shape.
-type Walkthrough = {
-  nodes: {
-    id: string;
-    slug: string;
-    title: string;
-    summary: string | null;
-    depth: number;
-  }[];
-  edges: { from_id: string; to_id: string }[];
+type WalkthroughRPC = {
+  nodes: (Omit<Walkthrough["nodes"][number], "duration_minutes"> & {
+    word_count: number;
+  })[];
+  edges: Walkthrough["edges"];
 };
 
 // A guide's title/summary/body live on the canonical guide's current
@@ -76,7 +71,9 @@ async function loadCanonicalTags(supabase: DB, revisionId: string | null) {
     console.error(error);
     throw new ServiceError("Failed to load guide subjects", 500);
   }
-  return (data ?? []).map((r) => r.subjects).filter((s) => s !== null);
+  return (data ?? [])
+    .map((r) => r.subjects)
+    .filter((s): s is NonNullable<typeof s> & { slug: string } => !!s?.slug);
 }
 
 // Resolve a base slug to its id, or 404. Shared by the variant/walkthrough
@@ -117,7 +114,7 @@ async function loadGuideTags(supabase: DB, revisionIds: string[]) {
   }
   for (const row of data ?? []) {
     const subject = row.subject;
-    if (!subject) continue;
+    if (!subject?.slug) continue;
     const list = map.get(row.guide_revision_id) ?? [];
     list.push({ slug: subject.slug, name: subject.name });
     map.set(row.guide_revision_id, list);
@@ -264,6 +261,7 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
 
   const detail: Guide = {
     slug: guide.slug ?? "",
+    variant_slug: guide.canonical?.slug ?? null,
     title: guide.title ?? "",
     author: authorId ? (usernames.get(authorId) ?? "") : "",
     summary: current?.summary ?? null,
@@ -311,7 +309,15 @@ export async function getWalkthrough(supabase: DB, rawSlug: string) {
     console.error(error);
     throw new ServiceError("Failed to compute walkthrough", 500);
   }
-  return data as unknown as Walkthrough;
+
+  const { nodes, edges } = data as unknown as WalkthroughRPC;
+  return {
+    nodes: nodes.map(({ word_count, ...node }) => ({
+      ...node,
+      duration_minutes: readingMinutes(word_count),
+    })),
+    edges,
+  } satisfies Walkthrough;
 }
 
 // List the published variants (methods/alternatives) under a guide, ranked
@@ -346,6 +352,7 @@ export async function listGuideVariants(
 // editor.
 export async function addGuideVariant(
   supabase: DB,
+  userId: string,
   rawSlug: string,
   input: CreateVariantInput
 ) {
@@ -353,7 +360,7 @@ export async function addGuideVariant(
 
   const { data: revision_id, error } = await supabase.rpc("create_variant", {
     p_guide_base_id: baseId,
-    p_title: input.title,
+    p_title: input.title ?? undefined,
     p_summary: input.summary ?? undefined,
     p_body: input.body ?? undefined,
   });
@@ -362,6 +369,13 @@ export async function addGuideVariant(
     console.error(error);
     throw new ServiceError("Failed to add variant", 500);
   }
+
+  // Prereqs and todos aren't include because those are inherited from shared base.
+  await syncDraftTagsAndEdges(supabase, userId, revision_id, {
+    tags: input.tags,
+    newSubjects: input.newSubjects,
+  });
+
   return { revision_id };
 }
 

@@ -7,6 +7,7 @@ import type {
   KnowledgeType,
   SearchFilters,
 } from "@/lib/api/search";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ObjectiveCard } from "@/components/cards/ObjectiveCard";
 
@@ -340,7 +341,32 @@ function RouteComponent() {
                   {guideCards(guides.items).map((guide) => (
                     <GuideCard
                       key={guide.slug}
-                      guide={guide}
+                      guide={{
+                        ...guide,
+                        actionBtns: (
+                          <div className="col-span-2 col-start-3 mt-5 flex items-center justify-around border-t-1 p-4 pt-8 lg:mt-0 lg:border-none lg:pt-4">
+                            <Button
+                              variant="outline"
+                              className="btn-sec"
+                              size="lg"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                navigate({
+                                  to: "/guides/$slug/walkthrough",
+                                  params: { slug: guide.slug },
+                                });
+                              }}
+                            >
+                              View Walkthrough
+                            </Button>
+
+                            <Button className="btn-pri" size="lg">
+                              Read
+                            </Button>
+                          </div>
+                        ),
+                      }}
                       to={GuideRoute.to}
                     />
                   ))}

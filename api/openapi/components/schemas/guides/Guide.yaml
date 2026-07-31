@@ -5,6 +5,10 @@ properties:
   slug:
     type: string
     example: calculus
+  variant_slug:
+    description: Slug of the currently canonical variant, for its /{base-slug}/{guide-slug} permalink.
+    type: [string, "null"]
+    example: original
   title:
     type: string
     example: Calculus
@@ -54,6 +58,7 @@ properties:
 required:
   [
     slug,
+    variant_slug,
     title,
     author,
     summary,

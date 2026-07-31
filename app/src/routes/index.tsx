@@ -42,7 +42,10 @@ export const Route = createFileRoute("/")({
         subjects: await listSubjects({ signal: abortController.signal }),
         subjectsFailed: false,
       };
-    } catch {
+    } catch (err) {
+      // a cancelled load isn't a failure. swallowing it would cache the empty
+      // result as a success and the router would never refetch.
+      if (abortController.signal.aborted) throw err;
       return { subjects: [], subjectsFailed: true };
     }
   },

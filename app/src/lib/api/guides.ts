@@ -40,10 +40,37 @@ export async function getGuide(slug: string, { signal }: FetchOptions = {}) {
   return res.json();
 }
 
+export async function getGuideWalkthrough(
+  slug: string,
+  { signal }: FetchOptions = {}
+) {
+  const res = await guides[":slug"].walkthrough.$get(
+    { param: { slug } },
+    { init: { signal } }
+  );
+  if (!res.ok) return assertOk(res) as Promise<never>;
+
+  return res.json();
+}
+
 export async function createGuide(
   body: InferRequestType<typeof guides.$post>["json"]
 ) {
   const res = await guides.$post({ json: body });
+  if (!res.ok) return assertOk(res) as Promise<never>;
+
+  const { revision_id } = await res.json();
+  return revision_id;
+}
+
+export async function addGuideVariant(
+  slug: string,
+  body: InferRequestType<(typeof guides)[":slug"]["variants"]["$post"]>["json"]
+) {
+  const res = await guides[":slug"].variants.$post({
+    param: { slug },
+    json: body,
+  });
   if (!res.ok) return assertOk(res) as Promise<never>;
 
   const { revision_id } = await res.json();

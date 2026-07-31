@@ -15,6 +15,8 @@ type PropTypes = {
   onSaveDraft: () => void;
   onPublish: () => void;
   submitting: boolean;
+  title?: string;
+  publishLabel?: string;
 };
 
 export const Submit = ({
@@ -24,13 +26,15 @@ export const Submit = ({
   onSaveDraft,
   onPublish,
   submitting,
+  title = "Preview",
+  publishLabel = "Submit for Review",
 }: PropTypes) => {
   return (
     <Stepper.Content step="submit">
       {/* same header slot as the other steps, but with the draft/submit actions */}
       <div className="mb-4 flex items-center justify-between">
         <h1 className="ml-1 font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
-          Preview
+          {title}
         </h1>
 
         <div className="text-mono flex justify-between gap-4">
@@ -52,7 +56,7 @@ export const Submit = ({
             disabled={submitting}
             onClick={onPublish}
           >
-            Submit for Review
+            {publishLabel}
           </button>
         </div>
       </div>
