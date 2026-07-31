@@ -1,4 +1,5 @@
-// Turns an id into a little SVG constellation  avatar.
+import wasmModule from "@resvg/resvg-wasm/index_bg.wasm";
+import { initWasm, Resvg } from "@resvg/resvg-wasm";
 
 type Palette = { bg: string; line: string; node: string; fill: string };
 
@@ -17,7 +18,6 @@ const SHAPES = ["circle", "square", "triangle"] as const;
 type ShapeType = (typeof SHAPES)[number];
 type Point = { x: number; y: number };
 
-// Rounds a polygon's corners a bit
 const roundedPolygonPath = (points: Point[], radius: number): string => {
   const n = points.length;
   const parts: string[] = [];
@@ -84,16 +84,13 @@ const shapeMarkup = (
 };
 
 export const generateAvatarSVG = (seed: string): string => {
-  // Use a strictly unsigned 32-bit FNV-1a hash algorithm
   let hash = 0x811c9dc5;
   for (let i = 0; i < seed.length; i++) {
     hash ^= seed.charCodeAt(i);
     hash = Math.imul(hash, 0x01000193);
   }
-  // Convert to positive, unsigned 32-bit int to prevent PRNG bugs
-  hash = hash >>> 0;
+  hash >>>= 0;
 
-  // LCG Random Number Generator (avoid state 0)
   let rngState = hash === 0 ? 1 : hash;
   const random = () => {
     rngState = (rngState * 1664525 + 1013904223) >>> 0;
@@ -150,4 +147,27 @@ export const generateAvatarSVG = (seed: string): string => {
     `<rect width="200" height="200" fill="${bg}" />${poly}` +
     `<circle cx="100" cy="100" r="75" fill="${node}" opacity="0.1" />${paths}${nodes}</svg>`
   );
+};
+
+let wasmPromise: Promise<void> | null = null;
+
+const initWasmOnce = async () => {
+  if (!wasmPromise) {
+    wasmPromise = initWasm(wasmModule).catch((err) => {
+      wasmPromise = null;
+      throw err;
+    });
+  }
+  return wasmPromise;
+};
+
+export const generateAvatarPNG = async (seed: string): Promise<Uint8Array> => {
+  await initWasmOnce();
+
+  const svg = generateAvatarSVG(seed);
+  const resvg = new Resvg(svg, {
+    fitTo: { mode: "width", value: 200 },
+  });
+  const image = resvg.render();
+  return image.asPng();
 };

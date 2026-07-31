@@ -24,9 +24,11 @@ import { reviewsRouter } from "./routes/reviews";
 import { mediaRouter } from "./routes/media";
 
 const app = new Hono<HonoEnv>()
-  .use((c, next) => cors({ origin: c.env.APP_URL })(c, next))
-  .use(supabaseMiddleware())
+  .use((c, next) => cors({ origin: c.env.APP_URL || "*" })(c, next))
   .get("/", (c) => c.json({ ok: true }))
+
+  .route("/avatar", avatarRouter)
+  .use(supabaseMiddleware())
   .route("/me", meRouter)
   .route("/profiles", profilesRouter)
   .route("/guides", guidesRouter)
@@ -37,7 +39,6 @@ const app = new Hono<HonoEnv>()
   .route("/prerequisites", prerequisitesRouter)
   .route("/todos", todosRouter)
   .route("/subjects", subjectsRouter)
-  .route("/avatar", avatarRouter)
   .route("/reviews", reviewsRouter)
   .route("/media", mediaRouter);
 
