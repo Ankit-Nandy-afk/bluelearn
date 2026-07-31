@@ -261,6 +261,7 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
 
   const detail: Guide = {
     slug: guide.slug ?? "",
+    variant_slug: guide.canonical?.slug ?? null,
     title: guide.title ?? "",
     author: authorId ? (usernames.get(authorId) ?? "") : "",
     summary: current?.summary ?? null,

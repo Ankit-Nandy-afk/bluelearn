@@ -4,7 +4,6 @@ import {
   objectiveSummarySchema,
   objectiveTitleSchema,
 } from "./fields";
-import { subjectSlugSchema } from "../subjects";
 
 // Create a draft objective. The objective is built to reach target_ids (at least one
 // goal); title is optional at creation and only required to publish.
@@ -12,7 +11,7 @@ export const createObjectiveSchema = z.object({
   title: objectiveTitleSchema.nullish(),
   summary: objectiveSummarySchema.nullish(),
   target_ids: z.array(z.uuid()).min(1),
-  tags: z.array(subjectSlugSchema).default([]),
+  tags: z.array(z.uuid()).default([]),
 });
 
 // One goal in the objective's curation. Position comes from the array index, so
@@ -34,7 +33,7 @@ export const updateObjectiveRevisionSchema = z
     title: objectiveTitleSchema,
     summary: objectiveSummarySchema.nullish(),
     change_summary: objectiveChangeSummarySchema.nullish(),
-    tags: z.array(subjectSlugSchema),
+    tags: z.array(z.uuid()),
     targets: z.array(objectiveTargetSchema).min(1),
   })
   .partial()

@@ -7,6 +7,7 @@ export type GuideContribution = {
   body: string;
   subjects: Array<string>;
   newSubjects: Array<{
+    id?: string;
     name: string;
     summary: string;
   }>;
@@ -21,6 +22,7 @@ export type VariantContribution = {
   baseGuide: string;
   subjects: Array<string>;
   newSubjects: Array<{
+    id?: string;
     name: string;
     summary: string;
   }>;

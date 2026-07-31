@@ -133,7 +133,7 @@ export async function getRevisionSnapshot(
 async function loadRevisionTags(supabase: DB, revisionId: string) {
   const { data, error } = await supabase
     .from("objective_revision_subjects")
-    .select("subject:subjects(id, slug, name)")
+    .select("subject:subjects(id, slug, name, summary, status)")
     .eq("objective_revision_id", revisionId);
 
   if (error) {
@@ -143,29 +143,28 @@ async function loadRevisionTags(supabase: DB, revisionId: string) {
   return (data ?? []).map((r) => r.subject).filter((s) => s !== null);
 }
 
-// Replace a draft revision's subject tag set with the given slugs.
+// Replace a draft revision's subject tag set. Tags are keyed by subject id, not
+// slug, because a subject proposed inline has no slug until it is approved.
 export async function replaceRevisionTags(
   supabase: DB,
   revisionId: string,
-  slugs: string[]
+  ids: string[]
 ) {
-  const unique = [...new Set(slugs)];
+  const subjectIds = [...new Set(ids)];
 
-  let subjectIds: string[] = [];
-  if (unique.length > 0) {
+  if (subjectIds.length > 0) {
     const { data, error } = await supabase
       .from("subjects")
       .select("id")
-      .in("slug", unique);
+      .in("id", subjectIds);
 
     if (error) {
       console.error(error);
       throw new ServiceError("Failed to resolve subjects", 500);
     }
-    if ((data ?? []).length !== unique.length) {
+    if ((data ?? []).length !== subjectIds.length) {
       throw new ServiceError("Unknown subject tag", 400);
     }
-    subjectIds = (data ?? []).map((s) => s.id);
   }
 
   const { error: delError } = await supabase

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Combobox } from "@/components/ui/combobox";
 
-type SubjectOption = { slug: string; name: string };
+type SubjectOption = { id: string; name: string };
 type GuideOption = {
   slug: string | null;
   title: string | null;
@@ -136,15 +136,15 @@ export const ObjectiveDetails = ({
             multiple
             items={subjects.map((s) => {
               return {
-                value: s.slug,
+                value: s.id,
                 label: s.name,
               };
             })}
             value={objectiveContData.subjects}
-            onValueChange={(slugs) =>
+            onValueChange={(ids) =>
               setObjectiveContData((prev) => ({
                 ...prev,
-                subjects: slugs,
+                subjects: ids,
               }))
             }
           />

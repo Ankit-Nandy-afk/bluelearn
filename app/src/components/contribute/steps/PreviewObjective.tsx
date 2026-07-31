@@ -140,9 +140,9 @@ export const PreviewObjective = ({
     return guide ? guide.title : slug;
   };
 
-  const getSubjectName = (slug: string) => {
-    const subject = subjectOptions.find((s) => s.slug === slug);
-    return subject ? subject.name : slug;
+  const getSubjectName = (id: string) => {
+    const subject = subjectOptions.find((s) => s.id === id);
+    return subject ? subject.name : id;
   };
 
   const getGuideDuration = (slug: string) => {
@@ -230,16 +230,16 @@ export const PreviewObjective = ({
         data: totalGuides,
       },
     ],
-    tags: objectiveContData.subjects.map((slug) => ({
-      slug,
-      name: getSubjectName(slug),
+    tags: objectiveContData.subjects.map((id) => ({
+      slug: id,
+      name: getSubjectName(id),
     })),
   };
 
   return (
     <Stepper.Content step="preview-objective">
       <StepperActionHeader
-        title={"Preview Objective"}
+        title={"Preview"}
         Stepper={Stepper}
         onSaveDraft={onSaveDraft}
         onPublish={onPublish}
@@ -258,7 +258,7 @@ export const PreviewObjective = ({
           </h3>
           {objectiveContData.targets.length === 0 ? (
             <p className="px-1 text-sm text-muted-foreground">
-              No subobjectives configured.
+              No sub-objectives configured.
             </p>
           ) : (
             <ol className="m-0 flex w-full list-none flex-col gap-10 p-0">

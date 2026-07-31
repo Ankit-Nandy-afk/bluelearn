@@ -163,16 +163,16 @@ export const VariantDetails = ({
             multiple
             items={subjects.map((s) => {
               return {
-                value: s.slug,
+                value: s.id,
                 label: s.name,
                 description: s.summary ?? "",
               };
             })}
             value={variantContData.subjects}
-            onValueChange={(slugs) =>
+            onValueChange={(ids) =>
               setVariantContData((prev: any) => ({
                 ...prev,
-                subjects: slugs,
+                subjects: ids,
               }))
             }
           />
@@ -242,7 +242,7 @@ export const VariantDetails = ({
           <div className="flex flex-wrap gap-2 px-1">
             {variantContData.newSubjects.map((sub, index) => (
               <Badge key={index} variant="outline" className="gap-1.5">
-                {sub.name} - {sub.summary}
+                {sub.summary ? `${sub.name} - ${sub.summary}` : sub.name}
                 <button
                   type="button"
                   aria-label={`Remove ${sub.name}`}

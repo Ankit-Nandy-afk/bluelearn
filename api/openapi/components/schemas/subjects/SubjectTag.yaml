@@ -10,4 +10,10 @@ properties:
   name:
     type: string
     example: Mathematics
-required: [id, slug, name]
+  summary:
+    type: [string, "null"]
+  status:
+    description: Draft until a review approves the subject alongside its guide.
+    type: string
+    enum: [draft, published]
+required: [id, slug, name, summary, status]
