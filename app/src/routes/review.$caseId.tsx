@@ -1,13 +1,15 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { Check, X } from "lucide-react";
 
 import type { ReaderGuide } from "@/components/GuideReader";
 import { Separator } from "@/components/ui/separator";
-import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { GuideReader } from "@/components/GuideReader";
+import { cn } from "@/lib/utils";
 
 import { castDecision, getReviewCase } from "@/lib/api/reviews";
 
@@ -18,6 +20,68 @@ export type Review = {
   notes: string;
   reasons: Array<string>;
 };
+
+function ChangeSection({
+  label,
+  count,
+  empty,
+  children,
+}: {
+  label: string;
+  count: number;
+  empty: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="font-mono text-xs/relaxed font-bold tracking-[0.08em] uppercase">
+        {label} ({count})
+      </p>
+      {count === 0 ? (
+        <p className="pl-3 text-xs text-muted-foreground">{empty}</p>
+      ) : (
+        <ul className="space-y-3">{children}</ul>
+      )}
+    </div>
+  );
+}
+
+function ChangeRow({
+  label,
+  badge,
+}: {
+  label: string;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <li className="flex items-center justify-between gap-2 pl-3 text-xs">
+      <span className="min-w-0 truncate">{label}</span>
+      {badge}
+    </li>
+  );
+}
+
+function ChangeBadge({
+  tone,
+  children,
+}: {
+  tone: "new" | "existing";
+  children: React.ReactNode;
+}) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "border-transparent font-mono tracking-[0.06em] uppercase",
+        tone === "new"
+          ? "bg-brand-blue/15 text-brand-dk-blue dark:text-brand-blue"
+          : "bg-muted-foreground/8 text-muted-foreground"
+      )}
+    >
+      {children}
+    </Badge>
+  );
+}
 
 export const Route = createFileRoute("/review/$caseId")({
   loader: async ({ params, abortController }) => {
@@ -54,6 +118,8 @@ function RouteComponent() {
         prerequisites: [],
       }
     : null;
+
+  const subjects = revision?.tags ?? [];
 
   const [review, setReview] = useState<Review>({
     decision: "",
@@ -115,35 +181,19 @@ function RouteComponent() {
   return (
     <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
       <section className="grid grid-cols-[320px_1fr] border-b">
-        <aside className="h-[calc(100vh-70px)] overflow-y-auto border-r px-6 py-6">
-          <CollapsibleSection
-            title={<p className="ml-auto">Submission Review</p>}
-            defaultOpen={true}
-          >
-            <div className="flex justify-around">
+        <aside className="h-[calc(100vh-70px)] space-y-4 overflow-y-auto border-r px-6 py-6">
+          <section className="space-y-4">
+            <p className="font-mono text-xs/relaxed font-bold tracking-[0.08em] uppercase">
+              Review Actions
+            </p>
+
+            <div className="grid grid-cols-2 gap-2">
               <Button
-                className="btn-reject"
-                size="lg"
-                onClick={() => {
-                  if (review.decision == "reject") {
-                    setReview((prev) => ({
-                      ...prev,
-                      decision: "",
-                    }));
-                  } else {
-                    setReview((prev) => ({
-                      ...prev,
-                      decision: "reject",
-                    }));
-                  }
-                }}
-                disabled={review.decision == "approve"}
-              >
-                Reject
-              </Button>
-              <Button
-                className="btn-approve"
-                size="lg"
+                variant="outline"
+                className={cn(
+                  "h-9 border-green-600/40 text-green-700 hover:bg-green-600/10 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
+                  review.decision == "approve" && "bg-green-600/10"
+                )}
                 onClick={() => {
                   if (review.decision == "approve") {
                     setReview((prev) => ({
@@ -159,20 +209,47 @@ function RouteComponent() {
                 }}
                 disabled={review.decision == "reject"}
               >
+                <Check />
                 Approve
+              </Button>
+              <Button
+                variant="outline"
+                className={cn(
+                  "h-9 border-red-500/40 text-red-600 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400",
+                  review.decision == "reject" && "bg-red-500/10"
+                )}
+                onClick={() => {
+                  if (review.decision == "reject") {
+                    setReview((prev) => ({
+                      ...prev,
+                      decision: "",
+                    }));
+                  } else {
+                    setReview((prev) => ({
+                      ...prev,
+                      decision: "reject",
+                    }));
+                  }
+                }}
+                disabled={review.decision == "approve"}
+              >
+                <X />
+                Reject
               </Button>
             </div>
 
-            <FieldGroup>
+            <Separator />
+
+            <FieldGroup className="gap-4">
               <Field className="space-y-2">
-                <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+                <FieldLabel className="font-mono font-bold tracking-[0.08em] uppercase">
                   Notes
                 </FieldLabel>
 
                 <textarea
                   className="h-32 w-full min-w-0 resize-none rounded-md border border-input bg-input/20 p-2 text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs/relaxed file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
                   rows={4}
-                  placeholder="Add notes with more details."
+                  placeholder="Add notes to explain your decision..."
                   required
                   value={review.notes}
                   onChange={(e) =>
@@ -186,7 +263,7 @@ function RouteComponent() {
 
               {review.decision == "reject" && (
                 <Field className="space-y-2">
-                  <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+                  <FieldLabel className="font-mono font-bold tracking-[0.08em] uppercase">
                     Reasons
                   </FieldLabel>
 
@@ -205,46 +282,86 @@ function RouteComponent() {
               )}
             </FieldGroup>
 
-            <FieldGroup>
-              <Button
-                className="btn-pri"
-                size="lg"
-                onClick={() => {
-                  submitDecision();
-                }}
-              >
-                Submit
-              </Button>
-            </FieldGroup>
+            <Button
+              className="btn-pri w-full py-2.5"
+              size="lg"
+              onClick={() => {
+                submitDecision();
+              }}
+            >
+              Submit Decision
+            </Button>
 
-            <FieldGroup>
-              <p className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
-                {submitError === null ? submitting : ""}
-              </p>
-              <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
-                {submitError ?? ""}
-              </p>
-            </FieldGroup>
-          </CollapsibleSection>
+            {(submitting || submitError) && (
+              <div className="space-y-1">
+                <p className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
+                  {submitError === null ? submitting : ""}
+                </p>
+                <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
+                  {submitError ?? ""}
+                </p>
+              </div>
+            )}
+          </section>
+
+          <Separator />
+
+          <section className="space-y-6">
+            <ChangeSection
+              label="Proposed Subjects"
+              count={subjects.length}
+              empty="None proposed."
+            >
+              {subjects.map((s) => (
+                <ChangeRow
+                  key={s.id}
+                  label={s.name}
+                  badge={
+                    s.status === "draft" ? (
+                      <ChangeBadge tone="new">New</ChangeBadge>
+                    ) : (
+                      <ChangeBadge tone="existing">Existing</ChangeBadge>
+                    )
+                  }
+                />
+              ))}
+            </ChangeSection>
+
+            <Separator />
+
+            <ChangeSection
+              label="Prerequisites"
+              count={revisionData.prerequisites.length}
+              empty="None declared."
+            >
+              {revisionData.prerequisites.map((p) => (
+                <ChangeRow key={p.slug} label={p.title ?? p.slug} />
+              ))}
+            </ChangeSection>
+
+            <Separator />
+
+            <ChangeSection
+              label="Todos"
+              count={revisionData.todos.length}
+              empty="None declared."
+            >
+              {revisionData.todos.map((t) => (
+                <ChangeRow key={t.id} label={t.title} />
+              ))}
+            </ChangeSection>
+          </section>
         </aside>
 
         {/* MAIN */}
-        <main className="h-[calc(100vh-70px)] min-w-0 overflow-y-auto px-10 py-8 lg:px-16">
-          <p className="data-label text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
-            Review
-          </p>
-
-          <Separator className="mb-8" />
-
-          <div className="rounded-md border bg-background p-4 shadow-none transition-colors hover:bg-muted">
-            {guide ? (
-              <GuideReader guide={guide} />
-            ) : (
-              <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
-                No guide revision found to display.
-              </p>
-            )}
-          </div>
+        <main className="h-[calc(100vh-70px)] min-w-0 overflow-y-auto px-10 py-6 lg:px-16">
+          {guide ? (
+            <GuideReader guide={guide} />
+          ) : (
+            <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
+              No guide revision found to display.
+            </p>
+          )}
         </main>
       </section>
     </div>
