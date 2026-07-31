@@ -95,14 +95,26 @@ async function loadGuideBaseMeta(supabase: DB, baseIds: string[]) {
   if (baseIds.length === 0) return map;
 
   const { data, error } = await selectInBatches(baseIds, (batch) =>
-    supabase.from("guide_bases").select("id, slug, title").in("id", batch)
+    supabase
+      .from("guide_bases")
+      .select(
+        `id, slug,
+         canonical:guides!guide_bases_canonical_guide_id_fkey(
+           current:guide_revisions!guides_current_revision_id_fkey(title)
+         )`
+      )
+      .in("id", batch)
   );
 
   if (error) {
     console.error(error);
     throw new ServiceError("Failed to load objective guides", 500);
   }
-  for (const b of data ?? []) map.set(b.id, { slug: b.slug, title: b.title });
+  for (const b of data ?? [])
+    map.set(b.id, {
+      slug: b.slug,
+      title: b.canonical?.current?.title ?? null,
+    });
   return map;
 }
 

@@ -8,7 +8,7 @@ import type {
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 import { slugify } from "../lib/slug";
-import { buildGuideListItems } from "./guide.service";
+import { buildGuideListItems, PUBLISHED_GUIDE_SELECT } from "./guide.service";
 import { buildObjectiveListItems } from "./objective.service";
 
 type DB = SupabaseClient<Database>;
@@ -191,19 +191,9 @@ export async function listSubjectGuides(
     count,
     error: guideError,
   } = await supabase
-    .from("guide_bases")
-    .select(
-      `id, slug, title, knowledge_type, status, created_at,
-       canonical:guides!guide_bases_canonical_guide_id_fkey!inner(
-         author_id,
-         current:guide_revisions!guides_current_revision_id_fkey!inner(
-           id, summary, word_count,
-           guide_revision_subjects!inner(subject_id)
-         )
-       )`,
-      { count: "exact" }
-    )
-    .eq("canonical.current.guide_revision_subjects.subject_id", subject.id)
+    .from("published_guides")
+    .select(PUBLISHED_GUIDE_SELECT, { count: "exact" })
+    .contains("subject_ids", [subject.id])
     .order("title")
     .range(from, to);
 
