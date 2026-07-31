@@ -3,6 +3,7 @@ import type { DecisionReason, Pagination } from "@bluelearn/schemas";
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 import { PANEL_POLICY_DEFAULTS } from "../lib/review-policy";
+import { readingMinutes } from "../lib/reading";
 
 type DB = SupabaseClient<Database>;
 type ReviewOutcome = Database["public"]["Enums"]["review_outcome"];
@@ -99,6 +100,10 @@ type CaseDetailRow = {
       body: string | null;
       status: string;
       created_at: string;
+      word_count: number;
+      guide_revision_subjects: Array<{
+        subjects: { id: string; name: string } | null;
+      }> | null;
     } | null;
   } | null;
 };
@@ -228,7 +233,10 @@ export async function getReviewCase(supabase: DB, caseId: string) {
        ),
        guide_review_cases(
          guide_revision_id,
-         guide_revisions(id, title, summary, body, status, created_at)
+         guide_revisions(
+           id, title, summary, body, status, created_at, word_count,
+           guide_revision_subjects(subjects(id, name))
+         )
        )`
     )
     .eq("id", caseId)
@@ -242,6 +250,7 @@ export async function getReviewCase(supabase: DB, caseId: string) {
   if (!raw) throw new ServiceError("Review case not found", 404);
 
   const data = raw as unknown as CaseDetailRow;
+  const revision = data.guide_review_cases?.guide_revisions ?? null;
   const latestPanel = data.review_panels[0] ?? null;
   const members = latestPanel?.panel_members ?? [];
 
@@ -273,7 +282,20 @@ export async function getReviewCase(supabase: DB, caseId: string) {
           created_at: d.created_at,
         };
       }),
-    revision: data.guide_review_cases?.guide_revisions ?? null,
+    revision: revision
+      ? {
+          id: revision.id,
+          title: revision.title,
+          summary: revision.summary,
+          body: revision.body,
+          status: revision.status,
+          created_at: revision.created_at,
+          duration_minutes: readingMinutes(revision.word_count),
+          tags: (revision.guide_revision_subjects ?? [])
+            .map((r) => r.subjects)
+            .filter((s): s is NonNullable<typeof s> => !!s),
+        }
+      : null,
   };
 }
 

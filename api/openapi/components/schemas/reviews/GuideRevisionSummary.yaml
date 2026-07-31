@@ -18,4 +18,22 @@ properties:
     example: submitted
   created_at:
     $ref: "../common/Timestamp.yaml"
-required: [id, status, created_at]
+  duration_minutes:
+    type: integer
+    example: 7
+  tags:
+    type: array
+    description: >
+      Subjects the revision is tagged with, identified by id because a subject
+      proposed alongside the revision has no slug until it is published.
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: "../common/Uuid.yaml"
+        name:
+          type: string
+          example: Topology
+      required: [id, name]
+required: [id, status, created_at, duration_minutes, tags]

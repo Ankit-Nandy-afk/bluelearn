@@ -17,19 +17,29 @@ import { loadUsernames } from "./identity.service";
 
 type DB = SupabaseClient<Database>;
 
-// The guide_bases row shape every card listing selects.
-type GuideCardRow = {
-  id: string;
-  slug: string | null;
-  title: string | null;
-  knowledge_type: Database["public"]["Enums"]["knowledge_type"];
-  status: Database["public"]["Enums"]["node_status"];
-  created_at: string;
-  canonical: {
-    author_id: string | null;
-    current: { id: string; summary: string | null; word_count: number };
-  };
-};
+// The published_guides row shape every card listing selects. The view already
+// flattens base -> canonical guide -> live revision. Postgres cannot mark view
+// columns NOT NULL, so the generated Row has every column nullable even though
+// the view's inner joins guarantee the identity ones.
+type GuideCardRow = Pick<
+  Database["public"]["Views"]["published_guides"]["Row"],
+  | "id"
+  | "base_slug"
+  | "title"
+  | "knowledge_type"
+  | "status"
+  | "created_at"
+  | "author_id"
+  | "revision_id"
+  | "summary"
+  | "word_count"
+>;
+
+// Columns of published_guides a card needs. subject_ids is only for filtering,
+// so it stays out.
+export const PUBLISHED_GUIDE_SELECT =
+  `id, base_slug, title, knowledge_type, status, created_at,
+   author_id, revision_id, summary, word_count` as const;
 
 type WalkthroughRPC = {
   nodes: (Omit<Walkthrough["nodes"][number], "duration_minutes"> & {
@@ -132,34 +142,30 @@ export async function buildGuideListItems(
   const [tagsByRevision, usernames] = await Promise.all([
     loadGuideTags(
       supabase,
-      rows.map((r) => r.canonical.current.id)
+      rows.map((r) => r.revision_id!)
     ),
     loadUsernames(
       supabase,
-      rows.map((r) => r.canonical.author_id)
+      rows.map((r) => r.author_id)
     ),
   ]);
 
-  return rows.map((base) => {
-    const current = base.canonical.current;
-    const authorId = base.canonical.author_id;
-    return {
-      id: base.id,
-      slug: base.slug,
-      title: base.title,
-      knowledge_type: base.knowledge_type,
-      summary: current.summary,
-      status: base.status,
-      created_at: base.created_at,
-      author: authorId ? (usernames.get(authorId) ?? null) : null,
-      duration_minutes: readingMinutes(current.word_count),
-      tags: tagsByRevision.get(current.id) ?? [],
-    };
-  });
+  return rows.map((card) => ({
+    id: card.id!,
+    slug: card.base_slug,
+    title: card.title,
+    knowledge_type: card.knowledge_type!,
+    summary: card.summary,
+    status: card.status!,
+    created_at: card.created_at!,
+    author: card.author_id ? (usernames.get(card.author_id) ?? null) : null,
+    duration_minutes: readingMinutes(card.word_count ?? 0),
+    tags: tagsByRevision.get(card.revision_id!) ?? [],
+  }));
 }
 
-// List published guides as cards, alphabetical. RLS hides drafts from
-// non-authors.
+// List published guides as cards, alphabetical by title. The view is already
+// scoped to published bases.
 export async function listPublishedGuides(
   supabase: DB,
   { page, limit }: Pagination = { page: 1, limit: 20 }
@@ -168,18 +174,8 @@ export async function listPublishedGuides(
   const to = from + limit - 1;
 
   const { data, count, error } = await supabase
-    .from("guide_bases")
-    .select(
-      `id, slug, title, knowledge_type, status, created_at,
-       canonical:guides!guide_bases_canonical_guide_id_fkey!inner(
-         author_id,
-         current:guide_revisions!guides_current_revision_id_fkey!inner(
-           id, summary, word_count
-         )
-       )`,
-      { count: "exact" }
-    )
-    .eq("status", "published")
+    .from("published_guides")
+    .select(PUBLISHED_GUIDE_SELECT, { count: "exact" })
     .order("title")
     .range(from, to);
 
@@ -243,7 +239,7 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
   const { data: guide, error } = await supabase
     .from("guide_bases")
     .select(
-      `id, slug, title, knowledge_type, status, created_at, updated_at, ${CANONICAL_CONTENT}`
+      `id, slug, knowledge_type, status, created_at, updated_at, ${CANONICAL_CONTENT}`
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -262,7 +258,7 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
   const detail: Guide = {
     slug: guide.slug ?? "",
     variant_slug: guide.canonical?.slug ?? null,
-    title: guide.title ?? "",
+    title: current?.title ?? "",
     author: authorId ? (usernames.get(authorId) ?? "") : "",
     summary: current?.summary ?? null,
     body: current?.body ?? null,

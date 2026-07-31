@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
-import type { Guide } from "@bluelearn/schemas";
+import type { ReaderGuide } from "@/components/GuideReader";
 import { Separator } from "@/components/ui/separator";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -40,7 +40,7 @@ function RouteComponent() {
 
   const revision = revisionData.revision;
 
-  const guide: Guide | null = revision
+  const guide: ReaderGuide | null = revision
     ? {
         slug: "",
         variant_slug: null,
@@ -48,9 +48,9 @@ function RouteComponent() {
         author: "",
         summary: revision.summary ?? null,
         body: revision.body ?? null,
-        duration_minutes: 0,
+        duration_minutes: revision.duration_minutes,
         created_at: revision.created_at,
-        tags: [],
+        tags: revision.tags,
         prerequisites: [],
       }
     : null;
