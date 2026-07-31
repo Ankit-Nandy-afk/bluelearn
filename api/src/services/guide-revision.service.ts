@@ -109,14 +109,19 @@ async function resolveRevisionBase(supabase: DB, revisionId: string) {
 
   const { data: guide, error: guideError } = await supabase
     .from("guides")
-    .select("guide_base_id")
+    // Explicit fkey: guide_bases.canonical_guide_id points back at guides, so a
+    // bare embed is ambiguous.
+    .select("guide_base_id, guide_bases!guides_guide_base_id_fkey(status)")
     .eq("id", rev.guide_id)
     .single();
   if (guideError) {
     console.error(guideError);
     throw new ServiceError("Failed to resolve guide base", 500);
   }
-  return guide.guide_base_id;
+  return {
+    id: guide.guide_base_id,
+    status: guide.guide_bases.status,
+  };
 }
 
 // Wipe the base's prerequisite edges and re-add them from the given guide slugs.
@@ -203,12 +208,20 @@ export async function syncDraftTagsAndEdges(
   }
 
   if (prerequisites !== undefined || todoPrereqs !== undefined) {
-    const baseId = await resolveRevisionBase(supabase, revisionId);
+    const base = await resolveRevisionBase(supabase, revisionId);
+    // Guide revisions cannot edit prerequisites or todos because those
+    // belong to the guide base.
+    if (base.status !== "draft") {
+      throw new ServiceError(
+        "Prerequisites and todos can't be changed from a revision once the guide is published",
+        422
+      );
+    }
     if (prerequisites !== undefined) {
-      await replacePrerequisites(supabase, baseId, prerequisites);
+      await replacePrerequisites(supabase, base.id, prerequisites);
     }
     if (todoPrereqs !== undefined) {
-      await replaceTodos(supabase, baseId, todoPrereqs);
+      await replaceTodos(supabase, base.id, todoPrereqs);
     }
   }
 }

@@ -159,6 +159,17 @@ describe("GET /guides/{slug}", () => {
     expect(body.tags.map((t) => t.slug)).toContain(subject.slug);
   });
 
+  it("names the canonical variant so callers can build its permalink", async () => {
+    const { base } = await createPublishedGuide({ variantSlug: "original" });
+
+    const res = await app.request(`/guides/${base.slug}`, {}, env);
+
+    expect(res.status).toBe(200);
+    await expectToMatchSpec(res, "GET", "/guides/{slug}");
+    const body = (await res.json()) as { variant_slug: string | null };
+    expect(body.variant_slug).toBe("original");
+  });
+
   it("hides another author's draft guide", async () => {
     const { token } = await makeUser();
     const draft = await createGuideBase();

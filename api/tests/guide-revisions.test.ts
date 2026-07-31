@@ -8,6 +8,7 @@ import {
   createPublishedGuide,
 } from "./factories/guides";
 import { createSubject, tagGuideRevision } from "./factories/subjects";
+import { createPrerequisite, createTodo } from "./factories/graph";
 import { expectToMatchSpec } from "./openapi";
 
 // A draft revision owned by `authorId`, hanging off a fresh draft guide.
@@ -197,6 +198,80 @@ describe("PATCH /guide-revisions/{id}", () => {
       .single();
     expect(created?.status).toBe("draft");
     expect(created?.slug).toBeNull();
+  });
+
+  it("refuses prerequisite edits once the base is published", async () => {
+    const author = await makeUser();
+    const { base, guide } = await createPublishedGuide({
+      authorId: author.userId,
+    });
+    const kept = await createGuideBase({ status: "published" });
+    await createPrerequisite(kept.id, base.id);
+    const draft = await createGuideRevision(guide.id, {
+      status: "draft",
+      author_id: author.userId,
+    });
+    const other = await createGuideBase({ status: "published" });
+
+    const res = await app.request(
+      `/guide-revisions/${draft.id}`,
+      jsonAuth(author.token, "PATCH", { prerequisites: [other.slug] }),
+      env
+    );
+
+    expect(res.status).toBe(422);
+    await expectToMatchSpec(res, "PATCH", "/guide-revisions/{id}");
+
+    // the live graph survives the rejected write
+    const { data: edges } = await admin
+      .from("guide_edges")
+      .select("from_guide_base_id")
+      .eq("to_guide_base_id", base.id)
+      .eq("edge_type", "prerequisite");
+    expect(edges?.map((e) => e.from_guide_base_id)).toEqual([kept.id]);
+  });
+
+  it("refuses todo edits once the base is published", async () => {
+    const author = await makeUser();
+    const { base, guide } = await createPublishedGuide({
+      authorId: author.userId,
+    });
+    await createTodo(base.id, { title: "Learn vectors" });
+    const draft = await createGuideRevision(guide.id, {
+      status: "draft",
+      author_id: author.userId,
+    });
+
+    const res = await app.request(
+      `/guide-revisions/${draft.id}`,
+      jsonAuth(author.token, "PATCH", { todoPrereqs: ["Learn matrices"] }),
+      env
+    );
+
+    expect(res.status).toBe(422);
+
+    const { data: todos } = await admin
+      .from("todo_prerequisites")
+      .select("title")
+      .eq("dependent_guide_base_id", base.id);
+    expect(todos?.map((t) => t.title)).toEqual(["Learn vectors"]);
+  });
+
+  it("still edits body on a published base", async () => {
+    const author = await makeUser();
+    const { guide } = await createPublishedGuide({ authorId: author.userId });
+    const draft = await createGuideRevision(guide.id, {
+      status: "draft",
+      author_id: author.userId,
+    });
+
+    const res = await app.request(
+      `/guide-revisions/${draft.id}`,
+      jsonAuth(author.token, "PATCH", { body: "Revised body" }),
+      env
+    );
+
+    expect(res.status).toBe(200);
   });
 });
 

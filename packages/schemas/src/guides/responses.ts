@@ -5,6 +5,7 @@ import { guideReferenceSchema } from "./references";
 
 export const guideSchema = z.object({
   slug: z.string(),
+  variant_slug: z.string().nullable(),
   title: z.string(),
   author: z.string(),
   summary: z.string().nullable(),
