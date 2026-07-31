@@ -27,8 +27,9 @@ export const Route = createFileRoute("/settings/account")({
 });
 
 function RouteComponent() {
-  const { email: initialEmail } = Route.useLoaderData();
+  const { email: initialEmail, profile } = Route.useLoaderData();
   const currentEmail = initialEmail || "";
+  const username = profile.username;
 
   const [email, setEmail] = useState<string>(currentEmail);
 
@@ -50,7 +51,7 @@ function RouteComponent() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== "delete account") return;
+    if (deleteConfirmText !== username) return;
 
     setIsDeleting(true);
     try {
@@ -349,14 +350,13 @@ function RouteComponent() {
                   htmlFor="delete-confirm"
                   className="font-mono text-xs tracking-[0.08em] uppercase"
                 >
-                  Type <span className="font-bold">delete account</span> to
-                  confirm
+                  Type <span className="font-bold">{username}</span> to confirm
                 </FieldLabel>
                 <Input
                   id="delete-confirm"
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder={'type "Delete Account"'}
+                  placeholder={`Type "${username}"`}
                 />
               </div>
             </div>
@@ -369,7 +369,7 @@ function RouteComponent() {
               <Button
                 variant="destructive"
                 size="lg"
-                disabled={deleteConfirmText !== "Delete Account" || isDeleting}
+                disabled={deleteConfirmText !== username || isDeleting}
                 onClick={handleDeleteAccount}
               >
                 {isDeleting ? "Deleting..." : "Delete Account"}
