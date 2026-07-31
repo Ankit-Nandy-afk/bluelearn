@@ -129,6 +129,7 @@ export function LoginForm({
                   <Checkbox
                     id="policies-checkbox"
                     name="policies-checkbox"
+                    className="border-primary"
                     checked={acceptedPolicies}
                     onCheckedChange={(isTicked) =>
                       setAcceptedPolicies(isTicked === true)

@@ -176,6 +176,7 @@ export function RegisterForm({
                   <Checkbox
                     id="policies-checkbox"
                     name="policies-checkbox"
+                    className="border-primary"
                     checked={acceptedPolicies}
                     onCheckedChange={(isTicked) =>
                       setAcceptedPolicies(isTicked === true)
