@@ -146,6 +146,15 @@ function rowTarget(row: ActivityRow) {
     row.target_slug
   )
     return { to: "/objectives/$slug", params: { slug: row.target_slug } };
+  if (
+    row.content_kind === "objective" &&
+    row.status === "draft" &&
+    row.revision_id
+  )
+    return {
+      to: "/contribute",
+      search: { draft: row.revision_id, kind: "objective" as const },
+    };
   return null;
 }
 
