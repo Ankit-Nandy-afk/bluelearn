@@ -25,7 +25,7 @@ export function validateRegister(input: RegisterInput): RegisterErrors | null {
     errors.confirmPassword = "Passwords do not match";
   }
   if (!input.acceptedPolicies) {
-    errors.acceptedTerms = "You must accept the terms of service";
+    errors.acceptedPolicies = "You must accept the terms of service";
   }
 
   return Object.keys(errors).length > 0 ? errors : null;
