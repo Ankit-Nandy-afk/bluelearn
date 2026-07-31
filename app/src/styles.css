@@ -180,6 +180,16 @@
     transform: scale(1.05);
   }
 
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-mono text-xs font-bold text-white uppercase transition-all duration-200;
+    background: #e11d26;
+  }
+
+  .btn-danger:hover {
+    background: #c4161e;
+    transform: scale(1.05);
+  }
+
   .btn-approve {
     @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-mono text-xs font-bold text-foreground uppercase transition-all duration-200;
     background: #00e408;

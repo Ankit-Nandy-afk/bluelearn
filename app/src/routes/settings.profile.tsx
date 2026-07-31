@@ -3,15 +3,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { getMyIdentity } from "@/lib/api/identity";
 
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { FieldLabel } from "@/components/ui/field";
 import { client } from "@/lib/api/apiClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -60,41 +54,36 @@ function RouteComponent() {
   };
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
-          Public Profile
-        </h1>
-
-        <div className="flex items-center">
-          <Button
-            variant="default"
-            className="btn-pri"
-            size="lg"
-            disabled={saving}
-            onClick={handleSave}
-          >
-            {saving ? "Saving..." : "Save"}
-          </Button>
+    <div className="max-w-2xl space-y-5">
+      <header className="flex items-start justify-between gap-6 border-b border-border pb-5">
+        <div className="space-y-1.5">
+          <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
+            Public Profile
+          </h1>
         </div>
-      </div>
 
-      <Separator className="mb-8 bg-border" />
+        <Button
+          variant="default"
+          className="btn-pri"
+          size="lg"
+          disabled={saving}
+          onClick={handleSave}
+        >
+          {saving ? "Saving..." : "Save"}
+        </Button>
+      </header>
 
-      <FieldGroup>
-        <Field className="space-y-2">
+      <section>
+        <div className="space-y-3 py-5 first:pt-0">
           <div className="space-y-1">
             <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-              Profile Photo
+              Profile Picture
             </FieldLabel>
-            <FieldDescription className="text-xs">
-              Automatically generated when your account was created.
-            </FieldDescription>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Avatar className="size-30 bg-secondary">
-              <AvatarImage className="" />
+          <div className="flex items-center gap-5">
+            <Avatar className="size-24 bg-secondary">
+              <AvatarImage />
               <AvatarFallback className="bg-secondary text-2xl font-bold">
                 {getInitials(profile.displayName || profile.username)}
               </AvatarFallback>
@@ -119,23 +108,26 @@ function RouteComponent() {
               </div>
             </div>
           </div>
-        </Field>
+        </div>
 
-        <Field className="space-y-2">
+        <div className="space-y-3 py-5 first:pt-0">
           <div className="space-y-1">
-            <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+            <FieldLabel
+              htmlFor="display-name"
+              className="font-mono tracking-[0.08em] uppercase"
+            >
               Display Name
             </FieldLabel>
-            <FieldDescription className="text-xs">
-              Publicly visible (if blank, defaults to username)
-            </FieldDescription>
+            <p className="text-xs text-muted-foreground">
+              Publicly visible. Defaults to your username when blank.
+            </p>
           </div>
 
           <Input
             id="display-name"
+            name="display-name"
             type="text"
             maxLength={50}
-            placeholder="..."
             className="h-10 rounded-md"
             value={profile.displayName}
             onChange={(e) => {
@@ -145,23 +137,27 @@ function RouteComponent() {
               });
             }}
           />
-        </Field>
+        </div>
 
-        <Field className="space-y-2">
+        <div className="space-y-3 py-5 first:pt-0">
           <div className="space-y-1">
             <FieldLabel
               required
+              htmlFor="username"
               className="font-mono tracking-[0.08em] uppercase"
             >
               Username
             </FieldLabel>
+            <p className="text-xs text-muted-foreground">
+              Your unique handle across Bluelearn.
+            </p>
           </div>
 
           <Input
             id="username"
+            name="username"
             type="text"
             maxLength={50}
-            placeholder="..."
             className="h-10 rounded-md"
             required
             value={profile.username}
@@ -172,22 +168,26 @@ function RouteComponent() {
               });
             }}
           />
-        </Field>
+        </div>
 
-        <Field className="space-y-2">
+        <div className="space-y-3 py-5 first:pt-0">
           <div className="space-y-1">
-            <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+            <FieldLabel
+              htmlFor="bio"
+              className="font-mono tracking-[0.08em] uppercase"
+            >
               Bio
             </FieldLabel>
-            <FieldDescription className="text-xs">
-              Short bio, visible on your profile
-            </FieldDescription>
+            <p className="text-xs text-muted-foreground">
+              Short bio, visible on your profile.
+            </p>
           </div>
 
           <textarea
+            id="bio"
+            name="bio"
             className="h-32 w-full min-w-0 resize-none rounded-md border border-input bg-input/20 p-2 text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs/relaxed file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
             rows={3}
-            placeholder="..."
             value={profile.bio}
             onChange={(e) => {
               setProfile({
@@ -196,8 +196,8 @@ function RouteComponent() {
               });
             }}
           />
-        </Field>
-      </FieldGroup>
+        </div>
+      </section>
     </div>
   );
 }

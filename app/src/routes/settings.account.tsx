@@ -3,11 +3,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { signIn, signOut, updateEmail, updatePassword } from "@/lib/auth";
+import { MIN_PASSWORD_LENGTH } from "@/lib/authValidation";
 import { deleteMyAccount, getMyIdentity } from "@/lib/api/identity";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { FieldLabel } from "@/components/ui/field";
 import {
   Dialog,
   DialogClose,
@@ -42,7 +42,6 @@ function RouteComponent() {
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  const [isEmailEditing, setIsEmailEditing] = useState(false);
   const [isPasswordEditing, setIsPasswordEditing] = useState(false);
 
   const navigate = useNavigate();
@@ -64,10 +63,24 @@ function RouteComponent() {
     }
   };
 
-  const handleSave = async () => {
+  const trimmedEmail = email.trim();
+  const emailChanged = trimmedEmail !== currentEmail;
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
+  const canSaveEmail = emailChanged && emailValid && !saving;
+
+  const canUpdatePassword =
+    password.old.length > 0 &&
+    password.new.length > 0 &&
+    password.confirmNew.length > 0 &&
+    !updating;
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSaveEmail) return;
+
     setSaving(true);
 
-    const { error } = await updateEmail(email);
+    const { error } = await updateEmail(trimmedEmail);
 
     if (error) {
       toast.error(error.message);
@@ -78,11 +91,16 @@ function RouteComponent() {
     setSaving(false);
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canUpdatePassword) return;
+
     setUpdating(true);
 
-    if (password.new.length < 6) {
-      toast.error("New password must be at least 6 characters long.");
+    if (password.new.length < MIN_PASSWORD_LENGTH) {
+      toast.error(
+        `New password must be at least ${MIN_PASSWORD_LENGTH} characters long.`
+      );
       setUpdating(false);
       return;
     }
@@ -123,124 +141,88 @@ function RouteComponent() {
   };
 
   return (
-    <div>
-      <h1 className="mb-4 font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
-        Account
-      </h1>
+    <div className="max-w-2xl space-y-5">
+      <header className="space-y-1.5 border-b border-border pb-5">
+        <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
+          Account
+        </h1>
+      </header>
 
-      <Separator className="mb-8 bg-border" />
+      <section className="space-y-3">
+        <h2 className="mono-micro text-muted-foreground">Authentication</h2>
 
-      <div className="my-8">
-        <h2 className="mb-2 font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
-          Account Details
-        </h2>
-
-        <Separator className="mb-4 bg-border" />
-
-        <FieldGroup>
-          <Field className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                  Email
-                </FieldLabel>
-                {!isEmailEditing && (
-                  <p className="text-sm text-muted-foreground">
-                    {currentEmail || "Loading..."}
-                  </p>
-                )}
-              </div>
-              {!isEmailEditing && (
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="btn-sec"
-                  onClick={() => setIsEmailEditing(true)}
-                >
-                  Change Email
-                </Button>
-              )}
+        <div className="border-t border-border">
+          <form className="space-y-3 py-3" onSubmit={handleSave}>
+            <div className="space-y-1">
+              <FieldLabel
+                htmlFor="email"
+                className="font-mono tracking-[0.08em] uppercase"
+              >
+                Email
+              </FieldLabel>
+              <p className="text-xs text-muted-foreground">
+                Used to sign in. Changing it sends a confirmation link to both
+                the old and new address.
+              </p>
             </div>
 
-            {isEmailEditing && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="New email address"
-                    className="h-10 rounded-md"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="flex items-center justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="btn-sec"
-                    onClick={() => {
-                      setIsEmailEditing(false);
-                      setEmail(currentEmail);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="lg"
-                    className="btn-pri"
-                    disabled={saving}
-                    onClick={handleSave}
-                  >
-                    {saving ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </Field>
-        </FieldGroup>
-      </div>
+            <div className="flex items-center gap-2">
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                className="h-10 rounded-md"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Button
+                type="submit"
+                variant="default"
+                size="lg"
+                className="btn-pri h-10"
+                disabled={!canSaveEmail}
+              >
+                {saving ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </form>
 
-      <div className="my-8">
-        <h2 className="mb-2 font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
-          Security
-        </h2>
-
-        <Separator className="mb-4 bg-border" />
-
-        <FieldGroup>
-          <Field className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                  Password
-                </FieldLabel>
-                {!isPasswordEditing && (
-                  <p className="text-sm text-muted-foreground">********</p>
-                )}
-              </div>
-              {!isPasswordEditing && (
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="btn-sec"
-                  onClick={() => setIsPasswordEditing(true)}
-                >
-                  Change Password
-                </Button>
-              )}
+          <div className="space-y-3 py-3">
+            <div className="space-y-1">
+              <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+                Password
+              </FieldLabel>
+              <p className="text-xs text-muted-foreground">
+                At least {MIN_PASSWORD_LENGTH} characters.
+              </p>
             </div>
 
-            {isPasswordEditing && (
-              <div className="space-y-4">
+            {!isPasswordEditing ? (
+              <Button
+                variant="outline"
+                size="lg"
+                className="btn-sec"
+                onClick={() => setIsPasswordEditing(true)}
+              >
+                Change password
+              </Button>
+            ) : (
+              <form className="space-y-4" onSubmit={handleUpdate}>
                 <div className="space-y-2">
-                  <FieldLabel className="font-mono text-xs tracking-[0.08em] uppercase">
+                  <FieldLabel
+                    htmlFor="old-password"
+                    className="font-mono text-xs tracking-[0.08em] uppercase"
+                  >
                     Old Password
                   </FieldLabel>
                   <Input
+                    autoFocus
                     id="old-password"
+                    name="current-password"
                     type="password"
+                    autoComplete="current-password"
                     className="h-10 rounded-md"
                     value={password.old}
                     onChange={(e) => {
@@ -253,12 +235,17 @@ function RouteComponent() {
                 </div>
 
                 <div className="space-y-2">
-                  <FieldLabel className="font-mono text-xs tracking-[0.08em] uppercase">
+                  <FieldLabel
+                    htmlFor="new-password"
+                    className="font-mono text-xs tracking-[0.08em] uppercase"
+                  >
                     New Password
                   </FieldLabel>
                   <Input
                     id="new-password"
+                    name="new-password"
                     type="password"
+                    autoComplete="new-password"
                     className="h-10 rounded-md"
                     value={password.new}
                     onChange={(e) => {
@@ -271,12 +258,17 @@ function RouteComponent() {
                 </div>
 
                 <div className="space-y-2">
-                  <FieldLabel className="font-mono text-xs tracking-[0.08em] uppercase">
+                  <FieldLabel
+                    htmlFor="confirm-password"
+                    className="font-mono text-xs tracking-[0.08em] uppercase"
+                  >
                     Confirm New Password
                   </FieldLabel>
                   <Input
                     id="confirm-password"
+                    name="confirm-password"
                     type="password"
+                    autoComplete="new-password"
                     className="h-10 rounded-md"
                     value={password.confirmNew}
                     onChange={(e) => {
@@ -288,8 +280,9 @@ function RouteComponent() {
                   />
                 </div>
 
-                <div className="flex items-center justify-end space-x-2 pt-2">
+                <div className="flex items-center justify-end gap-2 pt-1">
                   <Button
+                    type="button"
                     variant="outline"
                     size="lg"
                     className="btn-sec"
@@ -301,51 +294,47 @@ function RouteComponent() {
                     Cancel
                   </Button>
                   <Button
+                    type="submit"
                     variant="default"
                     size="lg"
                     className="btn-pri"
-                    onClick={handleUpdate}
-                    disabled={updating}
+                    disabled={!canUpdatePassword}
                   >
-                    {updating ? "Updating..." : "Update Password"}
+                    {updating ? "Updating..." : "Update password"}
                   </Button>
                 </div>
-              </div>
+              </form>
             )}
-          </Field>
-        </FieldGroup>
-      </div>
+          </div>
+        </div>
+      </section>
 
-      <div className="my-8">
-        <h2 className="mb-2 font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
-          Delete Account
-        </h2>
+      <section className="space-y-3">
+        <h2 className="mono-micro text-muted-foreground">Delete account</h2>
 
-        <Separator className="mb-4 bg-border" />
+        <div className="space-y-4 border-t border-destructive/30 py-5">
+          <p className="text-xs text-muted-foreground">
+            Deleting your account is permanent and cannot be undone.
+            Contributions you authored stay published but are no longer
+            attributed to you.
+          </p>
 
-        <p className="py-2 font-mono text-xs text-destructive">
-          This action is permanent and cannot be undone.
-        </p>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button
-              variant="destructive"
-              size="lg"
-              className="font-mono tracking-[0.08em] uppercase"
-            >
-              Delete Account
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Are you absolutely sure?</DialogTitle>
-              <DialogDescription>
-                This action cannot be undone. This will permanently delete your
-                account and remove your data from our servers.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="destructive" size="lg" className="btn-danger">
+                Delete account
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete your account?</DialogTitle>
+                <DialogDescription>
+                  This removes your profile and sign-in details from Bluelearn.
+                  Guides you wrote stay published without your name. You cannot
+                  undo this.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2 py-4">
                 <FieldLabel
                   htmlFor="delete-confirm"
                   className="font-mono text-xs tracking-[0.08em] uppercase"
@@ -354,30 +343,32 @@ function RouteComponent() {
                 </FieldLabel>
                 <Input
                   id="delete-confirm"
+                  className="h-10 rounded-md"
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
                   placeholder={`Type "${username}"`}
                 />
               </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline" size="lg" className="btn-sec">
-                  Cancel
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" size="lg" className="btn-sec">
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button
+                  variant="destructive"
+                  size="lg"
+                  className="btn-danger"
+                  disabled={deleteConfirmText !== username || isDeleting}
+                  onClick={handleDeleteAccount}
+                >
+                  {isDeleting ? "Deleting..." : "Delete account"}
                 </Button>
-              </DialogClose>
-              <Button
-                variant="destructive"
-                size="lg"
-                disabled={deleteConfirmText !== username || isDeleting}
-                onClick={handleDeleteAccount}
-              >
-                {isDeleting ? "Deleting..." : "Delete Account"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </section>
     </div>
   );
 }
