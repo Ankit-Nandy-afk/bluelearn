@@ -2,6 +2,8 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { NotFound } from "@/components/NotFound";
+import { useRequireRole } from "@/lib/authContext";
 
 import { Route as ReviewCaseIdRoute } from "@/routes/review.$caseId";
 import { getReviewQueue } from "@/lib/api/reviews";
@@ -38,6 +40,10 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function RouteComponent() {
   const cases = Route.useLoaderData();
+  const access = useRequireRole("verifier");
+
+  if (access === "pending") return null;
+  if (access === "not-found") return <NotFound />;
 
   if (cases.length === 0) {
     return (

@@ -56,14 +56,14 @@ on conflict (id) do nothing;
 -- the circular deferrable FKs without needing a wrapping transaction.
 -- ---------------------------------------------------------------------------
 
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values
-  ('20000000-0000-4000-8000-000000000001', 'binary-search',             'Binary Search',                'theoretical', 'draft'),
-  ('20000000-0000-4000-8000-000000000002', 'react-hooks',               'React Hooks',                  'theoretical', 'draft'),
-  ('20000000-0000-4000-8000-000000000003', 'deploy-cloudflare-workers', 'Deploy to Cloudflare Workers', 'practical',   'draft'),
-  ('20000000-0000-4000-8000-000000000004', 'sql-joins',                 'SQL Joins',                    'theoretical', 'draft'),
-  ('20000000-0000-4000-8000-000000000005', 'debounce-search-input',     'Debounce a Search Input',      'practical',   'draft'),
+insert into public.guide_bases (id, slug, knowledge_type, status) values
+  ('20000000-0000-4000-8000-000000000001', 'binary-search',             'theoretical', 'draft'),
+  ('20000000-0000-4000-8000-000000000002', 'react-hooks',               'theoretical', 'draft'),
+  ('20000000-0000-4000-8000-000000000003', 'deploy-cloudflare-workers', 'practical',   'draft'),
+  ('20000000-0000-4000-8000-000000000004', 'sql-joins',                 'theoretical', 'draft'),
+  ('20000000-0000-4000-8000-000000000005', 'debounce-search-input',     'practical',   'draft'),
   -- Stays draft: must NOT appear in /guides or search results.
-  ('20000000-0000-4000-8000-000000000006', 'css-grid',                  'CSS Grid',                     'theoretical', 'draft')
+  ('20000000-0000-4000-8000-000000000006', 'css-grid',                  'theoretical', 'draft')
 on conflict (id) do nothing;
 
 insert into public.guides (id, guide_base_id, slug, status, author_id) values
@@ -281,8 +281,8 @@ begin
 
   -- Five published guides tagged with the subject.
   for i in 1..5 loop
-    insert into public.guide_bases (id, slug, title, knowledge_type, status)
-    values (gb[i], slugs[i], titles[i], kinds[i], 'published');
+    insert into public.guide_bases (id, slug, knowledge_type, status)
+    values (gb[i], slugs[i], kinds[i], 'published');
 
     insert into public.guides (id, guide_base_id, author_id, slug, status)
     values (gd[i], gb[i], v_author, 'main', 'published');
@@ -358,49 +358,49 @@ insert into public.subjects (id, slug, name, creator_id) values ('10000000-1000-
 insert into public.subjects (id, slug, name, creator_id) values ('10000000-1000-4000-8000-000000000013', 'unity', 'Unity', '00000000-0000-4000-8000-000000000001') on conflict (slug) do nothing;
 insert into public.subjects (id, slug, name, creator_id) values ('10000000-1000-4000-8000-000000000014', 'vectors', 'Vectors', '00000000-0000-4000-8000-000000000001') on conflict (slug) do nothing;
 
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000000', 'arithmetic-introduction', 'Introduction to Arithmetic', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000000', 'arithmetic-introduction', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000000', '20000000-1000-4000-8000-000000000000', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000000', '30000000-1000-4000-8000-000000000000', 'Introduction to Arithmetic', 'Learn the fundamental operations of mathematics, including addition, subtraction, multiplication, and division.', '# What is Arithmetic?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-000000000000' where id = '30000000-1000-4000-8000-000000000000';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-000000000000' where id = '20000000-1000-4000-8000-000000000000';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000000', id from public.subjects where slug = 'mathematics' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000000', id from public.subjects where slug = 'arithmetic' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000001', 'algebra-how-to-express-equations', 'How to Express and Manipulate Algebraic Equations', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000001', 'algebra-how-to-express-equations', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000001', '20000000-1000-4000-8000-000000000001', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000001', '30000000-1000-4000-8000-000000000001', 'How to Express and Manipulate Algebraic Equations', 'Learn how variables, expressions, and equations are used to model and solve mathematical problems.', '# How do you work with algebraic expressions?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-000000000001' where id = '30000000-1000-4000-8000-000000000001';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-000000000001' where id = '20000000-1000-4000-8000-000000000001';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000001', id from public.subjects where slug = 'mathematics' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000001', id from public.subjects where slug = 'algebra' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000002', 'calculus-introduction', 'Introduction to Calculus', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000002', 'calculus-introduction', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000002', '20000000-1000-4000-8000-000000000002', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000002', '30000000-1000-4000-8000-000000000002', 'Introduction to Calculus', 'Explore the mathematical study of change and accumulation through derivatives and integrals.', '# What is Calculus?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-000000000002' where id = '30000000-1000-4000-8000-000000000002';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-000000000002' where id = '20000000-1000-4000-8000-000000000002';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000002', id from public.subjects where slug = 'mathematics' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000002', id from public.subjects where slug = 'calculus' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000003', 'probabilities-how-to-calculate-probability', 'How to Calculate Probability', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000003', 'probabilities-how-to-calculate-probability', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000003', '20000000-1000-4000-8000-000000000003', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000003', '30000000-1000-4000-8000-000000000003', 'How to Calculate Probability', 'Learn how to calculate the likelihood of events and reason about uncertainty.', '# How do you calculate probability?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-000000000003' where id = '30000000-1000-4000-8000-000000000003';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-000000000003' where id = '20000000-1000-4000-8000-000000000003';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000003', id from public.subjects where slug = 'mathematics' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000003', id from public.subjects where slug = 'probability' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000004', 'statistics-how-to-analyse-data', 'How to Analyse Data in Statistics', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000004', 'statistics-how-to-analyse-data', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000004', '20000000-1000-4000-8000-000000000004', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000004', '30000000-1000-4000-8000-000000000004', 'How to Analyse Data in Statistics', 'Discover how to collect, interpret, and analyse data to uncover meaningful insights.', '# How do you analyse data?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-000000000004' where id = '30000000-1000-4000-8000-000000000004';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-000000000004' where id = '20000000-1000-4000-8000-000000000004';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000004', id from public.subjects where slug = 'mathematics' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000004', id from public.subjects where slug = 'statistics' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000005', 'vectors-introduction', 'Introduction to Vectors', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000005', 'vectors-introduction', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000005', '20000000-1000-4000-8000-000000000005', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000005', '30000000-1000-4000-8000-000000000005', 'Introduction to Vectors', 'Understand vectors, quantities that have both magnitude and direction, and how they are used in mathematics and physics.', '# What is a Vector?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-000000000005' where id = '30000000-1000-4000-8000-000000000005';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-000000000005' where id = '20000000-1000-4000-8000-000000000005';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000005', id from public.subjects where slug = 'mathematics' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000005', id from public.subjects where slug = 'vectors' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000006', 'mechanics-how-to-apply-newtons-laws', 'How to Apply Newton''s Laws in Mechanics', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000006', 'mechanics-how-to-apply-newtons-laws', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000006', '20000000-1000-4000-8000-000000000006', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000006', '30000000-1000-4000-8000-000000000006', 'How to Apply Newton''s Laws in Mechanics', 'Apply Newton''s laws of motion to understand forces, movement, and physical systems.', '# How do you solve mechanics problems?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-000000000006' where id = '30000000-1000-4000-8000-000000000006';
@@ -408,48 +408,48 @@ update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-0000
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000006', id from public.subjects where slug = 'physics' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000006', id from public.subjects where slug = 'mechanics' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000006', id from public.subjects where slug = 'mathematics' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000007', 'machine-learning-fundamentals', 'Introduction to Machine Learning', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000007', 'machine-learning-fundamentals', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000007', '20000000-1000-4000-8000-000000000007', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000007', '30000000-1000-4000-8000-000000000007', 'Introduction to Machine Learning', 'Learn how machines find patterns in data and make predictions without being explicitly programmed.', '# What is Machine Learning?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-000000000007' where id = '30000000-1000-4000-8000-000000000007';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-000000000007' where id = '20000000-1000-4000-8000-000000000007';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000007', id from public.subjects where slug = 'ai' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000007', id from public.subjects where slug = 'machine-learning' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000008', 'physics-simulations-how-to-build-basic-simulations', 'How to Build Basic Physics Simulations', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000008', 'physics-simulations-how-to-build-basic-simulations', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000008', '20000000-1000-4000-8000-000000000008', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000008', '30000000-1000-4000-8000-000000000008', 'How to Build Basic Physics Simulations', 'Create simple physics simulations by combining mathematical models with programming.', '# How do physics simulations work?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-000000000008' where id = '30000000-1000-4000-8000-000000000008';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-000000000008' where id = '20000000-1000-4000-8000-000000000008';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000008', id from public.subjects where slug = 'physics' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000008', id from public.subjects where slug = 'simulation' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000009', 'programming-fundamentals', 'Introduction to Programming', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000009', 'programming-fundamentals', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000009', '20000000-1000-4000-8000-000000000009', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000009', '30000000-1000-4000-8000-000000000009', 'Introduction to Programming', 'Learn how to express instructions a computer can run, covering variables, control flow, and functions.', '# What is Programming?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-000000000009' where id = '30000000-1000-4000-8000-000000000009';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-000000000009' where id = '20000000-1000-4000-8000-000000000009';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000009', id from public.subjects where slug = 'programming' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000009', id from public.subjects where slug = 'computer-science' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000a', 'data-structures-how-to-choose-structures', 'How to Choose the Right Data Structure', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000a', 'data-structures-how-to-choose-structures', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-00000000000a', '20000000-1000-4000-8000-00000000000a', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-00000000000a', '30000000-1000-4000-8000-00000000000a', 'How to Choose the Right Data Structure', 'Understand common data structures and learn when to use each one effectively.', '# How do you choose a data structure?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-00000000000a' where id = '30000000-1000-4000-8000-00000000000a';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-00000000000a' where id = '20000000-1000-4000-8000-00000000000a';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000a', id from public.subjects where slug = 'computer-science' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000a', id from public.subjects where slug = 'data-structures' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000b', 'game-ai-systems-how-to-build-ai-behaviours', 'How to Build Game AI Behaviours', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000b', 'game-ai-systems-how-to-build-ai-behaviours', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-00000000000b', '20000000-1000-4000-8000-00000000000b', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-00000000000b', '30000000-1000-4000-8000-00000000000b', 'How to Build Game AI Behaviours', 'Understand game AI systems and how to develop custom AI behviours.', '# How does Game AI work?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-00000000000b' where id = '30000000-1000-4000-8000-00000000000b';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-00000000000b' where id = '20000000-1000-4000-8000-00000000000b';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000b', id from public.subjects where slug = 'game-development' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000b', id from public.subjects where slug = 'ai' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000c', 'game-development-introduction', 'Introduction to Game Development', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000c', 'game-development-introduction', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-00000000000c', '20000000-1000-4000-8000-00000000000c', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-00000000000c', '30000000-1000-4000-8000-00000000000c', 'Introduction to Game Development', 'Learn how to create and animate game characters and bring them into Unity.', '# What is Game Development?', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-00000000000c' where id = '30000000-1000-4000-8000-00000000000c';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-00000000000c' where id = '20000000-1000-4000-8000-00000000000c';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000c', id from public.subjects where slug = 'game-development' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000d', 'blender-character-creation', 'Blender Character Creation', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000d', 'blender-character-creation', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-00000000000d', '20000000-1000-4000-8000-00000000000d', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-00000000000d', '30000000-1000-4000-8000-00000000000d', 'Blender Character Creation', 'Learn how to create characters in blender starting with the initial sketch to the 3D character.', '# Starting with the character concept sketch', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-00000000000d' where id = '30000000-1000-4000-8000-00000000000d';
@@ -457,7 +457,7 @@ update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-0000
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000d', id from public.subjects where slug = '3d-modelling' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000d', id from public.subjects where slug = 'blender' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000d', id from public.subjects where slug = 'animation' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000e', 'unity-import-character', 'How to Import a Character into Unity', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000e', 'unity-import-character', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-00000000000e', '20000000-1000-4000-8000-00000000000e', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-00000000000e', '30000000-1000-4000-8000-00000000000e', 'How to Import a Character into Unity', 'Bring a rigged 3D character into Unity and set up its materials, avatar, and animation clips.', '# How to Import a Character into Unity.', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-00000000000e' where id = '30000000-1000-4000-8000-00000000000e';
@@ -465,7 +465,7 @@ update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-0000
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000e', id from public.subjects where slug = 'game-development' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000e', id from public.subjects where slug = 'unity' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000e', id from public.subjects where slug = '3d' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000f', 'unity-character-movement', 'How to Create Character Movement in Unity', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-00000000000f', 'unity-character-movement', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-00000000000f', '20000000-1000-4000-8000-00000000000f', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-00000000000f', '30000000-1000-4000-8000-00000000000f', 'How to Create Character Movement in Unity', 'Create player movement systems in Unity using Character Controllers and C# scripts.', '# How to Create Character Movement in Unity.', '00000000-0000-4000-8000-000000000001', 'submitted', now()) on conflict do nothing;
 update public.guides set current_revision_id = '40000000-1000-4000-8000-00000000000f' where id = '30000000-1000-4000-8000-00000000000f';
@@ -473,7 +473,7 @@ update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-0000
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000f', id from public.subjects where slug = 'game-development' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000f', id from public.subjects where slug = 'unity' on conflict do nothing;
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-00000000000f', id from public.subjects where slug = 'programming' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000010', 'latex-usage-101', 'Utilizing LaTeX 101', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000010', 'latex-usage-101', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000010', '20000000-1000-4000-8000-000000000010', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000010', '30000000-1000-4000-8000-000000000010', 'Utilizing LaTeX 101', 'A beginner-friendly introduction to writing LaTeX math expressions, covering inline and display syntax, common commands, and argument grouping.', '# Utilizing LaTeX 101
 
@@ -514,7 +514,7 @@ You''ll also see `{}` and `[]` in formulas. `{}` groups characters together as a
 update public.guides set current_revision_id = '40000000-1000-4000-8000-000000000010' where id = '30000000-1000-4000-8000-000000000010';
 update public.guide_bases set canonical_guide_id = '30000000-1000-4000-8000-000000000010' where id = '20000000-1000-4000-8000-000000000010';
 insert into public.guide_revision_subjects (guide_revision_id, subject_id) select '40000000-1000-4000-8000-000000000010', id from public.subjects where slug = 'mathematics' on conflict do nothing;
-insert into public.guide_bases (id, slug, title, knowledge_type, status) values ('20000000-1000-4000-8000-000000000011', 'how-to-install-github-cli-on-wsl', 'How to install GitHub CLI on WSL', 'theoretical', 'published') on conflict do nothing;
+insert into public.guide_bases (id, slug, knowledge_type, status) values ('20000000-1000-4000-8000-000000000011', 'how-to-install-github-cli-on-wsl', 'theoretical', 'published') on conflict do nothing;
 insert into public.guides (id, guide_base_id, slug, status, author_id) values ('30000000-1000-4000-8000-000000000011', '20000000-1000-4000-8000-000000000011', 'main', 'published', '00000000-0000-4000-8000-000000000001') on conflict do nothing;
 insert into public.guide_revisions (id, guide_id, title, summary, body, author_id, status, approved_at) values ('40000000-1000-4000-8000-000000000011', '30000000-1000-4000-8000-000000000011', 'How to install GitHub CLI on WSL', 'This guide covers the steps to install GitHub CLI in WSL (Ubuntu)', '## Update Packages
 ```shell
