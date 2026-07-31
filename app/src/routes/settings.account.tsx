@@ -173,7 +173,7 @@ function RouteComponent() {
             </div>
 
             {isEmailEditing && (
-              <div className="space-y-4 p-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Input
                     id="email"
@@ -246,7 +246,7 @@ function RouteComponent() {
             </div>
 
             {isPasswordEditing && (
-              <div className="space-y-4 p-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <FieldLabel className="font-mono text-xs tracking-[0.08em] uppercase">
                     Old Password
