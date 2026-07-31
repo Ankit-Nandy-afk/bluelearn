@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { useAuth } from "@/lib/authContext";
 import { signIn, signOut, updateEmail, updatePassword } from "@/lib/auth";
-import { deleteMyAccount } from "@/lib/api/identity";
+import { deleteMyAccount, getMyIdentity } from "@/lib/api/identity";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,11 +20,14 @@ import {
 
 export const Route = createFileRoute("/settings/account")({
   component: RouteComponent,
+  loader: async ({ abortController }) => {
+    return getMyIdentity({ signal: abortController.signal });
+  },
 });
 
 function RouteComponent() {
-  const { session } = useAuth();
-  const currentEmail = session?.user.email || "";
+  const { email: initialEmail } = Route.useLoaderData();
+  const currentEmail = initialEmail || "";
 
   const [email, setEmail] = useState<string>("");
 
@@ -70,8 +72,6 @@ function RouteComponent() {
       setIsDeleting(false);
     }
   };
-
-  // TODO: fetch account data and update data based on fields
 
   const handleSave = async () => {
     setSaving(true);
