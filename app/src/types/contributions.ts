@@ -37,6 +37,7 @@ export type ObjectiveContribution = {
   title: string;
   summary: string;
   targets: Array<string>;
-  featured: string;
+  featuredSubObjective: string;
   subObjectives: Array<SubObjective>;
+  subjects: Array<string>;
 };
