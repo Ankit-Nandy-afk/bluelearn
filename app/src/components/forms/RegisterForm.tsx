@@ -52,14 +52,17 @@ export function RegisterForm({
     }
 
     setSubmitting(true);
-    const { error } = await signUp(email, password, username);
+    const { data, error } = await signUp(email, password, username);
 
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    navigate({ to: "/" });
+
+    // with a session, useRedirectIfAuthed handles it. navigating here too would
+    // race that and abort the destination loader mid-flight.
+    if (!data.session) navigate({ to: "/" });
   }
 
   return (

@@ -12,6 +12,7 @@
   --brand-grey: #59636d;
   --brand-border: #d9dfe4;
   --brand-blue: #3d80dd;
+  --brand-dk-blue: #12315f;
   --brand-dark: #0a0a0a;
   --brand-cta: #111827;
   --brand-surface: #fafafa;
@@ -267,6 +268,7 @@
   --color-brand-grey: var(--brand-grey);
   --color-brand-border: var(--brand-border);
   --color-brand-blue: var(--brand-blue);
+  --color-brand-dk-blue: var(--brand-dk-blue);
   --color-brand-dark: var(--brand-dark);
   --color-brand-cta: var(--brand-cta);
   --color-brand-surface: var(--brand-surface);

@@ -5,7 +5,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   "vars": { "APP_URL": "https://blue-frontend-ch1.pages.dev" },
-  "triggers": { "crons": ["* * * * *"] },
+  "triggers": { "crons": ["*/5 * * * *", "0 */12 * * *"] },
   "durable_objects": {
     "bindings": [
       {

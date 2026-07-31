@@ -68,11 +68,13 @@ export async function listSubjects(
   ]);
 
   return {
-    data: (data ?? []).map((subject) => ({
-      ...subject,
-      guides_total: guideCounts.get(subject.id) ?? 0,
-      objectives_total: objectiveCounts.get(subject.id) ?? 0,
-    })),
+    data: (data ?? [])
+      .filter((s): s is typeof s & { slug: string } => s.slug !== null)
+      .map((subject) => ({
+        ...subject,
+        guides_total: guideCounts.get(subject.id) ?? 0,
+        objectives_total: objectiveCounts.get(subject.id) ?? 0,
+      })),
     total: count ?? 0,
   };
 }
@@ -147,7 +149,7 @@ export async function createSubject(
 
   const { data, error } = await supabase
     .from("subjects")
-    .insert({ slug, name, summary: summary ?? null, creator_id: userId })
+    .insert({ name, summary: summary ?? null, creator_id: userId })
     .select("id, slug, name")
     .single();
 

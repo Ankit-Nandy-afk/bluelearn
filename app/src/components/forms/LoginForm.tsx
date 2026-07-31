@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -27,8 +27,6 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const navigate = useNavigate();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(true);
@@ -52,8 +50,6 @@ export function LoginForm({
       toast.error(error.message);
       return;
     }
-
-    navigate({ to: "/" });
   }
 
   return (

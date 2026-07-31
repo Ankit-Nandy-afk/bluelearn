@@ -2,12 +2,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   CreateGuideInput,
   CreateVariantInput,
+  Guide,
   GuideListItem,
   Pagination,
   SubjectReference,
+  Walkthrough,
 } from "@bluelearn/schemas";
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
+import { selectInBatches } from "../lib/batch";
 import { syncDraftTagsAndEdges } from "./guide-revision.service";
 import { readingMinutes } from "../lib/reading";
 import { loadUsernames } from "./identity.service";
@@ -28,17 +31,11 @@ type GuideCardRow = {
   };
 };
 
-// Shape of compute_walkthrough's jsonb payload. Narrowing the RPC's recursive
-// Json return gives the route (and the typed client) a concrete shape.
-type Walkthrough = {
-  nodes: {
-    id: string;
-    slug: string;
-    title: string;
-    summary: string | null;
-    depth: number;
-  }[];
-  edges: { from_id: string; to_id: string }[];
+type WalkthroughRPC = {
+  nodes: (Omit<Walkthrough["nodes"][number], "duration_minutes"> & {
+    word_count: number;
+  })[];
+  edges: Walkthrough["edges"];
 };
 
 // A guide's title/summary/body live on the canonical guide's current
@@ -48,11 +45,13 @@ const CANONICAL_CONTENT = `
   canonical:guides!guide_bases_canonical_guide_id_fkey(
     id,
     slug,
+    author_id,
     current:guide_revisions!guides_current_revision_id_fkey(
       id,
       title,
       summary,
       body,
+      word_count,
       created_at
     )
   )
@@ -72,7 +71,9 @@ async function loadCanonicalTags(supabase: DB, revisionId: string | null) {
     console.error(error);
     throw new ServiceError("Failed to load guide subjects", 500);
   }
-  return (data ?? []).map((r) => r.subjects).filter((s) => s !== null);
+  return (data ?? [])
+    .map((r) => r.subjects)
+    .filter((s): s is NonNullable<typeof s> & { slug: string } => !!s?.slug);
 }
 
 // Resolve a base slug to its id, or 404. Shared by the variant/walkthrough
@@ -100,10 +101,12 @@ async function loadGuideTags(supabase: DB, revisionIds: string[]) {
   const map = new Map<string, SubjectReference[]>();
   if (revisionIds.length === 0) return map;
 
-  const { data, error } = await supabase
-    .from("guide_revision_subjects")
-    .select("guide_revision_id, subject:subjects(slug, name)")
-    .in("guide_revision_id", revisionIds);
+  const { data, error } = await selectInBatches(revisionIds, (batch) =>
+    supabase
+      .from("guide_revision_subjects")
+      .select("guide_revision_id, subject:subjects(slug, name)")
+      .in("guide_revision_id", batch)
+  );
 
   if (error) {
     console.error(error);
@@ -111,7 +114,7 @@ async function loadGuideTags(supabase: DB, revisionIds: string[]) {
   }
   for (const row of data ?? []) {
     const subject = row.subject;
-    if (!subject) continue;
+    if (!subject?.slug) continue;
     const list = map.get(row.guide_revision_id) ?? [];
     list.push({ slug: subject.slug, name: subject.name });
     map.set(row.guide_revision_id, list);
@@ -251,12 +254,25 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
   }
   if (!guide) throw new ServiceError("Guide not found", 404);
 
-  const subjects = await loadCanonicalTags(
-    supabase,
-    guide.canonical?.current?.id ?? null
-  );
+  const current = guide.canonical?.current ?? null;
+  const subjects = await loadCanonicalTags(supabase, current?.id ?? null);
+  const authorId = guide.canonical?.author_id ?? null;
+  const usernames = await loadUsernames(supabase, [authorId]);
 
-  return { guide, subjects };
+  const detail: Guide = {
+    slug: guide.slug ?? "",
+    variant_slug: guide.canonical?.slug ?? null,
+    title: guide.title ?? "",
+    author: authorId ? (usernames.get(authorId) ?? "") : "",
+    summary: current?.summary ?? null,
+    body: current?.body ?? null,
+    duration_minutes: readingMinutes(current?.word_count ?? 0),
+    created_at: guide.created_at,
+    tags: subjects.map((s) => ({ slug: s.slug, name: s.name })),
+    prerequisites: [],
+  };
+
+  return detail;
 }
 
 // Archive the guide. Per RLS this is moderator/admin-only (authors cannot move
@@ -293,7 +309,15 @@ export async function getWalkthrough(supabase: DB, rawSlug: string) {
     console.error(error);
     throw new ServiceError("Failed to compute walkthrough", 500);
   }
-  return data as unknown as Walkthrough;
+
+  const { nodes, edges } = data as unknown as WalkthroughRPC;
+  return {
+    nodes: nodes.map(({ word_count, ...node }) => ({
+      ...node,
+      duration_minutes: readingMinutes(word_count),
+    })),
+    edges,
+  } satisfies Walkthrough;
 }
 
 // List the published variants (methods/alternatives) under a guide, ranked
@@ -328,6 +352,7 @@ export async function listGuideVariants(
 // editor.
 export async function addGuideVariant(
   supabase: DB,
+  userId: string,
   rawSlug: string,
   input: CreateVariantInput
 ) {
@@ -335,7 +360,7 @@ export async function addGuideVariant(
 
   const { data: revision_id, error } = await supabase.rpc("create_variant", {
     p_guide_base_id: baseId,
-    p_title: input.title,
+    p_title: input.title ?? undefined,
     p_summary: input.summary ?? undefined,
     p_body: input.body ?? undefined,
   });
@@ -344,6 +369,13 @@ export async function addGuideVariant(
     console.error(error);
     throw new ServiceError("Failed to add variant", 500);
   }
+
+  // Prereqs and todos aren't include because those are inherited from shared base.
+  await syncDraftTagsAndEdges(supabase, userId, revision_id, {
+    tags: input.tags,
+    newSubjects: input.newSubjects,
+  });
+
   return { revision_id };
 }
 

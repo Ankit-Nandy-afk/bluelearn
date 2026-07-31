@@ -30,6 +30,7 @@ import { Route as ObjectivesSlugRouteImport } from './routes/objectives.$slug'
 import { Route as GuidesSlugRouteImport } from './routes/guides/$slug'
 import { Route as GuidesSlugIndexRouteImport } from './routes/guides/$slug/index'
 import { Route as GuidesSlugWalkthroughRouteImport } from './routes/guides/$slug/walkthrough'
+import { Route as GuidesSlugVariantSlugEditRouteImport } from './routes/guides/$slug/$variantSlug/edit'
 
 const SubjectsRoute = SubjectsRouteImport.update({
   id: '/subjects',
@@ -136,6 +137,12 @@ const GuidesSlugWalkthroughRoute = GuidesSlugWalkthroughRouteImport.update({
   path: '/walkthrough',
   getParentRoute: () => GuidesSlugRoute,
 } as any)
+const GuidesSlugVariantSlugEditRoute =
+  GuidesSlugVariantSlugEditRouteImport.update({
+    id: '/$variantSlug/edit',
+    path: '/$variantSlug/edit',
+    getParentRoute: () => GuidesSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/subjects/': typeof SubjectsIndexRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug/': typeof GuidesSlugIndexRoute
+  '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -178,6 +186,7 @@ export interface FileRoutesByTo {
   '/subjects': typeof SubjectsIndexRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug': typeof GuidesSlugIndexRoute
+  '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -202,6 +211,7 @@ export interface FileRoutesById {
   '/subjects/': typeof SubjectsIndexRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug/': typeof GuidesSlugIndexRoute
+  '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/subjects/'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug/'
+    | '/guides/$slug/$variantSlug/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/subjects'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug'
+    | '/guides/$slug/$variantSlug/edit'
   id:
     | '__root__'
     | '/'
@@ -269,6 +281,7 @@ export interface FileRouteTypes {
     | '/subjects/'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug/'
+    | '/guides/$slug/$variantSlug/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -436,6 +449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesSlugWalkthroughRouteImport
       parentRoute: typeof GuidesSlugRoute
     }
+    '/guides/$slug/$variantSlug/edit': {
+      id: '/guides/$slug/$variantSlug/edit'
+      path: '/$variantSlug/edit'
+      fullPath: '/guides/$slug/$variantSlug/edit'
+      preLoaderRoute: typeof GuidesSlugVariantSlugEditRouteImport
+      parentRoute: typeof GuidesSlugRoute
+    }
   }
 }
 
@@ -483,11 +503,13 @@ const SubjectsRouteWithChildren = SubjectsRoute._addFileChildren(
 interface GuidesSlugRouteChildren {
   GuidesSlugWalkthroughRoute: typeof GuidesSlugWalkthroughRoute
   GuidesSlugIndexRoute: typeof GuidesSlugIndexRoute
+  GuidesSlugVariantSlugEditRoute: typeof GuidesSlugVariantSlugEditRoute
 }
 
 const GuidesSlugRouteChildren: GuidesSlugRouteChildren = {
   GuidesSlugWalkthroughRoute: GuidesSlugWalkthroughRoute,
   GuidesSlugIndexRoute: GuidesSlugIndexRoute,
+  GuidesSlugVariantSlugEditRoute: GuidesSlugVariantSlugEditRoute,
 }
 
 const GuidesSlugRouteWithChildren = GuidesSlugRoute._addFileChildren(
