@@ -32,6 +32,7 @@ type PropTypes = {
   onSaveDraft: () => void;
   submitting?: boolean;
   showBaseFields?: boolean;
+  title?: string;
   changeSummary?: string;
   onChangeSummaryChange?: (value: string) => void;
 };
@@ -47,6 +48,7 @@ export const GuideDetails = ({
   // Prerequisites and todos live on the guide base, so they're only
   // authorable while the base is still a draft.
   showBaseFields = true,
+  title = "Guide Details",
   changeSummary,
   onChangeSummaryChange,
 }: PropTypes) => {
@@ -62,7 +64,7 @@ export const GuideDetails = ({
   return (
     <Stepper.Content step="guide-details">
       <StepperActionHeader
-        title={"Guide Details"}
+        title={title}
         Stepper={Stepper}
         onSaveDraft={onSaveDraft}
         submitting={submitting}

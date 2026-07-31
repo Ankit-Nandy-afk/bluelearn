@@ -48,8 +48,8 @@ export const Route = createFileRoute("/guides/$slug/$variantSlug/edit")({
 });
 
 const StepperInstance = defineStepper([
-  { id: "guide-details", title: "Guide Details" },
-  { id: "content", title: "Content" },
+  { id: "guide-details", title: "Edit Details" },
+  { id: "content", title: "Edit Content" },
   { id: "submit", title: "Preview" },
 ]);
 
@@ -295,6 +295,7 @@ function RouteComponent() {
                   onSaveDraft={saveDraft}
                   submitting={submitting}
                   showBaseFields={false}
+                  title="Edit Details"
                   changeSummary={changeSummary}
                   onChangeSummaryChange={setChangeSummary}
                 />
@@ -308,6 +309,7 @@ function RouteComponent() {
                   onUploadImage={uploadGuideImage}
                   onSaveDraft={saveDraft}
                   submitting={submitting}
+                  title="Edit Content"
                 />
 
                 <Submit
@@ -317,6 +319,8 @@ function RouteComponent() {
                   onSaveDraft={saveDraft}
                   onPublish={publish}
                   submitting={submitting}
+                  title="Preview"
+                  publishLabel="Submit Guide Revision"
                 />
               </div>
             </>

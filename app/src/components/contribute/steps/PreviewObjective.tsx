@@ -239,7 +239,7 @@ export const PreviewObjective = ({
   return (
     <Stepper.Content step="preview-objective">
       <StepperActionHeader
-        title={"Preview Objective"}
+        title={"Preview"}
         Stepper={Stepper}
         onSaveDraft={onSaveDraft}
         onPublish={onPublish}
@@ -258,7 +258,7 @@ export const PreviewObjective = ({
           </h3>
           {objectiveContData.targets.length === 0 ? (
             <p className="px-1 text-sm text-muted-foreground">
-              No subobjectives configured.
+              No sub-objectives configured.
             </p>
           ) : (
             <ol className="m-0 flex w-full list-none flex-col gap-10 p-0">
