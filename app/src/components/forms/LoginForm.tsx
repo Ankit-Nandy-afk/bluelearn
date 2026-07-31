@@ -29,13 +29,13 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(true);
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!acceptedTerms) {
+    if (!acceptedPolicies) {
       toast.error("You must accept the terms of service");
       return;
     }
@@ -127,20 +127,22 @@ export function LoginForm({
               <CardFooter className="flex flex-col gap-5 border-t p-6">
                 <Field orientation="horizontal">
                   <Checkbox
-                    id="terms-checkbox-2"
-                    name="terms-checkbox-2"
-                    checked={acceptedTerms}
-                    onCheckedChange={(v) => setAcceptedTerms(v === true)}
+                    id="policies-checkbox"
+                    name="policies-checkbox"
+                    checked={acceptedPolicies}
+                    onCheckedChange={(isTicked) =>
+                      setAcceptedPolicies(isTicked === true)
+                    }
                   />
 
                   <FieldContent>
-                    <FieldLabel htmlFor="terms-checkbox-2">
-                      Accept terms of service
+                    <FieldLabel htmlFor="policies-checkbox">
+                      Accept Terms of Service and Privacy Policy
                     </FieldLabel>
 
                     <FieldDescription className="font-mono">
-                      By clicking this checkbox, you agree to the terms of
-                      service and privacy policy.
+                      By clicking this checkbox, you agree to the Terms of
+                      Service and Privacy Policy.
                     </FieldDescription>
                   </FieldContent>
                 </Field>
