@@ -299,6 +299,7 @@ export type ProfileActivityRow = {
     | "rejected"
     | "published";
   target_slug: string | null;
+  base_slug: string | null;
   review_case_id: string | null;
   revision_id: string | null;
 };
@@ -372,7 +373,7 @@ export async function getMyActivity(
     ];
     const bases = await supabase
       .from("guide_bases")
-      .select("id, canonical_guide_id")
+      .select("id, slug, canonical_guide_id")
       .in("id", baseIds);
     if (bases.error) fail(bases.error);
 
@@ -390,6 +391,7 @@ export async function getMyActivity(
     const canonicalByBase = new Map(
       (bases.data ?? []).map((b) => [b.id, b.canonical_guide_id])
     );
+    const slugByBase = new Map((bases.data ?? []).map((b) => [b.id, b.slug]));
     const caseByRev = new Map(
       (links.data ?? []).map((l) => [l.guide_revision_id, l.case_id])
     );
@@ -423,6 +425,7 @@ export async function getMyActivity(
         created_at: rev.created_at,
         status,
         target_slug: guide?.slug ?? null,
+        base_slug: guide ? (slugByBase.get(guide.guide_base_id) ?? null) : null,
         review_case_id: RESOLVED_CASE_STATUSES.has(caseStatus) ? caseId : null,
         revision_id: rev.id,
       });
@@ -468,6 +471,7 @@ export async function getMyActivity(
         created_at: rev.created_at,
         status: rev.status,
         target_slug: slugById.get(rev.objective_id) ?? null,
+        base_slug: null,
         review_case_id: null,
         revision_id: rev.id,
       });
@@ -534,7 +538,9 @@ export async function getMyActivity(
       const guideIds = [...new Set((revs.data ?? []).map((r) => r.guide_id))];
       const guides = await supabase
         .from("guides")
-        .select("id, slug")
+        // Explicit fkey: guide_bases.canonical_guide_id points back at guides,
+        // so a bare embed is ambiguous.
+        .select("id, slug, guide_bases!guides_guide_base_id_fkey(slug)")
         .in("id", guideIds);
       if (guides.error) fail(guides.error);
 
@@ -544,6 +550,9 @@ export async function getMyActivity(
       const revById = new Map((revs.data ?? []).map((r) => [r.id, r]));
       const slugByGuide = new Map(
         (guides.data ?? []).map((g) => [g.id, g.slug])
+      );
+      const baseSlugByGuide = new Map(
+        (guides.data ?? []).map((g) => [g.id, g.guide_bases.slug])
       );
 
       for (const decision of myDecisions) {
@@ -563,6 +572,9 @@ export async function getMyActivity(
           status: caseStatus,
           target_slug: revData
             ? (slugByGuide.get(revData.guide_id) ?? null)
+            : null,
+          base_slug: revData
+            ? (baseSlugByGuide.get(revData.guide_id) ?? null)
             : null,
           review_case_id: RESOLVED_CASE_STATUSES.has(caseStatus)
             ? caseId

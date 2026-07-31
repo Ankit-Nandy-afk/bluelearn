@@ -43,6 +43,7 @@ function RouteComponent() {
   const guide: Guide | null = revision
     ? {
         slug: "",
+        variant_slug: null,
         title: revision.title ?? "",
         author: "",
         summary: revision.summary ?? null,
