@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { avatarRouter } from "./routes/avatar";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseMiddleware } from "./middleware/auth.middleware";
 import { ServiceError } from "./lib/service-error";
@@ -26,7 +27,6 @@ const app = new Hono<HonoEnv>()
   .use((c, next) => cors({ origin: c.env.APP_URL })(c, next))
   .use(supabaseMiddleware())
   .get("/", (c) => c.json({ ok: true }))
-
   .route("/me", meRouter)
   .route("/profiles", profilesRouter)
   .route("/guides", guidesRouter)
@@ -37,6 +37,7 @@ const app = new Hono<HonoEnv>()
   .route("/prerequisites", prerequisitesRouter)
   .route("/todos", todosRouter)
   .route("/subjects", subjectsRouter)
+  .route("/avatar", avatarRouter)
   .route("/reviews", reviewsRouter)
   .route("/media", mediaRouter);
 
