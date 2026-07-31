@@ -73,10 +73,11 @@ function RouteComponent() {
           )}
 
           <Button
+            variant="default"
             className="btn-pri"
-            onClick={handleSave}
-            disabled={saving}
             size="lg"
+            disabled={saving}
+            onClick={handleSave}
           >
             {saving ? "Saving..." : "Save"}
           </Button>

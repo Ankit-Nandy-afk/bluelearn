@@ -163,8 +163,9 @@ function RouteComponent() {
               </div>
               {!isEmailEditing && (
                 <Button
-                  className="btn-sec"
                   variant="outline"
+                  size="lg"
+                  className="btn-sec"
                   onClick={() => setIsEmailEditing(true)}
                 >
                   Change Email
@@ -192,8 +193,9 @@ function RouteComponent() {
                     <p className="mono-micro text-green-500">{saveSuccess}</p>
                   )}
                   <Button
-                    className="btn-sec"
                     variant="outline"
+                    size="lg"
+                    className="btn-sec"
                     onClick={() => {
                       setIsEmailEditing(false);
                       setSaveError(null);
@@ -203,9 +205,11 @@ function RouteComponent() {
                     Cancel
                   </Button>
                   <Button
+                    variant="default"
+                    size="lg"
                     className="btn-pri"
-                    onClick={handleSave}
                     disabled={saving}
+                    onClick={handleSave}
                   >
                     {saving ? "Saving..." : "Save Changes"}
                   </Button>
@@ -236,8 +240,9 @@ function RouteComponent() {
               </div>
               {!isPasswordEditing && (
                 <Button
-                  className="btn-sec"
                   variant="outline"
+                  size="lg"
+                  className="btn-sec"
                   onClick={() => setIsPasswordEditing(true)}
                 >
                   Change Password
@@ -306,8 +311,9 @@ function RouteComponent() {
                     <p className="mono-micro text-destructive">{updateError}</p>
                   )}
                   <Button
-                    className="btn-sec"
                     variant="outline"
+                    size="lg"
+                    className="btn-sec"
                     onClick={() => {
                       setIsPasswordEditing(false);
                       setUpdateError(null);
@@ -317,6 +323,8 @@ function RouteComponent() {
                     Cancel
                   </Button>
                   <Button
+                    variant="default"
+                    size="lg"
                     className="btn-pri"
                     onClick={handleUpdate}
                     disabled={updating}
@@ -344,6 +352,7 @@ function RouteComponent() {
           <DialogTrigger asChild>
             <Button
               variant="destructive"
+              size="lg"
               className="font-mono tracking-[0.08em] uppercase"
             >
               Delete Account
@@ -379,10 +388,13 @@ function RouteComponent() {
             </div>
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" size="lg" className="btn-sec">
+                  Cancel
+                </Button>
               </DialogClose>
               <Button
                 variant="destructive"
+                size="lg"
                 disabled={deleteConfirmText !== "Delete Account" || isDeleting}
                 onClick={handleDeleteAccount}
               >
