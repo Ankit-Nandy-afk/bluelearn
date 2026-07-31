@@ -27,13 +27,23 @@ import { Content } from "@/components/contribute/steps/Content";
 import { Submit } from "@/components/contribute/steps/Submit";
 
 export const Route = createFileRoute("/guides/$slug/$variantSlug/edit")({
-  loader: async ({ params }) => {
+  validateSearch: (search: Record<string, unknown>): { draft?: string } => ({
+    draft: typeof search.draft === "string" ? search.draft : undefined,
+  }),
+  loaderDeps: ({ search }) => ({ draft: search.draft }),
+  loader: async ({ params, deps }) => {
     const variant = await getVariantBySlug(params.slug, params.variantSlug);
     // A variant with nothing published has no snapshot to revise.
     if (!variant.current) throw notFound();
 
-    const snapshot = await getRevision(variant.current.id);
-    return { variant, current: variant.current, snapshot };
+    // Resuming picks up the open draft; otherwise seed from what's live.
+    const snapshot = await getRevision(deps.draft ?? variant.current.id);
+    return {
+      variant,
+      current: variant.current,
+      snapshot,
+      draftId: deps.draft ?? null,
+    };
   },
   component: RouteComponent,
 });
@@ -45,7 +55,7 @@ const StepperInstance = defineStepper([
 ]);
 
 function RouteComponent() {
-  const { variant, current, snapshot } = Route.useLoaderData();
+  const { variant, current, snapshot, draftId } = Route.useLoaderData();
   const { Stepper } = StepperInstance;
 
   const [guideContData, setGuideContData] = useState<GuideContribution>(() => ({
@@ -61,7 +71,7 @@ function RouteComponent() {
     todoPrereqs: snapshot.todos,
   }));
 
-  const [revisionId, setRevisionId] = useState<string | null>(null);
+  const [revisionId, setRevisionId] = useState<string | null>(draftId);
   const [submitting, setSubmitting] = useState(false);
 
   const [subjectOptions, setSubjectOptions] =
