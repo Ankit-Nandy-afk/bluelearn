@@ -103,7 +103,7 @@ export const DraggableGuideCard = ({
               {guide.duration_minutes && (
                 <span className="flex items-center gap-1 font-mono font-medium uppercase">
                   <Clock className="h-3 w-3 text-muted-foreground/75" />
-                  {guide.duration_minutes}min
+                  {formatDuration(guide.duration_minutes)}
                 </span>
               )}
             </div>
