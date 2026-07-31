@@ -71,9 +71,7 @@ export function stripNulls<T extends object>(item: T): T {
   return doc;
 }
 
-// Map a published_guides row to its Typesense document. Returns null for rows
-// missing slug/title (nullable in the generated types, never null for
-// published guides) — skip those rather than indexing them.
+// Map a published_guides row to its Typesense document.
 export async function rowToGuideDocument(
   supabase: DB,
   row: GuideRow

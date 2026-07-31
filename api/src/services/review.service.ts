@@ -351,8 +351,8 @@ export async function getReviewCase(
       : (members.find((pm) => pm.member_id === viewerId)?.review_decisions ??
         null);
 
-  // A finished case is a public record, so its proposed graph goes public with
-  // it. While the case is open only the author and the seats can see that much.
+  // Tags and edges are made public on closed cases, but while the case is open,
+  // only the author and the seats can see them.
   const closed = data.status === "approved" || data.status === "rejected";
   const canSeeTagsAndEdges =
     closed ||

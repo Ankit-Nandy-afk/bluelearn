@@ -17,10 +17,7 @@ import { loadUsernames } from "./identity.service";
 
 type DB = SupabaseClient<Database>;
 
-// The published_guides row shape every card listing selects. The view already
-// flattens base -> canonical guide -> live revision. Postgres cannot mark view
-// columns NOT NULL, so the generated Row has every column nullable even though
-// the view's inner joins guarantee the identity ones.
+// Names the exact published_guides columns that PUBLISHED_GUIDE_SELECT fetches.
 type GuideCardRow = Pick<
   Database["public"]["Views"]["published_guides"]["Row"],
   | "id"
@@ -35,8 +32,7 @@ type GuideCardRow = Pick<
   | "word_count"
 >;
 
-// Columns of published_guides a card needs. subject_ids is only for filtering,
-// so it stays out.
+// Columns of published_guides a card needs.
 export const PUBLISHED_GUIDE_SELECT =
   `id, base_slug, title, knowledge_type, status, created_at,
    author_id, revision_id, summary, word_count` as const;
@@ -164,8 +160,7 @@ export async function buildGuideListItems(
   }));
 }
 
-// List published guides as cards, alphabetical by title. The view is already
-// scoped to published bases.
+// List published guides as cards, alphabetical by title.
 export async function listPublishedGuides(
   supabase: DB,
   { page, limit }: Pagination = { page: 1, limit: 20 }
