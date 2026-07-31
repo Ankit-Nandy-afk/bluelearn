@@ -15,13 +15,11 @@ import {
 } from "@/components/ui/card";
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 
 export function LoginForm({
   className,
@@ -29,16 +27,10 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
-    if (!acceptedPolicies) {
-      toast.error("You must accept the terms of service");
-      return;
-    }
 
     setSubmitting(true);
 
@@ -125,29 +117,6 @@ export function LoginForm({
 
               {/* Footer */}
               <CardFooter className="flex flex-col gap-5 border-t p-6">
-                <Field orientation="horizontal">
-                  <Checkbox
-                    id="policies-checkbox"
-                    name="policies-checkbox"
-                    className="border-primary"
-                    checked={acceptedPolicies}
-                    onCheckedChange={(isTicked) =>
-                      setAcceptedPolicies(isTicked === true)
-                    }
-                  />
-
-                  <FieldContent>
-                    <FieldLabel htmlFor="policies-checkbox">
-                      I accept the Terms of Service and Privacy Policy
-                    </FieldLabel>
-
-                    <FieldDescription className="font-mono">
-                      By clicking this checkbox, you agree to the Terms of
-                      Service and Privacy Policy.
-                    </FieldDescription>
-                  </FieldContent>
-                </Field>
-
                 <Button
                   type="submit"
                   className="btn-pri w-full"
