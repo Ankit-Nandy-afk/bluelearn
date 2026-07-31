@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
+import { toast } from "sonner";
 
 import type { ReaderGuide } from "@/components/GuideReader";
 import { Separator } from "@/components/ui/separator";
@@ -96,10 +97,7 @@ export const Route = createFileRoute("/review/$caseId")({
 function RouteComponent() {
   const { caseId } = Route.useParams();
   const revisionData = Route.useLoaderData();
-  const [submitting, setSubmitting] = useState<
-    "Submitting..." | "Submitted." | ""
-  >("");
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const revision = revisionData.revision;
@@ -140,15 +138,17 @@ function RouteComponent() {
   ];
 
   const validateReview = () => {
-    let missingFields = "";
-    if (review.decision == "approve") return "";
+    if (review.decision === "")
+      return "Choose approve or reject before submitting";
+    if (review.decision === "approve") return "";
 
-    if (review.reasons.length === 0)
-      missingFields += "Rejections require at least one reason. ";
-    if (review.notes.length === 0)
-      missingFields += "Rejections require a note. ";
+    const missing = [];
+    if (review.reasons.length === 0) missing.push("at least one reason");
+    if (review.notes.length === 0) missing.push("a note");
 
-    return missingFields;
+    return missing.length === 0
+      ? ""
+      : `Rejections require ${missing.join(" and ")}`;
   };
 
   const submitDecision = async () => {
@@ -158,23 +158,25 @@ function RouteComponent() {
 
     const missingFields = validateReview();
     if (missingFields.length !== 0) {
-      setSubmitError(
-        "There were errors with your submission: \n" + missingFields
-      );
+      toast.error(missingFields);
       return;
     }
 
-    setSubmitting("Submitting...");
-    setSubmitError(null);
+    setSubmitting(true);
+    const toastId = toast.loading("Submitting decision...");
 
     try {
       await castDecision(caseId, review, { signal: controller.signal });
-      setSubmitting("Submitted.");
+      toast.success("Decision submitted", { id: toastId });
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
-        setSubmitError("There was an unexpected error with your submission.");
-        setSubmitting("");
+        toast.error("There was an unexpected error with your submission", {
+          id: toastId,
+        });
+      } else {
+        toast.dismiss(toastId);
       }
+      setSubmitting(false);
     }
   };
 
@@ -285,23 +287,13 @@ function RouteComponent() {
             <Button
               className="btn-pri w-full py-2.5"
               size="lg"
+              disabled={submitting}
               onClick={() => {
                 submitDecision();
               }}
             >
               Submit Decision
             </Button>
-
-            {(submitting || submitError) && (
-              <div className="space-y-1">
-                <p className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
-                  {submitError === null ? submitting : ""}
-                </p>
-                <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
-                  {submitError ?? ""}
-                </p>
-              </div>
-            )}
           </section>
 
           <Separator />
