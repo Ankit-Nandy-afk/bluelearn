@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/card";
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
@@ -183,16 +182,28 @@ export function RegisterForm({
                     }
                   />
 
-                  <FieldContent>
-                    <FieldLabel htmlFor="policies-checkbox">
-                      I accept the Terms of Service and Privacy Policy
-                    </FieldLabel>
-
-                    <FieldDescription className="font-mono">
-                      By clicking this checkbox, you agree to the Terms of
-                      Service and Privacy Policy.
-                    </FieldDescription>
-                  </FieldContent>
+                  <FieldLabel htmlFor="policies-checkbox" className="block">
+                    I have read and agree to the{" "}
+                    <a
+                      href="https://bluelearn.org/terms"
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-primary underline underline-offset-2 hover:text-primary/80"
+                    >
+                      Terms of Service
+                    </a>{" "}
+                    and the{" "}
+                    <a
+                      href="https://bluelearn.org/privacy"
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-primary underline underline-offset-2 hover:text-primary/80"
+                    >
+                      Privacy Policy
+                    </a>
+                  </FieldLabel>
                 </Field>
 
                 <Button
