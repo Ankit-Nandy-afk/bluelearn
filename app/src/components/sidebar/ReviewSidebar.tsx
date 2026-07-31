@@ -1,76 +1,23 @@
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
 import { useRef, useState } from "react";
-import { Combobox } from "../ui/combobox";
+
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { ChangeRow } from "@/components/review/ChangeRow";
+import { ChangeBadge } from "@/components/review/ChangeBadge";
+import { ChangeSection } from "@/components/review/ChangeSection";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
+
 import { cn } from "@/lib/utils";
 import { castDecision } from "@/lib/api/reviews";
-import { Badge } from "@/components/ui/badge";
 
 export type Review = {
   decision: string;
   notes: string;
   reasons: Array<string>;
 };
-
-function ChangeSection({
-  count,
-  empty,
-  children,
-}: {
-  count: number;
-  empty: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2">
-      {count === 0 ? (
-        <p className="text-xs text-muted-foreground">{empty}</p>
-      ) : (
-        <ul className="space-y-3">{children}</ul>
-      )}
-    </div>
-  );
-}
-
-function ChangeRow({
-  label,
-  badge,
-}: {
-  label: string;
-  badge?: React.ReactNode;
-}) {
-  return (
-    <li className="flex items-center justify-between gap-2 text-xs">
-      <span className="min-w-0 truncate">{label}</span>
-      {badge}
-    </li>
-  );
-}
-
-function ChangeBadge({
-  tone,
-  children,
-}: {
-  tone: "new" | "existing";
-  children: React.ReactNode;
-}) {
-  return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "border-transparent font-mono tracking-[0.06em] uppercase",
-        tone === "new"
-          ? "bg-brand-blue/15 text-brand-dk-blue dark:text-brand-blue"
-          : "bg-muted-foreground/8 text-muted-foreground"
-      )}
-    >
-      {children}
-    </Badge>
-  );
-}
 
 type PropTypes = {
   caseId: string;
@@ -308,7 +255,7 @@ export const ReviewSidebar = ({
 
         <CollapsibleSection
           defaultOpen={true}
-          title={<p className="ml-auto">Prerequisites</p>}
+          title={<p className="ml-auto">Prerequisite Guides</p>}
         >
           <ChangeSection
             count={revisionData.prerequisites.length}
@@ -316,22 +263,20 @@ export const ReviewSidebar = ({
           >
             {revisionData.prerequisites.map(
               (p: { slug: string; title?: string }) => (
-                <ChangeRow key={p.slug} label={p.title ?? p.slug} />
+                <ChangeRow
+                  key={p.slug}
+                  label={p.title ?? p.slug}
+                  badge={<ChangeBadge tone="existing">Existing</ChangeBadge>}
+                />
               )
             )}
-          </ChangeSection>
-        </CollapsibleSection>
 
-        <CollapsibleSection
-          defaultOpen={true}
-          title={<p className="ml-auto">Todos</p>}
-        >
-          <ChangeSection
-            count={revisionData.todos.length}
-            empty="None declared."
-          >
             {revisionData.todos.map((t: { id: string; title: string }) => (
-              <ChangeRow key={t.id} label={t.title} />
+              <ChangeRow
+                key={t.id}
+                label={t.title}
+                badge={<ChangeBadge tone="new">To Do</ChangeBadge>}
+              />
             ))}
           </ChangeSection>
         </CollapsibleSection>
