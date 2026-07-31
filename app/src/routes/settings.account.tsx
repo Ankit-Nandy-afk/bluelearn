@@ -1,12 +1,23 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { useAuth } from "@/lib/authContext";
-import { signIn, updateEmail, updatePassword } from "@/lib/auth";
+import { signIn, signOut, updateEmail, updatePassword } from "@/lib/auth";
+import { deleteMyAccount } from "@/lib/api/identity";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/settings/account")({
   component: RouteComponent,
@@ -38,6 +49,27 @@ function RouteComponent() {
 
   const [isEmailEditing, setIsEmailEditing] = useState(false);
   const [isPasswordEditing, setIsPasswordEditing] = useState(false);
+
+  const navigate = useNavigate();
+
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "delete account") return;
+
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteMyAccount();
+      await signOut();
+      navigate({ to: "/" });
+    } catch (err: any) {
+      setDeleteError(err.message || "Failed to delete account");
+      setIsDeleting(false);
+    }
+  };
 
   // TODO: fetch account data and update data based on fields
 
@@ -214,7 +246,7 @@ function RouteComponent() {
             </div>
 
             {isPasswordEditing && (
-              <div className="space-y-4 rounded-md border p-4">
+              <div className="space-y-4 p-4">
                 <div className="space-y-2">
                   <FieldLabel className="font-mono text-xs tracking-[0.08em] uppercase">
                     Old Password
@@ -285,7 +317,7 @@ function RouteComponent() {
                     Cancel
                   </Button>
                   <Button
-                    className="btn-sec"
+                    className="btn-pri"
                     onClick={handleUpdate}
                     disabled={updating}
                   >
@@ -308,12 +340,57 @@ function RouteComponent() {
         <p className="py-2 font-mono text-xs text-destructive">
           This action is permanent and cannot be undone.
         </p>
-        <Button
-          variant="destructive"
-          className="font-mono tracking-[0.08em] uppercase"
-        >
-          Delete Account
-        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              variant="destructive"
+              className="font-mono tracking-[0.08em] uppercase"
+            >
+              Delete Account
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Are you absolutely sure?</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. This will permanently delete your
+                account and remove your data from our servers.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <FieldLabel
+                  htmlFor="delete-confirm"
+                  className="font-mono text-xs tracking-[0.08em] uppercase"
+                >
+                  Type <span className="font-bold">delete account</span> to
+                  confirm
+                </FieldLabel>
+                <Input
+                  id="delete-confirm"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={'type "Delete Account"'}
+                />
+              </div>
+              {deleteError && (
+                <p className="mono-micro text-destructive">{deleteError}</p>
+              )}
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button
+                variant="destructive"
+                disabled={deleteConfirmText !== "Delete Account" || isDeleting}
+                onClick={handleDeleteAccount}
+              >
+                {isDeleting ? "Deleting..." : "Delete Account"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
