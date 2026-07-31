@@ -19,6 +19,7 @@ import { getGuideWalkthrough } from "@/lib/api/guides";
 import { DraggableGuideCard } from "@/components/contribute/DraggableGuideCard";
 import { Badge } from "@/components/ui/badge";
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
+import { formatDuration } from "@/lib/guideUtils";
 import {
   Card,
   CardContent,
@@ -77,12 +78,7 @@ export const OrderObjectiveGuides = ({
   }, [curatedSequence, targetGuide, guidesMap]);
 
   const formattedDuration = useMemo(() => {
-    if (totalDuration === 0) return "0m";
-    const h = Math.floor(totalDuration / 60);
-    const m = totalDuration % 60;
-    if (h > 0 && m > 0) return `${h}h ${m}m`;
-    if (h > 0) return `${h}h`;
-    return `${m}m`;
+    return formatDuration(totalDuration);
   }, [totalDuration]);
 
   const [walkthroughData, setWalkthroughData] = useState<Walkthrough | null>(
