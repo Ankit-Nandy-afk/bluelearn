@@ -8,12 +8,23 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { useLexicalNodeSelection } from "@lexical/react/useLexicalNodeSelection";
 import {
   addComposerChild$,
-  insertJsx$,
+  addExportVisitor$,
+  addImportVisitor$,
+  addLexicalNode$,
+  addMdastExtension$,
+  addNestedEditorChild$,
+  addSyntaxExtension$,
+  addTableCellEditorChild$,
+  addToMarkdownExtension$,
+  insertDecoratorNode$,
   lexical,
   realmPlugin,
-  useLexicalNodeRemove,
   usePublisher,
 } from "@mdxeditor/editor";
+import { math } from "micromark-extension-math";
+import { mathFromMarkdown, mathToMarkdown } from "mdast-util-math";
+import { MathExportVisitor, MathImportVisitor } from "./MathVisitors";
+import { $createMathNode, MathNode } from "./MathNode";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +38,9 @@ const {
   $isRangeSelection,
   $isTextNode,
   $getNodeByKey,
+  $createNodeSelection,
   $createRangeSelection,
+  $insertNodes,
   $setSelection,
   createCommand,
   COMMAND_PRIORITY_NORMAL,
@@ -53,7 +66,7 @@ export interface MathLiveComponentProps {
   latex: string;
   inline: boolean;
   onChange: (latex: string) => void;
-  nodeKey?: string;
+  nodeKey: string;
 }
 
 type MathEditorPayload = {
@@ -62,7 +75,7 @@ type MathEditorPayload = {
   onChange: (latex: string) => void;
   onRemove: () => void;
   anchorElement: HTMLElement;
-  nodeKey?: string;
+  nodeKey: string;
 };
 
 export const OPEN_MATH_EDITOR_COMMAND = createCommand<MathEditorPayload | null>(
@@ -79,21 +92,54 @@ export function SingletonMathEditor() {
   });
   const mfRef = useRef<any>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const internalLatexRef = useRef("");
+  const pendingLatexRef = useRef<string | null>(null);
+  const commitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const payloadRef = useRef<MathEditorPayload | null>(null);
+  payloadRef.current = payload;
 
-  // Position updater
+  const cancelPending = useCallback(() => {
+    if (commitTimeoutRef.current) {
+      clearTimeout(commitTimeoutRef.current);
+      commitTimeoutRef.current = null;
+    }
+    pendingLatexRef.current = null;
+  }, []);
+
+  const commitLatex = useCallback(
+    (latex: string, onChange: (latex: string) => void) => {
+      pendingLatexRef.current = latex;
+      if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
+      commitTimeoutRef.current = setTimeout(() => {
+        commitTimeoutRef.current = null;
+        pendingLatexRef.current = null;
+        onChange(latex);
+      }, 300);
+    },
+    []
+  );
+
+  const closeEditor = useCallback(() => {
+    const current = payloadRef.current;
+    if (current && pendingLatexRef.current !== null) {
+      current.onChange(pendingLatexRef.current);
+    }
+    cancelPending();
+    setPayload(null);
+  }, [cancelPending]);
+
   const updatePosition = useCallback(() => {
-    if (!payload?.anchorElement) return;
-    const rect = payload.anchorElement.getBoundingClientRect();
+    const current = payloadRef.current;
+    if (!current?.anchorElement) return;
+    const rect = current.anchorElement.getBoundingClientRect();
     setPosition({
       top: rect.bottom + window.scrollY + 8,
       left: Math.max(
         16,
-        rect.left + window.scrollX - (payload.inline ? 0 : 64)
+        rect.left + window.scrollX - (current.inline ? 0 : 64)
       ), // Adjust for center alignment
       width: rect.width,
     });
-  }, [payload]);
+  }, []);
 
   // Handle command
   useEffect(() => {
@@ -101,59 +147,76 @@ export function SingletonMathEditor() {
       OPEN_MATH_EDITOR_COMMAND,
       (newPayload) => {
         if (newPayload) {
-          internalLatexRef.current = newPayload.latex;
           setPayload(newPayload);
-
-          if (mfRef.current) {
-            mfRef.current.value = newPayload.latex;
-            setTimeout(() => {
-              if (mfRef.current) mfRef.current.focus();
-            }, 50);
-          }
         } else {
-          setPayload(null);
+          closeEditor();
         }
         return true;
       },
       COMMAND_PRIORITY_NORMAL
     );
-  }, [editor]);
+  }, [editor, closeEditor]);
+
+  useEffect(() => {
+    if (!payload) return;
+    const mf = mfRef.current;
+    if (!mf) return;
+    mf.value = payload.latex;
+    const frame = requestAnimationFrame(() => mfRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [payload]);
+
+  useEffect(() => {
+    return () => {
+      const current = payloadRef.current;
+      if (current && pendingLatexRef.current !== null) {
+        current.onChange(pendingLatexRef.current);
+      }
+      if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
+    };
+  }, []);
 
   // Update position on scroll/resize when active
   useEffect(() => {
     if (!payload) return;
     updatePosition();
-    window.addEventListener("scroll", updatePosition, true);
-    window.addEventListener("resize", updatePosition);
+
+    let frame = 0;
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        updatePosition();
+      });
+    };
+
+    window.addEventListener("scroll", schedule, true);
+    window.addEventListener("resize", schedule);
     return () => {
-      window.removeEventListener("scroll", updatePosition, true);
-      window.removeEventListener("resize", updatePosition);
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule, true);
+      window.removeEventListener("resize", schedule);
     };
   }, [payload, updatePosition]);
 
   // Input listener
   useEffect(() => {
     const mf = mfRef.current;
-    if (!mf) return;
+    if (!mf || !payload) return;
 
     const handleInput = (e: Event) => {
-      const newVal = (e.target as any).value;
-      internalLatexRef.current = newVal;
-      if (payload) {
-        payload.onChange(newVal);
-      }
+      commitLatex((e.target as any).value, payload.onChange);
     };
 
     const handleMoveOut = () => {
-      if (payload) {
-        if (payload.nodeKey) {
-          const node = $getNodeByKey(payload.nodeKey);
-          if (node) {
-            node.selectNext();
-          }
+      const { nodeKey } = payload;
+      closeEditor();
+      editor.update(() => {
+        const node = $getNodeByKey(nodeKey);
+        if (node) {
+          node.selectNext();
         }
-        setPayload(null);
-      }
+      });
     };
 
     mf.addEventListener("input", handleInput);
@@ -162,12 +225,13 @@ export function SingletonMathEditor() {
       mf.removeEventListener("input", handleInput);
       mf.removeEventListener("move-out", handleMoveOut);
     };
-  }, [payload]);
+  }, [payload, commitLatex, closeEditor, editor]);
 
   // Outside click to close
   useEffect(() => {
+    if (!payload) return;
+
     const handleClickOutside = (e: MouseEvent) => {
-      if (!payload) return;
       const target = e.target as HTMLElement;
 
       // Ignore clicks on math-field internals, menus, or scrims
@@ -182,7 +246,7 @@ export function SingletonMathEditor() {
       }
 
       if (popoverRef.current && !popoverRef.current.contains(target)) {
-        setPayload(null);
+        closeEditor();
       }
     };
 
@@ -193,7 +257,7 @@ export function SingletonMathEditor() {
       document.removeEventListener("pointerdown", handleClickOutside, {
         capture: true,
       });
-  }, [payload]);
+  }, [payload, closeEditor]);
 
   const isVisible = !!payload;
   const portalNode = typeof document !== "undefined" ? document.body : null;
@@ -224,7 +288,7 @@ export function SingletonMathEditor() {
           onKeyDown={(e: any) => {
             if (e.key === "Enter" || e.key === "Escape") {
               e.preventDefault();
-              setPayload(null);
+              closeEditor();
               editor.focus();
             }
           }}
@@ -240,6 +304,7 @@ export function SingletonMathEditor() {
             className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             onClick={() => {
               if (payload) {
+                cancelPending();
                 payload.onRemove();
                 setPayload(null);
               }
@@ -261,9 +326,7 @@ export function SingletonMathEditor() {
             variant="default"
             size="sm"
             className="h-7 rounded-md px-3 text-xs"
-            onClick={() => {
-              setPayload(null);
-            }}
+            onClick={closeEditor}
           >
             Done
           </Button>
@@ -282,14 +345,20 @@ export function MathLiveComponent({
 }: MathLiveComponentProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
   const [editor] = useLexicalComposerContext();
-  const removeNode = useLexicalNodeRemove();
-  const [isSelected, setSelected, clearSelection] = useLexicalNodeSelection(
-    nodeKey || "unknown"
-  );
+  const [isSelected, setSelected, clearSelection] =
+    useLexicalNodeSelection(nodeKey);
   const [isRangeSelected, setIsRangeSelected] = useState(false);
 
+  const removeNode = useCallback(() => {
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if (node) {
+        node.remove();
+      }
+    });
+  }, [editor, nodeKey]);
+
   useEffect(() => {
-    if (!nodeKey) return;
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         const selection = $getSelection();
@@ -340,10 +409,8 @@ export function MathLiveComponent({
       onDragStart={(e) => e.preventDefault()}
       onClick={(e) => {
         e.stopPropagation();
-        if (nodeKey) {
-          clearSelection();
-          setSelected(true);
-        }
+        clearSelection();
+        setSelected(true);
         editor.dispatchCommand(OPEN_MATH_EDITOR_COMMAND, {
           latex,
           inline,
@@ -406,19 +473,6 @@ export function MathLiveComponent({
       )}
     </span>
   );
-}
-
-// Math Utility Functions
-export function getIsInlineFromAttributes(attributes: Array<any>): boolean {
-  const inlineAttr = attributes.find((a: any) => a.name === "inline");
-  return inlineAttr &&
-    typeof inlineAttr === "object" &&
-    "value" in inlineAttr &&
-    inlineAttr.value != null
-    ? inlineAttr.value === "true" ||
-        (typeof inlineAttr.value === "object" &&
-          inlineAttr.value.value === "true")
-    : false;
 }
 
 function isValidInlineMathEquation(equation: string): boolean {
@@ -484,7 +538,6 @@ function findMathInText(text: string) {
 
 export function MathShortcutTypeListener() {
   const [editor] = useLexicalComposerContext();
-  const insertJsx = usePublisher(insertJsx$);
 
   useEffect(() => {
     return editor.registerUpdateListener(
@@ -545,69 +598,69 @@ export function MathShortcutTypeListener() {
         if (scheduledInsert) {
           editor.update(() => {
             const node = $getNodeByKey(scheduledInsert.anchorKey);
-            if ($isTextNode(node)) {
-              const rangeSelection = $createRangeSelection();
-              rangeSelection.anchor.set(
-                node.getKey(),
-                scheduledInsert.startIdx,
-                "text"
-              );
-              rangeSelection.focus.set(
-                node.getKey(),
-                scheduledInsert.endIdx + 1,
-                "text"
-              );
-              $setSelection(rangeSelection);
-            }
-          });
+            if (!$isTextNode(node)) return;
 
-          setTimeout(() => {
-            insertJsx({
-              kind: "text",
-              name: "Math",
-              props: {
-                latex: scheduledInsert.equation,
-                inline: {
-                  type: "expression",
-                  value: scheduledInsert.isInline ? "true" : "false",
-                },
-              },
-            });
-          }, 0);
+            const rangeSelection = $createRangeSelection();
+            rangeSelection.anchor.set(
+              node.getKey(),
+              scheduledInsert.startIdx,
+              "text"
+            );
+            rangeSelection.focus.set(
+              node.getKey(),
+              scheduledInsert.endIdx + 1,
+              "text"
+            );
+            $setSelection(rangeSelection);
+
+            const mathNode = $createMathNode(
+              scheduledInsert.equation,
+              scheduledInsert.isInline
+            );
+            $insertNodes([mathNode]);
+
+            const nodeSelection = $createNodeSelection();
+            nodeSelection.add(mathNode.getKey());
+            $setSelection(nodeSelection);
+          });
         }
       }
     );
-  }, [editor, insertJsx]);
+  }, [editor]);
 
   return null;
 }
 
-export const mathShortcutsPlugin = realmPlugin({
+export const mathPlugin = realmPlugin({
   init: (realm) => {
     realm.pubIn({
+      [addSyntaxExtension$]: math(),
+      [addMdastExtension$]: mathFromMarkdown(),
+      [addToMarkdownExtension$]: mathToMarkdown(),
+      [addLexicalNode$]: MathNode,
+      [addImportVisitor$]: MathImportVisitor,
+      [addExportVisitor$]: MathExportVisitor,
       [addComposerChild$]: () => (
         <>
           <MathShortcutTypeListener />
           <SingletonMathEditor />
         </>
       ),
+      [addNestedEditorChild$]: () => <MathShortcutTypeListener />,
+      [addTableCellEditorChild$]: () => <MathShortcutTypeListener />,
     });
   },
 });
 
 export function InsertInlineMath() {
-  const insertJsx = usePublisher(insertJsx$);
+  const insertDecoratorNode = usePublisher(insertDecoratorNode$);
   return (
     <button
       type="button"
       onClick={() => {
-        insertJsx({
-          kind: "text",
-          name: "Math",
-          props: { latex: "", inline: { type: "expression", value: "true" } },
-        });
+        insertDecoratorNode(() => $createMathNode("", true));
       }}
-      className="flex min-h-7 min-w-7 items-center justify-center gap-1 rounded p-1.5 text-slate-800 transition-colors hover:bg-slate-200"
+      className="flex min-h-7 min-w-7 items-center justify-center gap-1 rounded p-1.5 text-foreground transition-colors hover:bg-muted"
       title="Insert Inline Math (e.g. $e = mc^2$)"
     >
       <span className="font-serif text-sm font-bold">f(x)</span>
@@ -616,18 +669,14 @@ export function InsertInlineMath() {
 }
 
 export function InsertBlockMath() {
-  const insertJsx = usePublisher(insertJsx$);
+  const insertDecoratorNode = usePublisher(insertDecoratorNode$);
   return (
     <button
       type="button"
       onClick={() => {
-        insertJsx({
-          kind: "text",
-          name: "Math",
-          props: { latex: "", inline: { type: "expression", value: "false" } },
-        });
+        insertDecoratorNode(() => $createMathNode("", false));
       }}
-      className="flex min-h-7 min-w-7 items-center justify-center gap-1 rounded p-1.5 text-slate-800 transition-colors hover:bg-slate-200"
+      className="flex min-h-7 min-w-7 items-center justify-center gap-1 rounded p-1.5 text-foreground transition-colors hover:bg-muted"
       title="Insert Block Math (e.g. $$f(x) = \\sin(x)$$)"
     >
       <span className="font-serif text-sm font-bold italic">$$</span>

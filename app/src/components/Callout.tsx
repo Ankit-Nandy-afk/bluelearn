@@ -56,7 +56,7 @@ export const Callout = ({ type = "info", children }: CalloutProps) => {
     },
   };
 
-  const currentVariant = variants[type];
+  const currentVariant = variants[type] ?? variants.info;
 
   return (
     <div

@@ -13,66 +13,72 @@ export default function CalloutShortcutListener() {
     const removeKeyboardListener = editor.registerCommand(
       KEY_DOWN_COMMAND,
       (event: KeyboardEvent) => {
-        if (event.key === " " || event.key === "Enter") {
-          const state = { handled: false };
+        if (event.key !== " " && event.key !== "Enter") {
+          return false;
+        }
 
-          editor.update(() => {
-            const selection = $getSelection();
-            if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
-              return;
-            }
+        const match = editor.getEditorState().read(() => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
+            return null;
+          }
 
-            const anchorKey = selection.anchor.key;
-            const offset = selection.anchor.offset;
-            const anchorNode = $getNodeByKey(anchorKey);
+          const anchorNode = $getNodeByKey(selection.anchor.key);
+          if (!$isTextNode(anchorNode)) {
+            return null;
+          }
 
-            if (!$isTextNode(anchorNode)) {
-              return;
-            }
+          const textContent = anchorNode.getTextContent();
+          if (selection.anchor.offset !== textContent.length) {
+            return null;
+          }
 
-            const textContent = anchorNode.getTextContent();
-            if (offset !== textContent.length) {
-              return;
-            }
+          const parentNode = anchorNode.getParent();
+          if (!parentNode || parentNode.getType() !== "paragraph") {
+            return null;
+          }
 
-            const parentNode = anchorNode.getParent();
-            if (parentNode && parentNode.getType() === "paragraph") {
-              const match = textContent.match(/^:::([a-z]+)?$/);
-              if (match) {
-                const name = match[1] || "info";
-                if (
-                  [
-                    "note",
-                    "tip",
-                    "danger",
-                    "info",
-                    "caution",
-                    "warning",
-                  ].includes(name)
-                ) {
-                  const directiveNode = $createDirectiveNode({
-                    type: "containerDirective",
-                    name,
-                    attributes: {},
-                    children: [{ type: "paragraph", children: [] }],
-                  });
+          const directiveMatch = textContent.match(/^:::([a-z]+)?$/);
+          if (!directiveMatch) {
+            return null;
+          }
 
-                  parentNode.insertAfter(directiveNode);
-                  directiveNode.select();
-                  parentNode.remove();
+          const name = directiveMatch[1] || "info";
+          if (
+            !["note", "tip", "danger", "info", "caution", "warning"].includes(
+              name
+            )
+          ) {
+            return null;
+          }
 
-                  state.handled = true;
-                }
-              }
-            }
+          return { name, paragraphKey: parentNode.getKey() };
+        });
+
+        if (!match) {
+          return false;
+        }
+
+        editor.update(() => {
+          const parentNode = $getNodeByKey(match.paragraphKey);
+          if (!parentNode) {
+            return;
+          }
+
+          const directiveNode = $createDirectiveNode({
+            type: "containerDirective",
+            name: match.name,
+            attributes: {},
+            children: [{ type: "paragraph", children: [] }],
           });
 
-          if (state.handled) {
-            event.preventDefault();
-            return true;
-          }
-        }
-        return false;
+          parentNode.insertAfter(directiveNode);
+          directiveNode.select();
+          parentNode.remove();
+        });
+
+        event.preventDefault();
+        return true;
       },
       COMMAND_PRIORITY_LOW
     );

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   MDXEditor,
   NestedLexicalEditor,
@@ -7,7 +7,6 @@ import {
   directivesPlugin,
   headingsPlugin,
   imagePlugin,
-  jsxPlugin,
   linkDialogPlugin,
   linkPlugin,
   listsPlugin,
@@ -16,24 +15,17 @@ import {
   tablePlugin,
   thematicBreakPlugin,
   toolbarPlugin,
-  useMdastNodeUpdater,
-  useNestedEditorContext,
 } from "@mdxeditor/editor";
 import { toast } from "sonner";
 import { Callout } from "../../Callout";
 
-import {
-  MathLiveComponent,
-  getIsInlineFromAttributes,
-  mathShortcutsPlugin,
-} from "./MathLivePlugin";
+import { mathPlugin } from "./MathLivePlugin";
 import EditorToolbar from "./EditorToolbar";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import "./Editor.css";
 
 type EditorProps = {
-  id?: string;
   // Markdown to open with, e.g. when resuming a draft.
   value?: string;
   onChange?: (markdown: string) => void;
@@ -41,21 +33,11 @@ type EditorProps = {
 };
 
 export default function Editor({
-  id = "default-draft",
   value,
   onChange,
   onUploadImage,
 }: EditorProps) {
-  const autosaveKey = `bluelearn-editor-autosave-${id}`;
-
-  const [initialMarkdown] = useState<string>(() => {
-    if (value) return value;
-    try {
-      const saved = localStorage.getItem(autosaveKey);
-      if (saved) return saved;
-    } catch {}
-    return "";
-  });
+  const [initialMarkdown] = useState<string>(() => value ?? "");
 
   const editorRef = useRef<MDXEditorMethods>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -65,39 +47,41 @@ export default function Editor({
   onUploadImageRef.current = onUploadImage;
   const latestRef = useRef<string | null>(null);
 
-  const handleMarkdownChange = useCallback(
-    (newMarkdown: string) => {
-      latestRef.current = newMarkdown;
+  // debounce so we don't re-render the flow on every keystroke
+  const handleMarkdownChange = useCallback((newMarkdown: string) => {
+    latestRef.current = newMarkdown;
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      onChangeRef.current?.(newMarkdown);
+      saveTimeoutRef.current = null;
+    }, 1000);
+  }, []);
 
-      // Save locally immediately to guarantee no keystrokes are lost
-      try {
-        localStorage.setItem(autosaveKey, newMarkdown);
-      } catch {}
-
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      saveTimeoutRef.current = setTimeout(() => {
-        onChangeRef.current?.(newMarkdown);
-        saveTimeoutRef.current = null;
-      }, 1000);
-    },
-    [autosaveKey]
-  );
-
+  // If the user clicks away (e.g., clicking "Save Draft" or "Next"),
+  // immediately flush any pending debounced state to the parent
+  // so that the button click handlers see the freshest data.
   const handleBlur = useCallback(() => {
-    // If the user clicks away (e.g., clicking "Save Draft" or "Next"),
-    // immediately flush any pending debounced state to the parent
-    // so that the button click handlers see the freshest data.
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
       if (latestRef.current !== null) {
-        setTimeout(() => {
-          onChangeRef.current?.(latestRef.current!);
-        }, 0);
+        onChangeRef.current?.(latestRef.current);
       }
     }
+  }, []);
+
+  // Force a save on a pending edit if user leaves before the debounce fires
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        if (latestRef.current !== null) {
+          onChangeRef.current?.(latestRef.current);
+        }
+      }
+    };
   }, []);
 
   const CalloutDirectiveDescriptor = useMemo(
@@ -166,64 +150,7 @@ export default function Editor({
         },
       }),
       directivesPlugin({ directiveDescriptors: [CalloutDirectiveDescriptor] }),
-      mathShortcutsPlugin(),
-      jsxPlugin({
-        jsxComponentDescriptors: [
-          {
-            name: "Math",
-            kind: "text",
-            props: [
-              { name: "latex", type: "string" },
-              { name: "inline", type: "expression" },
-            ],
-            hasChildren: false,
-            Editor: (props) => {
-              const updateMdastNode = useMdastNodeUpdater();
-              const { lexicalNode } = useNestedEditorContext();
-              const handleChange = (newLatex: string) => {
-                const isInline = getIsInlineFromAttributes(
-                  props.mdastNode.attributes
-                );
-
-                updateMdastNode({
-                  attributes: [
-                    { type: "mdxJsxAttribute", name: "latex", value: newLatex },
-                    {
-                      type: "mdxJsxAttribute",
-                      name: "inline",
-                      value: {
-                        type: "mdxJsxAttributeValueExpression",
-                        value: isInline ? "true" : "false",
-                      },
-                    },
-                  ],
-                });
-              };
-              const latexAttr = props.mdastNode.attributes.find(
-                (a: any) => a.name === "latex"
-              );
-              const isInline = getIsInlineFromAttributes(
-                props.mdastNode.attributes
-              );
-
-              return (
-                <MathLiveComponent
-                  latex={
-                    latexAttr &&
-                    typeof latexAttr === "object" &&
-                    typeof latexAttr.value === "string"
-                      ? latexAttr.value
-                      : ""
-                  }
-                  inline={isInline}
-                  onChange={handleChange}
-                  nodeKey={lexicalNode.getKey()}
-                />
-              );
-            },
-          },
-        ],
-      }),
+      mathPlugin(),
       toolbarPlugin({
         toolbarContents: () => (
           <EditorToolbar
