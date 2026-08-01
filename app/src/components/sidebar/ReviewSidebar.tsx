@@ -391,47 +391,49 @@ export const ReviewSidebar = ({
             </ChangeSection>
           </CollapsibleSection>
 
-          <CollapsibleSection
-            defaultOpen={true}
-            title={<p className="ml-auto">Prerequisite Guides</p>}
-          >
-            <ChangeSection
-              count={revisionData.prerequisites.length}
-              empty="None declared."
+          {!isEdit && (
+            <CollapsibleSection
+              defaultOpen={true}
+              title={<p className="ml-auto">Prerequisite Guides</p>}
             >
-              {revisionData.prerequisites.map(
-                (p: { slug: string; title?: string }) => (
+              <ChangeSection
+                count={revisionData.prerequisites.length}
+                empty="None declared."
+              >
+                {revisionData.prerequisites.map(
+                  (p: { slug: string; title?: string }) => (
+                    <ChangeRow
+                      key={p.slug}
+                      label={p.title ?? p.slug}
+                      badge={
+                        <Badge
+                          variant="outline"
+                          className="border-transparent bg-muted-foreground/8 font-mono tracking-[0.06em] text-muted-foreground uppercase"
+                        >
+                          Existing
+                        </Badge>
+                      }
+                    />
+                  )
+                )}
+
+                {revisionData.todos.map((t: { id: string; title: string }) => (
                   <ChangeRow
-                    key={p.slug}
-                    label={p.title ?? p.slug}
+                    key={t.id}
+                    label={t.title}
                     badge={
                       <Badge
                         variant="outline"
-                        className="border-transparent bg-muted-foreground/8 font-mono tracking-[0.06em] text-muted-foreground uppercase"
+                        className="border-transparent bg-brand-blue/15 font-mono tracking-[0.06em] text-brand-dk-blue uppercase dark:text-brand-blue"
                       >
-                        Existing
+                        To do
                       </Badge>
                     }
                   />
-                )
-              )}
-
-              {revisionData.todos.map((t: { id: string; title: string }) => (
-                <ChangeRow
-                  key={t.id}
-                  label={t.title}
-                  badge={
-                    <Badge
-                      variant="outline"
-                      className="border-transparent bg-brand-blue/15 font-mono tracking-[0.06em] text-brand-dk-blue uppercase dark:text-brand-blue"
-                    >
-                      To do
-                    </Badge>
-                  }
-                />
-              ))}
-            </ChangeSection>
-          </CollapsibleSection>
+                ))}
+              </ChangeSection>
+            </CollapsibleSection>
+          )}
         </section>
       </div>
     </aside>
