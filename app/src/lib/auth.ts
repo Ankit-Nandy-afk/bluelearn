@@ -1,3 +1,5 @@
+import { redirect } from "@tanstack/react-router";
+
 import { supabase } from "./supabase";
 import type { Session } from "@supabase/supabase-js";
 
@@ -54,6 +56,15 @@ export async function updateEmail(email: string) {
 
 export async function getSession() {
   return supabase.auth.getSession();
+}
+
+// Redirect to login on authenticated-user only pages. Only works on ssr: false
+// routes, since the session lives in the browser.
+export async function requireSession() {
+  if (typeof window === "undefined") return;
+
+  const { data } = await getSession();
+  if (!data.session) throw redirect({ to: "/login" });
 }
 
 export function onAuthStateChange(

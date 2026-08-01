@@ -3,8 +3,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import type { ContributionType } from "@/types/contributions";
 import ContributionFlow from "@/components/contribute/ContributionFlow";
+import { requireSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/contribute")({
+  ssr: false,
+  beforeLoad: requireSession,
   validateSearch: (
     search: Record<string, unknown>
   ): { draft?: string; kind?: "guide" | "objective" } => ({
