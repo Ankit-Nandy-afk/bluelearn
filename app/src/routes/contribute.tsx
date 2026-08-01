@@ -7,15 +7,22 @@ import ContributionFlow from "@/components/contribute/ContributionFlow";
 export const Route = createFileRoute("/contribute")({
   validateSearch: (
     search: Record<string, unknown>
-  ): { draft?: string; kind?: "guide" | "objective" } => ({
+  ): {
+    draft?: string;
+    kind?: "guide" | "objective";
+    source?: string;
+    edit?: string;
+  } => ({
     draft: typeof search.draft === "string" ? search.draft : undefined,
     kind: search.kind === "objective" ? "objective" : undefined,
+    source: typeof search.source === "string" ? search.source : undefined,
+    edit: typeof search.edit === "string" ? search.edit : undefined,
   }),
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { draft, kind } = Route.useSearch();
+  const { draft, kind, source, edit } = Route.useSearch();
   const [type, setType] = useState<ContributionType | null>(null);
 
   return (
@@ -26,6 +33,8 @@ function RouteComponent() {
           setType={setType}
           draftId={draft}
           draftKind={kind}
+          sourceRevisionId={source}
+          editSlug={edit}
         />
       </section>
     </div>

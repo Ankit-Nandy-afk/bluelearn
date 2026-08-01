@@ -16,7 +16,7 @@ import type { Guide } from "@bluelearn/schemas";
 import { addGuideVariant, createGuide, listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
-import { createObjective } from "@/lib/api/objectives";
+import { createObjective, createObjectiveRevision } from "@/lib/api/objectives";
 import {
   getObjectiveRevision,
   submitObjectiveRevision,
@@ -47,6 +47,8 @@ type PropTypes = {
   setType: (value: ContributionType) => void;
   draftId?: string;
   draftKind?: "guide" | "objective";
+  sourceRevisionId?: string;
+  editSlug?: string;
 };
 
 const createGuideContData = (): GuideContribution => ({
@@ -79,6 +81,39 @@ const createObjectiveContData = (): ObjectiveContribution => ({
   subjects: [],
 });
 
+type ObjectiveRevisionData = Awaited<ReturnType<typeof getObjectiveRevision>>;
+
+const objectiveDataFromRevision = (
+  data: ObjectiveRevisionData
+): ObjectiveContribution => {
+  const slugByNodeId = new Map(data.snapshot.nodes.map((n) => [n.id, n.slug]));
+  const targetNodes = data.snapshot.nodes
+    .filter((n): n is typeof n & { slug: string } => n.is_target && !!n.slug)
+    .sort((a, b) => (a.target_position ?? 0) - (b.target_position ?? 0));
+
+  return {
+    title: data.revision.title ?? "",
+    summary: data.revision.summary ?? "",
+    targets: targetNodes.map((n) => n.slug),
+    featuredSubObjective: targetNodes.find((n) => n.is_featured)?.slug ?? "",
+    subObjectives: targetNodes.flatMap((n) => {
+      const sequence = data.snapshot.orders
+        .filter((o) => o.target_node_id === n.id)
+        .map((o) => slugByNodeId.get(o.node_id))
+        .filter((slug): slug is string => !!slug);
+      if (sequence.length === 0) return [];
+      return [
+        {
+          targetSlug: n.slug,
+          selectedSlugs: sequence,
+          curatedSequence: sequence,
+        },
+      ];
+    }),
+    subjects: data.subjects.map((s) => s.id),
+  };
+};
+
 type NewSubject = { id?: string; name: string; summary: string };
 
 const existingTagIds = (newSubjects: Array<NewSubject>) =>
@@ -94,6 +129,8 @@ export default function ContributionFlow({
   setType,
   draftId,
   draftKind,
+  sourceRevisionId,
+  editSlug,
 }: PropTypes) {
   const [guideContData, setGuideContData] =
     useState<GuideContribution>(createGuideContData);
@@ -123,6 +160,8 @@ export default function ContributionFlow({
           setType={setType}
           draftId={draftId}
           draftKind={draftKind}
+          sourceRevisionId={sourceRevisionId}
+          editSlug={editSlug}
           guideContData={guideContData}
           setGuideContData={setGuideContData}
           variantContData={variantContData}
@@ -142,6 +181,8 @@ function Inner({
   setType,
   draftId,
   draftKind,
+  sourceRevisionId,
+  editSlug,
   guideContData,
   setGuideContData,
   variantContData,
@@ -155,6 +196,8 @@ function Inner({
   setType: (value: ContributionType) => void;
   draftId?: string;
   draftKind?: "guide" | "objective";
+  sourceRevisionId?: string;
+  editSlug?: string;
 
   guideContData: GuideContribution;
   setGuideContData: Dispatch<SetStateAction<GuideContribution>>;
@@ -201,41 +244,7 @@ function Inner({
     if (draftKind === "objective") {
       getObjectiveRevision(draftId)
         .then((data) => {
-          const slugByNodeId = new Map(
-            data.snapshot.nodes.map((n) => [n.id, n.slug])
-          );
-          const targetNodes = data.snapshot.nodes
-            .filter(
-              (n): n is typeof n & { slug: string } => n.is_target && !!n.slug
-            )
-            .sort(
-              (a, b) => (a.target_position ?? 0) - (b.target_position ?? 0)
-            );
-
-          setObjectiveContData({
-            title: data.revision.title ?? "",
-            summary: data.revision.summary ?? "",
-            targets: targetNodes.map((n) => n.slug),
-            featuredSubObjective:
-              targetNodes.find((n) => n.is_featured)?.slug ?? "",
-            // An uncurated target is left out, so the order step still seeds it
-            // on draft resume.
-            subObjectives: targetNodes.flatMap((n) => {
-              const sequence = data.snapshot.orders
-                .filter((o) => o.target_node_id === n.id)
-                .map((o) => slugByNodeId.get(o.node_id))
-                .filter((slug): slug is string => !!slug);
-              if (sequence.length === 0) return [];
-              return [
-                {
-                  targetSlug: n.slug,
-                  selectedSlugs: sequence,
-                  curatedSequence: sequence,
-                },
-              ];
-            }),
-            subjects: data.subjects.map((s) => s.id),
-          });
+          setObjectiveContData(objectiveDataFromRevision(data));
           setRevisionId(draftId);
           setType("objective");
           requestAnimationFrame(() => stepper.goTo("objective-details"));
@@ -289,6 +298,22 @@ function Inner({
         toast.error("Could not load draft");
       });
   }, [draftId]);
+
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!sourceRevisionId || !editSlug || seededRef.current) return;
+    seededRef.current = true;
+
+    getObjectiveRevision(sourceRevisionId)
+      .then((data) => {
+        setObjectiveContData(objectiveDataFromRevision(data));
+        setType("objective");
+        requestAnimationFrame(() => stepper.goTo("objective-details"));
+      })
+      .catch(() => {
+        toast.error("Could not load objective");
+      });
+  }, [sourceRevisionId, editSlug]);
 
   const [subjectOptions, setSubjectOptions] = useState<
     Awaited<ReturnType<typeof listSubjects>>
@@ -453,6 +478,26 @@ function Inner({
           targets: objectiveTargets(),
         });
         return revisionId;
+      }
+
+      if (editSlug) {
+        if (!creatingRef.current) {
+          creatingRef.current = createObjectiveRevision(editSlug)
+            .then(async (id) => {
+              await updateObjectiveRevision(id, {
+                title: objectiveContData.title || undefined,
+                summary: objectiveContData.summary || undefined,
+                tags: objectiveContData.subjects,
+                targets: objectiveTargets(),
+              });
+              setRevisionId(id);
+              return id;
+            })
+            .finally(() => {
+              creatingRef.current = null;
+            });
+        }
+        return creatingRef.current;
       }
 
       if (!creatingRef.current) {
