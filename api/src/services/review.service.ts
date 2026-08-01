@@ -4,6 +4,7 @@ import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 import { PANEL_POLICY_DEFAULTS } from "../lib/review-policy";
 import { readingMinutes } from "../lib/reading";
+import { loadUsernames } from "./identity.service";
 
 type DB = SupabaseClient<Database>;
 type ReviewOutcome = Database["public"]["Enums"]["review_outcome"];
@@ -331,16 +332,24 @@ export async function getReviewCase(
   const latestPanel = data.review_panels[0] ?? null;
   const members = latestPanel?.panel_members ?? [];
 
+  const panelistNames = await loadUsernames(
+    supabase,
+    members.map((pm) => pm.member_id)
+  );
+
   const mapDecision = (
     d: NonNullable<
       CaseDetailRow["review_panels"][number]["panel_members"][number]["review_decisions"]
-    >
+    >,
+    memberId: string | null
   ) => ({
     id: d.id,
     decision: d.decision,
     notes: d.notes,
     reasons: d.review_decision_reasons?.map((r) => r.reason) ?? [],
     created_at: d.created_at,
+    member_id: memberId,
+    member_username: memberId ? (panelistNames.get(memberId) ?? null) : null,
   });
 
   // Lets the reviewer come back to a review decision with their own data reseeded
@@ -373,6 +382,23 @@ export async function getReviewCase(
       ? await loadTagsAndEdges(service, revision.id, revision.guide_id)
       : null;
 
+  // A rejection can only be revised once at a time, so the author's open fork
+  // decides whether the case offers to start one or resume it.
+  const reviseDraft =
+    isAuthor && data.status === "rejected" && revision
+      ? await supabase
+          .from("guide_revisions")
+          .select("id")
+          .eq("revised_from_revision_id", revision.id)
+          .eq("status", "draft")
+          .maybeSingle()
+      : null;
+
+  if (reviseDraft?.error) {
+    console.error(reviseDraft.error);
+    throw new ServiceError("Failed to load review case", 500);
+  }
+
   return {
     case: {
       id: data.id,
@@ -391,9 +417,10 @@ export async function getReviewCase(
     })),
     decisions: members
       .filter((pm) => pm.review_decisions)
-      .map((pm) => mapDecision(pm.review_decisions!)),
-    viewer_decision: viewerVote ? mapDecision(viewerVote) : null,
+      .map((pm) => mapDecision(pm.review_decisions!, pm.member_id)),
+    viewer_decision: viewerVote ? mapDecision(viewerVote, viewerId) : null,
     viewer_role: viewerRole,
+    revise_draft_id: reviseDraft?.data?.id ?? null,
     revision: revision
       ? {
           id: revision.id,
