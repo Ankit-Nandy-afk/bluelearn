@@ -171,7 +171,7 @@ export function RegisterForm({
 
               {/* Footer */}
               <CardFooter className="flex flex-col gap-5 border-t p-6">
-                <Field orientation="horizontal">
+                <Field orientation="horizontal" className="flex items-center">
                   <Checkbox
                     id="policies-checkbox"
                     name="policies-checkbox"
