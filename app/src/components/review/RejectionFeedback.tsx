@@ -79,7 +79,7 @@ export const RejectionFeedback = ({ draftId }: { draftId: string }) => {
             <Link
               to="/review/$caseId"
               params={{ caseId }}
-              className="mono-micro text-muted-foreground underline-offset-4 hover:underline"
+              className="mono-micro text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
             >
               View the closed case
             </Link>
