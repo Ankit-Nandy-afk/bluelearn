@@ -203,9 +203,11 @@ export async function replaceRevisionTags(
 }
 
 export async function getObjectiveRevision(supabase: DB, revisionId: string) {
-  const { data: revision, error } = await supabase
+  const { data: row, error } = await supabase
     .from("objective_revisions")
-    .select(REVISION_META)
+    .select(
+      `${REVISION_META}, objective:objectives!objective_revisions_objective_id_fkey(id, current_revision_id)`
+    )
     .eq("id", revisionId)
     .maybeSingle();
 
@@ -213,7 +215,9 @@ export async function getObjectiveRevision(supabase: DB, revisionId: string) {
     console.error(error);
     throw new ServiceError("Failed to load revision", 500);
   }
-  if (!revision) throw new ServiceError("Revision not found", 404);
+  if (!row) throw new ServiceError("Revision not found", 404);
+
+  const { objective, ...revision } = row;
 
   const snapshot = await getRevisionSnapshot(
     supabase,
@@ -221,7 +225,7 @@ export async function getObjectiveRevision(supabase: DB, revisionId: string) {
     revision.status === "published" ? "frozen" : "live"
   );
   const subjects = await loadRevisionTags(supabase, revisionId);
-  return { revision, snapshot, subjects };
+  return { revision, objective, snapshot, subjects };
 }
 
 // Overwrite a draft revision's metadata and/or subject tags.

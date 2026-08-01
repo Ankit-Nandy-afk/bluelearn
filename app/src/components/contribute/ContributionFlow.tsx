@@ -75,6 +75,7 @@ const createVariantContData = (): VariantContribution => ({
 const createObjectiveContData = (): ObjectiveContribution => ({
   title: "",
   summary: "",
+  changeSummary: "",
   targets: [],
   featuredSubObjective: "",
   subObjectives: [],
@@ -94,6 +95,7 @@ const objectiveDataFromRevision = (
   return {
     title: data.revision.title ?? "",
     summary: data.revision.summary ?? "",
+    changeSummary: data.revision.change_summary ?? "",
     targets: targetNodes.map((n) => n.slug),
     featuredSubObjective: targetNodes.find((n) => n.is_featured)?.slug ?? "",
     subObjectives: targetNodes.flatMap((n) => {
@@ -213,6 +215,7 @@ function Inner({
       setObjectiveContData(createObjectiveContData());
       setVariantContData(createVariantContData());
       setRevisionId(null);
+      setShowChangeSummary(false);
       setType(value);
     }
 
@@ -234,6 +237,7 @@ function Inner({
 
   const [revisionId, setRevisionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showChangeSummary, setShowChangeSummary] = useState(false);
 
   // Resume a draft opened from the profile.
   const resumedRef = useRef(false);
@@ -245,6 +249,7 @@ function Inner({
       getObjectiveRevision(draftId)
         .then((data) => {
           setObjectiveContData(objectiveDataFromRevision(data));
+          setShowChangeSummary(!!data.objective.current_revision_id);
           setRevisionId(draftId);
           setType("objective");
           requestAnimationFrame(() => stepper.goTo("objective-details"));
@@ -306,7 +311,11 @@ function Inner({
 
     getObjectiveRevision(sourceRevisionId)
       .then((data) => {
-        setObjectiveContData(objectiveDataFromRevision(data));
+        setObjectiveContData({
+          ...objectiveDataFromRevision(data),
+          changeSummary: "",
+        });
+        setShowChangeSummary(!!data.objective.current_revision_id);
         setType("objective");
         requestAnimationFrame(() => stepper.goTo("objective-details"));
       })
@@ -474,6 +483,7 @@ function Inner({
         await updateObjectiveRevision(revisionId, {
           title: objectiveContData.title || undefined,
           summary: objectiveContData.summary || undefined,
+          change_summary: objectiveContData.changeSummary || null,
           tags: objectiveContData.subjects,
           targets: objectiveTargets(),
         });
@@ -487,6 +497,7 @@ function Inner({
               await updateObjectiveRevision(id, {
                 title: objectiveContData.title || undefined,
                 summary: objectiveContData.summary || undefined,
+                change_summary: objectiveContData.changeSummary || null,
                 tags: objectiveContData.subjects,
                 targets: objectiveTargets(),
               });
@@ -678,6 +689,7 @@ function Inner({
           setObjectiveContData={setObjectiveContData}
           subjects={subjectOptions}
           guides={guideOptions}
+          showChangeSummary={showChangeSummary}
           onSaveDraft={saveDraft}
           submitting={submitting}
         />

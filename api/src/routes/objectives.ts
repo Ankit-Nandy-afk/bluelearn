@@ -117,13 +117,12 @@ export const objectivesRouter = new Hono<HonoEnv>()
   );
 
 export const objectiveRevisionsRouter = new Hono<HonoEnv>()
-  // Returns the revision's metadata, snapshot, and subject tags as { revision, snapshot, subjects }.
+  // Returns the revision's metadata, parent objective, snapshot, and subject tags
+  // as { revision, objective, snapshot, subjects }.
   .get("/:id", async (c) => {
-    const { revision, snapshot, subjects } = await getObjectiveRevision(
-      c.get("supabase"),
-      c.req.param("id")
-    );
-    return c.json({ revision, snapshot, subjects });
+    const { revision, objective, snapshot, subjects } =
+      await getObjectiveRevision(c.get("supabase"), c.req.param("id"));
+    return c.json({ revision, objective, snapshot, subjects });
   })
 
   // Overwrites a draft's metadata, tags, and/or target curation. Returns

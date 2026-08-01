@@ -26,6 +26,7 @@ type PropTypes = {
   setObjectiveContData: Dispatch<SetStateAction<ObjectiveContribution>>;
   subjects: Array<SubjectOption>;
   guides: Array<GuideOption>;
+  showChangeSummary?: boolean;
   onSaveDraft?: () => void;
   submitting?: boolean;
 };
@@ -36,6 +37,7 @@ export const ObjectiveDetails = ({
   setObjectiveContData,
   subjects,
   guides,
+  showChangeSummary = false,
   onSaveDraft,
   submitting,
 }: PropTypes) => {
@@ -121,6 +123,31 @@ export const ObjectiveDetails = ({
             }
           />
         </Field>
+
+        {showChangeSummary && (
+          <Field className="space-y-2">
+            <div className="space-y-1">
+              <FieldLabel className="mono-micro">Change Summary</FieldLabel>
+              <FieldDescription className="text-xs">
+                Briefly describe what this revision changes.
+              </FieldDescription>
+            </div>
+
+            <Textarea
+              className="h-24 w-full min-w-0 resize-none"
+              rows={3}
+              maxLength={500}
+              placeholder="Describe what changed."
+              value={objectiveContData.changeSummary}
+              onChange={(e) =>
+                setObjectiveContData((prev) => ({
+                  ...prev,
+                  changeSummary: e.target.value,
+                }))
+              }
+            />
+          </Field>
+        )}
 
         <Field className="space-y-2">
           <div className="space-y-1">
