@@ -97,7 +97,12 @@ function RouteComponent() {
       prerequisites: [],
     };
 
-    return <GuideReader guide={guide} />;
+    return (
+      <GuideReader
+        guide={guide}
+        guideType={revision.knowledge_type ?? undefined}
+      />
+    );
   }, [revision]);
 
   return (

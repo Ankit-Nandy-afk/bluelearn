@@ -110,6 +110,7 @@ type CaseDetailRow = {
 };
 
 type TagsAndEdges = {
+  knowledge_type: Database["public"]["Enums"]["knowledge_type"] | null;
   tags: Array<{ id: string; name: string; status: string }>;
   prerequisites: Array<{ slug: string; title: string | null }>;
   todos: Array<{ id: string; title: string }>;
@@ -221,8 +222,8 @@ export async function listReviewCases(supabase: DB) {
   }));
 }
 
-// The tags and edges a revision proposes. Uses service client because
-// draft tags and edges are unreachable through RLS.
+// The knowledge type, tags, and edges a revision proposes. Uses service client
+// because a draft base and its tags and edges are unreachable through RLS.
 async function loadTagsAndEdges(
   service: DB,
   revisionId: string,
@@ -230,7 +231,9 @@ async function loadTagsAndEdges(
 ): Promise<TagsAndEdges> {
   const { data: guide, error: guideError } = await service
     .from("guides")
-    .select("guide_base_id")
+    .select(
+      "guide_base_id, guide_bases!guides_guide_base_id_fkey(knowledge_type)"
+    )
     .eq("id", guideId)
     .maybeSingle();
 
@@ -275,6 +278,7 @@ async function loadTagsAndEdges(
   }
 
   return {
+    knowledge_type: guide?.guide_bases?.knowledge_type ?? null,
     tags: (tagRes.data ?? [])
       .map((r) => r.subjects)
       .filter((s): s is NonNullable<typeof s> => !!s)
@@ -429,6 +433,7 @@ export async function getReviewCase(
           author_username: revision.author_id
             ? (usernames.get(revision.author_id) ?? null)
             : null,
+          knowledge_type: tagsAndEdges?.knowledge_type ?? null,
           title: revision.title,
           summary: revision.summary,
           body: revision.body,

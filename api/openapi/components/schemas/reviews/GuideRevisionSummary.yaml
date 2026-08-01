@@ -10,6 +10,13 @@ properties:
     type: [string, "null"]
     description: Username of the author who submitted the revision.
     example: username123
+  knowledge_type:
+    description: >
+      The knowledge type of the guide base the revision belongs to. Null when
+      the base could not be resolved.
+    type: [string, "null"]
+    enum: [theoretical, practical, null]
+    example: theoretical
   title:
     type: [string, "null"]
     example: Calculus
