@@ -59,7 +59,6 @@ export function RegisterForm({
       return;
     }
 
-    // With a session, useRedirectIfAuthed handles it.
     if (!data.session) navigate({ to: "/verify-email", search: { email } });
   }
 
