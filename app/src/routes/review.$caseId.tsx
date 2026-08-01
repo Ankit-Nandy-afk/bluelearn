@@ -117,14 +117,14 @@ function RouteComponent() {
         {/* MAIN */}
         <main className="min-w-0 px-10 pt-8 pb-6 lg:px-16">
           {isEdit && revision && (
-            <div className="mb-6 inline-flex gap-1 rounded-md border p-1">
+            <div className="mb-6 inline-flex gap-1 border-b">
               {(["guide", "changes"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   className={cn(
-                    "mono-micro rounded-sm px-3 py-1.5 tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:text-foreground",
-                    view === tab && "bg-muted text-foreground"
+                    "mono-micro -mb-px border-b-2 border-transparent px-3 py-1.5 tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:text-foreground",
+                    view === tab && "border-brand-blue text-brand-blue"
                   )}
                   onClick={() => setView(tab)}
                 >
