@@ -23,7 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
 import { buildBreadcrumbs } from "@/lib/breadcrumbs";
-import { getGuide } from "@/lib/api/guides";
+import { getGuide, getVariantId } from "@/lib/api/guides";
 
 import "katex/dist/katex.min.css";
 import { GuideSidebar } from "@/components/sidebar/GuideSidebar";
@@ -49,15 +49,18 @@ const SIDEBAR_ACTIONS: Array<Action> = [
   { icon: History, label: "View Revisions" },
 ];
 
-function useVote() {
+function useVote(slug: string) {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
+  const thisSlug = slug;
 
-  const toggleVote = (type: "up" | "down") => {
+  const toggleVote = async (type: "up" | "down") => {
     const prev = vote;
     const next = prev === type ? null : type;
 
     // Set vote on frontend before updating database
     setVote(next);
+
+    const variantId = await getVariantId(thisSlug);
   };
 
   return {
