@@ -78,17 +78,18 @@ function buildFeaturedSubObjective(
   if (!featured) return [];
 
   const byId = new Map(nodes.map((n) => [n.id, n]));
-  return orders
-    .filter((o) => o.target_node_id === featured.id)
+  const prereqs = orders
+    .filter(
+      (o) => o.target_node_id === featured.id && o.node_id !== featured.id
+    )
     .sort((a, b) => a.position - b.position)
-    .map((o, i) => {
-      const node = byId.get(o.node_id);
-      return {
-        position: i + 1,
-        slug: node?.slug ?? null,
-        title: node?.title ?? null,
-      };
-    });
+    .map((o) => byId.get(o.node_id));
+
+  return [...prereqs, featured].map((node, i) => ({
+    position: i + 1,
+    slug: node?.slug ?? null,
+    title: node?.title ?? null,
+  }));
 }
 
 async function loadGuideBaseMeta(supabase: DB, baseIds: string[]) {
