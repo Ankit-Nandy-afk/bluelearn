@@ -4,6 +4,12 @@ description: The guide revision the case is judging.
 properties:
   id:
     $ref: "../common/Uuid.yaml"
+  author_id:
+    $ref: "../common/Uuid.yaml"
+  author_username:
+    type: [string, "null"]
+    description: Username of the author who submitted the revision.
+    example: username123
   title:
     type: [string, "null"]
     example: Calculus
@@ -13,6 +19,12 @@ properties:
   body:
     type: [string, "null"]
     example: "# Calculus\n\nThe body of the guide in markdown."
+  change_summary:
+    type: [string, "null"]
+    description: >
+      The author's own note on what this revision changes. Null on a first
+      submission, which has nothing to change.
+    example: Rewrote the limits section and fixed two derivative examples.
   status:
     type: string
     example: submitted

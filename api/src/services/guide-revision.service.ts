@@ -532,13 +532,16 @@ export async function diffWithPrevious(supabase: DB, id: string) {
   }
   if (!current) throw new ServiceError("Revision not found", 404);
 
-  const { data: prev, error: prevError } = await supabase
+  let query = supabase
     .from("guide_revisions")
     .select("id")
     .eq("guide_id", current.guide_id)
     .not("approved_at", "is", null)
-    .neq("id", id)
-    .lt("approved_at", current.approved_at)
+    .neq("id", id);
+
+  if (current.approved_at) query = query.lt("approved_at", current.approved_at);
+
+  const { data: prev, error: prevError } = await query
     .order("approved_at", { ascending: false })
     .limit(1)
     .maybeSingle();

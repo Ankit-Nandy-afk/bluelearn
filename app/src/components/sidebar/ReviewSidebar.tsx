@@ -3,10 +3,10 @@ import { Check, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
+import { Badge } from "@/components/ui/badge";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { ChangeRow } from "@/components/review/ChangeRow";
-import { ChangeBadge } from "@/components/review/ChangeBadge";
 import { ChangeSection } from "@/components/review/ChangeSection";
 import { DecisionList } from "@/components/review/DecisionList";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,19 @@ type PropTypes = {
   revisionData: any;
 };
 
+const DetailRow = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) => (
+  <div className="flex items-center justify-between gap-2 text-xs">
+    <span className="text-muted-foreground">{label}</span>
+    {value}
+  </div>
+);
+
 export const ReviewSidebar = ({
   caseId,
   revision,
@@ -39,6 +52,8 @@ export const ReviewSidebar = ({
   const navigate = useNavigate();
 
   const subjects = revision?.tags ?? [];
+
+  const isEdit = revisionData.case.case_type === "guide_edit";
 
   // Reviewers can revote while the case is open, so start from their last vote.
   const priorDecision = revisionData.viewer_decision;
@@ -148,6 +163,38 @@ export const ReviewSidebar = ({
   return (
     <aside className="border-r">
       <div className="sticky top-[65px] max-h-[calc(100vh-65px)] space-y-4 overflow-y-auto px-6 py-6">
+        <CollapsibleSection
+          defaultOpen={true}
+          title={<p className="ml-auto">Submission Details</p>}
+        >
+          <div className="space-y-2">
+            <DetailRow
+              label="Case Type"
+              value={
+                <Badge
+                  variant="outline"
+                  className="border-badge-border bg-badge font-mono tracking-[0.06em] text-badge-foreground uppercase"
+                >
+                  {isEdit ? "Guide Revision" : "Guide Creation"}
+                </Badge>
+              }
+            />
+            <DetailRow
+              label="Author"
+              value={
+                <Badge
+                  variant="outline"
+                  className="border-badge-border bg-badge font-mono tracking-[0.06em] text-badge-foreground uppercase"
+                >
+                  {revision?.author_username
+                    ? `@${revision.author_username}`
+                    : "Unknown"}
+                </Badge>
+              }
+            />
+          </div>
+        </CollapsibleSection>
+
         {canVote && (
           <CollapsibleSection
             defaultOpen={true}
@@ -267,6 +314,23 @@ export const ReviewSidebar = ({
           </CollapsibleSection>
         )}
 
+        {isEdit && (
+          <CollapsibleSection
+            defaultOpen={true}
+            title={<p className="ml-auto">Change Summary</p>}
+          >
+            {revision?.change_summary ? (
+              <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                {revision.change_summary}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                The author left no summary of what changed.
+              </p>
+            )}
+          </CollapsibleSection>
+        )}
+
         {!caseOpen && (
           <CollapsibleSection
             defaultOpen={true}
@@ -306,9 +370,19 @@ export const ReviewSidebar = ({
                     label={s.name}
                     badge={
                       s.status === "draft" ? (
-                        <ChangeBadge tone="new">New</ChangeBadge>
+                        <Badge
+                          variant="outline"
+                          className="border-transparent bg-brand-blue/15 font-mono tracking-[0.06em] text-brand-dk-blue uppercase dark:text-brand-blue"
+                        >
+                          New
+                        </Badge>
                       ) : (
-                        <ChangeBadge tone="existing">Existing</ChangeBadge>
+                        <Badge
+                          variant="outline"
+                          className="border-transparent bg-muted-foreground/8 font-mono tracking-[0.06em] text-muted-foreground uppercase"
+                        >
+                          Existing
+                        </Badge>
                       )
                     }
                   />
@@ -330,7 +404,14 @@ export const ReviewSidebar = ({
                   <ChangeRow
                     key={p.slug}
                     label={p.title ?? p.slug}
-                    badge={<ChangeBadge tone="existing">Existing</ChangeBadge>}
+                    badge={
+                      <Badge
+                        variant="outline"
+                        className="border-transparent bg-muted-foreground/8 font-mono tracking-[0.06em] text-muted-foreground uppercase"
+                      >
+                        Existing
+                      </Badge>
+                    }
                   />
                 )
               )}
@@ -339,7 +420,14 @@ export const ReviewSidebar = ({
                 <ChangeRow
                   key={t.id}
                   label={t.title}
-                  badge={<ChangeBadge tone="new">To do</ChangeBadge>}
+                  badge={
+                    <Badge
+                      variant="outline"
+                      className="border-transparent bg-brand-blue/15 font-mono tracking-[0.06em] text-brand-dk-blue uppercase dark:text-brand-blue"
+                    >
+                      To do
+                    </Badge>
+                  }
                 />
               ))}
             </ChangeSection>

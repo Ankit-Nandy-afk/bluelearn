@@ -98,6 +98,7 @@ type CaseDetailRow = {
       title: string | null;
       summary: string | null;
       body: string | null;
+      change_summary: string | null;
       status: string;
       created_at: string;
       word_count: number;
@@ -312,7 +313,7 @@ export async function getReviewCase(
        guide_review_cases(
          guide_revision_id,
          guide_revisions(
-           id, guide_id, author_id, title, summary, body, status, created_at, word_count,
+           id, guide_id, author_id, title, summary, body, change_summary, status, created_at, word_count,
            guide_revision_subjects(subjects(id, name, status))
          )
        )`
@@ -332,10 +333,10 @@ export async function getReviewCase(
   const latestPanel = data.review_panels[0] ?? null;
   const members = latestPanel?.panel_members ?? [];
 
-  const panelistNames = await loadUsernames(
-    supabase,
-    members.map((pm) => pm.member_id)
-  );
+  const usernames = await loadUsernames(supabase, [
+    ...members.map((pm) => pm.member_id),
+    revision?.author_id ?? null,
+  ]);
 
   const mapDecision = (
     d: NonNullable<
@@ -349,7 +350,7 @@ export async function getReviewCase(
     reasons: d.review_decision_reasons?.map((r) => r.reason) ?? [],
     created_at: d.created_at,
     member_id: memberId,
-    member_username: memberId ? (panelistNames.get(memberId) ?? null) : null,
+    member_username: memberId ? (usernames.get(memberId) ?? null) : null,
   });
 
   // Lets the reviewer come back to a review decision with their own data reseeded
@@ -424,9 +425,14 @@ export async function getReviewCase(
     revision: revision
       ? {
           id: revision.id,
+          author_id: revision.author_id,
+          author_username: revision.author_id
+            ? (usernames.get(revision.author_id) ?? null)
+            : null,
           title: revision.title,
           summary: revision.summary,
           body: revision.body,
+          change_summary: revision.change_summary,
           status: revision.status,
           created_at: revision.created_at,
           duration_minutes: readingMinutes(revision.word_count),
