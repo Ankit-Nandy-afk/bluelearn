@@ -26,8 +26,7 @@ export async function updateRevision(
   return res.json();
 }
 
-// Diff of this revision against the guide's live revision. 404 when the guide
-// has nothing published yet.
+// Diff of this revision against the guide's live revision.
 export async function getRevisionDiff(
   id: string,
   { signal }: FetchOptions = {}
@@ -41,7 +40,7 @@ export async function getRevisionDiff(
   return res.json();
 }
 
-// Forks a rejected submission into an editable draft, or hands back the draft
+// Forks a rejected submission into an editable draft or resumes the draft
 // already opened for it.
 export async function reviseRevision(id: string) {
   const res = await revisions[":id"].revise.$post({ param: { id } });

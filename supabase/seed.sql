@@ -39,8 +39,7 @@ values
 on conflict (provider_id, provider) do nothing;
 
 -- ---------------------------------------------------------------------------
--- Verifiers: three seats, enough to fill a review panel.
--- Login: verifier{1,2,3}@bluelearn.dev / password123
+-- Three verifiers (login: verifier{1,2,3}@bluelearn.dev / password123)
 -- ---------------------------------------------------------------------------
 
 do $$

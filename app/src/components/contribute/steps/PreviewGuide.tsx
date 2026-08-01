@@ -32,7 +32,6 @@ export const PreviewGuide = ({
         submitting={submitting}
       />
 
-      {/* Same renderer the published page uses, so this is what it'll look like */}
       <GuideReader guide={guide} guideType={guideType} />
     </Stepper.Content>
   );
