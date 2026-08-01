@@ -134,14 +134,18 @@ function RouteComponent() {
             </div>
           )}
 
-          {view === "changes" ? (
-            <DiffPane diff={diff} failed={diffFailed} />
-          ) : (
-            (guideContent ?? (
+          <div className={cn(view !== "guide" && "hidden")}>
+            {guideContent ?? (
               <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
                 No guide revision found to display.
               </p>
-            ))
+            )}
+          </div>
+
+          {isEdit && (
+            <div className={cn(view !== "changes" && "hidden")}>
+              <DiffPane diff={diff} failed={diffFailed} />
+            </div>
           )}
         </main>
       </section>
