@@ -314,23 +314,6 @@ export const ReviewSidebar = ({
           </CollapsibleSection>
         )}
 
-        {isEdit && (
-          <CollapsibleSection
-            defaultOpen={true}
-            title={<p className="ml-auto">Change Summary</p>}
-          >
-            {revision?.change_summary ? (
-              <p className="text-xs leading-relaxed whitespace-pre-wrap">
-                {revision.change_summary}
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                The author left no summary of what changed.
-              </p>
-            )}
-          </CollapsibleSection>
-        )}
-
         {!caseOpen && (
           <CollapsibleSection
             defaultOpen={true}
@@ -354,6 +337,23 @@ export const ReviewSidebar = ({
                 </Button>
               )}
             </section>
+          </CollapsibleSection>
+        )}
+
+        {isEdit && (
+          <CollapsibleSection
+            defaultOpen={true}
+            title={<p className="ml-auto">Change Summary</p>}
+          >
+            {revision?.change_summary ? (
+              <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                {revision.change_summary}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                The author left no summary of what changed.
+              </p>
+            )}
           </CollapsibleSection>
         )}
 

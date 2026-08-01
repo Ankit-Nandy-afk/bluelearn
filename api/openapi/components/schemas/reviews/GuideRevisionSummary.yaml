@@ -5,7 +5,10 @@ properties:
   id:
     $ref: "../common/Uuid.yaml"
   author_id:
-    $ref: "../common/Uuid.yaml"
+    description: The author who submitted the revision.
+    oneOf:
+      - $ref: "../common/Uuid.yaml"
+      - type: "null"
   author_username:
     type: [string, "null"]
     description: Username of the author who submitted the revision.
