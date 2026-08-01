@@ -140,7 +140,7 @@ export function LoginForm({
             {/* Right side - Image */}
             <div className="relative hidden md:flex md:items-center md:justify-center">
               <img
-                src="/assets/atom/atom-arrow-2.png"
+                src="/assets/adam/adam-arrow-smile.png"
                 alt="Login to start contributing"
                 className="absolute object-cover p-8"
               />

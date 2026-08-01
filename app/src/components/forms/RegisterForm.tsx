@@ -227,7 +227,7 @@ export function RegisterForm({
             {/* Right side - Image */}
             <div className="relative hidden md:flex md:items-center md:justify-center">
               <img
-                src="/assets/atom/atom-cube-3.png"
+                src="/assets/adam/adam-cube-line.png"
                 alt="Register to start contributing"
                 className="absolute object-cover p-8"
               />

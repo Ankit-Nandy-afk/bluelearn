@@ -124,7 +124,7 @@ export function EmailVerification({
           {/* Right side - Image */}
           <div className="relative hidden md:flex md:items-center md:justify-center">
             <img
-              src="/assets/atom/atom-arrow-reg.png"
+              src="/assets/adam/adam-arrow-reg.png"
               alt="Verify your email to start contributing"
               className="absolute object-cover p-8"
             />
