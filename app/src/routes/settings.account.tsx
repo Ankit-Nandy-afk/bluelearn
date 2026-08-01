@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+import { Eye, EyeOff } from "lucide-react";
 import { signIn, signOut, updateEmail, updatePassword } from "@/lib/auth";
 import { MIN_PASSWORD_LENGTH } from "@/lib/authValidation";
 import { deleteMyAccount, getMyIdentity } from "@/lib/api/identity";
@@ -38,6 +39,9 @@ function RouteComponent() {
     new: "",
     confirmNew: "",
   });
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -217,21 +221,39 @@ function RouteComponent() {
                   >
                     Old Password
                   </FieldLabel>
-                  <Input
-                    autoFocus
-                    id="old-password"
-                    name="current-password"
-                    type="password"
-                    autoComplete="current-password"
-                    className="h-10 rounded-md"
-                    value={password.old}
-                    onChange={(e) => {
-                      setPassword({
-                        ...password,
-                        old: e.target.value,
-                      });
-                    }}
-                  />
+                  <div className="relative w-full">
+                    <Input
+                      autoFocus
+                      id="old-password"
+                      name="current-password"
+                      type={showOldPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      className="h-10 rounded-md pr-10"
+                      value={password.old}
+                      onChange={(e) => {
+                        setPassword({
+                          ...password,
+                          old: e.target.value,
+                        });
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowOldPassword((prev) => !prev)}
+                      aria-label={
+                        showOldPassword
+                          ? "Hide old password"
+                          : "Show old password"
+                      }
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                    >
+                      {showOldPassword ? (
+                        <EyeOff size={20} />
+                      ) : (
+                        <Eye size={20} />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -241,20 +263,38 @@ function RouteComponent() {
                   >
                     New Password
                   </FieldLabel>
-                  <Input
-                    id="new-password"
-                    name="new-password"
-                    type="password"
-                    autoComplete="new-password"
-                    className="h-10 rounded-md"
-                    value={password.new}
-                    onChange={(e) => {
-                      setPassword({
-                        ...password,
-                        new: e.target.value,
-                      });
-                    }}
-                  />
+                  <div className="relative w-full">
+                    <Input
+                      id="new-password"
+                      name="new-password"
+                      type={showNewPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      className="h-10 rounded-md pr-10"
+                      value={password.new}
+                      onChange={(e) => {
+                        setPassword({
+                          ...password,
+                          new: e.target.value,
+                        });
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword((prev) => !prev)}
+                      aria-label={
+                        showNewPassword
+                          ? "Hide new password"
+                          : "Show new password"
+                      }
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                    >
+                      {showNewPassword ? (
+                        <EyeOff size={20} />
+                      ) : (
+                        <Eye size={20} />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -264,20 +304,38 @@ function RouteComponent() {
                   >
                     Confirm New Password
                   </FieldLabel>
-                  <Input
-                    id="confirm-password"
-                    name="confirm-password"
-                    type="password"
-                    autoComplete="new-password"
-                    className="h-10 rounded-md"
-                    value={password.confirmNew}
-                    onChange={(e) => {
-                      setPassword({
-                        ...password,
-                        confirmNew: e.target.value,
-                      });
-                    }}
-                  />
+                  <div className="relative w-full">
+                    <Input
+                      id="confirm-password"
+                      name="confirm-password"
+                      type={showConfirmNewPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      className="h-10 rounded-md pr-10"
+                      value={password.confirmNew}
+                      onChange={(e) => {
+                        setPassword({
+                          ...password,
+                          confirmNew: e.target.value,
+                        });
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmNewPassword((prev) => !prev)}
+                      aria-label={
+                        showConfirmNewPassword
+                          ? "Hide confirm new password"
+                          : "Show confirm new password"
+                      }
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmNewPassword ? (
+                        <EyeOff size={20} />
+                      ) : (
+                        <Eye size={20} />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-2 pt-1">
