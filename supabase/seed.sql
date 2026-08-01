@@ -3,6 +3,7 @@
 -- reference: users 0..., subjects 1..., bases 2..., guides 3..., revisions 4...
 --
 -- Login for the seed author: seed@bluelearn.org / password123
+-- Verifiers: verifier{1,2,3}@bluelearn.dev / password123
 --
 -- After seeding, rebuild the search index:
 --   bun api/scripts/typesense-sync.ts --force
@@ -36,6 +37,52 @@ values
    '{"sub":"00000000-0000-4000-8000-000000000001","email":"seed@bluelearn.org","email_verified":true}',
    'email', now(), now(), now())
 on conflict (provider_id, provider) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Verifiers: three seats, enough to fill a review panel.
+-- Login: verifier{1,2,3}@bluelearn.dev / password123
+-- ---------------------------------------------------------------------------
+
+do $$
+declare
+  v_id uuid;
+  i int;
+begin
+  for i in 1..3 loop
+    v_id := ('00000000-0000-4000-8000-00000000001' || i)::uuid;
+
+    insert into auth.users
+      (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+       raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+       confirmation_token, recovery_token, email_change, email_change_token_new)
+    values
+      ('00000000-0000-0000-0000-000000000000', v_id,
+       'authenticated', 'authenticated', 'verifier' || i || '@bluelearn.dev',
+       extensions.crypt('password123', extensions.gen_salt('bf')), now(),
+       '{"provider":"email","providers":["email"]}',
+       jsonb_build_object('username', 'verifier' || i),
+       now(), now(),
+       '', '', '', '')
+    on conflict (id) do nothing;
+
+    insert into auth.identities
+      (id, user_id, provider_id, identity_data, provider,
+       last_sign_in_at, created_at, updated_at)
+    values
+      (gen_random_uuid(), v_id, v_id::text,
+       jsonb_build_object(
+         'sub', v_id::text,
+         'email', 'verifier' || i || '@bluelearn.dev',
+         'email_verified', true
+       ),
+       'email', now(), now(), now())
+    on conflict (provider_id, provider) do nothing;
+
+    insert into public.user_roles (user_id, role)
+    values (v_id, 'verifier')
+    on conflict (user_id, role) do nothing;
+  end loop;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- Subjects

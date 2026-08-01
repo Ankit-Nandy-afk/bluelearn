@@ -1,0 +1,1 @@
+truncate table public.user_roles cascade
