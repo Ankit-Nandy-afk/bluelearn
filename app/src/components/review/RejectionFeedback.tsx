@@ -42,8 +42,10 @@ export const RejectionFeedback = ({ draftId }: { draftId: string }) => {
         aria-hidden={open}
         tabIndex={open ? -1 : 0}
         className={cn(
-          "absolute top-[39px] right-7 transition-opacity duration-150",
-          open ? "pointer-events-none opacity-0" : "opacity-100 delay-250"
+          "absolute top-[39px] right-7 transition-opacity",
+          open
+            ? "pointer-events-none opacity-0 duration-75"
+            : "opacity-100 delay-250 duration-150"
         )}
         onClick={() => setOpen(true)}
       >
@@ -56,14 +58,7 @@ export const RejectionFeedback = ({ draftId }: { draftId: string }) => {
           open ? "w-[320px] border-l" : "w-0"
         )}
       >
-        <aside
-          className={cn(
-            "sticky top-[65px] max-h-[calc(100vh-65px)] w-[320px] space-y-4 overflow-y-auto px-6 pt-[39px] pb-8 transition-opacity",
-            open
-              ? "opacity-100 delay-200 duration-200"
-              : "opacity-0 duration-150"
-          )}
-        >
+        <aside className="sticky top-[65px] max-h-[calc(100vh-65px)] w-[320px] space-y-4 overflow-y-auto px-6 pt-[39px] pb-8">
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-2">
               <p className="font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
