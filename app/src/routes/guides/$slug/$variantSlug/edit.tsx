@@ -19,8 +19,6 @@ import { createVariantRevision, getVariantBySlug } from "@/lib/api/variants";
 import { uploadMedia } from "@/lib/api/media";
 import { estimateReadMinutes } from "@/lib/guideUtils";
 
-import guidesData from "@/data/guides.json";
-
 import { GuideDetails } from "@/components/contribute/steps/GuideDetails";
 import { Content } from "@/components/contribute/steps/Content";
 import { Submit } from "@/components/contribute/steps/Submit";
@@ -90,12 +88,8 @@ function RouteComponent() {
   >(() => approved.map((s) => ({ id: s.id, name: s.name })));
 
   const [guideOptions, setGuideOptions] = useState<
-    Array<{
-      slug: string | null;
-      title: string | null;
-      summary: string | null;
-    }>
-  >(guidesData);
+    Awaited<ReturnType<typeof listGuides>>
+  >([]);
 
   const [username, setUsername] = useState<string | null>(null);
 
@@ -112,9 +106,7 @@ function RouteComponent() {
       })
       .catch(() => {});
     listGuides(opts)
-      .then((data) => {
-        if (data.length > 0) setGuideOptions(data);
-      })
+      .then(setGuideOptions)
       .catch(() => {});
     getMyIdentity(opts)
       .then((data) => setUsername(data.profile.username))
