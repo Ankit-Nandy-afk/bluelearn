@@ -161,6 +161,26 @@ export async function updateMyProfile(
   return { profile, roles };
 }
 
+// Deletes profile row first then delete the auth user.
+export async function deleteMyAccount(service: DB, userId: string) {
+  const { error: profileError } = await service
+    .from("profiles")
+    .delete()
+    .eq("id", userId);
+
+  if (profileError) {
+    console.error(profileError);
+    throw new ServiceError("Failed to delete account", 500);
+  }
+
+  const { error: authError } = await service.auth.admin.deleteUser(userId);
+
+  if (authError) {
+    console.error(authError);
+    throw new ServiceError("Failed to delete account", 500);
+  }
+}
+
 // A public profile by username. Reads roles with the service client because
 // user_roles RLS hides them; suspended members are treated as not found.
 export async function getPublicProfile(
@@ -302,7 +322,8 @@ function findEarliestRevisionByParent<
   return earliest;
 }
 
-// A case is only openable once the panel has finished it.
+// A panelist's own row only links out once the panel has finished. Authors can
+// open their case at any point, since the review page admits them while it runs.
 const RESOLVED_CASE_STATUSES = new Set<string>(["approved", "rejected"]);
 
 // The caller's activites, which include guide and objective revisions they
@@ -406,7 +427,7 @@ export async function getMyActivity(
         status,
         target_slug: guide?.slug ?? null,
         base_slug: guide ? (slugByBase.get(guide.guide_base_id) ?? null) : null,
-        review_case_id: RESOLVED_CASE_STATUSES.has(caseStatus) ? caseId : null,
+        review_case_id: caseId,
         revision_id: rev.id,
       });
     }

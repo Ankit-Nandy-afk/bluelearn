@@ -1,11 +1,17 @@
 export const MIN_PASSWORD_LENGTH = 8;
+export const MIN_USERNAME_LENGTH = 3;
+export const MAX_USERNAME_LENGTH = 30;
+export const MAX_DISPLAY_NAME_LENGTH = 50;
+export const MAX_BIO_LENGTH = 500;
+
+export const USERNAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 export type RegisterInput = {
   username: string;
   email: string;
   password: string;
   confirmPassword: string;
-  acceptedTerms: boolean;
+  acceptedPolicies: boolean;
 };
 
 export type RegisterErrors = Partial<Record<keyof RegisterInput, string>>;
@@ -24,8 +30,8 @@ export function validateRegister(input: RegisterInput): RegisterErrors | null {
   if (input.password !== input.confirmPassword) {
     errors.confirmPassword = "Passwords do not match";
   }
-  if (!input.acceptedTerms) {
-    errors.acceptedTerms = "You must accept the terms of service";
+  if (!input.acceptedPolicies) {
+    errors.acceptedPolicies = "You must accept the terms of service";
   }
 
   return Object.keys(errors).length > 0 ? errors : null;

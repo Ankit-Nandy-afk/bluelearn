@@ -18,7 +18,7 @@ import {
   Users,
 } from "lucide-react";
 
-import type { Action } from "@/components/Sidebar";
+import type { Action } from "@/components/sidebar/GuideSidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
@@ -26,7 +26,7 @@ import { buildBreadcrumbs } from "@/lib/breadcrumbs";
 import { getGuide } from "@/lib/api/guides";
 
 import "katex/dist/katex.min.css";
-import { Sidebar } from "@/components/Sidebar";
+import { GuideSidebar } from "@/components/sidebar/GuideSidebar";
 import { GuideReader } from "@/components/GuideReader";
 import {
   DropdownMenu,
@@ -107,7 +107,7 @@ function RouteComponent() {
   return (
     <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
       <section className="grid grid-cols-[320px_1fr] border-b">
-        <Sidebar
+        <GuideSidebar
           sidebarActions={
             <div className="flex items-center justify-start gap-4">
               {SIDEBAR_ACTIONS.map((action: Action) => (

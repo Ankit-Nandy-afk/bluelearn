@@ -1,30 +1,42 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   BlockTypeSelect,
   BoldItalicUnderlineToggles,
+  CodeToggle,
   CreateLink,
   InsertCodeBlock,
   InsertTable,
   InsertThematicBreak,
   ListsToggle,
+  StrikeThroughSupSubToggles,
   UndoRedo,
+  insertDirective$,
+  usePublisher,
 } from "@mdxeditor/editor";
 import {
+  AlertCircle,
+  AlertTriangle,
   Check,
   ChevronDown,
   Code,
   Copy,
   Download,
+  Info,
+  Lightbulb,
   Link as LinkIcon,
+  Maximize,
+  Minimize,
   Minus,
   Plus,
   Table,
   Upload,
 } from "lucide-react";
-import { InsertBlockMath, InsertInlineMath } from "./math-plugin/index.tsx";
+import { InsertBlockMath, InsertInlineMath } from "./MathLivePlugin";
 import MarkdownLinkImageShortcutListener from "./MarkdownLinkImageShortcutListener";
 import H1RestrictionListener from "./H1RestrictionListener.tsx";
 import CodeBlockShortcutListener from "./CodeBlockShortcutListener";
+import CalloutShortcutListener from "./CalloutShortcutListener";
+import TabShortcutListener from "./TabShortcutListener";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import {
   Popover,
@@ -51,6 +63,17 @@ export default function EditorToolbar({
   const codeBlockRef = useRef<HTMLSpanElement>(null);
   const inlineMathRef = useRef<HTMLSpanElement>(null);
   const blockMathRef = useRef<HTMLSpanElement>(null);
+  const insertDirective = usePublisher(insertDirective$);
+
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const toggleFullScreen = () => {
+    document.body.classList.toggle("editor-fullscreen");
+    setIsFullScreen(document.body.classList.contains("editor-fullscreen"));
+  };
+
+  useEffect(() => {
+    return () => document.body.classList.remove("editor-fullscreen");
+  }, []);
 
   const handleDownload = () => {
     const content = editorRef.current?.getMarkdown() || "";
@@ -100,9 +123,13 @@ export default function EditorToolbar({
       <MarkdownLinkImageShortcutListener />
       <H1RestrictionListener onH1Attempted={onH1Attempted} />
       <CodeBlockShortcutListener />
+      <CalloutShortcutListener />
+      <TabShortcutListener />
       <UndoRedo />
       <div className="mdx-toolbar-divider"></div>
       <BoldItalicUnderlineToggles />
+      <StrikeThroughSupSubToggles options={["Strikethrough"]} />
+      <CodeToggle />
       <div className="mdx-toolbar-divider"></div>
       <BlockTypeSelect />
       <div className="mdx-toolbar-divider"></div>
@@ -214,13 +241,75 @@ export default function EditorToolbar({
             <Minus className="h-3.5 w-3.5 text-muted-foreground" />
             <span>Horizontal Line</span>
           </button>
+          <div className="my-1 h-px bg-border" />
+          <div className="toolbar-popover-header">Callouts</div>
+          <button
+            type="button"
+            className="toolbar-popover-item"
+            onClick={() =>
+              insertDirective({ type: "containerDirective", name: "info" })
+            }
+          >
+            <Info className="h-3.5 w-3.5 text-blue-500" />
+            <span>Info Callout</span>
+          </button>
+          <button
+            type="button"
+            className="toolbar-popover-item"
+            onClick={() =>
+              insertDirective({ type: "containerDirective", name: "note" })
+            }
+          >
+            <Info className="h-3.5 w-3.5 text-blue-500" />
+            <span>Note Callout</span>
+          </button>
+          <button
+            type="button"
+            className="toolbar-popover-item"
+            onClick={() =>
+              insertDirective({ type: "containerDirective", name: "tip" })
+            }
+          >
+            <Lightbulb className="h-3.5 w-3.5 text-green-500" />
+            <span>Tip Callout</span>
+          </button>
+          <button
+            type="button"
+            className="toolbar-popover-item"
+            onClick={() =>
+              insertDirective({ type: "containerDirective", name: "caution" })
+            }
+          >
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+            <span>Caution Callout</span>
+          </button>
+          <button
+            type="button"
+            className="toolbar-popover-item"
+            onClick={() =>
+              insertDirective({ type: "containerDirective", name: "warning" })
+            }
+          >
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+            <span>Warning Callout</span>
+          </button>
+          <button
+            type="button"
+            className="toolbar-popover-item"
+            onClick={() =>
+              insertDirective({ type: "containerDirective", name: "danger" })
+            }
+          >
+            <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+            <span>Danger Callout</span>
+          </button>
         </PopoverContent>
       </Popover>
 
       <div className="mdx-toolbar-divider"></div>
 
       {/* Actions & Sharing Button Group */}
-      <div className="flex items-center gap-1 bg-card p-0.5">
+      <div className="ml-1 flex items-center gap-1 p-0.5">
         <button
           type="button"
           onClick={handleCopy}
@@ -244,6 +333,15 @@ export default function EditorToolbar({
           aria-label="Import .md file"
         >
           <Upload />
+        </button>
+        <div className="mx-1 h-4 w-px bg-border"></div>
+        <button
+          type="button"
+          onClick={toggleFullScreen}
+          title={isFullScreen ? "Exit Full Screen" : "Full Screen"}
+          aria-label="Toggle Full Screen"
+        >
+          {isFullScreen ? <Minimize /> : <Maximize />}
         </button>
       </div>
 

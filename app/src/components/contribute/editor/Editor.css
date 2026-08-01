@@ -6,6 +6,10 @@
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
   --blue-1: var(--background);
   --blue-2: var(--muted);
   --blue-3: var(--muted);
@@ -86,7 +90,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  position: relative;
   transition:
     border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -101,22 +105,46 @@
 
 /* == CUSTOM TOOLBAR == */
 [class*="_toolbarRoot"] {
-  width: 100% !important;
-  max-width: 100% !important;
+  width: max-content !important;
+  max-width: calc(100% - 2rem) !important;
+  margin: 1rem auto 0 auto !important;
   padding: 0 !important;
-  border-radius: 0 !important;
-  background-color: var(--card) !important;
-  border-bottom: 1px solid var(--border) !important;
-  z-index: 10 !important;
+  border-radius: 9999px !important; /* Pill shape */
+  background-color: hsl(var(--card) / 0.75) !important;
+  border: 1px solid hsl(var(--border) / 0.6) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 hsl(var(--background) / 0.5) !important;
+  position: sticky !important;
+  top: 1rem !important;
+  z-index: 50 !important;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease !important;
+}
+
+[class*="_toolbarRoot"]:hover {
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 hsl(var(--background) / 0.5) !important;
 }
 
 .mdxeditor-toolbar-custom {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem;
+  gap: 0.125rem;
+  padding: 0.375rem 0.5rem;
   width: 100%;
+  border-radius: inherit;
+  scrollbar-width: none;
+}
+
+.mdxeditor-toolbar-custom::-webkit-scrollbar {
+  display: none;
 }
 
 .mdx-toolbar-divider {
@@ -194,7 +222,6 @@
     0 4px 6px -4px rgba(0, 0, 0, 0.08) !important;
   filter: none !important;
   padding: 0.25rem !important;
-  z-index: 50 !important;
 }
 
 [class*="_selectItem"],
@@ -217,6 +244,7 @@
 }
 
 /* == DIALOGS & POPUPS == */
+
 [class*="_dialogContent"],
 [class*="_largeDialogContent"] {
   border: 1px solid var(--border) !important;
@@ -340,13 +368,13 @@
 
 /* == CODE & SYNTAX HIGHLIGHTING == */
 .mdxeditor-content pre {
-  background-color: #282c34 !important;
-  border: 1px solid #181a1f !important;
+  background-color: var(--secondary) !important;
+  border: 1px solid var(--border) !important;
   border-radius: var(--radius) !important;
   padding: 1rem !important;
   overflow-x: auto !important;
   margin: 1.25rem 0 !important;
-  color: #abb2bf !important;
+  color: var(--foreground) !important;
 }
 
 .mdxeditor-content code {
@@ -455,150 +483,17 @@
   padding: 0 !important;
 }
 
-/* == MATH & LATEX EDITOR INTEGRATION == */
-.mdxeditor-content .math-node {
-  color: var(--foreground) !important;
-  border-radius: var(--radius) !important;
-  transition: all 0.2s ease !important;
-  user-select: none !important; /* Prevent text selection to ensure clicks correctly open the editor */
-}
-
-.mdxeditor-content .math-node .select-all {
-  user-select: none !important; /* Override Tailwind's select-all class inside preview elements */
-}
-
-/* Inline Math Editor Input */
-.mdxeditor-content .math-node input {
-  background-color: var(--background) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius) !important;
-  padding: 0.25rem 0.5rem !important;
-  font-size: 0.875rem !important;
-  font-family: var(--font-mono) !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.mdxeditor-content .math-node input:focus {
-  border-color: var(--primary) !important;
-}
-
-/* Block Math Editor Popover Container */
-.mdxeditor-content div.flex.flex-col.max-w-2xl {
-  background-color: var(--card) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1) !important;
-  border-radius: var(--radius) !important;
-}
-
-/* Block Math Textarea */
-.mdxeditor-content textarea {
-  background-color: var(--background) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius) !important;
-  padding: 0.75rem !important;
-  font-size: 0.875rem !important;
-  font-family: var(--font-mono) !important;
-  outline: none !important;
-}
-
-.mdxeditor-content textarea:focus {
-  border-color: var(--primary) !important;
-}
-
-/* Math Save button */
-.mdxeditor-content button.bg-sky-500,
-.mdxeditor-content [className*="bg-sky-500"] {
-  background-color: var(--primary) !important;
-  color: var(--primary-foreground) !important;
-  border-radius: var(--radius) !important;
-  transition: opacity 0.2s ease !important;
-}
-
-.mdxeditor-content button.bg-sky-500:hover,
-.mdxeditor-content [className*="bg-sky-500"]:hover {
-  background-color: var(--primary) !important;
-  opacity: 0.9 !important;
-}
-
-.mdxeditor-content [className*="text-slate-500"] {
-  color: var(--muted-foreground) !important;
-}
-
-.katex {
-  font-size: 1.05em;
-  color: inherit;
+/* Hide native text selection over atomic blocks so our custom React state ring shines */
+.math-node *::selection {
+  background: transparent !important;
+  color: inherit !important;
 }
 
 /* == MATHLIVE MATH-FIELD STYLING == */
 math-field {
-  background: transparent !important;
-  border: none !important;
-  color: inherit !important;
-  outline: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  min-height: 0 !important;
-  font-size: inherit !important;
-  line-height: inherit !important;
-  height: auto !important;
-  vertical-align: middle !important;
-
   --contains-highlight-background-color: transparent;
-}
-
-math-field::part(container) {
-  min-height: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-math-field::part(content) {
-  min-height: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-math-field:focus-within {
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-math-field::part(virtual-keyboard-toggle) {
-  display: none !important;
-}
-
-/* Hide the sandwich menu icon by default when displaying equations */
-math-field::part(menu-toggle) {
-  display: none !important;
-}
-
-/* Show the sandwich menu icon when editing (focused) */
-math-field:focus::part(menu-toggle),
-math-field:focus-within::part(menu-toggle) {
-  display: flex !important;
-  transform: scale(0.75) !important;
-  transform-origin: center right !important;
-  opacity: 0.6 !important;
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease !important;
-}
-
-math-field:focus::part(menu-toggle):hover,
-math-field:focus-within::part(menu-toggle):hover {
-  opacity: 1 !important;
-  transform: scale(0.85) !important;
+  --highlight-text: transparent;
+  --text-highlight-background-color: transparent;
 }
 
 /* == CUSTOM TOOLBAR DROPDOWNS & POPOVERS == */
@@ -611,7 +506,7 @@ math-field:focus-within::part(menu-toggle):hover {
   font-weight: 500 !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius) !important;
-  background-color: var(--card) !important;
+  background-color: transparent !important;
   color: var(--foreground) !important;
   cursor: pointer !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -631,7 +526,6 @@ math-field:focus-within::part(menu-toggle):hover {
     0 10px 15px -3px rgba(0, 0, 0, 0.08),
     0 4px 6px -4px rgba(0, 0, 0, 0.08) !important;
   padding: 0.25rem !important;
-  z-index: 50 !important;
   width: 11.5rem !important;
   display: flex !important;
   flex-direction: column !important;
@@ -683,4 +577,47 @@ math-field:focus-within::part(menu-toggle):hover {
   pointer-events: none !important;
   top: 0 !important;
   left: 0 !important;
+}
+
+/* Code Block Enhancements */
+button[title="Delete code block"],
+[class*="_iconButton_"] {
+  cursor: pointer !important;
+}
+
+/* == FULL SCREEN MODE (NATIVE LAYOUT) == */
+body.editor-fullscreen header,
+body.editor-fullscreen nav,
+body.editor-fullscreen aside {
+  display: none !important;
+}
+
+body.editor-fullscreen .mx-auto:not(.math-node):not(.math-preview) {
+  max-width: none !important;
+  border: none !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  min-height: 100vh !important;
+}
+
+body.editor-fullscreen section {
+  border: none !important;
+}
+
+body.editor-fullscreen #bluelearn-editor-container {
+  height: calc(100vh - 150px) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+body.editor-fullscreen .editor-only-paper {
+  height: 100% !important;
+  max-height: none !important;
+  flex: 1 !important;
+}
+
+body.editor-fullscreen .mdxeditor-content {
+  max-height: none !important;
+  height: 100% !important;
 }
