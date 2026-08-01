@@ -1,17 +1,20 @@
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
 import { useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { ChangeRow } from "@/components/review/ChangeRow";
 import { ChangeBadge } from "@/components/review/ChangeBadge";
 import { ChangeSection } from "@/components/review/ChangeSection";
+import { DecisionList } from "@/components/review/DecisionList";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 
 import { cn } from "@/lib/utils";
 import { castDecision } from "@/lib/api/reviews";
+import { getRevision, reviseRevision } from "@/lib/api/guideRevisions";
 
 export type Review = {
   decision: string;
@@ -31,7 +34,9 @@ export const ReviewSidebar = ({
   revisionData,
 }: PropTypes) => {
   const [submitting, setSubmitting] = useState(false);
+  const [revising, setRevising] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const navigate = useNavigate();
 
   const subjects = revision?.tags ?? [];
 
@@ -86,6 +91,36 @@ export const ReviewSidebar = ({
   };
 
   const canVote = revisionData.viewer_role === "panelist" && caseOpen;
+
+  const canRevise =
+    revisionData.viewer_role === "author" &&
+    revisionData.case.status === "rejected" &&
+    revision;
+
+  const startRevision = async () => {
+    setRevising(true);
+    const toastId = toast.loading("Opening your revision...");
+
+    try {
+      const draftId = await reviseRevision(revision.id);
+      const draft = await getRevision(draftId);
+      toast.dismiss(toastId);
+
+      // Only a published guide has a variant slug, and only it has an editor route.
+      if (draft.base_slug && draft.variant_slug) {
+        navigate({
+          to: "/guides/$slug/$variantSlug/edit",
+          params: { slug: draft.base_slug, variantSlug: draft.variant_slug },
+          search: { draft: draftId },
+        });
+      } else {
+        navigate({ to: "/contribute", search: { draft: draftId } });
+      }
+    } catch {
+      toast.error("Could not open your revision", { id: toastId });
+      setRevising(false);
+    }
+  };
 
   const [review, setReview] = useState<Review>({
     decision:
@@ -231,6 +266,32 @@ export const ReviewSidebar = ({
         </CollapsibleSection>
       )}
 
+      {!caseOpen && (
+        <CollapsibleSection
+          defaultOpen={true}
+          title={<p className="ml-auto">Panel Decisions</p>}
+        >
+          <section className="space-y-4">
+            <DecisionList decisions={revisionData.decisions} />
+
+            {canRevise && (
+              <Button
+                className="btn-pri w-full py-2.5"
+                size="lg"
+                disabled={revising}
+                onClick={() => {
+                  startRevision();
+                }}
+              >
+                {revisionData.revise_draft_id
+                  ? "Continue revision"
+                  : "Revise submission"}
+              </Button>
+            )}
+          </section>
+        </CollapsibleSection>
+      )}
+
       <section className="space-y-2">
         <CollapsibleSection
           defaultOpen={true}
@@ -275,7 +336,7 @@ export const ReviewSidebar = ({
               <ChangeRow
                 key={t.id}
                 label={t.title}
-                badge={<ChangeBadge tone="new">To Do</ChangeBadge>}
+                badge={<ChangeBadge tone="new">To do</ChangeBadge>}
               />
             ))}
           </ChangeSection>

@@ -26,6 +26,16 @@ export async function updateRevision(
   return res.json();
 }
 
+// Forks a rejected submission into an editable draft, or hands back the draft
+// already opened for it.
+export async function reviseRevision(id: string) {
+  const res = await revisions[":id"].revise.$post({ param: { id } });
+  await assertOk(res);
+
+  const { revision_id } = await res.json();
+  return revision_id;
+}
+
 // Flips the draft to submitted and opens a review case. 422 if incomplete.
 export async function submitRevision(id: string) {
   const res = await revisions[":id"].submit.$post({ param: { id } });
