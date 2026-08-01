@@ -14,6 +14,7 @@ import {
 import {
   archiveObjective,
   createObjective,
+  createObjectiveRevision,
   getObjectiveBySlug,
   listObjectiveRevisions,
   listPublishedObjectives,
@@ -97,9 +98,22 @@ export const objectivesRouter = new Hono<HonoEnv>()
     return c.json({ revisions: data, total });
   })
 
-  // 201 with { revision_id } for the new draft.
-  .post("/:slug/revisions", requireUser, (c) =>
-    c.json({ error: "Not implemented" }, 501)
+  // 201 with { revision_id } for the new draft. 409 if nothing is published yet.
+  .post(
+    "/:slug/revisions",
+    requireUser,
+    rateLimitMiddleware({
+      ...CONTRIBUTION,
+      bucket: "objective-revision-create",
+    }),
+    async (c) => {
+      const { revision_id } = await createObjectiveRevision(
+        c.get("supabase"),
+        c.get("user").id,
+        c.req.param("slug")
+      );
+      return c.json({ revision_id }, 201);
+    }
   );
 
 export const objectiveRevisionsRouter = new Hono<HonoEnv>()

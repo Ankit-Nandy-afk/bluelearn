@@ -357,7 +357,7 @@ async function loadClosure(supabase: DB, targetIds: string[]) {
   return (data ?? []).map((r) => r.guide_base_id);
 }
 
-async function requireCurator(supabase: DB, userId: string) {
+export async function requireCurator(supabase: DB, userId: string) {
   const { data, error } = await supabase
     .from("user_roles")
     .select("role")
