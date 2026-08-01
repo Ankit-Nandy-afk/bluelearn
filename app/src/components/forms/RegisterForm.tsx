@@ -62,9 +62,7 @@ export function RegisterForm({
       return;
     }
 
-    // with a session, useRedirectIfAuthed handles it. navigating here too would
-    // race that and abort the destination loader mid-flight.
-    if (!data.session) navigate({ to: "/" });
+    if (!data.session) navigate({ to: "/verify-email", search: { email } });
   }
 
   return (
@@ -268,7 +266,7 @@ export function RegisterForm({
             {/* Right side - Image */}
             <div className="relative hidden md:flex md:items-center md:justify-center">
               <img
-                src="/assets/atom/atom-cube-3.png"
+                src="/assets/adam/adam-cube-line.png"
                 alt="Register to start contributing"
                 className="absolute object-cover p-8"
               />

@@ -108,8 +108,10 @@ export function useRequireRole(role: string) {
 export function useRedirectIfAuthed(to = "/") {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
-
+  // getSession and onAuthStateChange both land a session with a fresh object.
+  // This could cause the object to fire a second navigate that cancels the
+  // first one's loader mid-flight and blanks the page.
   useEffect(() => {
     if (!loading && session) navigate({ to });
-  }, [loading, session, navigate, to]);
+  }, [loading, Boolean(session), navigate, to]);
 }
