@@ -59,9 +59,8 @@ export function RegisterForm({
       return;
     }
 
-    // with a session, useRedirectIfAuthed handles it. navigating here too would
-    // race that and abort the destination loader mid-flight.
-    if (!data.session) navigate({ to: "/" });
+    // With a session, useRedirectIfAuthed handles it.
+    if (!data.session) navigate({ to: "/verify-email", search: { email } });
   }
 
   return (

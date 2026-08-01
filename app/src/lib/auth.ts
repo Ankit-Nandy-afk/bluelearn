@@ -22,6 +22,14 @@ export async function signUp(
   });
 }
 
+export async function resendVerification(email: string) {
+  return supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: `${window.location.origin}/login` },
+  });
+}
+
 export async function signOut() {
   return supabase.auth.signOut();
 }
