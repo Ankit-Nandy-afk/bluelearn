@@ -146,202 +146,206 @@ export const ReviewSidebar = ({
   ];
 
   return (
-    <aside className="h-[calc(100vh-70px)] space-y-4 overflow-y-auto border-r px-6 py-6">
-      {canVote && (
-        <CollapsibleSection
-          defaultOpen={true}
-          title={<p className="ml-auto">Review Decision</p>}
-        >
-          <section className="space-y-4">
-            <FieldGroup>
-              <Field className="space-y-4">
-                <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                  Vote
-                </FieldLabel>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "h-9 border-red-500/40 font-mono text-xs font-bold text-red-600 uppercase transition-colors hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400",
-                      review.decision == "reject" && "bg-red-500/10"
-                    )}
-                    onClick={() => {
-                      if (review.decision == "reject") {
-                        setReview((prev) => ({
-                          ...prev,
-                          decision: "",
-                        }));
-                      } else {
-                        setReview((prev) => ({
-                          ...prev,
-                          decision: "reject",
-                        }));
-                      }
-                    }}
-                  >
-                    <X />
-                    Reject
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "h-9 border-green-600/40 font-mono text-xs font-bold text-green-700 uppercase transition-colors hover:bg-green-600/10 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
-                      review.decision == "approve" && "bg-green-600/10"
-                    )}
-                    onClick={() => {
-                      if (review.decision == "approve") {
-                        setReview((prev) => ({
-                          ...prev,
-                          decision: "",
-                        }));
-                      } else {
-                        setReview((prev) => ({
-                          ...prev,
-                          decision: "approve",
-                        }));
-                      }
-                    }}
-                  >
-                    <Check />
-                    Approve
-                  </Button>
-                </div>
-              </Field>
-            </FieldGroup>
-
-            <FieldGroup className="gap-4">
-              <Field className="space-y-2">
-                <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                  Notes
-                </FieldLabel>
-
-                <textarea
-                  className="h-32 w-full min-w-0 resize-none rounded-md border border-input bg-input/20 p-2 text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs/relaxed file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
-                  rows={4}
-                  placeholder="Add notes to explain your decision..."
-                  required
-                  value={review.notes}
-                  onChange={(e) =>
-                    setReview((prev) => ({
-                      ...prev,
-                      notes: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-
-              {review.decision == "reject" && (
-                <Field className="space-y-2">
-                  <FieldLabel className="font-mono font-bold tracking-[0.08em] uppercase">
-                    Reasons
+    <aside className="border-r">
+      <div className="sticky top-[65px] max-h-[calc(100vh-65px)] space-y-4 overflow-y-auto px-6 py-6">
+        {canVote && (
+          <CollapsibleSection
+            defaultOpen={true}
+            title={<p className="ml-auto">Review Decision</p>}
+          >
+            <section className="space-y-4">
+              <FieldGroup>
+                <Field className="space-y-4">
+                  <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+                    Vote
                   </FieldLabel>
 
-                  <Combobox
-                    multiple
-                    items={REASONS}
-                    value={review.reasons}
-                    onValueChange={(reasons) =>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "h-9 border-red-500/40 font-mono text-xs font-bold text-red-600 uppercase transition-colors hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400",
+                        review.decision == "reject" && "bg-red-500/10"
+                      )}
+                      onClick={() => {
+                        if (review.decision == "reject") {
+                          setReview((prev) => ({
+                            ...prev,
+                            decision: "",
+                          }));
+                        } else {
+                          setReview((prev) => ({
+                            ...prev,
+                            decision: "reject",
+                          }));
+                        }
+                      }}
+                    >
+                      <X />
+                      Reject
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "h-9 border-green-600/40 font-mono text-xs font-bold text-green-700 uppercase transition-colors hover:bg-green-600/10 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
+                        review.decision == "approve" && "bg-green-600/10"
+                      )}
+                      onClick={() => {
+                        if (review.decision == "approve") {
+                          setReview((prev) => ({
+                            ...prev,
+                            decision: "",
+                          }));
+                        } else {
+                          setReview((prev) => ({
+                            ...prev,
+                            decision: "approve",
+                          }));
+                        }
+                      }}
+                    >
+                      <Check />
+                      Approve
+                    </Button>
+                  </div>
+                </Field>
+              </FieldGroup>
+
+              <FieldGroup className="gap-4">
+                <Field className="space-y-2">
+                  <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+                    Notes
+                  </FieldLabel>
+
+                  <textarea
+                    className="h-32 w-full min-w-0 resize-none rounded-md border border-input bg-input/20 p-2 text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs/relaxed file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+                    rows={4}
+                    placeholder="Add notes to explain your decision..."
+                    required
+                    value={review.notes}
+                    onChange={(e) =>
                       setReview((prev) => ({
                         ...prev,
-                        reasons,
+                        notes: e.target.value,
                       }))
                     }
                   />
                 </Field>
-              )}
-            </FieldGroup>
 
-            <Button
-              className="btn-pri w-full py-2.5"
-              size="lg"
-              disabled={submitting}
-              onClick={() => {
-                submitDecision();
-              }}
-            >
-              Submit Decision
-            </Button>
-          </section>
-        </CollapsibleSection>
-      )}
+                {review.decision == "reject" && (
+                  <Field className="space-y-2">
+                    <FieldLabel className="font-mono font-bold tracking-[0.08em] uppercase">
+                      Reasons
+                    </FieldLabel>
 
-      {!caseOpen && (
-        <CollapsibleSection
-          defaultOpen={true}
-          title={<p className="ml-auto">Panel Decisions</p>}
-        >
-          <section className="space-y-4">
-            <DecisionList decisions={revisionData.decisions} />
+                    <Combobox
+                      multiple
+                      items={REASONS}
+                      value={review.reasons}
+                      onValueChange={(reasons) =>
+                        setReview((prev) => ({
+                          ...prev,
+                          reasons,
+                        }))
+                      }
+                    />
+                  </Field>
+                )}
+              </FieldGroup>
 
-            {canRevise && (
               <Button
                 className="btn-pri w-full py-2.5"
                 size="lg"
-                disabled={revising}
+                disabled={submitting}
                 onClick={() => {
-                  startRevision();
+                  submitDecision();
                 }}
               >
-                {revisionData.revise_draft_id
-                  ? "Continue revision"
-                  : "Revise submission"}
+                Submit Decision
               </Button>
-            )}
-          </section>
-        </CollapsibleSection>
-      )}
+            </section>
+          </CollapsibleSection>
+        )}
 
-      <section className="space-y-2">
-        <CollapsibleSection
-          defaultOpen={true}
-          title={<p className="ml-auto">Proposed Subjects</p>}
-        >
-          <ChangeSection count={subjects.length} empty="None proposed.">
-            {subjects.map((s: { id: string; name: string; status: string }) => (
-              <ChangeRow
-                key={s.id}
-                label={s.name}
-                badge={
-                  s.status === "draft" ? (
-                    <ChangeBadge tone="new">New</ChangeBadge>
-                  ) : (
-                    <ChangeBadge tone="existing">Existing</ChangeBadge>
-                  )
-                }
-              />
-            ))}
-          </ChangeSection>
-        </CollapsibleSection>
-
-        <CollapsibleSection
-          defaultOpen={true}
-          title={<p className="ml-auto">Prerequisite Guides</p>}
-        >
-          <ChangeSection
-            count={revisionData.prerequisites.length}
-            empty="None declared."
+        {!caseOpen && (
+          <CollapsibleSection
+            defaultOpen={true}
+            title={<p className="ml-auto">Panel Decisions</p>}
           >
-            {revisionData.prerequisites.map(
-              (p: { slug: string; title?: string }) => (
-                <ChangeRow
-                  key={p.slug}
-                  label={p.title ?? p.slug}
-                  badge={<ChangeBadge tone="existing">Existing</ChangeBadge>}
-                />
-              )
-            )}
+            <section className="space-y-4">
+              <DecisionList decisions={revisionData.decisions} />
 
-            {revisionData.todos.map((t: { id: string; title: string }) => (
-              <ChangeRow
-                key={t.id}
-                label={t.title}
-                badge={<ChangeBadge tone="new">To do</ChangeBadge>}
-              />
-            ))}
-          </ChangeSection>
-        </CollapsibleSection>
-      </section>
+              {canRevise && (
+                <Button
+                  className="btn-pri w-full py-2.5"
+                  size="lg"
+                  disabled={revising}
+                  onClick={() => {
+                    startRevision();
+                  }}
+                >
+                  {revisionData.revise_draft_id
+                    ? "Continue revision"
+                    : "Revise submission"}
+                </Button>
+              )}
+            </section>
+          </CollapsibleSection>
+        )}
+
+        <section className="space-y-2">
+          <CollapsibleSection
+            defaultOpen={true}
+            title={<p className="ml-auto">Proposed Subjects</p>}
+          >
+            <ChangeSection count={subjects.length} empty="None proposed.">
+              {subjects.map(
+                (s: { id: string; name: string; status: string }) => (
+                  <ChangeRow
+                    key={s.id}
+                    label={s.name}
+                    badge={
+                      s.status === "draft" ? (
+                        <ChangeBadge tone="new">New</ChangeBadge>
+                      ) : (
+                        <ChangeBadge tone="existing">Existing</ChangeBadge>
+                      )
+                    }
+                  />
+                )
+              )}
+            </ChangeSection>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            defaultOpen={true}
+            title={<p className="ml-auto">Prerequisite Guides</p>}
+          >
+            <ChangeSection
+              count={revisionData.prerequisites.length}
+              empty="None declared."
+            >
+              {revisionData.prerequisites.map(
+                (p: { slug: string; title?: string }) => (
+                  <ChangeRow
+                    key={p.slug}
+                    label={p.title ?? p.slug}
+                    badge={<ChangeBadge tone="existing">Existing</ChangeBadge>}
+                  />
+                )
+              )}
+
+              {revisionData.todos.map((t: { id: string; title: string }) => (
+                <ChangeRow
+                  key={t.id}
+                  label={t.title}
+                  badge={<ChangeBadge tone="new">To do</ChangeBadge>}
+                />
+              ))}
+            </ChangeSection>
+          </CollapsibleSection>
+        </section>
+      </div>
     </aside>
   );
 };

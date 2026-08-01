@@ -53,7 +53,7 @@ function RouteComponent() {
   }, [revision]);
 
   return (
-    <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
+    <div className="mx-auto min-h-[calc(100vh-65px)] max-w-7xl border-x bg-background">
       <section className="grid grid-cols-[320px_1fr] border-b">
         <ReviewSidebar
           caseId={caseId}
@@ -62,7 +62,7 @@ function RouteComponent() {
         />
 
         {/* MAIN */}
-        <main className="h-[calc(100vh-70px)] min-w-0 overflow-y-auto px-10 py-6 lg:px-16">
+        <main className="min-w-0 px-10 pt-8 pb-6 lg:px-16">
           {guideContent ?? (
             <p className="font-mono text-[11px] tracking-[0.08em] text-red-500 uppercase">
               No guide revision found to display.

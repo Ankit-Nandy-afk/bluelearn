@@ -30,21 +30,23 @@ export const RejectionFeedback = ({ draftId }: { draftId: string }) => {
   if (!caseId) return null;
 
   return (
-    <aside className="w-[300px] shrink-0 space-y-4 overflow-y-auto border-l pl-6">
-      <div className="space-y-1">
-        <p className="font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
-          Panel Feedback
-        </p>
-        <Link
-          to="/review/$caseId"
-          params={{ caseId }}
-          className="mono-micro text-muted-foreground underline-offset-4 hover:underline"
-        >
-          View the closed case
-        </Link>
-      </div>
+    <div className="-mt-8 -mr-8 -mb-8 w-[320px] shrink-0 border-l lg:-mr-16">
+      <aside className="sticky top-[65px] max-h-[calc(100vh-65px)] space-y-4 overflow-y-auto px-6 py-8">
+        <div className="space-y-1">
+          <p className="font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
+            Panel Feedback
+          </p>
+          <Link
+            to="/review/$caseId"
+            params={{ caseId }}
+            className="mono-micro text-muted-foreground underline-offset-4 hover:underline"
+          >
+            View the closed case
+          </Link>
+        </div>
 
-      <DecisionList decisions={decisions} />
-    </aside>
+        <DecisionList decisions={decisions} />
+      </aside>
+    </div>
   );
 };
