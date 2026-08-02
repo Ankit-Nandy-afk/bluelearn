@@ -1,7 +1,7 @@
 import { toast } from "sonner";
-import { Check, X } from "lucide-react";
+import { Check, ExternalLink, X } from "lucide-react";
 import { useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
@@ -192,6 +192,26 @@ export const ReviewSidebar = ({
                 </Badge>
               }
             />
+            {isEdit && revision?.base && (
+              <DetailRow
+                label="Guide"
+                value={
+                  <Link
+                    to="/guides/$slug"
+                    params={{ slug: revision.base.slug }}
+                    className="flex min-w-0 items-center gap-1 leading-none text-foreground hover:underline"
+                  >
+                    <span className="max-w-[18ch] truncate">
+                      {revision.base.title ?? revision.base.slug}
+                    </span>
+                    <ExternalLink
+                      className="size-3 shrink-0 -translate-y-px"
+                      strokeWidth={2.75}
+                    />
+                  </Link>
+                }
+              />
+            )}
           </div>
         </CollapsibleSection>
 

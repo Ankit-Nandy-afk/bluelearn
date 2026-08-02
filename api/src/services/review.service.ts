@@ -111,6 +111,7 @@ type CaseDetailRow = {
 
 type TagsAndEdges = {
   knowledge_type: Database["public"]["Enums"]["knowledge_type"] | null;
+  base: { slug: string; title: string | null } | null;
   tags: Array<{ id: string; name: string; status: string }>;
   prerequisites: Array<{ slug: string; title: string | null }>;
   todos: Array<{ id: string; title: string }>;
@@ -232,7 +233,14 @@ async function loadTagsAndEdges(
   const { data: guide, error: guideError } = await service
     .from("guides")
     .select(
-      "guide_base_id, guide_bases!guides_guide_base_id_fkey(knowledge_type)"
+      `guide_base_id,
+       guide_bases!guides_guide_base_id_fkey(
+         knowledge_type,
+         slug,
+         canonical:guides!guide_bases_canonical_guide_id_fkey(
+           current:guide_revisions!guides_current_revision_id_fkey(title)
+         )
+       )`
     )
     .eq("id", guideId)
     .maybeSingle();
@@ -277,8 +285,16 @@ async function loadTagsAndEdges(
     throw new ServiceError("Failed to load revision tags and edges", 500);
   }
 
+  const baseSlug = guide?.guide_bases?.slug ?? null;
+
   return {
     knowledge_type: guide?.guide_bases?.knowledge_type ?? null,
+    base: baseSlug
+      ? {
+          slug: baseSlug,
+          title: guide?.guide_bases?.canonical?.current?.title ?? null,
+        }
+      : null,
     tags: (tagRes.data ?? [])
       .map((r) => r.subjects)
       .filter((s): s is NonNullable<typeof s> => !!s)
@@ -434,6 +450,7 @@ export async function getReviewCase(
             ? (usernames.get(revision.author_id) ?? null)
             : null,
           knowledge_type: tagsAndEdges?.knowledge_type ?? null,
+          base: tagsAndEdges?.base ?? null,
           title: revision.title,
           summary: revision.summary,
           body: revision.body,

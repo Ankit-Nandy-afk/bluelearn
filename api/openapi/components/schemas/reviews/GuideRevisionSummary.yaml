@@ -20,6 +20,25 @@ properties:
     type: [string, "null"]
     enum: [theoretical, practical, null]
     example: theoretical
+  base:
+    description: >
+      The published guide base the revision edits, so a reviewer can open the
+      guide it belongs to. Null while the base is unpublished, which is the
+      case for a guide creation, and null for a viewer who cannot see the
+      submission's tags and edges.
+    oneOf:
+      - type: object
+        additionalProperties: false
+        properties:
+          slug:
+            type: string
+            example: calculus
+          title:
+            type: [string, "null"]
+            description: Title of the base's canonical guide.
+            example: Calculus
+        required: [slug, title]
+      - type: "null"
   title:
     type: [string, "null"]
     example: Calculus
