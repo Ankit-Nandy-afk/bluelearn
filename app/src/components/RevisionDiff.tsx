@@ -23,19 +23,35 @@ export type RevisionDiffData = {
   };
 };
 
-type Row = { left: string | null; right: string | null };
+type Row = {
+  left: string | null;
+  right: string | null;
+  leftLineNumber: number | null;
+  rightLineNumber: number | null;
+};
 
 // The API hands back one flat stream of +/-/context tokens. A run of removals
 // sits across from the run of additions that replaced it, shorter side padded.
+// Each side counts its own lines so the numbers match the real text, padding
+// rows staying blank.
 function toRows(lines: Array<DiffLine>): Array<Row> {
   const rows: Array<Row> = [];
   let removed: Array<string> = [];
   let added: Array<string> = [];
+  let leftLineNumber = 0;
+  let rightLineNumber = 0;
 
   const flush = () => {
     const height = Math.max(removed.length, added.length);
     for (let i = 0; i < height; i++) {
-      rows.push({ left: removed[i] ?? null, right: added[i] ?? null });
+      const left = i < removed.length ? removed[i] : null;
+      const right = i < added.length ? added[i] : null;
+      rows.push({
+        left,
+        right,
+        leftLineNumber: left === null ? null : ++leftLineNumber,
+        rightLineNumber: right === null ? null : ++rightLineNumber,
+      });
     }
     removed = [];
     added = [];
@@ -46,7 +62,12 @@ function toRows(lines: Array<DiffLine>): Array<Row> {
     else if (line.type === "added") added.push(line.text);
     else {
       flush();
-      rows.push({ left: line.text, right: line.text });
+      rows.push({
+        left: line.text,
+        right: line.text,
+        leftLineNumber: ++leftLineNumber,
+        rightLineNumber: ++rightLineNumber,
+      });
     }
   }
   flush();
@@ -56,24 +77,44 @@ function toRows(lines: Array<DiffLine>): Array<Row> {
 
 const Cell = ({
   text,
+  line,
   tone,
 }: {
   text: string | null;
+  line: number | null;
   tone: "removed" | "added" | null;
-}) => (
-  <div
-    className={cn(
-      "px-3 py-0.5 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap",
-      tone === "removed" &&
-        "bg-red-500/10 text-red-900 dark:bg-red-500/15 dark:text-red-200",
-      tone === "added" &&
-        "bg-green-600/10 text-green-900 dark:bg-green-600/15 dark:text-green-200",
-      text === null && "bg-muted/40"
-    )}
-  >
-    {text ? text : " "}
-  </div>
-);
+}) => {
+  // A padding cell sits across from a change without being one itself, so it
+  // drops the tint the other side earned.
+  const shade = text === null ? null : tone;
+
+  return (
+    <div
+      className={cn(
+        "flex gap-3 font-mono text-xs leading-relaxed",
+        shade === "removed" &&
+          "bg-red-500/10 text-red-900 dark:bg-red-500/15 dark:text-red-200",
+        shade === "added" &&
+          "bg-green-600/10 text-green-900 dark:bg-green-600/15 dark:text-green-200",
+        text === null && "bg-muted/40"
+      )}
+    >
+      <span
+        className={cn(
+          "w-10 shrink-0 py-0.5 text-center tabular-nums opacity-70 select-none",
+          shade === "removed" && "bg-red-500/20 dark:bg-red-500/25",
+          shade === "added" && "bg-green-600/20 dark:bg-green-600/25",
+          !shade && "opacity-50"
+        )}
+      >
+        {line}
+      </span>
+      <span className="min-w-0 flex-1 py-0.5 pr-3 break-words whitespace-pre-wrap">
+        {text ? text : " "}
+      </span>
+    </div>
+  );
+};
 
 const Field = ({ label, field }: { label: string; field: FieldDiff }) => {
   if (!field.changed || !field.lines) {
@@ -98,8 +139,16 @@ const Field = ({ label, field }: { label: string; field: FieldDiff }) => {
           const changed = row.left !== row.right;
           return (
             <Fragment key={i}>
-              <Cell text={row.left} tone={changed ? "removed" : null} />
-              <Cell text={row.right} tone={changed ? "added" : null} />
+              <Cell
+                text={row.left}
+                line={row.leftLineNumber}
+                tone={changed ? "removed" : null}
+              />
+              <Cell
+                text={row.right}
+                line={row.rightLineNumber}
+                tone={changed ? "added" : null}
+              />
             </Fragment>
           );
         })}
