@@ -975,6 +975,7 @@ export type Database = {
           id: string
           resolved_guide_base_id: string | null
           status: Database["public"]["Enums"]["todo_status"]
+          summary: string
           title: string
         }
         Insert: {
@@ -983,6 +984,7 @@ export type Database = {
           id?: string
           resolved_guide_base_id?: string | null
           status?: Database["public"]["Enums"]["todo_status"]
+          summary: string
           title: string
         }
         Update: {
@@ -991,6 +993,7 @@ export type Database = {
           id?: string
           resolved_guide_base_id?: string | null
           status?: Database["public"]["Enums"]["todo_status"]
+          summary?: string
           title?: string
         }
         Relationships: [

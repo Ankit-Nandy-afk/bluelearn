@@ -10,7 +10,7 @@ export async function listOpenTodos(supabase: DB): Promise<TodoListItem[]> {
   const { data, error } = await supabase
     .from("todo_prerequisites")
     .select(
-      `id, dependent_guide_base_id, title, status, created_at,
+      `id, dependent_guide_base_id, title, summary, status, created_at,
        claims:todo_claims(count),
        base:guide_bases!todo_prerequisites_dependent_guide_base_id_fkey!inner(
          slug,
@@ -33,6 +33,7 @@ export async function listOpenTodos(supabase: DB): Promise<TodoListItem[]> {
     guide_slug: row.base.slug,
     guide_title: row.base.canonical?.current?.title ?? null,
     title: row.title,
+    summary: row.summary,
     status: row.status,
     claim_count: row.claims[0]?.count ?? 0,
     created_at: row.created_at,
@@ -42,16 +43,18 @@ export async function listOpenTodos(supabase: DB): Promise<TodoListItem[]> {
 export async function createTodo(
   supabase: DB,
   guideBaseId: string,
-  title: string
+  title: string,
+  summary: string
 ) {
   const { data, error } = await supabase
     .from("todo_prerequisites")
     .insert({
       dependent_guide_base_id: guideBaseId,
       title,
+      summary,
       status: "open",
     })
-    .select("id, dependent_guide_base_id, title, status, created_at")
+    .select("id, dependent_guide_base_id, title, summary, status, created_at")
     .single();
 
   if (error) {
@@ -63,6 +66,7 @@ export async function createTodo(
     id: data.id,
     guide_base_id: data.dependent_guide_base_id,
     title: data.title,
+    summary: data.summary,
     status: data.status,
     created_at: data.created_at,
   };

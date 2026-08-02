@@ -4,6 +4,7 @@ import type { TodoListItem } from "@bluelearn/schemas";
 export type TodoGroup = {
   key: string;
   title: string;
+  summary: string;
   todoIds: Array<string>;
   requestedBy: Array<{ slug: string; title: string | null }>;
   claimCount: number;
@@ -33,6 +34,7 @@ export const groupTodosByTitle = (
     return {
       key,
       title: sorted[0].title,
+      summary: sorted[0].summary,
       todoIds: sorted.map((row) => row.id),
       requestedBy: sorted
         .filter((row) => row.guide_slug)

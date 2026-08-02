@@ -47,6 +47,12 @@ export const TodoCard = ({ todo }: PropTypes) => {
             {todo.title}
           </h3>
 
+          {todo.summary && (
+            <p className="line-clamp-3 text-sm text-muted-foreground">
+              {todo.summary}
+            </p>
+          )}
+
           {todo.requestedBy.length > 0 && (
             <div className="flex flex-col gap-1">
               <p className="text-sm text-muted-foreground">
