@@ -1,4 +1,5 @@
-import { Fragment } from "react";
+import { ChevronsUpDown } from "lucide-react";
+import { Fragment, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -75,7 +76,43 @@ function toRows(lines: Array<DiffLine>): Array<Row> {
   return rows;
 }
 
-const Cell = ({
+// Untouched lines kept on each side of a change, so it reads in context.
+const CONTEXT = 3;
+
+// The mininum number of hidden lines that justifies collapsing them into a
+// "Show N changed lines" button.
+const MIN_GAP = 3;
+
+type Chunk = { kind: "rows" | "gap"; rows: Array<Row> };
+
+// Splits the rows into what's worth showing and the stretches of untouched text
+// between them, so a long body doesn't bury its few edits.
+function toChunks(rows: Array<Row>): Array<Chunk> {
+  const keep = new Array<boolean>(rows.length).fill(false);
+
+  rows.forEach((row, i) => {
+    if (row.left === row.right) return;
+    const from = Math.max(0, i - CONTEXT);
+    const to = Math.min(rows.length - 1, i + CONTEXT);
+    for (let j = from; j <= to; j++) keep[j] = true;
+  });
+
+  const chunks: Array<Chunk> = [];
+  for (let i = 0; i < rows.length; ) {
+    let j = i;
+    while (j < rows.length && keep[j] === keep[i]) j++;
+
+    const slice = rows.slice(i, j);
+    const collapsible = !keep[i] && slice.length >= MIN_GAP;
+    chunks.push({ kind: collapsible ? "gap" : "rows", rows: slice });
+    i = j;
+  }
+
+  return chunks;
+}
+
+// Each side ot a diff row (live and proposed cell).
+const LineCell = ({
   text,
   line,
   tone,
@@ -84,8 +121,6 @@ const Cell = ({
   line: number | null;
   tone: "removed" | "added" | null;
 }) => {
-  // A padding cell sits across from a change without being one itself, so it
-  // drops the tint the other side earned.
   const shade = text === null ? null : tone;
 
   return (
@@ -117,6 +152,8 @@ const Cell = ({
 };
 
 const Field = ({ label, field }: { label: string; field: FieldDiff }) => {
+  const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
+
   if (!field.changed || !field.lines) {
     return (
       <div className="flex items-baseline gap-3 border-b px-3 py-2 last:border-b-0">
@@ -128,6 +165,8 @@ const Field = ({ label, field }: { label: string; field: FieldDiff }) => {
     );
   }
 
+  const chunks = toChunks(toRows(field.lines));
+
   return (
     <div className="border-b last:border-b-0">
       <p className="border-b bg-muted/40 px-3 py-2 font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
@@ -135,23 +174,37 @@ const Field = ({ label, field }: { label: string; field: FieldDiff }) => {
       </p>
 
       <div className="grid grid-cols-2 divide-x">
-        {toRows(field.lines).map((row, i) => {
-          const changed = row.left !== row.right;
-          return (
-            <Fragment key={i}>
-              <Cell
-                text={row.left}
-                line={row.leftLineNumber}
-                tone={changed ? "removed" : null}
-              />
-              <Cell
-                text={row.right}
-                line={row.rightLineNumber}
-                tone={changed ? "added" : null}
-              />
-            </Fragment>
-          );
-        })}
+        {chunks.map((chunk, c) =>
+          chunk.kind === "gap" && !expanded.has(c) ? (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setExpanded((prev) => new Set(prev).add(c))}
+              className="col-span-2 flex w-full items-center gap-2 border-y border-l-0 bg-muted/40 px-3 py-1 font-mono text-[11px] text-muted-foreground hover:bg-muted"
+            >
+              <ChevronsUpDown className="size-3" />
+              Show {chunk.rows.length} unchanged lines
+            </button>
+          ) : (
+            chunk.rows.map((row, i) => {
+              const changed = row.left !== row.right;
+              return (
+                <Fragment key={`${c}-${i}`}>
+                  <LineCell
+                    text={row.left}
+                    line={row.leftLineNumber}
+                    tone={changed ? "removed" : null}
+                  />
+                  <LineCell
+                    text={row.right}
+                    line={row.rightLineNumber}
+                    tone={changed ? "added" : null}
+                  />
+                </Fragment>
+              );
+            })
+          )
+        )}
       </div>
     </div>
   );
