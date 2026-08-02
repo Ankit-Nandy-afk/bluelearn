@@ -18,7 +18,6 @@ import {
   Users,
 } from "lucide-react";
 
-import type { Action } from "@/components/sidebar/GuideSidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
@@ -41,12 +40,29 @@ import {
 } from "@/components/ui/tooltip";
 
 import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
+import { VariantsModal } from "@/components/guides/modals/VariantsModal";
+import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
+import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
+import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
 
-const SIDEBAR_ACTIONS: Array<Action> = [
-  { icon: Replace, label: "View Variants" },
-  { icon: Target, label: "View Objectives" },
-  { icon: Users, label: "View Contributors" },
-  { icon: History, label: "View Revisions" },
+type ModalType =
+  | "variants"
+  | "objectives"
+  | "contributors"
+  | "revisions"
+  | null;
+
+type SidebarActionItem = {
+  icon: typeof Replace;
+  label: string;
+  type: NonNullable<ModalType>;
+};
+
+const SIDEBAR_ACTIONS: Array<SidebarActionItem> = [
+  { icon: Replace, label: "View Variants", type: "variants" },
+  { icon: Target, label: "View Objectives", type: "objectives" },
+  { icon: Users, label: "View Contributors", type: "contributors" },
+  { icon: History, label: "View Revisions", type: "revisions" },
 ];
 
 function useVote() {
@@ -78,6 +94,7 @@ function RouteComponent() {
   const { slug } = Route.useParams();
   const guide = Route.useLoaderData();
 
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
   const { vote, upvote, downvote } = useVote();
 
   const breadcrumbOrigin = useLocation({
@@ -106,10 +123,15 @@ function RouteComponent() {
         <GuideSidebar
           sidebarActions={
             <div className="flex items-center justify-start gap-4">
-              {SIDEBAR_ACTIONS.map((action: Action) => (
+              {SIDEBAR_ACTIONS.map((action: SidebarActionItem) => (
                 <Tooltip key={action.label}>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="lg">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => setActiveModal(action.type)}
+                      aria-label={action.label}
+                    >
                       <action.icon className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -218,6 +240,32 @@ function RouteComponent() {
           <GuideReader guide={guide} />
         </main>
       </section>
+
+      {/* Action Modals */}
+      <VariantsModal
+        open={activeModal === "variants"}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+        slug={slug}
+        currentVariantSlug={guide.variant_slug}
+      />
+
+      <ObjectivesModal
+        open={activeModal === "objectives"}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+        slug={slug}
+      />
+
+      <ContributorsModal
+        open={activeModal === "contributors"}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+        slug={slug}
+      />
+
+      <RevisionsModal
+        open={activeModal === "revisions"}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+        slug={slug}
+      />
     </div>
   );
 }
