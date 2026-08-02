@@ -1,8 +1,10 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { SettingsSidebar } from "@/components/sidebar/SettingsSidebar";
+import { requireSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/settings")({
   ssr: false,
+  beforeLoad: requireSession,
   component: RouteComponent,
 });
 

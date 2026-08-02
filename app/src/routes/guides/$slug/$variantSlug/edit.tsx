@@ -18,12 +18,15 @@ import {
 import { createVariantRevision, getVariantBySlug } from "@/lib/api/variants";
 import { uploadMedia } from "@/lib/api/media";
 import { estimateReadMinutes } from "@/lib/guideUtils";
+import { requireSession } from "@/lib/auth";
 
 import { GuideDetails } from "@/components/contribute/steps/GuideDetails";
 import { Content } from "@/components/contribute/steps/Content";
 import { Submit } from "@/components/contribute/steps/Submit";
 
 export const Route = createFileRoute("/guides/$slug/$variantSlug/edit")({
+  ssr: false,
+  beforeLoad: requireSession,
   validateSearch: (search: Record<string, unknown>): { draft?: string } => ({
     draft: typeof search.draft === "string" ? search.draft : undefined,
   }),
