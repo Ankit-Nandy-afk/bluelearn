@@ -39,7 +39,7 @@ import { Button } from "@/components/ui/button";
 
 import { Badge } from "@/components/ui/badge";
 
-type ProfileSearch = ActivityFilters & { page?: number };
+type ProfileSearch = ActivityFilters & { page?: number; username?: string };
 
 function validString(value: unknown) {
   return typeof value === "string" && value ? value : undefined;
@@ -75,6 +75,7 @@ export const Route = createFileRoute("/profile")({
       ACTIVITY_STATUS_FILTERS.map((f) => f.value)
     ) as Array<ActivityStatusFilter>;
     return {
+      username: validString(search.username),
       type: type.length ? type : undefined,
       status: status.length ? status : undefined,
       title: validString(search.title),
