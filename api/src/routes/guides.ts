@@ -35,6 +35,7 @@ import {
   diffRevisions,
   diffWithPrevious,
   getRevision,
+  reviseRevision,
   submitRevision,
   updateRevision,
 } from "../services/guide-revision.service";
@@ -244,8 +245,10 @@ export const variantsRouter = new Hono<HonoEnv>()
 
 export const guideRevisionsRouter = new Hono<HonoEnv>()
   // Returns a revision snapshot, its subject tags, knowledge type, whether it is
-  // a variant, its base slug, prerequisites, and todos for resuming the
-  // contribute flow.
+  // a variant, its base and variant slugs, prerequisites, todos for resuming
+  // the contribute flow, and revised_from_case_id for when the draft was
+  // created from a rejected submission, so the editor can pull that
+  // case's feedback.
   .get("/:id", async (c) => {
     const {
       revision,
@@ -253,8 +256,10 @@ export const guideRevisionsRouter = new Hono<HonoEnv>()
       knowledge_type,
       is_variant,
       base_slug,
+      variant_slug,
       prerequisites,
       todos,
+      revised_from_case_id,
     } = await getRevision(c.get("supabase"), c.req.param("id"));
     return c.json({
       revision,
@@ -262,8 +267,10 @@ export const guideRevisionsRouter = new Hono<HonoEnv>()
       knowledge_type,
       is_variant,
       base_slug,
+      variant_slug,
       prerequisites,
       todos,
+      revised_from_case_id,
     });
   })
 
@@ -295,6 +302,22 @@ export const guideRevisionsRouter = new Hono<HonoEnv>()
         c.req.param("id")
       );
       return c.json({ review_case_id }, 201);
+    }
+  )
+
+  // 201 with { revision_id } for the draft forked off this rejected submission.
+  // Returns the draft already opened for it when there is one. 404 if the
+  // revision is not the caller's own rejected submission.
+  .post(
+    "/:id/revise",
+    requireUser,
+    rateLimitMiddleware({ ...CONTRIBUTION, bucket: "guide-revision-revise" }),
+    async (c) => {
+      const { revision_id } = await reviseRevision(
+        c.get("supabase"),
+        c.req.param("id")
+      );
+      return c.json({ revision_id }, 201);
     }
   )
 

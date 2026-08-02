@@ -4,6 +4,41 @@ description: The guide revision the case is judging.
 properties:
   id:
     $ref: "../common/Uuid.yaml"
+  author_id:
+    description: The author who submitted the revision.
+    oneOf:
+      - $ref: "../common/Uuid.yaml"
+      - type: "null"
+  author_username:
+    type: [string, "null"]
+    description: Username of the author who submitted the revision.
+    example: username123
+  knowledge_type:
+    description: >
+      The knowledge type of the guide base the revision belongs to. Null when
+      the base could not be resolved.
+    type: [string, "null"]
+    enum: [theoretical, practical, null]
+    example: theoretical
+  base:
+    description: >
+      The published guide base the revision edits, so a reviewer can open the
+      guide it belongs to. Null while the base is unpublished, which is the
+      case for a guide creation, and null for a viewer who cannot see the
+      submission's tags and edges.
+    oneOf:
+      - type: object
+        additionalProperties: false
+        properties:
+          slug:
+            type: string
+            example: calculus
+          title:
+            type: [string, "null"]
+            description: Title of the base's canonical guide.
+            example: Calculus
+        required: [slug, title]
+      - type: "null"
   title:
     type: [string, "null"]
     example: Calculus
@@ -13,6 +48,12 @@ properties:
   body:
     type: [string, "null"]
     example: "# Calculus\n\nThe body of the guide in markdown."
+  change_summary:
+    type: [string, "null"]
+    description: >
+      The author's own note on what this revision changes. Null on a first
+      submission, which has nothing to change.
+    example: Rewrote the limits section and fixed two derivative examples.
   status:
     type: string
     example: submitted
