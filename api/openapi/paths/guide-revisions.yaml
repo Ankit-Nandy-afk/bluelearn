@@ -180,8 +180,6 @@
                 revision_id:
                   $ref: "../components/schemas/common/Uuid.yaml"
               required: [revision_id]
-      "400":
-        $ref: "../components/responses/_shared.yaml#/BadRequest"
       "401":
         $ref: "../components/responses/_shared.yaml#/Unauthorized"
       "404":

@@ -247,7 +247,7 @@ export const guideRevisionsRouter = new Hono<HonoEnv>()
   // Returns a revision snapshot, its subject tags, knowledge type, whether it is
   // a variant, its base and variant slugs, prerequisites, todos for resuming
   // the contribute flow, and revised_from_case_id for when the draft was
-  // created form a rejected submission, so the editor can pull that
+  // created from a rejected submission, so the editor can pull that
   // case's feedback.
   .get("/:id", async (c) => {
     const {

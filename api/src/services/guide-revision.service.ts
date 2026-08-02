@@ -367,7 +367,7 @@ export async function reviseRevision(supabase: DB, id: string) {
       );
     }
     console.error(error);
-    throw new ServiceError("Unable to revise revision", 400);
+    throw new ServiceError("Unable to revise revision", 500);
   }
 
   return { revision_id };
