@@ -26,6 +26,11 @@ export const newSubjectSchema = z.object({
   summary: guideSummarySchema.nullish(),
 });
 
+export const todoPrereqSchema = z.object({
+  title: guideTodoTitleSchema,
+  summary: guideSummarySchema,
+});
+
 export const createGuideSchema = z.object({
   knowledge_type: knowledgeTypeSchema.default("theoretical"),
   title: guideTitleSchema.nullish(),
@@ -34,7 +39,7 @@ export const createGuideSchema = z.object({
   tags: z.array(z.uuid()).default([]),
   prerequisites: z.array(guideSlugSchema).default([]),
   newSubjects: z.array(newSubjectSchema).default([]),
-  todoPrereqs: z.array(guideTodoTitleSchema).default([]),
+  todoPrereqs: z.array(todoPrereqSchema).default([]),
   todoClaims: z.array(z.uuid()).default([]),
 });
 
@@ -55,7 +60,7 @@ export const updateRevisionSchema = revisionContentSchema
     tags: z.array(z.uuid()),
     prerequisites: z.array(guideSlugSchema),
     newSubjects: z.array(newSubjectSchema),
-    todoPrereqs: z.array(guideTodoTitleSchema),
+    todoPrereqs: z.array(todoPrereqSchema),
   })
   .partial()
   .refine((v) => Object.keys(v).length > 0, {
@@ -78,6 +83,7 @@ export const rollbackRevisionSchema = z.object({
   revision_id: z.uuid(),
 });
 
+export type TodoPrereqInput = z.infer<typeof todoPrereqSchema>;
 export type CreateGuideInput = z.infer<typeof createGuideSchema>;
 export type CreateVariantInput = z.infer<typeof createVariantSchema>;
 export type UpdateRevisionInput = z.infer<typeof updateRevisionSchema>;

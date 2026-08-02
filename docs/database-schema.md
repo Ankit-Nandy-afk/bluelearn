@@ -154,6 +154,7 @@ Missing prerequisite topics declared by authors when a real guide base does not 
 - `id`: primary key of the todo entry.
 - `dependent_guide_base_id`: the dependent guide base that declares the need (FK to `guide_bases`).
 - `title`: the named missing prerequisite topic (free text, no guide base exists yet).
+- `summary`: what the requester wants the missing guide to cover.
 - `status`: `open` while unfilled, `resolved` once a real guide base is created for the topic.
 - `resolved_guide_base_id`: the guide base that fulfilled this todo, set when `status` becomes `resolved`; null while open.
 - `created_at`: when the todo was declared.

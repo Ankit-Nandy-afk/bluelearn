@@ -7,6 +7,7 @@ export const todoListItemSchema = z.object({
   guide_slug: z.string().nullable(),
   guide_title: z.string().nullable(),
   title: z.string(),
+  summary: z.string(),
   status: todoStatusSchema,
   claim_count: z.number().int(),
   created_at: z.iso.datetime(),

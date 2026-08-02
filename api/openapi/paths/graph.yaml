@@ -172,7 +172,11 @@
               title:
                 type: string
                 example: Trigonometry
-            required: [guide_base_id, title]
+              summary:
+                type: string
+                maxLength: 500
+                example: Sine, cosine, and tangent on the unit circle.
+            required: [guide_base_id, title, summary]
     responses:
       "201":
         description: The created TODO prerequisite

@@ -40,8 +40,7 @@ properties:
     type: array
     description: Free-text notes for prerequisite guides that don't exist yet.
     items:
-      type: string
-    example: [Introduction to functions]
+      $ref: "./TodoPrereq.yaml"
   todoClaims:
     type: array
     description: >

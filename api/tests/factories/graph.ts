@@ -20,6 +20,7 @@ export function createTodo(
   return insert("todo_prerequisites", {
     dependent_guide_base_id: dependentGuideBaseId,
     title: "Missing prerequisite",
+    summary: "What the missing prerequisite should cover",
     status: "open",
     ...overrides,
   });
