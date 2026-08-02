@@ -446,7 +446,7 @@ export const ReviewSidebar = ({
                         variant="outline"
                         className="border-transparent bg-brand-blue/15 font-mono tracking-[0.06em] text-brand-dk-blue uppercase dark:text-brand-blue"
                       >
-                        To do
+                        Todo
                       </Badge>
                     }
                   />
