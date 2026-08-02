@@ -199,13 +199,13 @@ export const ReviewSidebar = ({
                   <Link
                     to="/guides/$slug"
                     params={{ slug: revision.base.slug }}
-                    className="flex min-w-0 items-center gap-1 leading-none text-foreground hover:underline"
+                    className="flex min-w-0 items-center gap-1 leading-none text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <span className="max-w-[18ch] truncate">
                       {revision.base.title ?? revision.base.slug}
                     </span>
                     <ExternalLink
-                      className="size-3 shrink-0 -translate-y-px"
+                      className="size-3 shrink-0 -translate-y-0.5"
                       strokeWidth={2.75}
                     />
                   </Link>
