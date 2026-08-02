@@ -19,7 +19,10 @@ import {
   getGuideBySlug,
   getVariantBySlug,
   getWalkthrough,
+  listGuideContributors,
+  listGuideRevisions,
   listGuideVariants,
+  listObjectivesForGuide,
   listPublishedGuides,
 } from "../services/guide.service";
 import {
@@ -148,6 +151,35 @@ export const guidesRouter = new Hono<HonoEnv>()
       c.req.param("variantSlug")
     );
     return c.json({ variant });
+  })
+
+  // Returns objectives containing this guide.
+  .get("/:slug/objectives", async (c) => {
+    const { objectives, total } = await listObjectivesForGuide(
+      c.get("supabase"),
+      c.req.param("slug")
+    );
+    return c.json({ objectives, total });
+  })
+
+  // Returns distinct contributors for this guide base.
+  .get("/:slug/contributors", async (c) => {
+    const { contributors } = await listGuideContributors(
+      c.get("supabase"),
+      c.req.param("slug")
+    );
+    return c.json({ contributors });
+  })
+
+  // Returns revision history for this guide.
+  .get("/:slug/revisions", zValidator("query", paginationSchema), async (c) => {
+    const { page, limit } = c.req.valid("query");
+    const { data, total } = await listGuideRevisions(
+      c.get("supabase"),
+      c.req.param("slug"),
+      { page, limit }
+    );
+    return c.json({ revisions: data, total });
   });
 
 export const variantsRouter = new Hono<HonoEnv>()

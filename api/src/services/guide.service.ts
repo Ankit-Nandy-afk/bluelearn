@@ -14,6 +14,7 @@ import { selectInBatches } from "../lib/batch";
 import { syncDraftTagsAndEdges } from "./guide-revision.service";
 import { readingMinutes } from "../lib/reading";
 import { loadUsernames } from "./identity.service";
+import { listVariantRevisions } from "./variant.service";
 
 type DB = SupabaseClient<Database>;
 
@@ -412,4 +413,127 @@ export async function getVariantBySlug(
       votes: { up: tally?.upvotes ?? 0, down: tally?.downvotes ?? 0 },
     },
   };
+}
+
+// List published objectives that include this guide base in their current revision.
+export async function listObjectivesForGuide(supabase: DB, rawSlug: string) {
+  const baseId = await resolveBaseId(supabase, rawSlug);
+
+  const { data: nodes, error: nodeError } = await supabase
+    .from("objective_revision_nodes")
+    .select("revision_id")
+    .eq("guide_base_id", baseId);
+
+  if (nodeError) {
+    console.error(nodeError);
+    throw new ServiceError("Failed to load objectives for guide", 500);
+  }
+
+  const revisionIds = [...new Set((nodes ?? []).map((n) => n.revision_id))];
+  if (revisionIds.length === 0) return { objectives: [], total: 0 };
+
+  const { data: objectives, error: objError } = await supabase
+    .from("objectives")
+    .select(
+      `id, slug, status,
+       current:objective_revisions!objectives_current_revision_id_fkey(title, summary)`
+    )
+    .in("current_revision_id", revisionIds)
+    .eq("status", "published");
+
+  if (objError) {
+    console.error(objError);
+    throw new ServiceError("Failed to load objectives for guide", 500);
+  }
+
+  const list = (objectives ?? [])
+    .filter((o) => o.slug !== null)
+    .map((o) => ({
+      id: o.id,
+      slug: o.slug!,
+      title: o.current?.title ?? "",
+      summary: o.current?.summary ?? null,
+    }));
+
+  return { objectives: list, total: list.length };
+}
+
+// List distinct contributors (authors) across all revisions of this guide base.
+export async function listGuideContributors(supabase: DB, rawSlug: string) {
+  const baseId = await resolveBaseId(supabase, rawSlug);
+
+  const { data: guides, error: guideError } = await supabase
+    .from("guides")
+    .select("id")
+    .eq("guide_base_id", baseId);
+
+  if (guideError) {
+    console.error(guideError);
+    throw new ServiceError("Failed to load guide contributors", 500);
+  }
+
+  const guideIds = (guides ?? []).map((g) => g.id);
+  if (guideIds.length === 0) return { contributors: [] };
+
+  const { data: revisions, error: revError } = await supabase
+    .from("guide_revisions")
+    .select("author_id")
+    .in("guide_id", guideIds);
+
+  if (revError) {
+    console.error(revError);
+    throw new ServiceError("Failed to load revisions for contributors", 500);
+  }
+
+  const authorIds = [
+    ...new Set(
+      (revisions ?? [])
+        .map((r) => r.author_id)
+        .filter((id): id is string => !!id)
+    ),
+  ];
+  if (authorIds.length === 0) return { contributors: [] };
+
+  const { data: profiles, error: profError } = await supabase
+    .from("profiles")
+    .select("id, username, display_name")
+    .in("id", authorIds);
+
+  if (profError) {
+    console.error(profError);
+    throw new ServiceError("Failed to load contributor profiles", 500);
+  }
+
+  const contributors = (profiles ?? []).map((p) => ({
+    id: p.id,
+    username: p.username,
+    name: p.display_name ?? null,
+    avatar_url: null,
+  }));
+
+  return { contributors };
+}
+
+// List revisions for a guide by slug (uses the canonical variant or specified variant).
+export async function listGuideRevisions(
+  supabase: DB,
+  rawSlug: string,
+  { page, limit }: Pagination = { page: 1, limit: 20 }
+) {
+  const baseId = await resolveBaseId(supabase, rawSlug);
+
+  const { data: base, error: baseError } = await supabase
+    .from("guide_bases")
+    .select("canonical_guide_id")
+    .eq("id", baseId)
+    .maybeSingle();
+
+  if (baseError || !base?.canonical_guide_id) {
+    throw new ServiceError("Failed to load canonical guide", 500);
+  }
+
+  return listVariantRevisions(supabase, base.canonical_guide_id, {
+    page,
+    limit,
+  });
 }

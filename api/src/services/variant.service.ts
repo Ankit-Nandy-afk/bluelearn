@@ -3,6 +3,7 @@ import type { CastVoteInput, Pagination } from "@bluelearn/schemas";
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 import { promoteCanonicalIfNeeded } from "./promotion.service";
+import { loadUsernames } from "./identity.service";
 
 type DB = SupabaseClient<Database>;
 
@@ -157,7 +158,9 @@ export async function listVariantRevisions(
 
   const { data, count, error } = await supabase
     .from("guide_revisions")
-    .select("id, created_at, approved_at", { count: "exact" })
+    .select("id, change_summary, created_at, approved_at, author_id", {
+      count: "exact",
+    })
     .eq("guide_id", id)
     .not("approved_at", "is", null)
     .order("approved_at", { ascending: false })
@@ -168,12 +171,17 @@ export async function listVariantRevisions(
     throw new ServiceError("Failed to load variant revisions", 500);
   }
 
+  const authorIds = (data ?? []).map((rev) => rev.author_id);
+  const usernames = await loadUsernames(supabase, authorIds);
+
   return {
     data: (data ?? []).map((rev) => ({
       id: rev.id,
       status: "approved" as const,
+      change_summary: rev.change_summary ?? null,
       created_at: rev.created_at,
       approved_at: rev.approved_at,
+      author: rev.author_id ? (usernames.get(rev.author_id) ?? null) : null,
     })),
     total: count ?? 0,
   };
