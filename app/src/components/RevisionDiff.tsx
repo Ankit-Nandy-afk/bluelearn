@@ -79,7 +79,9 @@ const Field = ({ label, field }: { label: string; field: FieldDiff }) => {
   if (!field.changed || !field.lines) {
     return (
       <div className="flex items-baseline gap-3 border-b px-3 py-2 last:border-b-0">
-        <p className="mono-micro tracking-[0.08em] uppercase">{label}</p>
+        <p className="font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
+          {label}
+        </p>
         <p className="mono-micro text-muted-foreground">Unchanged</p>
       </div>
     );
@@ -87,7 +89,7 @@ const Field = ({ label, field }: { label: string; field: FieldDiff }) => {
 
   return (
     <div className="border-b last:border-b-0">
-      <p className="mono-micro border-b bg-muted/40 px-3 py-2 tracking-[0.08em] uppercase">
+      <p className="border-b bg-muted/40 px-3 py-2 font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
         {label}
       </p>
 
@@ -123,10 +125,10 @@ export const RevisionDiff = ({ diff }: { diff: RevisionDiffData }) => {
   return (
     <div className="overflow-hidden rounded-md border">
       <div className="grid grid-cols-2 divide-x border-b bg-muted/60">
-        <p className="mono-micro px-3 py-2 tracking-[0.08em] uppercase">
+        <p className="px-3 py-2 font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
           Live version
         </p>
-        <p className="mono-micro px-3 py-2 tracking-[0.08em] uppercase">
+        <p className="px-3 py-2 font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
           Proposed
         </p>
       </div>
