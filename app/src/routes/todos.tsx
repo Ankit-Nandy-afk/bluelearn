@@ -55,7 +55,7 @@ function RouteComponent() {
     return (
       <TodosPage>
         <p className="text-sm text-muted-foreground">
-          Nothing waiting right now.
+          No todo guides right now.
         </p>
       </TodosPage>
     );

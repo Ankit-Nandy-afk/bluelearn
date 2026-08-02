@@ -172,7 +172,7 @@ What over-declaration does cost is **graph bloat**: redundant edges clutter the 
 
 ### `todo_claims`
 
-Records that someone has started writing a guide for a todo. A contributor who opens a todo from the board claims it on their first save, so the board can show the topic is already being worked on and the publish step knows which todos to close.
+Records that someone has started writing a guide for a todo. A contributor who opens a todo from the todo page claims it on their first save, so the todo page can show the topic is already being worked on and the publish step knows which todos to close.
 
 - `todo_id`: the claimed todo (FK to `todo_prerequisites`).
 - `guide_base_id`: the draft guide base being written to fulfil it (FK to `guide_bases`).

@@ -42,3 +42,12 @@ properties:
     items:
       type: string
     example: [Introduction to functions]
+  todoClaims:
+    type: array
+    description: >
+      Ids of the todos this draft is being written to fill, taken from the card
+      the author started at. Each must still be open and carry the same title as
+      the draft, and all of them resolve when the guide is published.
+    items:
+      type: string
+      format: uuid

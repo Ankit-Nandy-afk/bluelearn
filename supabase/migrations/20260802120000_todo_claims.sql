@@ -1,4 +1,4 @@
--- Tracks who has started writing a guide for a todo, so the board can show a
+-- Tracks who has started writing a guide for a todo, so the todo page can show a
 -- topic is already being worked on and publish knows which todos to close.
 create table public.todo_claims (
   todo_id uuid not null references public.todo_prerequisites (id) on delete cascade,
@@ -10,7 +10,7 @@ create table public.todo_claims (
 create index todo_claims_guide_base_id_idx on public.todo_claims (guide_base_id);
 alter table public.todo_claims enable row level security;
 
--- Public so the board can count the number of claims on an open todo.
+-- Public so the todo page can count the number of claims on an open todo.
 create policy "Todo claims are viewable by everyone"
   on public.todo_claims for select
   using (true);

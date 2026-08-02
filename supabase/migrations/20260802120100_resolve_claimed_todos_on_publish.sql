@@ -1,5 +1,5 @@
 -- Same as the previous close_review_panel except a first publish now also
--- resolves whatever TODOs the base claimed.
+-- resolves whatever todos the base claimed.
 create or replace function public.close_review_panel(p_case_id uuid)
 returns void
 language plpgsql
@@ -119,7 +119,7 @@ begin
           slug = coalesce(slug, v_base_slug)
       where id = v_base_id;
 
-    -- Close the TODOs this base was written to fill. Someone else may have
+    -- Close the todos this base was written to fill. Someone else may have
     -- resolved them first, so only open rows move.
     update public.todo_prerequisites
       set status = 'resolved',

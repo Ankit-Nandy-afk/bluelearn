@@ -35,6 +35,7 @@ export const createGuideSchema = z.object({
   prerequisites: z.array(guideSlugSchema).default([]),
   newSubjects: z.array(newSubjectSchema).default([]),
   todoPrereqs: z.array(guideTodoTitleSchema).default([]),
+  todoClaims: z.array(z.uuid()).default([]),
 });
 
 // A variant starts as a draft like a guide does, so every field here is optional

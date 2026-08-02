@@ -97,7 +97,7 @@ async function resolveSubjectIds(supabase: DB, ids: string[]) {
   return unique;
 }
 
-async function resolveRevisionBase(supabase: DB, revisionId: string) {
+export async function resolveRevisionBase(supabase: DB, revisionId: string) {
   const { data: rev, error } = await supabase
     .from("guide_revisions")
     .select("guide_id")

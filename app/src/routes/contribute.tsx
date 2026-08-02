@@ -11,16 +11,28 @@ export const Route = createFileRoute("/contribute")({
   beforeLoad: requireSession,
   validateSearch: (
     search: Record<string, unknown>
-  ): { draft?: string; kind?: "guide" | "objective" } => ({
+  ): {
+    draft?: string;
+    kind?: "guide" | "objective";
+    todoTitle?: string;
+    todos?: string;
+  } => ({
     draft: typeof search.draft === "string" ? search.draft : undefined,
     kind: search.kind === "objective" ? "objective" : undefined,
+    todoTitle:
+      typeof search.todoTitle === "string" ? search.todoTitle : undefined,
+    todos: typeof search.todos === "string" ? search.todos : undefined,
   }),
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { draft, kind } = Route.useSearch();
+  const { draft, kind, todoTitle, todos } = Route.useSearch();
   const [type, setType] = useState<ContributionType | null>(null);
+
+  // A resumed draft already carries its claims in the database, so the todo page's
+  // params only apply to a fresh start.
+  const todoIds = draft || !todos ? [] : todos.split(",");
 
   return (
     <div className="mx-auto flex min-h-[max(calc(100vh-65px),750px)] w-full max-w-[1280px] flex-col border-x bg-background">
@@ -31,6 +43,8 @@ function RouteComponent() {
             setType={setType}
             draftId={draft}
             draftKind={kind}
+            todoTitle={draft ? undefined : todoTitle}
+            todoIds={todoIds}
           />
         </div>
 

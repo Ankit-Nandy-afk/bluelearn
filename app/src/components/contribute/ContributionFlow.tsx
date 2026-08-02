@@ -47,6 +47,8 @@ type PropTypes = {
   setType: (value: ContributionType) => void;
   draftId?: string;
   draftKind?: "guide" | "objective";
+  todoTitle?: string;
+  todoIds: Array<string>;
 };
 
 const createGuideContData = (): GuideContribution => ({
@@ -94,6 +96,8 @@ export default function ContributionFlow({
   setType,
   draftId,
   draftKind,
+  todoTitle,
+  todoIds,
 }: PropTypes) {
   const [guideContData, setGuideContData] =
     useState<GuideContribution>(createGuideContData);
@@ -123,6 +127,8 @@ export default function ContributionFlow({
           setType={setType}
           draftId={draftId}
           draftKind={draftKind}
+          todoTitle={todoTitle}
+          todoIds={todoIds}
           guideContData={guideContData}
           setGuideContData={setGuideContData}
           variantContData={variantContData}
@@ -142,6 +148,8 @@ function Inner({
   setType,
   draftId,
   draftKind,
+  todoTitle,
+  todoIds,
   guideContData,
   setGuideContData,
   variantContData,
@@ -155,6 +163,8 @@ function Inner({
   setType: (value: ContributionType) => void;
   draftId?: string;
   draftKind?: "guide" | "objective";
+  todoTitle?: string;
+  todoIds: Array<string>;
 
   guideContData: GuideContribution;
   setGuideContData: Dispatch<SetStateAction<GuideContribution>>;
@@ -191,6 +201,17 @@ function Inner({
 
   const [revisionId, setRevisionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Start from the todo page with the topic's title already filled in.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!todoTitle || seededRef.current) return;
+    seededRef.current = true;
+
+    setGuideContData((prev) => ({ ...prev, title: todoTitle }));
+    setType("guide");
+    requestAnimationFrame(() => stepper.goTo("guide-details"));
+  }, [todoTitle]);
 
   // Resume a draft opened from the profile.
   const resumedRef = useRef(false);
@@ -497,6 +518,7 @@ function Inner({
                   ? "practical"
                   : "theoretical",
               ...draftFields(),
+              todoClaims: todoIds,
             })
           : addGuideVariant(variantContData.baseGuide, variantDraftFields())
       )

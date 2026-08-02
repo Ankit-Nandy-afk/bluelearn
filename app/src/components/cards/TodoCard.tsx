@@ -25,7 +25,7 @@ export const TodoCard = ({ todo }: PropTypes) => {
       <CardHeader className="p-6">
         <div className="flex items-center justify-between">
           <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
-            To Do
+            Todo
           </p>
           <Badge
             variant="default"

@@ -1,17 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { normalizeTodoTitle } from "@bluelearn/schemas";
+import type { TodoListItem } from "@bluelearn/schemas";
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 
 type DB = SupabaseClient<Database>;
 
-// The public board: open todos enriched with the dependent base's identity for
-// links. The inner join drops todos whose base the caller cannot see (drafts),
-// so the board only ever shows published dependents.
-export async function listOpenTodos(supabase: DB) {
+// The public todo page: open todos enriched with the dependent base's identity
+// for links. RLS alone isn't enough of a filter here, since an author can see
+// their own drafts, so the dependent has to be published outright. A todo asked
+// for by an unpublished guide isn't a real gap yet.
+export async function listOpenTodos(supabase: DB): Promise<TodoListItem[]> {
   const { data, error } = await supabase
     .from("todo_prerequisites")
     .select(
       `id, dependent_guide_base_id, title, status, created_at,
+       claims:todo_claims(count),
        base:guide_bases!todo_prerequisites_dependent_guide_base_id_fkey!inner(
          slug,
          canonical:guides!guide_bases_canonical_guide_id_fkey(
@@ -19,7 +23,8 @@ export async function listOpenTodos(supabase: DB) {
          )
        )`
     )
-    .eq("status", "open");
+    .eq("status", "open")
+    .eq("base.status", "published");
 
   if (error) {
     console.error(error);
@@ -33,6 +38,7 @@ export async function listOpenTodos(supabase: DB) {
     guide_title: row.base.canonical?.current?.title ?? null,
     title: row.title,
     status: row.status,
+    claim_count: row.claims[0]?.count ?? 0,
     created_at: row.created_at,
   }));
 }
@@ -64,4 +70,48 @@ export async function createTodo(
     status: data.status,
     created_at: data.created_at,
   };
+}
+
+// Claim the todos a contributor started from, so the todo page can show the topic is
+// being written and publish knows which rows to close. The caller picks the ids,
+// so every one has to be open and named the same thing as the draft.
+export async function claimTodos(
+  supabase: DB,
+  guideBaseId: string,
+  todoIds: Array<string>,
+  guideTitle: string | null | undefined
+) {
+  const key = normalizeTodoTitle(guideTitle ?? "");
+  if (!key) {
+    throw new ServiceError("A guide needs a title to claim todos", 422);
+  }
+
+  const { data, error } = await supabase
+    .from("todo_prerequisites")
+    .select("id, title, status")
+    .in("id", todoIds);
+
+  if (error) {
+    console.error(error);
+    throw new ServiceError("Failed to claim todos", 500);
+  }
+
+  if ((data ?? []).length !== todoIds.length) {
+    throw new ServiceError("Todo not found", 404);
+  }
+  if ((data ?? []).some((todo) => todo.status !== "open")) {
+    throw new ServiceError("Todo is already resolved", 409);
+  }
+  if ((data ?? []).some((todo) => normalizeTodoTitle(todo.title) !== key)) {
+    throw new ServiceError("Claimed todos must match the guide's title", 422);
+  }
+
+  const { error: claimError } = await supabase
+    .from("todo_claims")
+    .insert(todoIds.map((id) => ({ todo_id: id, guide_base_id: guideBaseId })));
+
+  if (claimError) {
+    console.error(claimError);
+    throw new ServiceError("Failed to claim todos", 500);
+  }
 }

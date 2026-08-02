@@ -11,7 +11,11 @@ import type {
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 import { selectInBatches } from "../lib/batch";
-import { syncDraftTagsAndEdges } from "./guide-revision.service";
+import {
+  resolveRevisionBase,
+  syncDraftTagsAndEdges,
+} from "./guide-revision.service";
+import { claimTodos } from "./todo.service";
 import { readingMinutes } from "../lib/reading";
 import { loadUsernames } from "./identity.service";
 
@@ -202,6 +206,7 @@ export async function createGuide(
     prerequisites,
     newSubjects,
     todoPrereqs,
+    todoClaims,
   } = input;
 
   const { data: revision_id, error } = await supabase.rpc("create_guide", {
@@ -222,6 +227,11 @@ export async function createGuide(
     newSubjects,
     todoPrereqs,
   });
+
+  if (todoClaims.length > 0) {
+    const base = await resolveRevisionBase(supabase, revision_id);
+    await claimTodos(supabase, base.id, todoClaims, title);
+  }
 
   return { revision_id };
 }
