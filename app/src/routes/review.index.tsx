@@ -62,6 +62,7 @@ function RouteComponent() {
 
 type QueueCase = {
   id: string;
+  case_type: string;
   title: string | null;
   created_at: string;
   decision: "approved" | "rejected" | null;
@@ -86,7 +87,9 @@ function CaseGrid({ cases }: { cases: Array<QueueCase> }) {
           <div className="rounded-md border bg-background p-4 shadow-none transition-colors hover:bg-muted">
             <div className="flex items-center justify-between">
               <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
-                Review Case
+                {c.case_type === "guide_edit"
+                  ? "Guide Revision"
+                  : "Guide Creation"}
               </p>
               <Badge
                 variant="outline"

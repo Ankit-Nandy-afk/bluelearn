@@ -18,4 +18,15 @@ properties:
       $ref: "./ReviewDecisionReason.yaml"
   created_at:
     $ref: "../common/Timestamp.yaml"
+  member_id:
+    description: The seat that cast this vote.
+    oneOf:
+      - $ref: "../common/Uuid.yaml"
+      - type: "null"
+  member_username:
+    description: >
+      Username behind the seat. Panelists are named on every case they can be
+      seen on, which means publicly once the case has closed.
+    type: [string, "null"]
+    example: euler
 required: [id, decision]

@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -212,6 +232,7 @@ export type Database = {
           guide_id: string
           id: string
           is_purged: boolean
+          revised_from_revision_id: string | null
           status: Database["public"]["Enums"]["revision_status"]
           summary: string | null
           title: string | null
@@ -227,6 +248,7 @@ export type Database = {
           guide_id: string
           id?: string
           is_purged?: boolean
+          revised_from_revision_id?: string | null
           status?: Database["public"]["Enums"]["revision_status"]
           summary?: string | null
           title?: string | null
@@ -242,6 +264,7 @@ export type Database = {
           guide_id?: string
           id?: string
           is_purged?: boolean
+          revised_from_revision_id?: string | null
           status?: Database["public"]["Enums"]["revision_status"]
           summary?: string | null
           title?: string | null
@@ -269,6 +292,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "published_guides"
             referencedColumns: ["guide_id"]
+          },
+          {
+            foreignKeyName: "guide_revisions_revised_from_revision_id_fkey"
+            columns: ["revised_from_revision_id"]
+            isOneToOne: false
+            referencedRelation: "guide_revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_revisions_revised_from_revision_id_fkey"
+            columns: ["revised_from_revision_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
+            referencedColumns: ["revision_id"]
           },
         ]
       }
@@ -1154,6 +1191,10 @@ export type Database = {
         Args: { p_revision_id: string }
         Returns: string
       }
+      revise_guide_revision: {
+        Args: { p_revision_id: string }
+        Returns: string
+      }
       rollback_objective_revision: {
         Args: { p_revision_id: string; p_source_revision_id: string }
         Returns: string
@@ -1322,6 +1363,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["verifier", "moderator", "curator", "admin"],
@@ -1358,3 +1402,4 @@ export const Constants = {
     },
   },
 } as const
+
