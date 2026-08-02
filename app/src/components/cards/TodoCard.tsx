@@ -1,11 +1,10 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import type { TodoGroup } from "@/lib/groupTodos";
 import { Route as GuideRoute } from "@/routes/guides/$slug/index";
 
 import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Footer } from "@/components/cards/Footer";
 
 type PropTypes = {
   todo: TodoGroup;
@@ -14,76 +13,78 @@ type PropTypes = {
 const requestLabel = (count: number) =>
   count === 1 ? "1 request" : `${count} requests`;
 
+const requestedByLabel = (count: number) =>
+  count === 1 ? "Requested by 1 guide" : `Requested by ${count} guides`;
+
 const claimNotice = (count: number) =>
   count === 1
     ? "Someone is currently drafting a guide for this topic."
     : `${count} people are currently drafting a guide for this topic.`;
 
 export const TodoCard = ({ todo }: PropTypes) => {
+  const navigate = useNavigate();
+
   return (
-    <Card className="flex h-full flex-col justify-between rounded-md bg-background shadow-none">
-      <CardHeader className="p-6">
-        <div className="flex items-center justify-between">
-          <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
-            Todo
-          </p>
-          <Badge
-            variant="default"
-            className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
-          >
-            {requestLabel(todo.todoIds.length)}
-          </Badge>
-        </div>
-
-        <h3 className="line-clamp-2 text-xl font-semibold tracking-tight">
-          {todo.title}
-        </h3>
-
-        {todo.requestedBy.length > 0 && (
-          <div className="flex flex-col gap-1">
-            <p className="mono-micro text-muted-foreground">Requested by</p>
-            <ul className="flex flex-col gap-1 text-sm">
-              {todo.requestedBy.map((guide) => (
-                <li key={guide.slug}>
-                  <Link
-                    to={GuideRoute.to}
-                    params={{ slug: guide.slug }}
-                    className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                  >
-                    {guide.title ?? guide.slug}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+    <Link
+      to="/contribute"
+      search={{ todoTitle: todo.title, todos: todo.todoIds.join(",") }}
+    >
+      <Card className="group h-full rounded-md bg-background shadow-none transition-colors hover:bg-muted">
+        <CardHeader className="p-6">
+          <div className="flex items-center justify-between">
+            <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
+              Todo
+            </p>
+            <Badge
+              variant="default"
+              className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
+            >
+              {requestLabel(todo.todoIds.length)}
+            </Badge>
           </div>
-        )}
 
-        {todo.claimCount > 0 && (
-          <p className="text-sm text-muted-foreground">
-            {claimNotice(todo.claimCount)} You can still create one if you think
-            yours will be different.
-          </p>
-        )}
-      </CardHeader>
+          <h3 className="line-clamp-2 text-xl font-semibold tracking-tight">
+            {todo.title}
+          </h3>
 
-      <Footer
-        data={{
-          actionBtns: (
-            <div className="col-span-2 col-start-3 flex items-center justify-around p-4">
-              <Link
-                to="/contribute"
-                search={{
-                  todoTitle: todo.title,
-                  todos: todo.todoIds.join(","),
-                }}
-                className="btn-cta tracking-[0.08em]"
-              >
-                Write Guide
-              </Link>
+          {todo.requestedBy.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <p className="text-sm text-muted-foreground">
+                {requestedByLabel(todo.requestedBy.length)}
+              </p>
+              <ul className="flex flex-col gap-1">
+                {todo.requestedBy.map((guide) => (
+                  <li key={guide.slug} className="min-w-0">
+                    {/* The card is a link now, so a nested one would be invalid
+                        markup. Same escape hatch the guide cards use. */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate({
+                          to: GuideRoute.to,
+                          params: { slug: guide.slug },
+                        });
+                      }}
+                      className="block max-w-full truncate text-left text-sm underline-offset-4 hover:underline"
+                    >
+                      {guide.title ?? guide.slug}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+
+              {todo.claimCount > 0 && (
+                <p className="pt-2 text-sm text-muted-foreground">
+                  {claimNotice(todo.claimCount)} You can still create one if you
+                  think yours will be different.
+                </p>
+              )}
             </div>
-          ),
-        }}
-      />
-    </Card>
+          )}
+        </CardHeader>
+      </Card>
+    </Link>
   );
 };

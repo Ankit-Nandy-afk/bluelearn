@@ -6,10 +6,6 @@ import { ServiceError } from "../lib/service-error";
 
 type DB = SupabaseClient<Database>;
 
-// The public todo page: open todos enriched with the dependent base's identity
-// for links. RLS alone isn't enough of a filter here, since an author can see
-// their own drafts, so the dependent has to be published outright. A todo asked
-// for by an unpublished guide isn't a real gap yet.
 export async function listOpenTodos(supabase: DB): Promise<TodoListItem[]> {
   const { data, error } = await supabase
     .from("todo_prerequisites")
@@ -73,8 +69,7 @@ export async function createTodo(
 }
 
 // Claim the todos a contributor started from, so the todo page can show the topic is
-// being written and publish knows which rows to close. The caller picks the ids,
-// so every one has to be open and named the same thing as the draft.
+// being written and publish knows which rows to close.
 export async function claimTodos(
   supabase: DB,
   guideBaseId: string,
@@ -102,6 +97,8 @@ export async function claimTodos(
   if ((data ?? []).some((todo) => todo.status !== "open")) {
     throw new ServiceError("Todo is already resolved", 409);
   }
+
+  // Ensures that that guide's title matches normalized todo title.
   if ((data ?? []).some((todo) => normalizeTodoTitle(todo.title) !== key)) {
     throw new ServiceError("Claimed todos must match the guide's title", 422);
   }
