@@ -142,13 +142,19 @@ export default function ContributionFlow({
   const [objectiveContData, setObjectiveContData] =
     useState<ObjectiveContribution>(createObjectiveContData);
 
+  const skipTypeStep = !!editSlug || draftKind === "objective";
+
   const StepperInstance = useMemo(() => {
     if (!type) {
       return defineStepper(typeStep);
     }
 
+    if (skipTypeStep) {
+      return defineStepper(flows[type]);
+    }
+
     return defineStepper([...typeStep, ...flows[type]]);
-  }, [type]);
+  }, [type, skipTypeStep]);
 
   const { Stepper } = StepperInstance;
 
@@ -160,6 +166,7 @@ export default function ContributionFlow({
           stepper={stepper}
           type={type}
           setType={setType}
+          skipTypeStep={skipTypeStep}
           draftId={draftId}
           draftKind={draftKind}
           sourceRevisionId={sourceRevisionId}
@@ -181,6 +188,7 @@ function Inner({
   stepper,
   type,
   setType,
+  skipTypeStep,
   draftId,
   draftKind,
   sourceRevisionId,
@@ -196,6 +204,7 @@ function Inner({
   stepper: any;
   type: ContributionType | null;
   setType: (value: ContributionType) => void;
+  skipTypeStep: boolean;
   draftId?: string;
   draftKind?: "guide" | "objective";
   sourceRevisionId?: string;
@@ -661,7 +670,9 @@ function Inner({
 
       {/* content */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <SelectType pickType={pickType} type={type} Stepper={Stepper} />
+        {!skipTypeStep && (
+          <SelectType pickType={pickType} type={type} Stepper={Stepper} />
+        )}
 
         <GuideDetails
           Stepper={Stepper}
@@ -690,6 +701,7 @@ function Inner({
           subjects={subjectOptions}
           guides={guideOptions}
           showChangeSummary={showChangeSummary}
+          hideBackBtn={skipTypeStep}
           onSaveDraft={saveDraft}
           submitting={submitting}
         />

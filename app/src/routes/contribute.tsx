@@ -27,7 +27,9 @@ export const Route = createFileRoute("/contribute")({
 
 function RouteComponent() {
   const { draft, kind, source, edit } = Route.useSearch();
-  const [type, setType] = useState<ContributionType | null>(null);
+  const [type, setType] = useState<ContributionType | null>(
+    edit || kind === "objective" ? "objective" : null
+  );
 
   return (
     <div className="mx-auto flex min-h-[max(calc(100vh-65px),750px)] w-full max-w-[1280px] flex-col border-x bg-background">

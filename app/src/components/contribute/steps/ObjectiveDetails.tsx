@@ -27,6 +27,7 @@ type PropTypes = {
   subjects: Array<SubjectOption>;
   guides: Array<GuideOption>;
   showChangeSummary?: boolean;
+  hideBackBtn?: boolean;
   onSaveDraft?: () => void;
   submitting?: boolean;
 };
@@ -38,6 +39,7 @@ export const ObjectiveDetails = ({
   subjects,
   guides,
   showChangeSummary = false,
+  hideBackBtn,
   onSaveDraft,
   submitting,
 }: PropTypes) => {
@@ -64,6 +66,7 @@ export const ObjectiveDetails = ({
       <StepperActionHeader
         title={"Objective Details"}
         Stepper={Stepper}
+        hideBackBtn={hideBackBtn}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
       />
