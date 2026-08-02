@@ -14,7 +14,7 @@ const requestLabel = (count: number) =>
   count === 1 ? "1 request" : `${count} requests`;
 
 const requestedByLabel = (count: number) =>
-  count === 1 ? "Requested by 1 guide" : `Requested by ${count} guides`;
+  count === 1 ? "Requested by 1 guide:" : `Requested by ${count} guides:`;
 
 const claimNotice = (count: number) =>
   count === 1
@@ -60,12 +60,15 @@ export const TodoCard = ({ todo }: PropTypes) => {
 
           {todo.requestedBy.length > 0 && (
             <div className="flex min-w-0 flex-col gap-1 pt-3">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm">
                 {requestedByLabel(todo.requestedBy.length)}
               </p>
-              <ul className="flex flex-col gap-1">
+              <ul className="flex list-disc flex-col gap-1 pl-5">
                 {todo.requestedBy.slice(0, 3).map((guide) => (
-                  <li key={guide.slug} className="min-w-0">
+                  <li
+                    key={guide.slug}
+                    className="min-w-0 marker:text-muted-foreground"
+                  >
                     <button
                       type="button"
                       onClick={(e) => {
@@ -76,7 +79,7 @@ export const TodoCard = ({ todo }: PropTypes) => {
                           params: { slug: guide.slug },
                         });
                       }}
-                      className="block max-w-full truncate text-left text-sm font-semibold underline-offset-4 hover:underline"
+                      className="block max-w-full truncate text-sm text-muted-foreground underline-offset-4 hover:underline"
                     >
                       {guide.title ?? guide.slug}
                     </button>
@@ -84,7 +87,7 @@ export const TodoCard = ({ todo }: PropTypes) => {
                 ))}
 
                 {todo.requestedBy.length > 3 && (
-                  <li className="text-sm text-muted-foreground">
+                  <li className="list-none text-sm text-muted-foreground">
                     +{todo.requestedBy.length - 3} more
                   </li>
                 )}
