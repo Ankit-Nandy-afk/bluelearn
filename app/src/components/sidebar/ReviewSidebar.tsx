@@ -417,7 +417,9 @@ export const ReviewSidebar = ({
               title={<p className="ml-auto">Prerequisite Guides</p>}
             >
               <ChangeSection
-                count={revisionData.prerequisites.length}
+                count={
+                  revisionData.prerequisites.length + revisionData.todos.length
+                }
                 empty="None declared."
               >
                 {revisionData.prerequisites.map(
