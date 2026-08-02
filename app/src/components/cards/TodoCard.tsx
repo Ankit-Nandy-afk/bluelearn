@@ -28,9 +28,10 @@ export const TodoCard = ({ todo }: PropTypes) => {
     <Link
       to="/contribute"
       search={{ todoTitle: todo.title, todos: todo.todoIds.join(",") }}
+      className="block min-w-0"
     >
       <Card className="group h-full rounded-md bg-background shadow-none transition-colors hover:bg-muted">
-        <CardHeader className="p-6">
+        <CardHeader className="min-w-0 p-6">
           <div className="flex items-center justify-between">
             <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
               Todo
@@ -54,7 +55,7 @@ export const TodoCard = ({ todo }: PropTypes) => {
           )}
 
           {todo.requestedBy.length > 0 && (
-            <div className="flex flex-col gap-1 pt-3">
+            <div className="flex min-w-0 flex-col gap-1 pt-3">
               <p className="text-sm text-muted-foreground">
                 {requestedByLabel(todo.requestedBy.length)}
               </p>
