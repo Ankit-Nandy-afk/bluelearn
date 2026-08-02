@@ -171,7 +171,7 @@ function ProfilePage({ profile, roles, stats, activity }: ProfilePageData) {
   const setFilters = (next: Partial<ActivityFilters>) =>
     navigate({
       to: "/profile",
-      search: (prev) => ({ ...prev, ...next, page: undefined }),
+      search: (prev: any) => ({ ...prev, ...next, page: undefined }),
       replace: true,
     });
 
@@ -200,7 +200,10 @@ function ProfilePage({ profile, roles, stats, activity }: ProfilePageData) {
     onPageChange: (next) =>
       navigate({
         to: "/profile",
-        search: (prev) => ({ ...prev, page: next === 1 ? undefined : next }),
+        search: (prev: any) => ({
+          ...prev,
+          page: next === 1 ? undefined : next,
+        }),
         replace: true,
       }),
   });

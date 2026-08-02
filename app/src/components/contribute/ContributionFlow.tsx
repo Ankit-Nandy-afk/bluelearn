@@ -45,6 +45,8 @@ import { PreviewObjective } from "@/components/contribute/steps/PreviewObjective
 type PropTypes = {
   type: ContributionType | null;
   setType: (value: ContributionType) => void;
+  step?: string;
+  onStepChange?: (step: string) => void;
   draftId?: string;
   draftKind?: "guide" | "objective";
 };
@@ -92,6 +94,8 @@ const unsavedSubjects = (newSubjects: Array<NewSubject>) =>
 export default function ContributionFlow({
   type,
   setType,
+  step,
+  onStepChange,
   draftId,
   draftKind,
 }: PropTypes) {
@@ -113,14 +117,30 @@ export default function ContributionFlow({
 
   const { Stepper } = StepperInstance;
 
+  // Determine current active step from URL/props or fallback to initial step
+  const activeStep = useMemo(() => {
+    if (!type) return "type";
+    if (step && StepperInstance.steps.some((s: any) => s.id === step))
+      return step;
+    return flows[type][0].id;
+  }, [type, step, StepperInstance]);
+
   return (
-    <Stepper.Root linear className="flex min-h-0 w-full flex-1 flex-col gap-8">
+    <Stepper.Root
+      linear
+      step={activeStep}
+      onStepChange={(newStep: string) => {
+        onStepChange?.(newStep);
+      }}
+      className="flex min-h-0 w-full flex-1 flex-col gap-8"
+    >
       {({ stepper }: any) => (
         <Inner
           Stepper={Stepper}
           stepper={stepper}
           type={type}
           setType={setType}
+          step={step}
           draftId={draftId}
           draftKind={draftKind}
           guideContData={guideContData}
@@ -140,6 +160,7 @@ function Inner({
   stepper,
   type,
   setType,
+  step,
   draftId,
   draftKind,
   guideContData,
@@ -153,6 +174,7 @@ function Inner({
   stepper: any;
   type: ContributionType | null;
   setType: (value: ContributionType) => void;
+  step?: string;
   draftId?: string;
   draftKind?: "guide" | "objective";
 
@@ -238,7 +260,10 @@ function Inner({
           });
           setRevisionId(draftId);
           setType("objective");
-          requestAnimationFrame(() => stepper.goTo("objective-details"));
+
+          const targetStep =
+            step && step !== "type" ? step : "objective-defaults";
+          requestAnimationFrame(() => stepper.goTo(targetStep));
         })
         .catch(() => {
           toast.error("Could not load draft");
@@ -282,7 +307,9 @@ function Inner({
         setRevisionId(draftId);
         setType(data.is_variant ? "variant" : "guide");
         requestAnimationFrame(() =>
-          stepper.goTo(data.is_variant ? "variant-details" : "guide-details")
+          stepper.goTo(
+            step ? step : data.is_variant ? "variant-details" : "guide-details"
+          )
         );
       })
       .catch(() => {
