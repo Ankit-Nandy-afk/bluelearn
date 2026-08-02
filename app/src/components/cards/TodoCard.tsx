@@ -27,7 +27,11 @@ export const TodoCard = ({ todo }: PropTypes) => {
   return (
     <Link
       to="/contribute"
-      search={{ todoTitle: todo.title, todos: todo.todoIds.join(",") }}
+      search={{
+        todoTitle: todo.title,
+        todoSummary: todo.summary,
+        todos: todo.todoIds.join(","),
+      }}
       className="block min-w-0"
     >
       <Card className="group h-full rounded-md bg-background shadow-none transition-colors hover:bg-muted">

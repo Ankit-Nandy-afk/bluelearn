@@ -15,19 +15,22 @@ export const Route = createFileRoute("/contribute")({
     draft?: string;
     kind?: "guide" | "objective";
     todoTitle?: string;
+    todoSummary?: string;
     todos?: string;
   } => ({
     draft: typeof search.draft === "string" ? search.draft : undefined,
     kind: search.kind === "objective" ? "objective" : undefined,
     todoTitle:
       typeof search.todoTitle === "string" ? search.todoTitle : undefined,
+    todoSummary:
+      typeof search.todoSummary === "string" ? search.todoSummary : undefined,
     todos: typeof search.todos === "string" ? search.todos : undefined,
   }),
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { draft, kind, todoTitle, todos } = Route.useSearch();
+  const { draft, kind, todoTitle, todoSummary, todos } = Route.useSearch();
   const [type, setType] = useState<ContributionType | null>(null);
 
   // A resumed draft already carries its claims in the database, so the todo page's
@@ -44,6 +47,7 @@ function RouteComponent() {
             draftId={draft}
             draftKind={kind}
             todoTitle={draft ? undefined : todoTitle}
+            todoSummary={draft ? undefined : todoSummary}
             todoIds={todoIds}
           />
         </div>

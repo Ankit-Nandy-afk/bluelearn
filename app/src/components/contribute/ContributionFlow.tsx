@@ -48,6 +48,7 @@ type PropTypes = {
   draftId?: string;
   draftKind?: "guide" | "objective";
   todoTitle?: string;
+  todoSummary?: string;
   todoIds: Array<string>;
 };
 
@@ -97,6 +98,7 @@ export default function ContributionFlow({
   draftId,
   draftKind,
   todoTitle,
+  todoSummary,
   todoIds,
 }: PropTypes) {
   const [guideContData, setGuideContData] =
@@ -128,6 +130,7 @@ export default function ContributionFlow({
           draftId={draftId}
           draftKind={draftKind}
           todoTitle={todoTitle}
+          todoSummary={todoSummary}
           todoIds={todoIds}
           guideContData={guideContData}
           setGuideContData={setGuideContData}
@@ -149,6 +152,7 @@ function Inner({
   draftId,
   draftKind,
   todoTitle,
+  todoSummary,
   todoIds,
   guideContData,
   setGuideContData,
@@ -164,6 +168,7 @@ function Inner({
   draftId?: string;
   draftKind?: "guide" | "objective";
   todoTitle?: string;
+  todoSummary?: string;
   todoIds: Array<string>;
 
   guideContData: GuideContribution;
@@ -202,16 +207,20 @@ function Inner({
   const [revisionId, setRevisionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Start from the todo page with the topic's title already filled in.
+  // Start from the todo page with the topic's title and summary already filled in.
   const seededRef = useRef(false);
   useEffect(() => {
     if (!todoTitle || seededRef.current) return;
     seededRef.current = true;
 
-    setGuideContData((prev) => ({ ...prev, title: todoTitle }));
+    setGuideContData((prev) => ({
+      ...prev,
+      title: todoTitle,
+      summary: todoSummary ?? prev.summary,
+    }));
     setType("guide");
     requestAnimationFrame(() => stepper.goTo("guide-details"));
-  }, [todoTitle]);
+  }, [todoTitle, todoSummary]);
 
   // Resume a draft opened from the profile.
   const resumedRef = useRef(false);
