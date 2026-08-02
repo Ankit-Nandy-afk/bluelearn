@@ -54,15 +54,13 @@ export const TodoCard = ({ todo }: PropTypes) => {
           )}
 
           {todo.requestedBy.length > 0 && (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 pt-3">
               <p className="text-sm text-muted-foreground">
                 {requestedByLabel(todo.requestedBy.length)}
               </p>
               <ul className="flex flex-col gap-1">
-                {todo.requestedBy.map((guide) => (
+                {todo.requestedBy.slice(0, 3).map((guide) => (
                   <li key={guide.slug} className="min-w-0">
-                    {/* The card is a link now, so a nested one would be invalid
-                        markup. Same escape hatch the guide cards use. */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -73,12 +71,18 @@ export const TodoCard = ({ todo }: PropTypes) => {
                           params: { slug: guide.slug },
                         });
                       }}
-                      className="block max-w-full truncate text-left text-sm underline-offset-4 hover:underline"
+                      className="block max-w-full truncate text-left text-sm font-semibold underline-offset-4 hover:underline"
                     >
                       {guide.title ?? guide.slug}
                     </button>
                   </li>
                 ))}
+
+                {todo.requestedBy.length > 3 && (
+                  <li className="text-sm text-muted-foreground">
+                    +{todo.requestedBy.length - 3} more
+                  </li>
+                )}
               </ul>
 
               {todo.claimCount > 0 && (
