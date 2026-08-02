@@ -143,16 +143,6 @@ export const guidesRouter = new Hono<HonoEnv>()
     }
   )
 
-  // Returns one published variant with its vote tally.
-  .get("/:slug/:variantSlug", async (c) => {
-    const { variant } = await getVariantBySlug(
-      c.get("supabase"),
-      c.req.param("slug"),
-      c.req.param("variantSlug")
-    );
-    return c.json({ variant });
-  })
-
   // Returns objectives containing this guide.
   .get("/:slug/objectives", async (c) => {
     const { objectives, total } = await listObjectivesForGuide(
@@ -180,6 +170,16 @@ export const guidesRouter = new Hono<HonoEnv>()
       { page, limit }
     );
     return c.json({ revisions: data, total });
+  })
+
+  // Returns one published variant with its vote tally.
+  .get("/:slug/:variantSlug", async (c) => {
+    const { variant } = await getVariantBySlug(
+      c.get("supabase"),
+      c.req.param("slug"),
+      c.req.param("variantSlug")
+    );
+    return c.json({ variant });
   });
 
 export const variantsRouter = new Hono<HonoEnv>()
