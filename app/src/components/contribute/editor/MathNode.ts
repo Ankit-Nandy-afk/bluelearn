@@ -1,6 +1,6 @@
 import { lexical } from "@mdxeditor/editor";
 import React from "react";
-import { MathView } from "./MathView";
+import { MathLiveComponent } from "./MathLivePlugin";
 
 import type {
   EditorConfig,
@@ -10,7 +10,7 @@ import type {
   SerializedLexicalNode,
 } from "lexical";
 
-const { DecoratorNode } = lexical;
+const { DecoratorNode, $getNodeByKey } = lexical;
 
 export interface SerializedMathNode extends SerializedLexicalNode {
   equation: string;
@@ -86,12 +86,21 @@ export class MathNode extends DecoratorNode<unknown> {
     return this.__inline;
   }
 
-  decorate(_editor: LexicalEditor, _config: EditorConfig): React.ReactNode {
-    return React.createElement(MathView, {
-      key: this.__key,
-      nodeKey: this.__key,
-      equation: this.__equation,
+  decorate(editor: LexicalEditor, _config: EditorConfig): React.ReactNode {
+    const nodeKey = this.__key;
+    return React.createElement(MathLiveComponent, {
+      key: nodeKey,
+      nodeKey,
+      latex: this.__equation,
       inline: this.__inline,
+      onChange: (latex: string) => {
+        editor.update(() => {
+          const node = $getNodeByKey(nodeKey);
+          if ($isMathNode(node)) {
+            node.setEquation(latex);
+          }
+        });
+      },
     });
   }
 }

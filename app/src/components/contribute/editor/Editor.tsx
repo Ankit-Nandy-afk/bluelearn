@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   MDXEditor,
+  NestedLexicalEditor,
   codeBlockPlugin,
   codeMirrorPlugin,
+  directivesPlugin,
   headingsPlugin,
   imagePlugin,
   linkDialogPlugin,
@@ -15,9 +17,10 @@ import {
   toolbarPlugin,
 } from "@mdxeditor/editor";
 import { toast } from "sonner";
+import { Callout } from "../../Callout";
 
-import { mathPlugin } from "./math-plugin/index.tsx";
-import EditorToolbar from "./EditorToolbar.tsx";
+import { mathPlugin } from "./MathLivePlugin";
+import EditorToolbar from "./EditorToolbar";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import "./Editor.css";
@@ -45,7 +48,7 @@ export default function Editor({
   const latestRef = useRef<string | null>(null);
 
   // debounce so we don't re-render the flow on every keystroke
-  const handleMarkdownChange = (newMarkdown: string) => {
+  const handleMarkdownChange = useCallback((newMarkdown: string) => {
     latestRef.current = newMarkdown;
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -54,7 +57,20 @@ export default function Editor({
       onChangeRef.current?.(newMarkdown);
       saveTimeoutRef.current = null;
     }, 1000);
-  };
+  }, []);
+
+  // If the user clicks away (e.g., clicking "Save Draft" or "Next"),
+  // immediately flush any pending debounced state to the parent
+  // so that the button click handlers see the freshest data.
+  const handleBlur = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+      if (latestRef.current !== null) {
+        onChangeRef.current?.(latestRef.current);
+      }
+    }
+  }, []);
 
   // Force a save on a pending edit if user leaves before the debounce fires
   useEffect(() => {
@@ -67,6 +83,34 @@ export default function Editor({
       }
     };
   }, []);
+
+  const CalloutDirectiveDescriptor = useMemo(
+    () => ({
+      name: "callout",
+      testNode(node: any) {
+        return ["note", "tip", "danger", "info", "caution", "warning"].includes(
+          node.name
+        );
+      },
+      attributes: [],
+      hasChildren: true,
+      Editor: (props: any) => {
+        return (
+          <Callout type={props.mdastNode.name}>
+            <NestedLexicalEditor
+              block
+              getContent={(node) => (node as any).children}
+              getUpdatedMdastNode={(mdastNode, children) => ({
+                ...mdastNode,
+                children: children as any,
+              })}
+            />
+          </Callout>
+        );
+      },
+    }),
+    []
+  );
 
   // Stable plugins configuration to avoid rebuilding Lexical instance during state re-renders
   const plugins = useMemo(
@@ -105,6 +149,7 @@ export default function Editor({
           markdown: "Markdown",
         },
       }),
+      directivesPlugin({ directiveDescriptors: [CalloutDirectiveDescriptor] }),
       mathPlugin(),
       toolbarPlugin({
         toolbarContents: () => (
@@ -125,12 +170,16 @@ export default function Editor({
   );
 
   return (
-    <div className="editor-only-container">
-      <div className="editor-only-paper">
+    <div
+      id="bluelearn-editor-container"
+      className="editor-only-container transition-all"
+    >
+      <div className="editor-only-paper flex flex-col">
         <MDXEditor
           ref={editorRef}
           markdown={initialMarkdown}
           onChange={handleMarkdownChange}
+          onBlur={handleBlur}
           contentEditableClassName="mdxeditor-content"
           placeholder="What will you teach the world today? Start typing here..."
           plugins={plugins}

@@ -40,7 +40,12 @@ export default function MarkdownLinkImageShortcutListener() {
 
           // Skip processing inside code blocks
           const parentNode = anchorNode.getParent();
-          if (parentNode === null || parentNode.getType() === "code") return;
+          if (
+            parentNode === null ||
+            parentNode.getType() === "code" ||
+            anchorNode.hasFormat("code")
+          )
+            return;
 
           const textContent = anchorNode.getTextContent();
           const textBeforeCursor = textContent.slice(0, anchorOffset);
@@ -103,8 +108,12 @@ export default function MarkdownLinkImageShortcutListener() {
 
                 const linkNode = $createLinkNode(url);
                 const textNode = $createTextNode(text);
+
                 linkNode.append(textNode);
-                $insertNodes([linkNode]);
+
+                const spaceNode = $createTextNode(" ");
+
+                $insertNodes([linkNode, spaceNode]);
               });
               return;
             }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signIn } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -15,13 +16,11 @@ import {
 } from "@/components/ui/card";
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 
 export function LoginForm({
   className,
@@ -29,16 +28,11 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
-    if (!acceptedTerms) {
-      toast.error("You must accept the terms of service");
-      return;
-    }
 
     setSubmitting(true);
 
@@ -110,41 +104,37 @@ export function LoginForm({
                       </Link>
                     </div>
 
-                    <Input
-                      id="password"
-                      type="password"
-                      autoComplete="current-password"
-                      className="h-10 rounded-md"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
+                    <div className="relative w-full">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        className="h-10 rounded-md pr-10"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
+                      </button>
+                    </div>
                   </Field>
                 </FieldGroup>
               </div>
 
               {/* Footer */}
               <CardFooter className="flex flex-col gap-5 border-t p-6">
-                <Field orientation="horizontal">
-                  <Checkbox
-                    id="terms-checkbox-2"
-                    name="terms-checkbox-2"
-                    checked={acceptedTerms}
-                    onCheckedChange={(v) => setAcceptedTerms(v === true)}
-                  />
-
-                  <FieldContent>
-                    <FieldLabel htmlFor="terms-checkbox-2">
-                      Accept terms of service
-                    </FieldLabel>
-
-                    <FieldDescription className="font-mono">
-                      By clicking this checkbox, you agree to the terms of
-                      service and privacy policy.
-                    </FieldDescription>
-                  </FieldContent>
-                </Field>
-
                 <Button
                   type="submit"
                   className="btn-pri w-full"
@@ -168,7 +158,7 @@ export function LoginForm({
             {/* Right side - Image */}
             <div className="relative hidden md:flex md:items-center md:justify-center">
               <img
-                src="/assets/atom/atom-arrow-2.png"
+                src="/assets/adam/adam-arrow-smile.png"
                 alt="Login to start contributing"
                 className="absolute object-cover p-8"
               />

@@ -1,3 +1,5 @@
+import { redirect } from "@tanstack/react-router";
+
 import { supabase } from "./supabase";
 import type { Session } from "@supabase/supabase-js";
 
@@ -15,7 +17,18 @@ export async function signUp(
   return supabase.auth.signUp({
     email,
     password,
-    options: { data: { username } },
+    options: {
+      data: { username },
+      emailRedirectTo: `${window.location.origin}/login`,
+    },
+  });
+}
+
+export async function resendVerification(email: string) {
+  return supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: `${window.location.origin}/login` },
   });
 }
 
@@ -33,8 +46,25 @@ export async function updatePassword(password: string) {
   return supabase.auth.updateUser({ password });
 }
 
+// Sends verification email to old and new email.
+export async function updateEmail(email: string) {
+  return supabase.auth.updateUser(
+    { email },
+    { emailRedirectTo: `${window.location.origin}/settings/account` }
+  );
+}
+
 export async function getSession() {
   return supabase.auth.getSession();
+}
+
+// Redirect to login on authenticated-user only pages. Only works on ssr: false
+// routes, since the session lives in the browser.
+export async function requireSession() {
+  if (typeof window === "undefined") return;
+
+  const { data } = await getSession();
+  if (!data.session) throw redirect({ to: "/login" });
 }
 
 export function onAuthStateChange(
