@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as SubjectsRouteImport } from './routes/subjects'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReviewRouteImport } from './routes/review'
@@ -37,6 +38,11 @@ import { Route as GuidesSlugIndexRouteImport } from './routes/guides/$slug/index
 import { Route as GuidesSlugWalkthroughRouteImport } from './routes/guides/$slug/walkthrough'
 import { Route as GuidesSlugVariantSlugEditRouteImport } from './routes/guides/$slug/$variantSlug/edit'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SubjectsRoute = SubjectsRouteImport.update({
   id: '/subjects',
   path: '/subjects',
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/review': typeof ReviewRouteWithChildren
   '/settings': typeof SettingsRouteWithChildren
   '/subjects': typeof SubjectsRouteWithChildren
+  '/verify-email': typeof VerifyEmailRoute
   '/guides/$slug': typeof GuidesSlugRouteWithChildren
   '/objectives/$slug': typeof ObjectivesSlugRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/objectives/$slug': typeof ObjectivesSlugRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
   '/settings/account': typeof SettingsAccountRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/review': typeof ReviewRouteWithChildren
   '/settings': typeof SettingsRouteWithChildren
   '/subjects': typeof SubjectsRouteWithChildren
+  '/verify-email': typeof VerifyEmailRoute
   '/guides/$slug': typeof GuidesSlugRouteWithChildren
   '/objectives/$slug': typeof ObjectivesSlugRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
@@ -272,6 +281,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/settings'
     | '/subjects'
+    | '/verify-email'
     | '/guides/$slug'
     | '/objectives/$slug'
     | '/review/$caseId'
@@ -297,6 +307,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/register'
     | '/reset-password'
+    | '/verify-email'
     | '/objectives/$slug'
     | '/review/$caseId'
     | '/settings/account'
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/settings'
     | '/subjects'
+    | '/verify-email'
     | '/guides/$slug'
     | '/objectives/$slug'
     | '/review/$caseId'
@@ -355,12 +367,20 @@ export interface RootRouteChildren {
   ReviewRoute: typeof ReviewRouteWithChildren
   SettingsRoute: typeof SettingsRouteWithChildren
   SubjectsRoute: typeof SubjectsRouteWithChildren
+  VerifyEmailRoute: typeof VerifyEmailRoute
   GuidesSlugRoute: typeof GuidesSlugRouteWithChildren
   GuidesIndexRoute: typeof GuidesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/subjects': {
       id: '/subjects'
       path: '/subjects'
@@ -641,6 +661,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReviewRoute: ReviewRouteWithChildren,
   SettingsRoute: SettingsRouteWithChildren,
   SubjectsRoute: SubjectsRouteWithChildren,
+  VerifyEmailRoute: VerifyEmailRoute,
   GuidesSlugRoute: GuidesSlugRouteWithChildren,
   GuidesIndexRoute: GuidesIndexRoute,
 }
