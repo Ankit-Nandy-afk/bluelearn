@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { normalizeTodoTitle } from "@bluelearn/schemas";
 import type { TodoListItem } from "@bluelearn/schemas";
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
@@ -77,17 +76,11 @@ export async function createTodo(
 export async function claimTodos(
   supabase: DB,
   guideBaseId: string,
-  todoIds: Array<string>,
-  guideTitle: string | null | undefined
+  todoIds: Array<string>
 ) {
-  const key = normalizeTodoTitle(guideTitle ?? "");
-  if (!key) {
-    throw new ServiceError("A guide needs a title to claim todos", 422);
-  }
-
   const { data, error } = await supabase
     .from("todo_prerequisites")
-    .select("id, title, status")
+    .select("id, status")
     .in("id", todoIds);
 
   if (error) {
@@ -100,11 +93,6 @@ export async function claimTodos(
   }
   if ((data ?? []).some((todo) => todo.status !== "open")) {
     throw new ServiceError("Todo is already resolved", 409);
-  }
-
-  // Ensures that that guide's title matches normalized todo title.
-  if ((data ?? []).some((todo) => normalizeTodoTitle(todo.title) !== key)) {
-    throw new ServiceError("Claimed todos must match the guide's title", 422);
   }
 
   const { error: claimError } = await supabase

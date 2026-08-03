@@ -230,7 +230,7 @@ export async function createGuide(
 
   if (todoClaims.length > 0) {
     const base = await resolveRevisionBase(supabase, revision_id);
-    await claimTodos(supabase, base.id, todoClaims, title);
+    await claimTodos(supabase, base.id, todoClaims);
   }
 
   return { revision_id };
