@@ -142,7 +142,7 @@ export default function ContributionFlow({
   const [objectiveContData, setObjectiveContData] =
     useState<ObjectiveContribution>(createObjectiveContData);
 
-  const skipTypeStep = !!editSlug || draftKind === "objective";
+  const skipTypeStep = !!editSlug || !!draftId;
 
   const StepperInstance = useMemo(() => {
     if (!type) {
@@ -644,6 +644,8 @@ function Inner({
     }
   };
 
+  if (skipTypeStep && !type) return null;
+
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col gap-6">
       {/* horizontal breadcrumb stepper */}
@@ -680,6 +682,7 @@ function Inner({
           setGuideContData={setGuideContData}
           subjects={subjectOptions}
           guides={guideOptions}
+          hideBackBtn={skipTypeStep}
           onSaveDraft={saveDraft}
           submitting={submitting}
         />
@@ -690,6 +693,7 @@ function Inner({
           setVariantContData={setVariantContData}
           guides={guideOptions}
           subjects={subjectOptions}
+          hideBackBtn={skipTypeStep}
           onSaveDraft={saveDraft}
           submitting={submitting}
         />
