@@ -41,6 +41,12 @@ import { OrderTargetGuides } from "@/components/contribute/steps/OrderTargetGuid
 
 import { flows, typeStep } from "@/lib/contributionFlow";
 import { PreviewObjective } from "@/components/contribute/steps/PreviewObjective";
+import {
+  clearStoredDraft,
+  getStoredDraft,
+  setStoredDraft,
+  useDebouncedContributionSave,
+} from "@/lib/contributionStorage";
 
 type PropTypes = {
   type: ContributionType | null;
@@ -99,13 +105,21 @@ export default function ContributionFlow({
   draftId,
   draftKind,
 }: PropTypes) {
-  const [guideContData, setGuideContData] =
-    useState<GuideContribution>(createGuideContData);
+  const [guideContData, setGuideContData] = useState<GuideContribution>(() => {
+    const stored = getStoredDraft<GuideContribution>("guide");
+    return stored?.data ?? createGuideContData();
+  });
   const [variantContData, setVariantContData] = useState<VariantContribution>(
-    createVariantContData
+    () => {
+      const stored = getStoredDraft<VariantContribution>("variant");
+      return stored?.data ?? createVariantContData();
+    }
   );
   const [objectiveContData, setObjectiveContData] =
-    useState<ObjectiveContribution>(createObjectiveContData);
+    useState<ObjectiveContribution>(() => {
+      const stored = getStoredDraft<ObjectiveContribution>("objective");
+      return stored?.data ?? createObjectiveContData();
+    });
 
   const StepperInstance = useMemo(() => {
     if (!type) {
@@ -188,10 +202,6 @@ function Inner({
 }) {
   const pickType = (value: ContributionType) => {
     if (type !== value) {
-      setGuideContData(createGuideContData());
-      setObjectiveContData(createObjectiveContData());
-      setVariantContData(createVariantContData());
-      setRevisionId(null);
       setType(value);
     }
 
@@ -211,14 +221,51 @@ function Inner({
     });
   };
 
-  const [revisionId, setRevisionId] = useState<string | null>(null);
+  const [revisionId, setRevisionId] = useState<string | null>(() => {
+    if (draftId) return draftId;
+    if (!type) return null;
+    const stored = getStoredDraft<unknown>(type);
+    return stored?.revisionId ?? null;
+  });
+
+  useEffect(() => {
+    if (draftId) return;
+    if (type) {
+      const stored = getStoredDraft<unknown>(type);
+      setRevisionId(stored?.revisionId ?? null);
+    }
+  }, [type, draftId]);
+
+  // Debounced auto-save for guide drafts
+  useDebouncedContributionSave(
+    type === "guide" ? "guide" : null,
+    guideContData,
+    revisionId,
+    step
+  );
+
+  // Debounced auto-save for variant drafts
+  useDebouncedContributionSave(
+    type === "variant" ? "variant" : null,
+    variantContData,
+    revisionId,
+    step
+  );
+
+  useDebouncedContributionSave(
+    type === "objective" ? "objective" : null,
+    objectiveContData,
+    revisionId,
+    step
+  );
+
   const [submitting, setSubmitting] = useState(false);
 
   // Resume a draft opened from the profile.
-  const resumedRef = useRef(false);
+  const loadedDraftIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!draftId || resumedRef.current) return;
-    resumedRef.current = true;
+    if (!draftId || loadedDraftIdRef.current === draftId) return;
+    loadedDraftIdRef.current = draftId;
 
     if (draftKind === "objective") {
       getObjectiveRevision(draftId)
@@ -234,7 +281,7 @@ function Inner({
               (a, b) => (a.target_position ?? 0) - (b.target_position ?? 0)
             );
 
-          setObjectiveContData({
+          const objData: ObjectiveContribution = {
             title: data.revision.title ?? "",
             summary: data.revision.summary ?? "",
             targets: targetNodes.map((n) => n.slug),
@@ -257,12 +304,21 @@ function Inner({
               ];
             }),
             subjects: data.subjects.map((s) => s.id),
+          };
+
+          setObjectiveContData(objData);
+          setStoredDraft("objective", {
+            data: objData,
+            revisionId: draftId,
+            step: step ? step : "objective-details",
+            updatedAt: Date.now(),
           });
+
           setRevisionId(draftId);
           setType("objective");
 
           const targetStep =
-            step && step !== "type" ? step : "objective-defaults";
+            step && step !== "type" ? step : "objective-details";
           requestAnimationFrame(() => stepper.goTo(targetStep));
         })
         .catch(() => {
@@ -283,7 +339,7 @@ function Inner({
           .map((s) => ({ id: s.id, name: s.name, summary: s.summary ?? "" }));
 
         if (data.is_variant) {
-          setVariantContData({
+          const vData: VariantContribution = {
             type: data.knowledge_type ?? "",
             title: data.revision.title ?? "",
             summary: data.revision.summary ?? "",
@@ -291,9 +347,16 @@ function Inner({
             baseGuide: data.base_slug ?? "",
             subjects: tagged,
             newSubjects: pending,
+          };
+          setVariantContData(vData);
+          setStoredDraft("variant", {
+            data: vData,
+            revisionId: draftId,
+            step: step ? step : "variant-details",
+            updatedAt: Date.now(),
           });
         } else {
-          setGuideContData({
+          const gData: GuideContribution = {
             type: data.knowledge_type ?? "theoretical",
             title: data.revision.title ?? "",
             summary: data.revision.summary ?? "",
@@ -302,6 +365,13 @@ function Inner({
             newSubjects: pending,
             prereqs: data.prerequisites,
             todoPrereqs: data.todos,
+          };
+          setGuideContData(gData);
+          setStoredDraft("guide", {
+            data: gData,
+            revisionId: draftId,
+            step: step ? step : "guide-details",
+            updatedAt: Date.now(),
           });
         }
         setRevisionId(draftId);
@@ -554,7 +624,21 @@ function Inner({
   const saveDraft = async () => {
     setSubmitting(true);
     try {
-      await persistDraft();
+      const id = await persistDraft();
+      if (type) {
+        const currentData =
+          type === "guide"
+            ? guideContData
+            : type === "variant"
+              ? variantContData
+              : objectiveContData;
+        setStoredDraft(type, {
+          data: currentData,
+          revisionId: id,
+          step,
+          updatedAt: Date.now(),
+        });
+      }
       toast.success("Draft saved");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save draft");
@@ -588,9 +672,19 @@ function Inner({
       if (!id) throw new Error("Failed to save draft before publishing");
       if (type === "objective") {
         await submitObjectiveRevision(id);
+        clearStoredDraft("objective");
+        setObjectiveContData(createObjectiveContData());
+        setRevisionId(null);
         toast.success("Objective published");
-      } else {
+      } else if (type) {
         await submitRevision(id);
+        clearStoredDraft(type);
+        if (type === "guide") {
+          setGuideContData(createGuideContData());
+        } else {
+          setVariantContData(createVariantContData());
+        }
+        setRevisionId(null);
         toast.success("Submitted for review");
       }
     } catch (e) {

@@ -60,11 +60,10 @@ function RouteComponent() {
     navigate({
       search: (prev) => ({
         ...prev,
-        // TODO (Exercise for you): When navigating back to the initial "type" selection step (newStep === "type"),
-        // decide how you want to handle the URL search params (e.g. clearing `step` or resetting `type`)
-        // to keep the URL clean.
         step: newStep === "type" ? undefined : newStep,
         type: newStep === "type" ? undefined : prev.type,
+        draft: newStep === "type" ? undefined : prev.draft,
+        kind: newStep === "type" ? undefined : prev.kind,
       }),
       replace: true,
     });
