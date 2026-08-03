@@ -11,7 +11,7 @@ export type TodoGroup = {
 };
 
 // Todo titles are free text, so the same topic can arrive as several rows spelled
-// differently. One card per normalized title and shows the first requesters
+// differently. One card per normalized title and shows the first requester's
 // wording.
 export const groupTodosByTitle = (
   todos: Array<TodoListItem>
@@ -42,8 +42,6 @@ export const groupTodosByTitle = (
           slug: row.guide_slug as string,
           title: row.guide_title,
         })),
-      // A claimant claims every row in the group at once, so the rows repeat
-      // the same count rather than splitting it.
       claimCount: Math.max(...sorted.map((row) => row.claim_count)),
     };
   });
