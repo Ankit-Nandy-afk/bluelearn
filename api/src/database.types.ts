@@ -212,6 +212,7 @@ export type Database = {
           guide_id: string
           id: string
           is_purged: boolean
+          revised_from_revision_id: string | null
           status: Database["public"]["Enums"]["revision_status"]
           summary: string | null
           title: string | null
@@ -227,6 +228,7 @@ export type Database = {
           guide_id: string
           id?: string
           is_purged?: boolean
+          revised_from_revision_id?: string | null
           status?: Database["public"]["Enums"]["revision_status"]
           summary?: string | null
           title?: string | null
@@ -242,6 +244,7 @@ export type Database = {
           guide_id?: string
           id?: string
           is_purged?: boolean
+          revised_from_revision_id?: string | null
           status?: Database["public"]["Enums"]["revision_status"]
           summary?: string | null
           title?: string | null
@@ -269,6 +272,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "published_guides"
             referencedColumns: ["guide_id"]
+          },
+          {
+            foreignKeyName: "guide_revisions_revised_from_revision_id_fkey"
+            columns: ["revised_from_revision_id"]
+            isOneToOne: false
+            referencedRelation: "guide_revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_revisions_revised_from_revision_id_fkey"
+            columns: ["revised_from_revision_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
+            referencedColumns: ["revision_id"]
           },
         ]
       }
@@ -1151,6 +1168,10 @@ export type Database = {
         Returns: string
       }
       publish_objective_revision: {
+        Args: { p_revision_id: string }
+        Returns: string
+      }
+      revise_guide_revision: {
         Args: { p_revision_id: string }
         Returns: string
       }

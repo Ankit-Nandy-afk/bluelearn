@@ -115,6 +115,14 @@
                     Gated the same way as prerequisites.
                   items:
                     $ref: "../components/schemas/reviews/SubmittedTodo.yaml"
+                revise_draft_id:
+                  description: >
+                    Draft the author already forked off this rejection, so the
+                    case can offer to resume it instead of starting another. Null
+                    for anyone but the author, and on a case that is not rejected.
+                  oneOf:
+                    - $ref: "../components/schemas/common/Uuid.yaml"
+                    - type: "null"
               required:
                 [
                   case,
@@ -125,6 +133,7 @@
                   revision,
                   prerequisites,
                   todos,
+                  revise_draft_id,
                 ]
       "403":
         $ref: "../components/responses/_shared.yaml#/Forbidden"

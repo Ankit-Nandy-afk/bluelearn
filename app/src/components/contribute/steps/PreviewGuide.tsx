@@ -2,7 +2,6 @@ import "katex/dist/katex.min.css";
 
 import type { Guide } from "@bluelearn/schemas";
 import type { GuideType } from "@/types/guides";
-import { Separator } from "@/components/ui/separator";
 import { GuideReader } from "@/components/GuideReader";
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
 
@@ -33,9 +32,6 @@ export const PreviewGuide = ({
         submitting={submitting}
       />
 
-      <Separator className="mb-8 bg-border" />
-
-      {/* same renderer the published page uses, so this is what it'll look like */}
       <GuideReader guide={guide} guideType={guideType} />
     </Stepper.Content>
   );

@@ -17,6 +17,7 @@ import {
   loadProfilePage,
 } from "@/lib/profile";
 import { formatDate } from "@/lib/guideUtils";
+import { requireSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { usePagination } from "@/lib/usePagination";
 import { Pagination } from "@/components/Pagination";
@@ -88,6 +89,7 @@ export const Route = createFileRoute("/profile")({
       page: Number.isInteger(page) && page > 1 ? page : undefined,
     };
   },
+  beforeLoad: requireSession,
   loader: ({ abortController }) => loadProfilePage(abortController.signal),
   component: RouteComponent,
   pendingComponent: () => <ProfileMessage>Loading profile...</ProfileMessage>,
