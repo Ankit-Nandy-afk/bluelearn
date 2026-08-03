@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
+import { getAuthToken } from "@/lib/auth";
 
 const SIDEBAR_ACTIONS: Array<Action> = [
   { icon: Replace, label: "View Variants" },
@@ -60,7 +61,76 @@ function useVote(slug: string) {
     // Display vote on frontend before updating database for better UX
     setVote(next);
 
+    const token = await getAuthToken();
+
+    if (!token) {
+      // TODO: Add a notice saying user is not authorized or signed in!
+      console.error("Unauthorized");
+      setVote(prev);
+    }
+
+    // Payload to update user vote in database
+    const payload: {
+      method: string | undefined;
+      direction: string | undefined;
+      headers: {
+        Authorization: string;
+      };
+    } = {
+      method: undefined,
+      direction: undefined,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+
+    switch (next) {
+      case null:
+        // DELETE retracts the vote
+        payload.method = "DELETE";
+        payload.direction = undefined;
+        break;
+      case "up":
+        payload.method = "PUT";
+        payload.direction = "up";
+        break;
+      case "down":
+        payload.method = "PUT";
+        payload.direction = "down";
+        break;
+      default:
+        console.error("Invalid vote selected");
+        break;
+    }
+
     const variantId = await getVariantId(thisSlug);
+    const api = import.meta.env.VITE_API_BASE;
+    const votingApi = `${api}/variants/${variantId}/vote`;
+
+    const responseBody = JSON.stringify({
+      direction: payload.direction,
+      reason: undefined,
+      note: undefined,
+    });
+
+    const response = await fetch(votingApi, {
+      method: payload.method,
+      headers: {
+        ...payload.headers,
+        "Content-Type": "application/json",
+      },
+      body: responseBody,
+    });
+
+    if (!response.ok) {
+      // TODO: Add user pop up showing that vote failed to be uploaded
+      console.log("Unable to update vote. vote:", payload.direction);
+
+      const errorBody = await response.json().catch(() => null);
+      console.error("Vote request failed:", response.status, errorBody);
+
+      setVote(prev);
+    }
   };
 
   return {
