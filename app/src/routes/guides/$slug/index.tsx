@@ -57,7 +57,7 @@ function useVote(slug: string) {
     const prev = vote;
     const next = prev === type ? null : type;
 
-    // Set vote on frontend before updating database
+    // Display vote on frontend before updating database for better UX
     setVote(next);
 
     const variantId = await getVariantId(thisSlug);
