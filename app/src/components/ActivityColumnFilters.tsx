@@ -66,7 +66,7 @@ function ColumnFilter({
             type="button"
             className={cn(
               "flex cursor-pointer items-center gap-1.5 uppercase transition-colors",
-              active ? "text-bright-blue" : "hover:text-foreground/70"
+              active ? "text-brand-bright-blue" : "hover:text-foreground/70"
             )}
           >
             <span>{label}</span>
@@ -88,7 +88,7 @@ function ColumnFilter({
           type="button"
           aria-label={`Clear ${label} filter`}
           onClick={onClear}
-          className="flex size-4 cursor-pointer items-center justify-center rounded text-bright-blue hover:bg-bright-blue/10"
+          className="flex size-4 cursor-pointer items-center justify-center rounded text-brand-bright-blue hover:bg-brand-bright-blue/10"
         >
           <XIcon className="size-3.5" />
         </button>
@@ -451,7 +451,7 @@ function SegmentedDateInput({
   }
 
   return (
-    <div className="flex items-center rounded-md border border-input px-2 py-1.5 text-sm focus-within:border-bright-blue">
+    <div className="flex items-center rounded-md border border-input px-2 py-1.5 text-sm focus-within:border-brand-bright-blue">
       <input
         ref={monthRef}
         value={month}
@@ -459,7 +459,7 @@ function SegmentedDateInput({
         onFocus={(e) => e.target.select()}
         inputMode="numeric"
         placeholder="MM"
-        className="w-7 bg-transparent text-center tabular-nums caret-transparent outline-none placeholder:font-light placeholder:text-muted-foreground focus:rounded-md focus:bg-bright-blue/15"
+        className="w-7 bg-transparent text-center tabular-nums caret-transparent outline-none placeholder:font-light placeholder:text-muted-foreground focus:rounded-md focus:bg-brand-bright-blue/15"
       />
       <span className="px-1 text-muted-foreground">/</span>
       <input
@@ -472,7 +472,7 @@ function SegmentedDateInput({
         }}
         inputMode="numeric"
         placeholder="DD"
-        className="w-7 bg-transparent text-center tabular-nums caret-transparent outline-none placeholder:font-light placeholder:text-muted-foreground focus:rounded-md focus:bg-bright-blue/15"
+        className="w-7 bg-transparent text-center tabular-nums caret-transparent outline-none placeholder:font-light placeholder:text-muted-foreground focus:rounded-md focus:bg-brand-bright-blue/15"
       />
       <span className="px-1 text-muted-foreground">/</span>
       <input
@@ -485,7 +485,7 @@ function SegmentedDateInput({
         }}
         inputMode="numeric"
         placeholder="YYYY"
-        className="w-11 bg-transparent text-center tabular-nums caret-transparent outline-none placeholder:font-light placeholder:text-muted-foreground focus:rounded-md focus:bg-bright-blue/15"
+        className="w-11 bg-transparent text-center tabular-nums caret-transparent outline-none placeholder:font-light placeholder:text-muted-foreground focus:rounded-md focus:bg-brand-bright-blue/15"
       />
     </div>
   );
@@ -514,7 +514,7 @@ const DateField = forwardRef<
       onClick={onClick}
       className={cn(
         "cursor-pointer rounded-md border px-2 py-1 text-xs transition-colors",
-        active ? "border-bright-blue" : "border-input hover:bg-muted",
+        active ? "border-brand-bright-blue" : "border-input hover:bg-muted",
         !date && "text-muted-foreground"
       )}
     >

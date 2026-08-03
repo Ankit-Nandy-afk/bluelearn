@@ -37,7 +37,8 @@ function RadioItem({ value, label }: { value: string; label: string }) {
 // Shared by the home page and /browse. Scope is single-choice; picking
 // "Guides" unlocks the guide-only knowledge-type filter (see filtersToParams).
 export function SearchFilterMenu({ value, onChange }: Props) {
-  const active = value.scope || value.knowledgeType ? "text-bright-blue" : "";
+  const active =
+    value.scope || value.knowledgeType ? "text-brand-bright-blue" : "";
 
   return (
     <DropdownMenu>

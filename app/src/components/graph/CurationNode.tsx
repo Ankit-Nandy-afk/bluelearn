@@ -22,7 +22,7 @@ export function CurationNode({ data }: { data: CurationNodeData }) {
       }
       badge={
         selectedOrder !== null && (
-          <div className="absolute -top-3 -right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-bright-blue text-xs font-bold text-white shadow-md ring-4 ring-background">
+          <div className="absolute -top-3 -right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-brand-bright-blue text-xs font-bold text-white shadow-md ring-4 ring-background">
             {selectedOrder}
           </div>
         )
