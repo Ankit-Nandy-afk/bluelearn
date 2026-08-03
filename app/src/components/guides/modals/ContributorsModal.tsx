@@ -1,14 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, Loader2, User, Users } from "lucide-react";
+import { ExternalLink, User, Users } from "lucide-react";
+import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideContributor } from "@bluelearn/schemas";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getGuideContributors } from "@/lib/api/guides";
 
@@ -68,80 +62,57 @@ export function ContributorsModal({
   }, [open, slug]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            <DialogTitle>Guide Contributors</DialogTitle>
+    <BaseGuideModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Guide Contributors"
+      description="Authors and editors who created revisions and variants for this guide."
+      icon={<Users className="h-4 w-4 text-primary" />}
+      loading={loading}
+      loadingText="Loading contributors..."
+      error={error}
+      isEmpty={contributors.length === 0}
+      emptyIcon={<User className="h-6 w-6" />}
+      emptyTitle="No contributors found"
+      emptyDescription="No authors have been credited for this guide yet."
+    >
+      {contributors.map((contributor) => (
+        <Link
+          key={contributor.id || contributor.username}
+          to="/profile"
+          search={{
+            username: contributor.username,
+          }}
+          onClick={() => onOpenChange(false)}
+          className="group flex w-full items-center justify-between rounded-lg border p-3.5 transition-colors hover:border-primary/40 hover:bg-accent/40"
+        >
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              {contributor.avatar_url && (
+                <AvatarImage
+                  src={contributor.avatar_url}
+                  alt={contributor.username}
+                />
+              )}
+              <AvatarFallback className="text-xs">
+                {getInitials(contributor.name, contributor.username)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-xs font-medium text-foreground group-hover:text-primary">
+                @{contributor.username}
+              </p>
+              {contributor.name && (
+                <p className="text-[11px] text-muted-foreground">
+                  {contributor.name}
+                </p>
+              )}
+            </div>
           </div>
-          <DialogDescription>
-            Authors and editors who created revisions and variants for this
-            guide.
-          </DialogDescription>
-        </DialogHeader>
 
-        <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <Loader2 className="mb-2 h-6 w-6 animate-spin text-primary" />
-              <p className="text-xs">Loading contributors...</p>
-            </div>
-          ) : error ? (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center text-xs text-destructive">
-              {error}
-            </div>
-          ) : contributors.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
-              <User className="mx-auto mb-2 h-6 w-6 text-muted-foreground/60" />
-              <p className="text-xs font-medium text-foreground">
-                No contributors found
-              </p>
-              <p className="mt-1 text-xs">
-                No authors have been credited for this guide yet.
-              </p>
-            </div>
-          ) : (
-            contributors.map((contributor) => (
-              <Link
-                key={contributor.id || contributor.username}
-                to="/profile"
-                search={{
-                  username: contributor.username,
-                }}
-                onClick={() => onOpenChange(false)}
-                className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:border-primary/40 hover:bg-accent/40"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    {contributor.avatar_url && (
-                      <AvatarImage
-                        src={contributor.avatar_url}
-                        alt={contributor.username}
-                      />
-                    )}
-                    <AvatarFallback className="text-xs">
-                      {getInitials(contributor.name, contributor.username)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-xs font-medium text-foreground group-hover:text-primary">
-                      @{contributor.username}
-                    </p>
-                    {contributor.name && (
-                      <p className="text-[11px] text-muted-foreground">
-                        {contributor.name}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-              </Link>
-            ))
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+          <ExternalLink className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+        </Link>
+      ))}
+    </BaseGuideModal>
   );
 }
