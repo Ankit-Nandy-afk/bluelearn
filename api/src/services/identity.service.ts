@@ -358,7 +358,7 @@ export async function getMyActivity(
         .in("id", guideIds),
       supabase
         .from("guide_revisions")
-        .select("id, guide_id, created_at")
+        .select("id, guide_id, created_at, revised_from_revision_id")
         .in("guide_id", guideIds),
       supabase
         .from("guide_review_cases")
@@ -403,6 +403,23 @@ export async function getMyActivity(
       allRevs.data ?? [],
       (r) => r.guide_id
     );
+    const revisedFrom = new Map(
+      (allRevs.data ?? []).map((r) => [r.id, r.revised_from_revision_id])
+    );
+
+    // A rejected attempt gets forked into a fresh revision, so walk back to the
+    // one it grew out of (retrying a creation should still be shown as a
+    // creation).
+    const isCreation = (revId: string, guideId: string) => {
+      const seen = new Set<string>();
+      let cur: string | null = revId;
+      while (cur && !seen.has(cur)) {
+        if (firstRev.get(guideId) === cur) return true;
+        seen.add(cur);
+        cur = revisedFrom.get(cur) ?? null;
+      }
+      return false;
+    };
 
     for (const rev of myGuideRevs) {
       const guide = guideById.get(rev.guide_id);
@@ -420,7 +437,7 @@ export async function getMyActivity(
       rows.push({
         content_kind: "guide",
         is_variant: canonical != null && canonical !== guide?.id,
-        is_creation: firstRev.get(rev.guide_id) === rev.id,
+        is_creation: isCreation(rev.id, rev.guide_id),
         title: rev.title ?? "Untitled",
         change_summary: rev.change_summary,
         created_at: rev.created_at,

@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import type { ContributionType } from "@/types/contributions";
 import ContributionFlow from "@/components/contribute/ContributionFlow";
+import { RejectionFeedback } from "@/components/review/RejectionFeedback";
+import { requireSession } from "@/lib/auth";
 
 export type ContributeSearch = {
   draft?: string;
@@ -11,6 +13,8 @@ export type ContributeSearch = {
 };
 
 export const Route = createFileRoute("/contribute")({
+  ssr: false,
+  beforeLoad: requireSession,
   validateSearch: (search: Record<string, unknown>): ContributeSearch => {
     const draft = typeof search.draft === "string" ? search.draft : undefined;
     const kind =

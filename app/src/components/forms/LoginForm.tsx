@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signIn } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -102,15 +104,31 @@ export function LoginForm({
                       </Link>
                     </div>
 
-                    <Input
-                      id="password"
-                      type="password"
-                      autoComplete="current-password"
-                      className="h-10 rounded-md"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
+                    <div className="relative w-full">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        className="h-10 rounded-md pr-10"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
+                      </button>
+                    </div>
                   </Field>
                 </FieldGroup>
               </div>
@@ -140,7 +158,7 @@ export function LoginForm({
             {/* Right side - Image */}
             <div className="relative hidden md:flex md:items-center md:justify-center">
               <img
-                src="/assets/atom/atom-arrow-2.png"
+                src="/assets/adam/adam-arrow-smile.png"
                 alt="Login to start contributing"
                 className="absolute object-cover p-8"
               />

@@ -9,6 +9,7 @@ import {
 } from "./factories/guides";
 import { createSubject, tagGuideRevision } from "./factories/subjects";
 import { createPrerequisite, createTodo } from "./factories/graph";
+import { createGuideReviewCase, createReviewCase } from "./factories/reviews";
 import { expectToMatchSpec } from "./openapi";
 
 // A draft revision owned by `authorId`, hanging off a fresh draft guide.
@@ -34,6 +35,26 @@ async function createCompleteDraft(authorId: string) {
   const subject = await createSubject();
   await tagGuideRevision(revision.id, subject.id);
   return { base, guide, revision, subject };
+}
+
+// Create a submitted revision whose case came back rejected.
+async function createRejectedSubmission(
+  authorId: string,
+  caseStatus: "rejected" | "approved" | "in_review" = "rejected"
+) {
+  const base = await createGuideBase();
+  const guide = await createGuide(base.id, { author_id: authorId });
+  const revision = await createGuideRevision(guide.id, {
+    status: "submitted",
+    author_id: authorId,
+    summary: "A summary",
+    body: "Some body",
+  });
+  const subject = await createSubject();
+  await tagGuideRevision(revision.id, subject.id);
+  const reviewCase = await createReviewCase(authorId, { status: caseStatus });
+  await createGuideReviewCase(reviewCase.id, revision.id);
+  return { base, guide, revision, subject, reviewCase };
 }
 
 describe("GET /guide-revisions/{id}", () => {
@@ -411,6 +432,147 @@ describe("POST /guide-revisions/{id}/submit", () => {
 
     expect(res.status).toBe(404);
     await expectToMatchSpec(res, "POST", "/guide-revisions/{id}/submit");
+  });
+});
+
+describe("POST /guide-revisions/{id}/revise", () => {
+  it("forks a rejected submission into a draft carrying its tags", async () => {
+    const author = await makeUser();
+    const { revision, subject } = await createRejectedSubmission(author.userId);
+
+    const res = await app.request(
+      `/guide-revisions/${revision.id}/revise`,
+      { method: "POST", ...auth(author.token) },
+      env
+    );
+
+    expect(res.status).toBe(201);
+    await expectToMatchSpec(res, "POST", "/guide-revisions/{id}/revise");
+    const { revision_id } = (await res.json()) as { revision_id: string };
+    expect(revision_id).not.toBe(revision.id);
+
+    const { data: draft } = await admin
+      .from("guide_revisions")
+      .select(
+        "status, title, body, guide_id, author_id, revised_from_revision_id"
+      )
+      .eq("id", revision_id)
+      .single();
+    expect(draft?.status).toBe("draft");
+    expect(draft?.title).toBe(revision.title);
+    expect(draft?.body).toBe(revision.body);
+    expect(draft?.guide_id).toBe(revision.guide_id);
+    expect(draft?.author_id).toBe(author.userId);
+    expect(draft?.revised_from_revision_id).toBe(revision.id);
+
+    const { data: tags } = await admin
+      .from("guide_revision_subjects")
+      .select("subject_id")
+      .eq("guide_revision_id", revision_id);
+    expect(tags?.map((t) => t.subject_id)).toEqual([subject.id]);
+
+    // The rejected revision stays frozen so its closed case still shows it.
+    const { data: original } = await admin
+      .from("guide_revisions")
+      .select("status")
+      .eq("id", revision.id)
+      .single();
+    expect(original?.status).toBe("submitted");
+  });
+
+  it("points the fork's case id at the rejection for the editor", async () => {
+    const author = await makeUser();
+    const { revision, reviewCase } = await createRejectedSubmission(
+      author.userId
+    );
+
+    const revised = await app.request(
+      `/guide-revisions/${revision.id}/revise`,
+      { method: "POST", ...auth(author.token) },
+      env
+    );
+    const { revision_id } = (await revised.json()) as { revision_id: string };
+
+    const res = await app.request(
+      `/guide-revisions/${revision_id}`,
+      auth(author.token),
+      env
+    );
+
+    expect(res.status).toBe(200);
+    await expectToMatchSpec(res, "GET", "/guide-revisions/{id}");
+    const body = (await res.json()) as { revised_from_case_id: string | null };
+    expect(body.revised_from_case_id).toBe(reviewCase.id);
+  });
+
+  it("hands back the same draft on a second revise", async () => {
+    const author = await makeUser();
+    const { revision } = await createRejectedSubmission(author.userId);
+    const post = () =>
+      app.request(
+        `/guide-revisions/${revision.id}/revise`,
+        { method: "POST", ...auth(author.token) },
+        env
+      );
+
+    const first = (await (await post()).json()) as { revision_id: string };
+    const second = (await (await post()).json()) as { revision_id: string };
+
+    expect(second.revision_id).toBe(first.revision_id);
+
+    const { data: drafts } = await admin
+      .from("guide_revisions")
+      .select("id")
+      .eq("revised_from_revision_id", revision.id);
+    expect(drafts?.length).toBe(1);
+  });
+
+  it("404s for someone who did not author the submission", async () => {
+    const author = await makeUser();
+    const { revision } = await createRejectedSubmission(author.userId);
+
+    const stranger = await makeUser();
+    const res = await app.request(
+      `/guide-revisions/${revision.id}/revise`,
+      { method: "POST", ...auth(stranger.token) },
+      env
+    );
+
+    expect(res.status).toBe(404);
+    await expectToMatchSpec(res, "POST", "/guide-revisions/{id}/revise");
+  });
+
+  it("404s while the case is still open", async () => {
+    const author = await makeUser();
+    const { revision } = await createRejectedSubmission(
+      author.userId,
+      "in_review"
+    );
+
+    const res = await app.request(
+      `/guide-revisions/${revision.id}/revise`,
+      { method: "POST", ...auth(author.token) },
+      env
+    );
+
+    expect(res.status).toBe(404);
+    await expectToMatchSpec(res, "POST", "/guide-revisions/{id}/revise");
+  });
+
+  it("404s on an approved submission", async () => {
+    const author = await makeUser();
+    const { revision } = await createRejectedSubmission(
+      author.userId,
+      "approved"
+    );
+
+    const res = await app.request(
+      `/guide-revisions/${revision.id}/revise`,
+      { method: "POST", ...auth(author.token) },
+      env
+    );
+
+    expect(res.status).toBe(404);
   });
 });
 
