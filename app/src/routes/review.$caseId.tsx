@@ -124,7 +124,7 @@ function RouteComponent() {
                   type="button"
                   className={cn(
                     "mono-micro -mb-px border-b-2 border-transparent px-3 py-1.5 tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:text-foreground",
-                    view === tab && "border-brand-blue text-brand-blue"
+                    view === tab && "border-bright-blue text-bright-blue"
                   )}
                   onClick={() => setView(tab)}
                 >

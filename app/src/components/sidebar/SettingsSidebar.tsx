@@ -46,8 +46,8 @@ export const SettingsSidebar = () => {
               <Link
                 to={item.to}
                 className={cn(
-                  "data-label flex items-center gap-4 px-2 py-4 hover:font-bold hover:text-brand-blue",
-                  active && "!font-bold !text-brand-blue"
+                  "data-label flex items-center gap-4 px-2 py-4 hover:font-bold hover:text-bright-blue",
+                  active && "!font-bold !text-bright-blue"
                 )}
               >
                 <item.icon className="h-4 w-4" />

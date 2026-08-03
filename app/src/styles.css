@@ -11,7 +11,7 @@
   --brand-body: #161a1e;
   --brand-grey: #59636d;
   --brand-border: #d9dfe4;
-  --brand-blue: #3d80dd;
+  --bright-blue: #3d80dd;
   --brand-dk-blue: #12315f;
   --brand-dark: #0a0a0a;
   --brand-cta: #111827;
@@ -32,7 +32,7 @@
   --popover: #ffffff;
   --popover-foreground: var(--foreground);
 
-  --primary: var(--brand-blue);
+  --primary: var(--bright-blue);
   --primary-foreground: #ffffff;
 
   --secondary: var(--brand-surface-hover);
@@ -42,7 +42,7 @@
   --muted-foreground: var(--brand-grey);
 
   --accent: var(--brand-surface-hover);
-  --accent-foreground: var(--brand-blue);
+  --accent-foreground: var(--bright-blue);
 
   --border: var(--brand-border);
   --input: var(--brand-border);
@@ -51,7 +51,7 @@
   --badge-border: var(--brand-chip-border);
   --badge-text: var(--foreground);
 
-  --ring: var(--brand-blue);
+  --ring: var(--bright-blue);
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
@@ -70,7 +70,7 @@
   --popover: #171b1f;
   --popover-foreground: var(--foreground);
 
-  --primary: var(--brand-blue);
+  --primary: var(--bright-blue);
   --primary-foreground: #ffffff;
 
   --secondary: #202429;
@@ -146,7 +146,7 @@
   }
 
   .btn-pri {
-    @apply inline-flex items-center justify-center rounded-md bg-brand-blue px-4 py-2 font-mono text-xs font-bold text-foreground uppercase transition-all duration-200 hover:bg-brand-blue dark:text-white;
+    @apply inline-flex items-center justify-center rounded-md bg-bright-blue px-4 py-2 font-mono text-xs font-bold text-foreground uppercase transition-all duration-200 hover:bg-bright-blue dark:text-white;
   }
 
   .btn-pri:hover {
@@ -327,7 +327,7 @@
   --color-brand-body: var(--brand-body);
   --color-brand-grey: var(--brand-grey);
   --color-brand-border: var(--brand-border);
-  --color-brand-blue: var(--brand-blue);
+  --color-bright-blue: var(--bright-blue);
   --color-brand-dk-blue: var(--brand-dk-blue);
   --color-brand-dark: var(--brand-dark);
   --color-brand-cta: var(--brand-cta);

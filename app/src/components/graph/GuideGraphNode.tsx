@@ -47,7 +47,7 @@ export function GuideGraphNode({
             : isHovered || isSelected
               ? "bg-muted"
               : "bg-background"
-        } ${isSelected ? "border-brand-blue" : "border-foreground"}`}
+        } ${isSelected ? "border-bright-blue" : "border-foreground"}`}
       >
         <CardHeader className="[container-type:normal] gap-1 py-3.5">
           <div className="flex items-start gap-3">
