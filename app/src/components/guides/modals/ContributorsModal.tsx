@@ -84,22 +84,22 @@ export function ContributorsModal({
             username: contributor.username,
           }}
           onClick={() => onOpenChange(false)}
-          className="group flex w-full items-center justify-between rounded-lg border p-3.5 transition-colors hover:border-primary/40 hover:bg-accent/40"
+          className="group flex w-full items-center justify-between rounded-lg border border-border bg-card p-3.5 transition-colors hover:bg-muted"
         >
           <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
+            <Avatar className="h-8 w-8 border border-border">
               {contributor.avatar_url && (
                 <AvatarImage
                   src={contributor.avatar_url}
                   alt={contributor.username}
                 />
               )}
-              <AvatarFallback className="text-xs">
+              <AvatarFallback className="mono-micro text-xs text-muted-foreground">
                 {getInitials(contributor.name, contributor.username)}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-xs font-medium text-foreground group-hover:text-primary">
+              <p className="text-xs font-medium text-foreground">
                 @{contributor.username}
               </p>
               {contributor.name && (
@@ -110,7 +110,7 @@ export function ContributorsModal({
             </div>
           </div>
 
-          <ExternalLink className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+          <ExternalLink className="h-3.5 w-3.5 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-foreground" />
         </Link>
       ))}
     </BaseGuideModal>

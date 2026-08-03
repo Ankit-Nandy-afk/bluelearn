@@ -69,7 +69,7 @@ export function ObjectivesModal({
       emptyAction={
         <Link
           to="/objectives"
-          className="text-xs font-medium text-primary underline underline-offset-4 hover:opacity-80"
+          className="btn-outline text-xs"
           onClick={() => onOpenChange(false)}
         >
           Explore all objectives
@@ -82,13 +82,13 @@ export function ObjectivesModal({
           to="/objectives/$slug"
           params={{ slug: objective.slug }}
           onClick={() => onOpenChange(false)}
-          className="group relative flex w-full flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:border-primary/40 hover:bg-accent/40"
+          className="group relative flex w-full flex-col gap-1.5 rounded-lg border border-border bg-card p-3.5 transition-colors hover:bg-muted"
         >
           <div className="flex items-center justify-between gap-2">
-            <h4 className="text-xs font-medium text-foreground group-hover:text-primary">
+            <h4 className="text-xs font-medium text-foreground">
               {objective.title}
             </h4>
-            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-foreground" />
           </div>
           {objective.summary && (
             <p className="line-clamp-2 text-xs text-muted-foreground">

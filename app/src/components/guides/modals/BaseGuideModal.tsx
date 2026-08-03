@@ -43,11 +43,11 @@ export function BaseGuideModal({
 }: BaseGuideModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-1/2 p-8 sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="p-6 sm:max-w-lg">
+        <DialogHeader className="gap-1.5 pb-2">
           <div className="flex items-center gap-2">
             {icon}
-            <DialogTitle className="font-mono text-xs tracking-wider uppercase">
+            <DialogTitle className="mono-micro text-foreground">
               {title}
             </DialogTitle>
           </div>
@@ -58,18 +58,18 @@ export function BaseGuideModal({
           )}
         </DialogHeader>
 
-        <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
+        <div className="max-h-[60vh] space-y-2.5 overflow-y-auto pr-1">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <Loader2 className="mb-2 h-6 w-6 animate-spin text-primary" />
-              <p className="text-xs">{loadingText}</p>
+              <Loader2 className="mb-2 h-5 w-5 animate-spin text-primary" />
+              <p className="mono-micro text-muted-foreground">{loadingText}</p>
             </div>
           ) : error ? (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center text-xs text-destructive">
               {error}
             </div>
           ) : isEmpty ? (
-            <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
+            <div className="rounded-lg border border-dashed border-border p-6 text-center text-muted-foreground">
               {emptyIcon && (
                 <div className="mx-auto mb-2 flex h-6 w-6 items-center justify-center text-muted-foreground/60">
                   {emptyIcon}
@@ -79,7 +79,9 @@ export function BaseGuideModal({
                 {emptyTitle}
               </p>
               {emptyDescription && (
-                <p className="mt-1 text-xs">{emptyDescription}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {emptyDescription}
+                </p>
               )}
               {emptyAction && <div className="mt-4">{emptyAction}</div>}
             </div>

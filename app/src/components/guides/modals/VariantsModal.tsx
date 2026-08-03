@@ -83,7 +83,7 @@ export function VariantsModal({
       emptyAction={
         <Link
           to="/contribute"
-          className="text-xs font-medium text-primary underline underline-offset-4 hover:opacity-80"
+          className="btn-outline text-xs"
           onClick={() => onOpenChange(false)}
         >
           Create a variant
@@ -98,18 +98,21 @@ export function VariantsModal({
           <div
             key={variant.id || variant.slug}
             onClick={() => handleSelectVariant(variant.slug)}
-            className={`group relative flex w-full cursor-pointer flex-col gap-1.5 rounded-lg border p-3.5 transition-colors ${
+            className={`group relative flex w-full cursor-pointer flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:bg-muted ${
               isCurrent
                 ? "border-primary/50 bg-primary/5"
-                : "hover:border-primary/40 hover:bg-accent/40"
+                : "border-border bg-card"
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <h4 className="text-xs font-medium text-foreground group-hover:text-primary">
+              <h4 className="text-xs font-medium text-foreground">
                 {variant.title}
               </h4>
               {isCurrent && (
-                <Badge variant="outline" className="gap-1 text-[10px]">
+                <Badge
+                  variant="outline"
+                  className="mono-micro gap-1 rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
+                >
                   <Check className="h-3 w-3 text-primary" />
                   Current
                 </Badge>

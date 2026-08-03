@@ -71,25 +71,37 @@ export function RevisionsModal({
         const formattedDate = displayDate
           ? formatDate(new Date(displayDate))
           : "Unknown date";
+        const isLatest = index === 0;
 
         return (
           <div
             key={rev.id}
-            className="relative flex w-full flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:border-primary/40 hover:bg-accent/40"
+            className={`relative flex w-full flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:bg-muted ${
+              isLatest
+                ? "border-primary/50 bg-primary/5"
+                : "border-border bg-card"
+            }`}
           >
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <GitCommit className="h-3.5 w-3.5 text-primary" />
-                <span className="font-mono text-[11px] text-muted-foreground">
+                <GitCommit
+                  className={`h-3.5 w-3.5 ${
+                    isLatest ? "text-primary" : "text-muted-foreground"
+                  }`}
+                />
+                <span className="mono-micro text-muted-foreground">
                   {rev.id.slice(0, 8)}
                 </span>
-                {index === 0 && (
-                  <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+                {isLatest && (
+                  <Badge
+                    variant="outline"
+                    className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
+                  >
                     Latest
                   </Badge>
                 )}
               </div>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="mono-micro text-muted-foreground/80">
                 {formattedDate}
               </span>
             </div>
@@ -99,8 +111,8 @@ export function RevisionsModal({
             </p>
 
             {rev.author && (
-              <p className="text-[11px] text-muted-foreground">
-                by <span className="font-medium">@{rev.author}</span>
+              <p className="mono-micro text-muted-foreground">
+                by @{rev.author}
               </p>
             )}
           </div>
