@@ -1183,6 +1183,10 @@ export type Database = {
         Args: { p_revision_id: string }
         Returns: string
       }
+      sweep_expired_review_seats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       wilson_lower_bound: {
         Args: { downvotes: number; upvotes: number; z?: number }
         Returns: number
