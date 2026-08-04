@@ -705,13 +705,13 @@ function Inner({
       {/* horizontal breadcrumb stepper */}
       <Stepper.List className="flex w-full items-center justify-center text-sm">
         <Stepper.Items>
-          {(step: any, index: number) => (
-            <Fragment key={step.id}>
+          {(item: any, index: number) => (
+            <Fragment key={item.id}>
               {index > 0 && (
                 <ChevronRight className="mx-1 size-4 text-muted-foreground/50" />
               )}
 
-              <Stepper.Item step={step.id}>
+              <Stepper.Item step={item.id}>
                 <Stepper.Trigger className="mono-micro flex items-center gap-2 rounded-full border border-border bg-background px-2 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted data-[status=active]:border-primary data-[status=active]:bg-primary/10 data-[status=active]:text-primary data-[status=active]:ring-1 data-[status=active]:ring-primary/20">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
                     {index + 1}

@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
-import { createElement } from "react";
-import { act, render } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   GuideContribution,
@@ -135,22 +134,15 @@ describe("contributionStorage", () => {
       todoPrereqs: [],
     };
 
-    function TestHarness({
-      data,
-      step,
-    }: {
-      data: GuideContribution;
-      step?: string;
-    }) {
-      useDebouncedContributionSave("guide", data, "rev-1", step, 300);
-      return null;
-    }
-
-    const { rerender, unmount } = render(
-      createElement(TestHarness, {
-        data: initialData,
-        step: "guide-details",
-      })
+    const { rerender, unmount } = renderHook(
+      ({ data, step }: { data: GuideContribution; step?: string }) =>
+        useDebouncedContributionSave("guide", data, "rev-1", step, 300),
+      {
+        initialProps: {
+          data: initialData,
+          step: "guide-details",
+        },
+      }
     );
 
     // Initial render should not have written immediately before timer
@@ -171,12 +163,10 @@ describe("contributionStorage", () => {
       ...initialData,
       title: "Draft Update 1",
     };
-    rerender(
-      createElement(TestHarness, {
-        data: updatedData1,
-        step: "guide-details",
-      })
-    );
+    rerender({
+      data: updatedData1,
+      step: "guide-details",
+    });
 
     // Not yet updated before delay
     act(() => {
@@ -190,12 +180,10 @@ describe("contributionStorage", () => {
       ...initialData,
       title: "Draft Update 2",
     };
-    rerender(
-      createElement(TestHarness, {
-        data: updatedData2,
-        step: "content",
-      })
-    );
+    rerender({
+      data: updatedData2,
+      step: "content",
+    });
 
     // Unmount before timer finishes flushes pending changes
     unmount();

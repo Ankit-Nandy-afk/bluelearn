@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import type { ContributionType } from "@/types/contributions";
 import ContributionFlow from "@/components/contribute/ContributionFlow";
-import { RejectionFeedback } from "@/components/review/RejectionFeedback";
 import { requireSession } from "@/lib/auth";
 
 export type ContributeSearch = {
