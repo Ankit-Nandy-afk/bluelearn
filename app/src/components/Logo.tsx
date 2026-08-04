@@ -13,7 +13,7 @@ export const Logo = () => {
       </Link>
     ) : (
       <Link to="/" className="flex items-center gap-3">
-        <img src={`/assets/logo/og/logo-og-bb.svg`} className="h-8" />
+        <img src={`/assets/logo/og/logo-og-pb.svg`} className="h-8" />
       </Link>
     );
   } else {

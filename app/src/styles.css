@@ -19,7 +19,7 @@
   --brand-muted-green: #73ab84;
   --brand-dark: #0a0a0a;
   --brand-cta: #111827;
-  --brand-surface: #fafafa;
+  --brand-surface: #e1e1e1;
   --brand-surface-hover: #f6f9fc;
   --brand-chip-border: #7fb4ff;
 }
@@ -69,7 +69,7 @@
 /* == DARK MODE == */
 .dark {
   --background: #0e1216;
-  --foreground: #f0f6fc;
+  --foreground: #e5e5e5;
 
   --card: #171b1f;
   --card-foreground: var(--foreground);
@@ -78,7 +78,7 @@
   --popover-foreground: var(--foreground);
 
   --primary: var(--brand-bright-blue);
-  --primary-foreground: #ffffff;
+  --primary-foreground: #e5e5e5;
 
   --secondary: #202429;
   --secondary-foreground: var(--foreground);

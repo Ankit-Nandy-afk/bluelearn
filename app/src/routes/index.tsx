@@ -91,7 +91,7 @@ function RouteComponent() {
 
             <p className="mt-3 text-right font-mono text-xs tracking-[0.08em] text-muted-foreground">
               <span className="font-bold text-brand-bright-blue">*</span>can't
-              find your subject area,
+              find your subject area?
               <br />
               contribute a guide
             </p>
