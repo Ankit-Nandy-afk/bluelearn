@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { Logo } from "@/components/Logo";
 
 // `role`, when set, hides the item from anyone who doesn't hold it.
 const navItems: Array<{ label: string; to: string; role?: string }> = [
@@ -60,10 +61,7 @@ export function Navbar() {
         <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6">
           {/* LEFT */}
           <div className="flex items-center gap-10">
-            <Link to="/" className="flex items-center gap-3">
-              <img src="/assets/logo.svg" className="h-8" />
-            </Link>
-
+            <Logo />
             <nav className="hidden items-center gap-6 md:flex">
               {visibleNavItems.map((item) => (
                 <Link
