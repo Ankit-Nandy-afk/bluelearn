@@ -71,20 +71,13 @@ export const TodoCard = ({ todo }: PropTypes) => {
                     key={guide.slug}
                     className="min-w-0 marker:text-muted-foreground"
                   >
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        navigate({
-                          to: GuideRoute.to,
-                          params: { slug: guide.slug },
-                        });
-                      }}
-                      className="block max-w-full truncate text-sm text-muted-foreground underline-offset-4 hover:underline"
+                    <Link
+                      to="/guides/$slug"
+                      params={{ slug: guide.slug }}
+                      className="block max-w-full truncate text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {guide.title ?? guide.slug}
-                    </button>
+                    </Link>
                   </li>
                 ))}
 
