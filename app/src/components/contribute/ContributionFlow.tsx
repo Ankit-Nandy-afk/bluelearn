@@ -342,6 +342,7 @@ function Inner({
   );
 
   const [submitting, setSubmitting] = useState(false);
+  const [publishAttempted, setPublishAttempted] = useState(false);
   const [showChangeSummary, setShowChangeSummary] = useState(false);
 
   // Start from the todo page with the topic's title and summary already filled in.
@@ -760,17 +761,28 @@ function Inner({
   };
 
   const missingObjectiveFields = () => {
-    const missing: Array<string> = [];
-    if (!objectiveContData.title.trim()) missing.push("a title");
-    if (!objectiveContData.summary.trim()) missing.push("a summary");
+    const missing: Array<{ field: string; label: string }> = [];
+    if (!objectiveContData.title.trim())
+      missing.push({ field: "title", label: "a title" });
+    if (!objectiveContData.summary.trim())
+      missing.push({ field: "summary", label: "a summary" });
     if (showChangeSummary && !objectiveContData.changeSummary.trim())
-      missing.push("a change summary");
-    if (objectiveContData.subjects.length === 0) missing.push("a subject");
-    if (objectiveContData.targets.length === 0) missing.push("a target guide");
+      missing.push({ field: "changeSummary", label: "a change summary" });
+    if (objectiveContData.subjects.length === 0)
+      missing.push({ field: "subjects", label: "a subject" });
+    if (objectiveContData.targets.length === 0)
+      missing.push({ field: "targets", label: "a target guide" });
     else if (!objectiveContData.featuredSubObjective)
-      missing.push("a featured sub-objective");
+      missing.push({
+        field: "featuredSubObjective",
+        label: "a featured sub-objective",
+      });
     return missing;
   };
+
+  const invalidObjectiveFields = publishAttempted
+    ? new Set(missingObjectiveFields().map((m) => m.field))
+    : undefined;
 
   const publish = async () => {
     setSubmitting(true);
@@ -778,8 +790,13 @@ function Inner({
       if (type === "objective") {
         const missing = missingObjectiveFields();
         if (missing.length > 0) {
-          throw new Error(`Your objective is missing ${missing.join(", ")}`);
+          setPublishAttempted(true);
+          stepper.goTo("objective-details");
+          throw new Error(
+            `Your objective is missing ${missing.map((m) => m.label).join(", ")}`
+          );
         }
+        setPublishAttempted(false);
       }
 
       const id = await persistDraft();
@@ -881,6 +898,7 @@ function Inner({
           subjects={subjectOptions}
           guides={guideOptions}
           showChangeSummary={showChangeSummary}
+          invalidFields={invalidObjectiveFields}
           hideBackBtn={skipTypeStep}
           onSaveDraft={saveDraft}
           submitting={submitting}
