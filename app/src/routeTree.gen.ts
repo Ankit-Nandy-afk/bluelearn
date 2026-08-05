@@ -37,6 +37,7 @@ import { Route as ObjectivesSlugRouteImport } from './routes/objectives.$slug'
 import { Route as GuidesSlugRouteImport } from './routes/guides/$slug'
 import { Route as GuidesSlugIndexRouteImport } from './routes/guides/$slug/index'
 import { Route as GuidesSlugWalkthroughRouteImport } from './routes/guides/$slug/walkthrough'
+import { Route as GuidesSlugVariantSlugIndexRouteImport } from './routes/guides/$slug/$variantSlug/index'
 import { Route as GuidesSlugVariantSlugEditRouteImport } from './routes/guides/$slug/$variantSlug/edit'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -179,6 +180,12 @@ const GuidesSlugWalkthroughRoute = GuidesSlugWalkthroughRouteImport.update({
   path: '/walkthrough',
   getParentRoute: () => GuidesSlugRoute,
 } as any)
+const GuidesSlugVariantSlugIndexRoute =
+  GuidesSlugVariantSlugIndexRouteImport.update({
+    id: '/$variantSlug/',
+    path: '/$variantSlug/',
+    getParentRoute: () => GuidesSlugRoute,
+  } as any)
 const GuidesSlugVariantSlugEditRoute =
   GuidesSlugVariantSlugEditRouteImport.update({
     id: '/$variantSlug/edit',
@@ -216,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug/': typeof GuidesSlugIndexRoute
   '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
+  '/guides/$slug/$variantSlug/': typeof GuidesSlugVariantSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -242,6 +250,7 @@ export interface FileRoutesByTo {
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug': typeof GuidesSlugIndexRoute
   '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
+  '/guides/$slug/$variantSlug': typeof GuidesSlugVariantSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -274,6 +283,7 @@ export interface FileRoutesById {
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug/': typeof GuidesSlugIndexRoute
   '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
+  '/guides/$slug/$variantSlug/': typeof GuidesSlugVariantSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -307,6 +317,7 @@ export interface FileRouteTypes {
     | '/guides/$slug/walkthrough'
     | '/guides/$slug/'
     | '/guides/$slug/$variantSlug/edit'
+    | '/guides/$slug/$variantSlug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '/guides/$slug/walkthrough'
     | '/guides/$slug'
     | '/guides/$slug/$variantSlug/edit'
+    | '/guides/$slug/$variantSlug'
   id:
     | '__root__'
     | '/'
@@ -364,6 +376,7 @@ export interface FileRouteTypes {
     | '/guides/$slug/walkthrough'
     | '/guides/$slug/'
     | '/guides/$slug/$variantSlug/edit'
+    | '/guides/$slug/$variantSlug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -583,6 +596,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesSlugWalkthroughRouteImport
       parentRoute: typeof GuidesSlugRoute
     }
+    '/guides/$slug/$variantSlug/': {
+      id: '/guides/$slug/$variantSlug/'
+      path: '/$variantSlug'
+      fullPath: '/guides/$slug/$variantSlug/'
+      preLoaderRoute: typeof GuidesSlugVariantSlugIndexRouteImport
+      parentRoute: typeof GuidesSlugRoute
+    }
     '/guides/$slug/$variantSlug/edit': {
       id: '/guides/$slug/$variantSlug/edit'
       path: '/$variantSlug/edit'
@@ -656,12 +676,14 @@ interface GuidesSlugRouteChildren {
   GuidesSlugWalkthroughRoute: typeof GuidesSlugWalkthroughRoute
   GuidesSlugIndexRoute: typeof GuidesSlugIndexRoute
   GuidesSlugVariantSlugEditRoute: typeof GuidesSlugVariantSlugEditRoute
+  GuidesSlugVariantSlugIndexRoute: typeof GuidesSlugVariantSlugIndexRoute
 }
 
 const GuidesSlugRouteChildren: GuidesSlugRouteChildren = {
   GuidesSlugWalkthroughRoute: GuidesSlugWalkthroughRoute,
   GuidesSlugIndexRoute: GuidesSlugIndexRoute,
   GuidesSlugVariantSlugEditRoute: GuidesSlugVariantSlugEditRoute,
+  GuidesSlugVariantSlugIndexRoute: GuidesSlugVariantSlugIndexRoute,
 }
 
 const GuidesSlugRouteWithChildren = GuidesSlugRoute._addFileChildren(
