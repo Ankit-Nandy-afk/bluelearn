@@ -732,6 +732,8 @@ function Inner({
     const missing: Array<string> = [];
     if (!objectiveContData.title.trim()) missing.push("a title");
     if (!objectiveContData.summary.trim()) missing.push("a summary");
+    if (showChangeSummary && !objectiveContData.changeSummary.trim())
+      missing.push("a change summary");
     if (objectiveContData.subjects.length === 0) missing.push("a subject");
     if (objectiveContData.targets.length === 0) missing.push("a target guide");
     else if (!objectiveContData.featuredSubObjective)

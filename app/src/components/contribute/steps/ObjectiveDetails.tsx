@@ -130,7 +130,9 @@ export const ObjectiveDetails = ({
         {showChangeSummary && (
           <Field className="space-y-2">
             <div className="space-y-1">
-              <FieldLabel className="mono-micro">Change Summary</FieldLabel>
+              <FieldLabel required className="mono-micro">
+                Change Summary
+              </FieldLabel>
               <FieldDescription className="text-xs">
                 Briefly describe what this revision changes.
               </FieldDescription>
