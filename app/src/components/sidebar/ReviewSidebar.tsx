@@ -392,7 +392,7 @@ export const ReviewSidebar = ({
                       s.status === "draft" ? (
                         <Badge
                           variant="outline"
-                          className="border-transparent bg-brand-blue/15 font-mono tracking-[0.06em] text-brand-dk-blue uppercase dark:text-brand-blue"
+                          className="border-transparent bg-brand-bright-blue/15 font-mono tracking-[0.06em] text-brand-dark-navy uppercase dark:text-brand-bright-blue"
                         >
                           New
                         </Badge>
@@ -495,7 +495,7 @@ export const ReviewSidebar = ({
                     badge={
                       <Badge
                         variant="outline"
-                        className="border-transparent bg-brand-blue/15 font-mono tracking-[0.06em] text-brand-dk-blue uppercase dark:text-brand-blue"
+                        className="border-transparent bg-brand-bright-blue/15 font-mono tracking-[0.06em] text-brand-dark-navy uppercase dark:text-brand-bright-blue"
                       >
                         Todo
                       </Badge>
