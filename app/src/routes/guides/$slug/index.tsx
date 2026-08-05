@@ -155,7 +155,7 @@ function RouteComponent() {
   const { slug } = Route.useParams();
   const guide = Route.useLoaderData();
 
-  const { vote, upvote, downvote } = useVote();
+  const { vote, upvote, downvote } = useVote(slug);
 
   const breadcrumbOrigin = useLocation({
     select: (location) => location.state.breadcrumbOrigin,
