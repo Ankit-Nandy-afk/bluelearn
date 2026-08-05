@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/authContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/guideUtils";
 
 export const Route = createFileRoute("/profile/$username")({
   loader: ({ params, abortController }) =>
@@ -53,10 +54,7 @@ function PublicProfilePage() {
   const initials = getInitials(profile.display_name || profile.username);
 
   const formattedJoinedDate = profile.created_at
-    ? new Date(profile.created_at).toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      })
+    ? formatDate(new Date(profile.created_at))
     : null;
 
   return (
