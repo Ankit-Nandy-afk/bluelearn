@@ -85,9 +85,14 @@ export function clearAllStoredDrafts(): void {
   }
 }
 
+export interface ContributionSaveControls {
+  cancel: () => void;
+}
+
 /**
  * Hook to automatically and debouncingly save contribution form data to localStorage.
- * Flushes pending changes immediately on component unmount or before dependency changes.
+ * Passing a null type disables saving, flushing anything already queued.
+ * Flushes pending changes immediately on component unmount.
  */
 export function useDebouncedContributionSave<T>(
   type: ContributionType | null,
@@ -95,55 +100,68 @@ export function useDebouncedContributionSave<T>(
   revisionId: string | null,
   step?: string,
   delay: number = 400
-): void {
-  const latestRef = useRef({ type, data, revisionId, step });
-  latestRef.current = { type, data, revisionId, step };
+): ContributionSaveControls {
+  const pendingRef = useRef<{
+    type: ContributionType;
+    data: T;
+    revisionId: string | null;
+    step?: string;
+  } | null>(null);
+  if (type) pendingRef.current = { type, data, revisionId, step };
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPendingRef = useRef(false);
 
-  useEffect(() => {
-    if (!type) return;
-
-    isPendingRef.current = true;
-
+  const clearTimer = () => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const flush = () => {
+    clearTimer();
+    if (!isPendingRef.current) return;
+    isPendingRef.current = false;
+
+    const pending = pendingRef.current;
+    if (!pending) return;
+
+    setStoredDraft(pending.type, {
+      data: pending.data,
+      revisionId: pending.revisionId,
+      step: pending.step,
+      updatedAt: Date.now(),
+    });
+  };
+
+  const cancel = () => {
+    clearTimer();
+    isPendingRef.current = false;
+  };
+
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
+  const cancelRef = useRef(cancel);
+  cancelRef.current = cancel;
+
+  useEffect(() => {
+    if (!type) {
+      flushRef.current();
+      return;
     }
 
+    isPendingRef.current = true;
+    clearTimer();
     timerRef.current = setTimeout(() => {
-      isPendingRef.current = false;
       timerRef.current = null;
-      const current = latestRef.current;
-      if (current.type) {
-        setStoredDraft(current.type, {
-          data: current.data,
-          revisionId: current.revisionId,
-          step: current.step,
-          updatedAt: Date.now(),
-        });
-      }
+      flushRef.current();
     }, delay);
   }, [type, data, revisionId, step, delay]);
 
   useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-      if (isPendingRef.current) {
-        isPendingRef.current = false;
-        const current = latestRef.current;
-        if (current.type) {
-          setStoredDraft(current.type, {
-            data: current.data,
-            revisionId: current.revisionId,
-            step: current.step,
-            updatedAt: Date.now(),
-          });
-        }
-      }
-    };
+    return () => flushRef.current();
   }, []);
+
+  return { cancel: () => cancelRef.current() };
 }

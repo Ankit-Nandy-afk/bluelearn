@@ -8,7 +8,7 @@ import { RejectionFeedback } from "@/components/review/RejectionFeedback";
 export type ContributeSearch = {
   draft?: string;
   kind?: "guide" | "objective";
-  type?: ContributionType;
+  contributionType?: ContributionType;
   step?: string;
 };
 
@@ -21,18 +21,18 @@ export const Route = createFileRoute("/contribute")({
       search.kind === "objective" || search.kind === "guide"
         ? search.kind
         : undefined;
-    const type =
-      search.type === "guide" ||
-      search.type === "variant" ||
-      search.type === "objective"
-        ? search.type
+    const contributionType =
+      search.contributionType === "guide" ||
+      search.contributionType === "variant" ||
+      search.contributionType === "objective"
+        ? search.contributionType
         : undefined;
     const step = typeof search.step === "string" ? search.step : undefined;
 
     return {
       draft,
       kind,
-      type,
+      contributionType,
       step,
     };
   },
@@ -40,14 +40,14 @@ export const Route = createFileRoute("/contribute")({
 });
 
 function RouteComponent() {
-  const { draft, kind, type, step } = Route.useSearch();
+  const { draft, kind, contributionType, step } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
   const handleTypeChange = (newType: ContributionType) => {
     navigate({
       search: (prev) => ({
         ...prev,
-        type: newType,
+        contributionType: newType,
         // Set the initial step for the selected contribution type
         step:
           newType === "guide"
@@ -65,7 +65,8 @@ function RouteComponent() {
       search: (prev) => ({
         ...prev,
         step: newStep === "type" ? undefined : newStep,
-        type: newStep === "type" ? undefined : prev.type,
+        contributionType:
+          newStep === "type" ? undefined : prev.contributionType,
         draft: newStep === "type" ? undefined : prev.draft,
         kind: newStep === "type" ? undefined : prev.kind,
       }),
@@ -73,15 +74,20 @@ function RouteComponent() {
     });
   };
 
+  const handlePublished = () => {
+    navigate({ search: {}, replace: true });
+  };
+
   return (
     <div className="mx-auto flex min-h-[max(calc(100vh-65px),750px)] w-full max-w-[1280px] flex-col border-x bg-background">
       <section className="relative flex min-h-0 flex-1 gap-8 border-b px-8 py-8 lg:px-16">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <ContributionFlow
-            type={type ?? null}
+            type={contributionType ?? null}
             setType={handleTypeChange}
             step={step}
             onStepChange={handleStepChange}
+            onPublished={handlePublished}
             draftId={draft}
             draftKind={kind}
           />
