@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 
 import type { TodoGroup } from "@/lib/groupTodos";
 import { Route as GuideRoute } from "@/routes/guides/$slug/index";
@@ -22,8 +22,6 @@ const claimNotice = (count: number) =>
     : `${count} people are currently drafting a guide for this topic.`;
 
 export const TodoCard = ({ todo }: PropTypes) => {
-  const navigate = useNavigate();
-
   return (
     <Link
       to="/contribute"
@@ -72,7 +70,7 @@ export const TodoCard = ({ todo }: PropTypes) => {
                     className="min-w-0 marker:text-muted-foreground"
                   >
                     <Link
-                      to="/guides/$slug"
+                      to={GuideRoute.to}
                       params={{ slug: guide.slug }}
                       className="block max-w-full truncate text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
