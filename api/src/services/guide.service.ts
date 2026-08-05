@@ -432,14 +432,18 @@ export async function listObjectivesForGuide(supabase: DB, rawSlug: string) {
   const revisionIds = [...new Set((nodes ?? []).map((n) => n.revision_id))];
   if (revisionIds.length === 0) return { objectives: [], total: 0 };
 
-  const { data: objectives, error: objError } = await supabase
-    .from("objectives")
-    .select(
-      `id, slug, status,
+  const { data: objectives, error: objError } = await selectInBatches(
+    revisionIds,
+    (batch) =>
+      supabase
+        .from("objectives")
+        .select(
+          `id, slug, status,
        current:objective_revisions!objectives_current_revision_id_fkey(title, summary)`
-    )
-    .in("current_revision_id", revisionIds)
-    .eq("status", "published");
+        )
+        .in("current_revision_id", batch)
+        .eq("status", "published")
+  );
 
   if (objError) {
     console.error(objError);
@@ -475,10 +479,11 @@ export async function listGuideContributors(supabase: DB, rawSlug: string) {
   const guideIds = (guides ?? []).map((g) => g.id);
   if (guideIds.length === 0) return { contributors: [] };
 
-  const { data: revisions, error: revError } = await supabase
-    .from("guide_revisions")
-    .select("author_id")
-    .in("guide_id", guideIds);
+  const { data: revisions, error: revError } = await selectInBatches(
+    guideIds,
+    (batch) =>
+      supabase.from("guide_revisions").select("author_id").in("guide_id", batch)
+  );
 
   if (revError) {
     console.error(revError);
@@ -494,10 +499,14 @@ export async function listGuideContributors(supabase: DB, rawSlug: string) {
   ];
   if (authorIds.length === 0) return { contributors: [] };
 
-  const { data: profiles, error: profError } = await supabase
-    .from("profiles")
-    .select("id, username, display_name")
-    .in("id", authorIds);
+  const { data: profiles, error: profError } = await selectInBatches(
+    authorIds,
+    (batch) =>
+      supabase
+        .from("profiles")
+        .select("id, username, display_name")
+        .in("id", batch)
+  );
 
   if (profError) {
     console.error(profError);
