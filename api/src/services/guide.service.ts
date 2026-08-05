@@ -392,8 +392,8 @@ export async function getVariantBySlug(
   const { data: variant, error } = await supabase
     .from("guides")
     .select(
-      `id, guide_base_id, slug, status,
-       current:guide_revisions!guides_current_revision_id_fkey(id, title, summary, body, created_at)`
+      `id, guide_base_id, slug, status, author_id,
+       current:guide_revisions!guides_current_revision_id_fkey(id, title, summary, body, word_count, created_at)`
     )
     .eq("guide_base_id", baseId)
     .eq("slug", rawVariantSlug.toLowerCase())
@@ -404,21 +404,43 @@ export async function getVariantBySlug(
     throw new ServiceError("Failed to load variant", 500);
   }
   if (!variant) throw new ServiceError("Variant not found", 404);
+  if (variant.status === "archived") {
+    throw new ServiceError("Variant not found", 404);
+  }
 
-  const { data: tally, error: tallyError } = await supabase
-    .from("guide_vote_tallies")
-    .select("upvotes, downvotes")
-    .eq("guide_id", variant.id)
-    .maybeSingle();
+  const [{ data: tally, error: tallyError }, tags, usernames] =
+    await Promise.all([
+      supabase
+        .from("guide_vote_tallies")
+        .select("upvotes, downvotes")
+        .eq("guide_id", variant.id)
+        .maybeSingle(),
+      loadCanonicalTags(supabase, variant.current?.id ?? null),
+      loadUsernames(supabase, [variant.author_id]),
+    ]);
 
   if (tallyError) {
     console.error(tallyError);
     throw new ServiceError("Failed to load vote tally", 500);
   }
 
+  const { author_id, current, ...rest } = variant;
+
   return {
     variant: {
-      ...variant,
+      ...rest,
+      current: current
+        ? {
+            id: current.id,
+            title: current.title,
+            summary: current.summary,
+            body: current.body,
+            created_at: current.created_at,
+          }
+        : null,
+      author: author_id ? (usernames.get(author_id) ?? "") : "",
+      tags: tags.map((s) => ({ slug: s.slug, name: s.name })),
+      duration_minutes: readingMinutes(current?.word_count ?? 0),
       votes: { up: tally?.upvotes ?? 0, down: tally?.downvotes ?? 0 },
     },
   };
