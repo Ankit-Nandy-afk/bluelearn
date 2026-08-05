@@ -59,7 +59,7 @@ function Shell({
 
 function Breadcrumbs({ crumbs }: { crumbs: Array<Breadcrumb> }) {
   return (
-    <ul className="mono-micro mb-6 flex min-w-0 flex-nowrap items-center gap-2 text-xs tracking-[0.08em] text-muted-foreground uppercase">
+    <ul className="mono-micro flex min-w-0 flex-nowrap items-center gap-2 text-xs tracking-[0.08em] text-muted-foreground uppercase">
       {crumbs.map((crumb, idx) => (
         <li
           key={`${crumb.label}-${idx}`}
@@ -176,7 +176,25 @@ function PathPage() {
     <Shell
       header={
         <>
-          <Breadcrumbs crumbs={breadcrumbs} />
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <Breadcrumbs crumbs={breadcrumbs} />
+
+            <div className="flex shrink-0 items-center gap-2">
+              {OBJECTIVE_ACTIONS.map((action: Action) => (
+                <Tooltip key={action.label}>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="lg">
+                      <action.icon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+
+                  <TooltipContent>
+                    <p>{action.label}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </div>
 
           <ObjectiveHeader
             objective={objective}
@@ -184,23 +202,6 @@ function PathPage() {
               guides: totalGuides,
               durationMinutes: totalDuration,
             }}
-            actions={
-              <div className="flex shrink-0 items-center gap-2">
-                {OBJECTIVE_ACTIONS.map((action: Action) => (
-                  <Tooltip key={action.label}>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="lg">
-                        <action.icon className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-
-                    <TooltipContent>
-                      <p>{action.label}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
-              </div>
-            }
           />
         </>
       }

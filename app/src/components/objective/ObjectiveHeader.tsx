@@ -13,10 +13,9 @@ type PropTypes = {
     guides: number;
     durationMinutes: number;
   };
-  actions?: React.ReactNode;
 };
 
-export const ObjectiveHeader = ({ objective, stats, actions }: PropTypes) => {
+export const ObjectiveHeader = ({ objective, stats }: PropTypes) => {
   const created = new Date(objective.created_at);
   const createdLabel = Number.isNaN(created.getTime())
     ? objective.created_at
@@ -24,13 +23,9 @@ export const ObjectiveHeader = ({ objective, stats, actions }: PropTypes) => {
 
   return (
     <header className="mb-5">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold">
-          {objective.title ?? "Untitled objective"}
-        </h1>
-
-        {actions}
-      </div>
+      <h1 className="text-3xl font-bold">
+        {objective.title ?? "Untitled objective"}
+      </h1>
 
       <div className="mono-micro my-2 flex flex-wrap items-center gap-2.5 text-muted-foreground/80">
         {objective.curator && (
