@@ -79,10 +79,8 @@ export function ContributorsModal({
       {contributors.map((contributor) => (
         <Link
           key={contributor.id || contributor.username}
-          to="/profile"
-          search={{
-            username: contributor.username,
-          }}
+          to="/profile/$username"
+          params={{ username: contributor.username }}
           onClick={() => onOpenChange(false)}
           className="group flex w-full items-center justify-between rounded-lg border border-border bg-card p-3.5 transition-colors hover:bg-muted"
         >
