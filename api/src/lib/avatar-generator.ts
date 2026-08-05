@@ -170,6 +170,15 @@ export const generateAvatarPNG = async (seed: string): Promise<Uint8Array> => {
   const resvg = new Resvg(svg, {
     fitTo: { mode: "width", value: 200 },
   });
-  const image = resvg.render();
-  return image.asPng();
+
+  try {
+    const image = resvg.render();
+    try {
+      return image.asPng();
+    } finally {
+      image.free();
+    }
+  } finally {
+    resvg.free();
+  }
 };

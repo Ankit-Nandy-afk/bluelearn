@@ -27,7 +27,7 @@ import { mediaRouter } from "./routes/media";
 import { searchRouter } from "./routes/search";
 
 const app = new Hono<HonoEnv>()
-  .use((c, next) => cors({ origin: c.env.APP_URL || "*" })(c, next))
+  .use((c, next) => cors({ origin: c.env.APP_URL })(c, next))
   .use(rateLimitMiddleware({ ...READ, bucket: "global-read" }))
   .get("/", (c) => c.json({ ok: true }))
   .route("/avatar", avatarRouter)
