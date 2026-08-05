@@ -202,7 +202,10 @@ function ProfilePage({ profile, roles, stats, activity }: ProfilePageData) {
     onPageChange: (next) =>
       navigate({
         to: "/profile",
-        search: (prev) => ({ ...prev, page: next === 1 ? undefined : next }),
+        search: (prev) => ({
+          ...prev,
+          page: next === 1 ? undefined : next,
+        }),
         replace: true,
       }),
   });
