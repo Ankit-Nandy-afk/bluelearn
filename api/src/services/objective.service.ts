@@ -10,6 +10,7 @@ import { ServiceError } from "../lib/service-error";
 import { readingMinutes } from "../lib/reading";
 import {
   getRevisionSnapshot,
+  loadRevisionTags,
   replaceRevisionTags,
 } from "./objective-revision.service";
 import { selectInBatches } from "../lib/batch";
@@ -312,7 +313,9 @@ export async function getObjectiveBySlug(supabase: DB, rawSlug: string) {
 
   const { data: row, error } = await supabase
     .from("objectives")
-    .select(`id, slug, status, current_revision_id, ${CURRENT_META}`)
+    .select(
+      `id, slug, status, created_by, created_at, current_revision_id, ${CURRENT_META}`
+    )
     .eq("slug", slug)
     .maybeSingle();
 
@@ -323,14 +326,23 @@ export async function getObjectiveBySlug(supabase: DB, rawSlug: string) {
   if (!row || !row.current_revision_id)
     throw new ServiceError("Objective not found", 404);
 
-  const { current, ...base } = row;
+  const [snapshot, usernames, subjects] = await Promise.all([
+    getRevisionSnapshot(supabase, row.current_revision_id),
+    loadUsernames(supabase, [row.created_by]),
+    loadRevisionTags(supabase, row.current_revision_id),
+  ]);
+
+  const { current, created_by, ...base } = row;
   const objective = {
     ...base,
     title: current?.title ?? null,
     summary: current?.summary ?? null,
+    curator: created_by ? (usernames.get(created_by) ?? null) : null,
+    tags: subjects
+      .filter((s): s is typeof s & { slug: string } => s.slug !== null)
+      .map((s) => ({ slug: s.slug, name: s.name })),
   };
 
-  const snapshot = await getRevisionSnapshot(supabase, row.current_revision_id);
   return { objective, snapshot };
 }
 

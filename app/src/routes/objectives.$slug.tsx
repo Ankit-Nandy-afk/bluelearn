@@ -15,6 +15,7 @@ import { getObjective } from "@/lib/api/objectives";
 import { listGuides } from "@/lib/api/guides";
 
 import ObjectiveFlow from "@/components/objective/ObjectiveFlow";
+import { ObjectiveHeader } from "@/components/objective/ObjectiveHeader";
 
 const OBJECTIVE_ACTIONS: Array<Action> = [
   { icon: Users, label: "View Contributors" },
@@ -35,24 +36,16 @@ export const Route = createFileRoute("/objectives/$slug")({
 });
 
 function Shell({
-  heading,
-  actions,
+  header,
   children,
 }: {
-  heading: string;
-  actions?: React.ReactNode;
+  header: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="mx-auto max-w-[1280px] border-x bg-background">
       <section className="border-b px-8 py-8 lg:px-16">
-        <div className="mb-4 flex items-center justify-between gap-4">
-          <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
-            {heading}
-          </h1>
-
-          {actions}
-        </div>
+        {header}
 
         <Separator className="mb-4 bg-border" />
 
@@ -62,9 +55,17 @@ function Shell({
   );
 }
 
+function FallbackHeading() {
+  return (
+    <h1 className="mb-4 font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
+      Objective
+    </h1>
+  );
+}
+
 function ObjectivePending() {
   return (
-    <Shell heading="Objective">
+    <Shell header={<FallbackHeading />}>
       <div className="h-64 animate-pulse rounded-lg border border-border bg-card" />
     </Shell>
   );
@@ -72,7 +73,7 @@ function ObjectivePending() {
 
 function ObjectiveError({ error }: { error: Error }) {
   return (
-    <Shell heading="Objective">
+    <Shell header={<FallbackHeading />}>
       <p className="text-sm text-muted-foreground">
         {error.message || "Objective could not be loaded. Try again shortly."}
       </p>
@@ -133,23 +134,32 @@ function PathPage() {
 
   return (
     <Shell
-      heading={`Objective: ${objective.title ?? "Untitled"} (${targets.length} sub-objectives | ${totalGuides} guides | ${formatDuration(totalDuration)} total)`}
-      actions={
-        <div className="flex shrink-0 items-center gap-2">
-          {OBJECTIVE_ACTIONS.map((action: Action) => (
-            <Tooltip key={action.label}>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="lg">
-                  <action.icon className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
+      header={
+        <ObjectiveHeader
+          objective={objective}
+          stats={{
+            subObjectives: targets.length,
+            guides: totalGuides,
+            durationMinutes: totalDuration,
+          }}
+          actions={
+            <div className="flex shrink-0 items-center gap-2">
+              {OBJECTIVE_ACTIONS.map((action: Action) => (
+                <Tooltip key={action.label}>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="lg">
+                      <action.icon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
 
-              <TooltipContent>
-                <p>{action.label}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
-        </div>
+                  <TooltipContent>
+                    <p>{action.label}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          }
+        />
       }
     >
       {targets.length === 0 ? (

@@ -17,18 +17,16 @@ export const objectiveEdgeSchema = z.object({
   to: z.string(),
 });
 
-// A objective's metadata, the leveled nodes, and the edges. word_count
-// is the sum over included nodes the client turns into total reading time.
 export const objectiveSchema = z.object({
+  id: z.uuid(),
   slug: z.string(),
-  title: z.string(),
+  status: z.enum(["draft", "published", "archived"]),
+  title: z.string().nullable(),
   summary: z.string().nullable(),
-  curator: z.string(),
+  curator: z.string().nullable(),
   created_at: z.iso.datetime(),
-  word_count: z.number().int(),
   tags: z.array(subjectReferenceSchema),
-  nodes: z.array(objectiveNodeSchema),
-  edges: z.array(objectiveEdgeSchema),
+  current_revision_id: z.uuid().nullable(),
 });
 
 // Represents a guide the curator placed under the featured target.

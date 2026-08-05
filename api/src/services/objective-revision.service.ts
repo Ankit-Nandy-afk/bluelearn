@@ -138,7 +138,7 @@ export async function getRevisionSnapshot(
   return { nodes, orders: orderRows ?? [], projected_edges, raw_edges };
 }
 
-async function loadRevisionTags(supabase: DB, revisionId: string) {
+export async function loadRevisionTags(supabase: DB, revisionId: string) {
   const { data, error } = await supabase
     .from("objective_revision_subjects")
     .select("subject:subjects(id, slug, name, summary, status)")
