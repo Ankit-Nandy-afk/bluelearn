@@ -3,6 +3,7 @@ import type {
   GuideListItem,
   ObjectiveListItem,
   Pagination,
+  SubjectGroup,
   SubjectListItem,
 } from "@bluelearn/schemas";
 import type { Database } from "../database.types";
@@ -53,6 +54,7 @@ export async function listSubjects(
     .from("subjects")
     .select("id, slug, name, summary", { count: "exact" })
     .eq("status", "published")
+    .order("name")
     .range(from, to);
 
   if (error) {
@@ -77,6 +79,61 @@ export async function listSubjects(
       })),
     total: count ?? 0,
   };
+}
+
+// Subjects that don't start with a letter share one group.
+const NON_LETTER_GROUP = "#";
+
+function groupChar(name: string) {
+  const first = name.at(0)?.toUpperCase() ?? "";
+  return /^[A-Z]$/.test(first) ? first : NON_LETTER_GROUP;
+}
+
+export async function listGroupedSubjects(
+  supabase: DB
+): Promise<SubjectGroup[]> {
+  const { data, error } = await supabase
+    .from("subjects")
+    .select("id, slug, name, summary")
+    .eq("status", "published")
+    .order("name");
+
+  if (error) {
+    console.error(error);
+    throw new ServiceError("Failed to load subjects", 500);
+  }
+
+  const [guideCounts, objectiveCounts] = await Promise.all([
+    countGuidesBySubject(supabase),
+    countObjectivesBySubject(supabase),
+  ]);
+
+  const groups = new Map<string, SubjectListItem[]>();
+
+  for (const subject of data ?? []) {
+    if (subject.slug === null) continue;
+
+    const char = groupChar(subject.name);
+    const group = groups.get(char) ?? [];
+
+    group.push({
+      ...subject,
+      slug: subject.slug,
+      guides_total: guideCounts.get(subject.id) ?? 0,
+      objectives_total: objectiveCounts.get(subject.id) ?? 0,
+    });
+    groups.set(char, group);
+  }
+
+  // "#" leads, then A-Z.
+  return [...groups.entries()]
+    .sort(([a], [b]) => {
+      if (a === b) return 0;
+      if (a === NON_LETTER_GROUP) return -1;
+      if (b === NON_LETTER_GROUP) return 1;
+      return a.localeCompare(b);
+    })
+    .map(([char, subjects]) => ({ char, subjects }));
 }
 
 async function countGuidesBySubject(supabase: DB) {
