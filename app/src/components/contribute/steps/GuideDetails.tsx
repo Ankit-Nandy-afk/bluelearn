@@ -54,7 +54,13 @@ export const GuideDetails = ({
   changeSummary,
   onChangeSummaryChange,
 }: PropTypes) => {
-  const [todoPrereq, setTodoPrereq] = useState<string>("");
+  const [todoPrereq, setTodoPrereq] = useState<{
+    title: string;
+    summary: string;
+  }>({
+    title: "",
+    summary: "",
+  });
   const [newSubject, setNewSubject] = useState<{
     name: string;
     summary: string;
@@ -375,26 +381,46 @@ export const GuideDetails = ({
                   maxLength={50}
                   placeholder="Enter title of missing prerequsite guide."
                   className="h-10 rounded-md"
-                  value={todoPrereq}
-                  onChange={(e) => setTodoPrereq(e.target.value)}
+                  value={todoPrereq.title}
+                  onChange={(e) =>
+                    setTodoPrereq((prev) => ({
+                      ...prev,
+                      title: e.target.value,
+                    }))
+                  }
+                />
+
+                <Input
+                  id="todo-prereq-summary"
+                  type="text"
+                  maxLength={50}
+                  placeholder="Enter summary of missing prerequsite guide."
+                  className="h-10 rounded-md"
+                  value={todoPrereq.summary}
+                  onChange={(e) =>
+                    setTodoPrereq((prev) => ({
+                      ...prev,
+                      summary: e.target.value,
+                    }))
+                  }
                 />
                 <Button
                   variant="ghost"
                   size="icon"
                   className="btn-sec h-10 w-24 rounded-md"
                   onClick={() => {
-                    if (todoPrereq !== "") {
+                    if (todoPrereq.title !== "" && todoPrereq.summary !== "") {
                       const todos = [...guideContData.todoPrereqs, todoPrereq];
                       setGuideContData((prev) => ({
                         ...prev,
                         todoPrereqs: todos,
                       }));
 
-                      setTodoPrereq("");
+                      setTodoPrereq({ title: "", summary: "" });
                     }
                   }}
                 >
-                  Add Guide
+                  Add Todo
                 </Button>
               </div>
             </Field>
@@ -402,10 +428,12 @@ export const GuideDetails = ({
               <div className="flex flex-wrap gap-2 px-1">
                 {guideContData.todoPrereqs.map((todo, index) => (
                   <Badge key={index} variant="outline" className="gap-1.5">
-                    {todo}
+                    {todo.summary
+                      ? `${todo.title} - ${todo.summary}`
+                      : todo.title}
                     <button
                       type="button"
-                      aria-label={`Remove ${todo}`}
+                      aria-label={`Remove ${todo.title}`}
                       className="text-muted-foreground hover:text-foreground"
                       onClick={() =>
                         setGuideContData((prev) => ({

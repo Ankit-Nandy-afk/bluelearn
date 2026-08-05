@@ -12,7 +12,10 @@ export type GuideContribution = {
     summary: string;
   }>;
   prereqs: Array<string>;
-  todoPrereqs: Array<string>;
+  todoPrereqs: Array<{
+    title: string;
+    summary: string;
+  }>;
 };
 
 export type VariantContribution = {

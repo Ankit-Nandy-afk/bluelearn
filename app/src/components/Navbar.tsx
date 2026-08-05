@@ -21,6 +21,7 @@ const navItems: Array<{ label: string; to: string; role?: string }> = [
   { label: "Browse", to: "/browse" },
   { label: "Subjects", to: "/subjects" },
   { label: "Objectives", to: "/objectives" },
+  { label: "Todo", to: "/todos" },
   { label: "Review", to: "/review", role: "verifier" },
 ];
 

@@ -151,24 +151,44 @@ There must be a trigger that prevents cycles among prerequisite edges. Related e
 
 Missing prerequisite topics declared by authors when a real guide base does not exist yet. Also acts as a recruitment surface for topics that still need writing.
 
-- `id`: primary key of the TODO entry.
+- `id`: primary key of the todo entry.
 - `dependent_guide_base_id`: the dependent guide base that declares the need (FK to `guide_bases`).
 - `title`: the named missing prerequisite topic (free text, no guide base exists yet).
-- `status`: `open` while unfilled, `resolved` once a real guide base is created for the topic.
-- `resolved_guide_base_id`: the guide base that fulfilled this TODO, set when `status` becomes `resolved`; null while open.
-- `created_at`: when the TODO was declared.
+- `summary`: what the requester wants the missing guide to cover.
+- `status`: `open` while unfilled, `resolved` once a published guide base fulfills the topic.
+- `resolved_guide_base_id`: the guide base that fulfilled this todo, set when `status` becomes `resolved`.
+- `created_at`: when the todo was declared.
 
 Example:
 
 ```text
 Dependent guide base: Newton's laws
-TODO prerequisite: Vectors
+Todo prerequisite: Vectors
 status = open
 ```
 
 Because walkthrough and level generation use the **longest** path, redundant transitive edges are harmless to level correctness. Authors typically declare every prerequisite a guide base needs, not just the ones one level below, which produces shortcut edges (e.g. `Algebra -> Calculus`) alongside the real chain (`Algebra -> Functions -> Limits -> Calculus`). The longest path dominates, so the guide base still lands at its correct deep level; the shortcut cannot pull it up.
 
 What over-declaration does cost is **graph bloat**: redundant edges clutter the DAG, walkthroughs, and diffs. A later **transitive reduction** pass can drop any edge `A -> C` when a longer path `A -> ... -> C` already exists. This is a tidiness optimization, not a correctness requirement, since levels stay correct without it. 
+
+### `todo_claims`
+
+Records that someone has started writing a guide for a todo. A contributor who opens a todo from the todo page claims it on their first save, so the todo page can show the topic is already being worked on and the publish step knows which todos to close.
+
+- `todo_id`: the claimed todo (FK to `todo_prerequisites`).
+- `guide_base_id`: the draft guide base being written to fulfil it (FK to `guide_bases`).
+- `created_at`: when the claim was made.
+- Primary key is `(todo_id, guide_base_id)`.
+
+Several people may claim the same todo, and whoever publishes first resolves it. When a claiming guide is published, every todo it claimed and that is still `open` flips to `resolved` and points at the new guide base.
+
+Example:
+
+```text
+Todo: Vectors (claimed)
+Claimed by guide base: Vectors (draft)
+status = open
+```
 
 ### `objectives`
 
@@ -644,7 +664,7 @@ A level is computed inside a walkthrough. The level of a guide base is its longe
 
 #### Reachability
 
-Reachability is computed by checking whether every transitive prerequisite exists and whether TODO prerequisites remain unresolved. Storing `reachable` would risk drift whenever an edge, guide base, or TODO prerequisite changes.
+Reachability is computed by checking whether every transitive prerequisite exists and whether todo prerequisites remain unresolved. Storing `reachable` would risk drift whenever an edge, guide base, or todo prerequisite changes.
 
 #### Walkthroughs
 

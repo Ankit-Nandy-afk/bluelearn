@@ -12,6 +12,9 @@ export type ContributeSearch = {
   step?: string;
   source?: string;
   edit?: string;
+  todoTitle?: string;
+  todoSummary?: string;
+  todos?: string;
 };
 
 export const Route = createFileRoute("/contribute")({
@@ -33,6 +36,11 @@ export const Route = createFileRoute("/contribute")({
     const source =
       typeof search.source === "string" ? search.source : undefined;
     const edit = typeof search.edit === "string" ? search.edit : undefined;
+    const todoTitle =
+      typeof search.todoTitle === "string" ? search.todoTitle : undefined;
+    const todoSummary =
+      typeof search.todoSummary === "string" ? search.todoSummary : undefined;
+    const todos = typeof search.todos === "string" ? search.todos : undefined;
 
     return {
       draft,
@@ -41,14 +49,26 @@ export const Route = createFileRoute("/contribute")({
       step,
       source,
       edit,
+      todoTitle,
+      todoSummary,
+      todos,
     };
   },
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { draft, kind, contributionType, step, source, edit } =
-    Route.useSearch();
+  const {
+    draft,
+    kind,
+    contributionType,
+    step,
+    source,
+    edit,
+    todoTitle,
+    todoSummary,
+    todos,
+  } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
   const type =
@@ -91,6 +111,10 @@ function RouteComponent() {
     navigate({ search: {}, replace: true });
   };
 
+  // A resumed draft already carries its claims in the database, so the todo page's
+  // params only apply to a fresh start.
+  const todoIds = draft || !todos ? [] : todos.split(",");
+
   return (
     <div className="mx-auto flex min-h-[max(calc(100vh-65px),750px)] w-full max-w-[1280px] flex-col border-x bg-background">
       <section className="relative flex min-h-0 flex-1 gap-8 border-b px-8 py-8 lg:px-16">
@@ -105,6 +129,9 @@ function RouteComponent() {
             draftKind={kind}
             sourceRevisionId={source}
             editSlug={edit}
+            todoTitle={draft ? undefined : todoTitle}
+            todoSummary={draft ? undefined : todoSummary}
+            todoIds={todoIds}
           />
         </div>
         {draft && <RejectionFeedback draftId={draft} />}

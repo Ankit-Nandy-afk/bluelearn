@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as TodosRouteImport } from './routes/todos'
 import { Route as SubjectsRouteImport } from './routes/subjects'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReviewRouteImport } from './routes/review'
@@ -41,6 +42,11 @@ import { Route as GuidesSlugVariantSlugEditRouteImport } from './routes/guides/$
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TodosRoute = TodosRouteImport.update({
+  id: '/todos',
+  path: '/todos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SubjectsRoute = SubjectsRouteImport.update({
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/review': typeof ReviewRouteWithChildren
   '/settings': typeof SettingsRouteWithChildren
   '/subjects': typeof SubjectsRouteWithChildren
+  '/todos': typeof TodosRoute
   '/verify-email': typeof VerifyEmailRoute
   '/guides/$slug': typeof GuidesSlugRouteWithChildren
   '/objectives/$slug': typeof ObjectivesSlugRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/todos': typeof TodosRoute
   '/verify-email': typeof VerifyEmailRoute
   '/objectives/$slug': typeof ObjectivesSlugRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/review': typeof ReviewRouteWithChildren
   '/settings': typeof SettingsRouteWithChildren
   '/subjects': typeof SubjectsRouteWithChildren
+  '/todos': typeof TodosRoute
   '/verify-email': typeof VerifyEmailRoute
   '/guides/$slug': typeof GuidesSlugRouteWithChildren
   '/objectives/$slug': typeof ObjectivesSlugRoute
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/settings'
     | '/subjects'
+    | '/todos'
     | '/verify-email'
     | '/guides/$slug'
     | '/objectives/$slug'
@@ -307,6 +317,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/register'
     | '/reset-password'
+    | '/todos'
     | '/verify-email'
     | '/objectives/$slug'
     | '/review/$caseId'
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/settings'
     | '/subjects'
+    | '/todos'
     | '/verify-email'
     | '/guides/$slug'
     | '/objectives/$slug'
@@ -367,6 +379,7 @@ export interface RootRouteChildren {
   ReviewRoute: typeof ReviewRouteWithChildren
   SettingsRoute: typeof SettingsRouteWithChildren
   SubjectsRoute: typeof SubjectsRouteWithChildren
+  TodosRoute: typeof TodosRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   GuidesSlugRoute: typeof GuidesSlugRouteWithChildren
   GuidesIndexRoute: typeof GuidesIndexRoute
@@ -379,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/verify-email'
       fullPath: '/verify-email'
       preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/todos': {
+      id: '/todos'
+      path: '/todos'
+      fullPath: '/todos'
+      preLoaderRoute: typeof TodosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/subjects': {
@@ -661,6 +681,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReviewRoute: ReviewRouteWithChildren,
   SettingsRoute: SettingsRouteWithChildren,
   SubjectsRoute: SubjectsRouteWithChildren,
+  TodosRoute: TodosRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   GuidesSlugRoute: GuidesSlugRouteWithChildren,
   GuidesIndexRoute: GuidesIndexRoute,
