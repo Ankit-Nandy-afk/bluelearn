@@ -45,7 +45,7 @@ function Calendar({
         range_middle:
           "[&>button]:bg-transparent [&>button]:hover:bg-transparent",
         selected: "[&>button]:bg-primary [&>button]:text-primary-foreground",
-        today: "[&>button]:font-semibold [&>button]:text-brand-blue",
+        today: "[&>button]:font-semibold [&>button]:text-brand-bright-blue",
         outside: "text-muted-foreground/60",
         disabled: "text-muted-foreground opacity-40",
         hidden: "invisible",
