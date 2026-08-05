@@ -20,6 +20,14 @@ export async function listSubjects({ signal }: FetchOptions = {}) {
   });
 }
 
+export async function listGroupedSubjects({ signal }: FetchOptions = {}) {
+  const res = await subjects.grouped.$get({}, { init: { signal } });
+  await assertOk(res);
+
+  const { groups } = await res.json();
+  return groups;
+}
+
 export async function getSubjectBySlug(
   slug: string,
   { signal }: FetchOptions = {}
