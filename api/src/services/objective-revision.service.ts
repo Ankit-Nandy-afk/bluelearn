@@ -500,7 +500,24 @@ export async function syncDraftCuration(
   const sequenced = new Set(targets.flatMap((t) => t.sequence ?? []));
   const unreached = [...sequenced].find((id) => !closureSet.has(id));
   if (unreached) {
-    throw new ServiceError("Sequenced topic is not in this objective", 400);
+    const { data: base } = await supabase
+      .from("guide_bases")
+      .select(
+        `slug,
+         canonical:guides!guide_bases_canonical_guide_id_fkey(
+           current:guide_revisions!guides_current_revision_id_fkey(title)
+         )`
+      )
+      .eq("id", unreached)
+      .maybeSingle();
+
+    const name = base?.canonical?.current?.title ?? base?.slug;
+    throw new ServiceError(
+      name
+        ? `"${name}" is not a prerequisite of any target guide, so it cannot be ordered here`
+        : "A guide in the sequence is not a prerequisite of any target guide",
+      400
+    );
   }
 
   const { data: nodes, error: nodesError } = await supabase
