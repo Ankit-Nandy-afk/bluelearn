@@ -15,7 +15,7 @@
   <a href="https://github.com/bluelearn-org/bluelearn/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/bluelearn-org/bluelearn/ci.yml?branch=main&label=CI&style=flat-square"/></a>
   <a href="LICENSE"><img alt="Code: AGPL-3.0" src="https://img.shields.io/badge/code-AGPL--3.0-blue?style=flat-square"/></a>
   <a href="LICENSE-CONTENT"><img alt="Content: CC BY-SA 4.0" src="https://img.shields.io/badge/content-CC%20BY--SA%204.0-green?style=flat-square"/></a>
-  <a href="https://discord.gg/bluesystem"><img alt="Discord" src="https://badgen.net/discord/members/1504519272729149502?icon=discord&color=5865F2"/></a>
+  <a href="https://discord.gg/bluelearnorg"><img alt="Discord" src="https://badgen.net/discord/members/bluelearnorg"/></a>
   <a href="https://github.com/bluelearn-org/bluelearn/stargazers"><img alt="Stars" src="https://badgen.net/github/stars/bluelearn-org/bluelearn?icon=github&color=yellow"/></a>
   <a href="https://github.com/bluelearn-org/bluelearn/network/members"><img alt="Forks" src="https://badgen.net/github/forks/bluelearn-org/bluelearn?icon=github"/></a>
   <a href="https://github.com/bluelearn-org/bluelearn/graphs/contributors"><img alt="Contributors" src="https://badgen.net/github/contributors/bluelearn-org/bluelearn?icon=github"/></a>
@@ -49,7 +49,7 @@ away. Community-written, optionally expert-verified, AGPL-3.0, free forever.
 This repository is the **product monorepo**: web client, API, and database.
 The marketing site is closed-source.
 
-**💬 [Join the Discord →](https://discord.gg/bluesystem)** · **🌐 [bluelearn.org →](https://bluelearn.org)** · **📺 [YouTube →](https://www.youtube.com/@blue-learn)**
+**💬 [Join the Discord →](https://discord.gg/bluelearnorg)** · **🌐 [bluelearn.org →](https://bluelearn.org)** · **📺 [YouTube →](https://www.youtube.com/@blue-learn)**
 
 ---
 
@@ -175,7 +175,7 @@ The shortest path:
 1. Find a [`good first issue`](https://github.com/bluelearn-org/bluelearn/labels/good%20first%20issue) or open one.
 2. Comment that you'd like to take it.
 3. [Set up locally](#-quick-start) and open a draft PR early.
-4. Ping `#contributing` on [Discord](https://discord.gg/bluesystem) anytime.
+4. Ping `#contributing` on [Discord](https://discord.gg/bluelearnorg) anytime.
 
 ### What we're hiring for (the contribution profile)
 
@@ -188,11 +188,11 @@ The shortest path:
 
 ## 📈 Star history
 
-<a href="https://star-history.com/#bluelearn-org/bluelearn&Date">
+<a href="https://www.star-history.com/?repos=bluelearn-org%2Fbluelearn&type=date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=bluelearn-org/bluelearn&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=bluelearn-org/bluelearn&type=Date" />
-    <img alt="Star history chart" src="https://api.star-history.com/svg?repos=bluelearn-org/bluelearn&type=Date" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=bluelearn-org/bluelearn&type=date&theme=dark&legend=top-left&sealed_token=tHu4rWhmfq6UHarcgbWdjdUmuxvLVM17memHLbivpSYgSBTSdPPnYAq2hocvWKJU8Ys7fxu-RynqNrhfI6Vqzkq1Tu8HEIy64w7cQ3wmzdsJ9dJLRsWssQNLNGfagPyLCqvY2VAjngyuWoVAByNw4gHn59UN18YSZ4XsYf0H0YWwGD5V66F9w_oKbm3r" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=bluelearn-org/bluelearn&type=date&legend=top-left&sealed_token=tHu4rWhmfq6UHarcgbWdjdUmuxvLVM17memHLbivpSYgSBTSdPPnYAq2hocvWKJU8Ys7fxu-RynqNrhfI6Vqzkq1Tu8HEIy64w7cQ3wmzdsJ9dJLRsWssQNLNGfagPyLCqvY2VAjngyuWoVAByNw4gHn59UN18YSZ4XsYf0H0YWwGD5V66F9w_oKbm3r" />
+    <img alt="Star history chart" src="https://api.star-history.com/chart?repos=bluelearn-org/bluelearn&type=date&legend=top-left&sealed_token=tHu4rWhmfq6UHarcgbWdjdUmuxvLVM17memHLbivpSYgSBTSdPPnYAq2hocvWKJU8Ys7fxu-RynqNrhfI6Vqzkq1Tu8HEIy64w7cQ3wmzdsJ9dJLRsWssQNLNGfagPyLCqvY2VAjngyuWoVAByNw4gHn59UN18YSZ4XsYf0H0YWwGD5V66F9w_oKbm3r" />
   </picture>
 </a>
 
@@ -229,7 +229,7 @@ making content available offline in low-bandwidth regions.
 | **Forks** | ![Forks](https://badgen.net/github/forks/bluelearn-org/bluelearn?icon=github) |
 | **Open issues** | ![Issues](https://badgen.net/github/open-issues/bluelearn-org/bluelearn?icon=github) |
 | **Open PRs** | ![PRs](https://badgen.net/github/open-prs/bluelearn-org/bluelearn?icon=github) |
-| **Discord members** | ![Discord](https://badgen.net/discord/members/1504519272729149502?icon=discord&color=5865F2) |
+| **Discord members** | ![Discord](https://badgen.net/discord/members/bluelearnorg) |
 
 ---
 
@@ -243,5 +243,5 @@ license above. See [CONTRIBUTING.md](CONTRIBUTING.md#licensing-and-sign-off)
 for sign-off details.
 
 <p align="center">
-  <sub>Built openly · <a href="https://bluelearn.org">bluelearn.org</a> · <a href="https://discord.gg/bluesystem">Discord</a> · <a href="https://github.com/bluelearn-org">GitHub</a></sub>
+  <sub>Built openly · <a href="https://bluelearn.org">bluelearn.org</a> · <a href="https://discord.gg/bluelearnorg">Discord</a> · <a href="https://github.com/bluelearn-org">GitHub</a></sub>
 </p>
