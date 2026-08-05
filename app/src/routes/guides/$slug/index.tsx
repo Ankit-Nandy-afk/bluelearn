@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import type { Action } from "@/components/sidebar/GuideSidebar";
+import type { ComboboxItem } from "@/components/ui/combobox";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
@@ -43,12 +44,94 @@ import {
 import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
 import { getAuthToken } from "@/lib/auth";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Combobox } from "@/components/ui/combobox";
+import { Textarea } from "@/components/ui/textarea";
+
 const SIDEBAR_ACTIONS: Array<Action> = [
   { icon: Replace, label: "View Variants" },
   { icon: Target, label: "View Objectives" },
   { icon: Users, label: "View Contributors" },
   { icon: History, label: "View Revisions" },
 ];
+
+function DownvoteDialog({ isOpen, onOpenChange }) {
+  const reasons: Array<ComboboxItem> = [
+    {
+      value: "unclear",
+      label: "Unclear",
+      description: "Explanation is confusing or hard to follow",
+    },
+    {
+      value: "factually_wrong",
+      label: "Factually Wrong",
+      description: "Information contradicts verified information",
+    },
+    {
+      value: "missing_step",
+      label: "Missing Step",
+      description: "A necessary action or concept is skipped",
+    },
+    {
+      value: "outdated",
+      label: "Outdated",
+      description: "Information is no longer accurate or current",
+    },
+    {
+      value: "broken_link",
+      label: "Broken Link",
+      description: "Referenced links are inaccessible",
+    },
+    {
+      value: "prereq_gap",
+      label: "Prerequisite Gap",
+      description: "Assumes knowledge not covered in listed prerequisites",
+    },
+    {
+      value: "wrong_level",
+      label: "Wrong Level",
+      description: "Difficulty does not match the stated proficiency level",
+    },
+    {
+      value: "scope_creep",
+      label: "Scope Creep",
+      description: "Includes unnecessary details beyond the main topic",
+    },
+  ];
+
+  const [selectedReason, setSelectedReason] = useState<string>("");
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogTitle>Downvote</DialogTitle>
+        <DialogDescription className="sr-only">
+          Dialog to submit reasoning for downvote
+        </DialogDescription>
+
+        <DialogHeader>Reason</DialogHeader>
+        <Combobox
+          items={reasons}
+          value={selectedReason}
+          onValueChange={(selectedReason) => setSelectedReason(selectedReason)}
+        />
+
+        <DialogHeader>Note</DialogHeader>
+        <Textarea placeholder="State your reason here."></Textarea>
+
+        <Button variant="default" size="lg" onClick={() => {}}>
+          Submit
+        </Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function useVote(slug: string) {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
@@ -177,6 +260,9 @@ function RouteComponent() {
 
   const breadcrumbs = buildBreadcrumbs(guide.title, breadcrumbOrigin);
 
+  // Downvote dialog
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
   return (
     <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
       <section className="grid grid-cols-[320px_1fr] border-b">
@@ -255,13 +341,21 @@ function RouteComponent() {
                 />
               </Button>
 
-              <Button variant="outline" size="lg" onClick={() => downvote()}>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  downvote();
+                  setIsOpen(true);
+                }}
+              >
                 <ArrowBigDown
                   className="h-4 w-4"
                   color={vote == "down" ? "#3D80DD" : "#000000"}
                   fill={vote == "down" ? "#3D80DD" : "#FFFFFF"}
                 />
               </Button>
+              <DownvoteDialog isOpen={isOpen} onOpenChange={setIsOpen} />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
