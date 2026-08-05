@@ -175,7 +175,7 @@ The shortest path:
 1. Find a [`good first issue`](https://github.com/bluelearn-org/bluelearn/labels/good%20first%20issue) or open one.
 2. Comment that you'd like to take it.
 3. [Set up locally](#-quick-start) and open a draft PR early.
-4. Ping `#contributing` on [Discord](https://discord.gg/bluesystem) anytime.
+4. Ping `#contributing` on [Discord](https://discord.gg/bluelearnorg) anytime.
 
 ### What we're hiring for (the contribution profile)
 
@@ -229,7 +229,7 @@ making content available offline in low-bandwidth regions.
 | **Forks** | ![Forks](https://badgen.net/github/forks/bluelearn-org/bluelearn?icon=github) |
 | **Open issues** | ![Issues](https://badgen.net/github/open-issues/bluelearn-org/bluelearn?icon=github) |
 | **Open PRs** | ![PRs](https://badgen.net/github/open-prs/bluelearn-org/bluelearn?icon=github) |
-| **Discord members** | ![Discord](https://badgen.net/discord/members/1504519272729149502?icon=discord&color=5865F2) |
+| **Discord members** | ![Discord](https://badgen.net/discord/members/bluelearnorg) |
 
 ---
 
