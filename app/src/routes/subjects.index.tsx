@@ -11,12 +11,11 @@ import {
 } from "@/components/subjects/SubjectsError";
 import { SubjectSidebar } from "@/components/sidebar/SubjectSidebar";
 
-import { listSubjects } from "@/lib/api/subjects";
-import { getSubjectsGroupedByChar } from "@/lib/groupSubjects";
+import { listGroupedSubjects } from "@/lib/api/subjects";
 
 export const Route = createFileRoute("/subjects/")({
   loader: ({ abortController }) =>
-    listSubjects({ signal: abortController.signal }),
+    listGroupedSubjects({ signal: abortController.signal }),
   errorComponent: SubjectsLoadError,
   component: RouteComponent,
 });
@@ -44,17 +43,14 @@ export const SubjectsPage = ({ children }: SubjectsPageProps) => {
 };
 
 function RouteComponent() {
-  const subjects = Route.useLoaderData();
+  const groups = Route.useLoaderData();
 
-  const groupedSubjects = useMemo(
-    () => getSubjectsGroupedByChar(subjects),
-    [subjects]
+  const subjects = useMemo(
+    () => groups.flatMap((group) => group.subjects),
+    [groups]
   );
 
-  const letters = useMemo(
-    () => Array.from(groupedSubjects.keys()),
-    [groupedSubjects]
-  );
+  const letters = useMemo(() => groups.map((group) => group.char), [groups]);
 
   const [selectedLetter, setSelectedLetter] = useState("");
 
@@ -77,7 +73,7 @@ function RouteComponent() {
       <section>
         {/* Desktop */}
         <div className="hidden md:grid md:grid-cols-[320px_1fr]">
-          <SubjectSidebar groupedSubject={groupedSubjects} />
+          <SubjectSidebar groups={groups} />
 
           <SubjectsGrid subjects={subjects} />
         </div>
@@ -98,7 +94,12 @@ function RouteComponent() {
             </TabsList>
           </Tabs>
 
-          <SubjectsGrid subjects={groupedSubjects.get(selectedLetter) ?? []} />
+          <SubjectsGrid
+            subjects={
+              groups.find((group) => group.char === selectedLetter)?.subjects ??
+              []
+            }
+          />
         </div>
       </section>
     </SubjectsPage>

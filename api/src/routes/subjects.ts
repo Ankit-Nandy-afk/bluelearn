@@ -4,6 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import type { HonoEnv } from "../types";
 import {
   getSubjectBySlug,
+  listGroupedSubjects,
   listSubjectGuides,
   listSubjectObjectives,
   listSubjects,
@@ -18,6 +19,12 @@ export const subjectsRouter = new Hono<HonoEnv>()
       limit,
     });
     return c.json({ subjects: data, total }, 200);
+  })
+
+  // Every subject grouped by the first character of its name.
+  .get("/grouped", async (c) => {
+    const groups = await listGroupedSubjects(c.get("supabase"));
+    return c.json({ groups }, 200);
   })
 
   // Subject metadata only
