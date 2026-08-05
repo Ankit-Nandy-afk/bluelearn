@@ -1,4 +1,4 @@
-import { Save } from "lucide-react";
+import { Save, Scroll } from "lucide-react";
 
 import { Separator } from "@/components/ui/separator";
 
@@ -12,6 +12,7 @@ type PropTypes = {
   publishLabel?: string;
   onSaveDraft?: () => void;
   onPublish?: () => void;
+  onViewGuideline?: () => void;
 };
 
 export const StepperActionHeader = ({
@@ -24,15 +25,27 @@ export const StepperActionHeader = ({
   hideBackBtn,
   onSaveDraft,
   onPublish,
+  onViewGuideline,
 }: PropTypes) => {
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
-          {title}
-        </h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
+            {title}
+          </h1>
 
-        <div className="text-mono flex justify-between gap-4">
+          <button
+            type="button"
+            className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
+            onClick={onViewGuideline}
+          >
+            <Scroll className="size-4" />
+            View Guidelines
+          </button>
+        </div>
+
+        <div className="text-mono flex items-center justify-between gap-4">
           {onSaveDraft && (
             <button
               type="button"
