@@ -1,7 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { History, Users } from "lucide-react";
+import { Link, createFileRoute, useLocation } from "@tanstack/react-router";
+import { History, House, Users } from "lucide-react";
 
 import type { Action } from "@/components/sidebar/GuideSidebar";
+import type { Breadcrumb } from "@/lib/breadcrumbs";
+import { buildBreadcrumbs } from "@/lib/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -55,6 +57,36 @@ function Shell({
   );
 }
 
+function Breadcrumbs({ crumbs }: { crumbs: Array<Breadcrumb> }) {
+  return (
+    <ul className="mono-micro mb-6 flex min-w-0 flex-nowrap items-center gap-2 text-xs tracking-[0.08em] text-muted-foreground uppercase">
+      {crumbs.map((crumb, idx) => (
+        <li
+          key={`${crumb.label}-${idx}`}
+          className="flex min-w-0 items-center gap-2"
+        >
+          {crumb.path ? (
+            <Link
+              to={crumb.path}
+              className="flex min-w-0 items-center hover:text-foreground"
+              aria-label={crumb.label}
+            >
+              {idx === 0 ? (
+                <House className="h-3.5 w-3.5 shrink-0" />
+              ) : (
+                <span className="max-w-[30ch] truncate">{crumb.label}</span>
+              )}
+            </Link>
+          ) : (
+            <span className="max-w-[30ch] truncate">{crumb.label}</span>
+          )}
+          {idx < crumbs.length - 1 && <span className="shrink-0">/</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function FallbackHeading() {
   return (
     <h1 className="mb-4 font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
@@ -83,6 +115,14 @@ function ObjectiveError({ error }: { error: Error }) {
 
 function PathPage() {
   const { objective, snapshot, guides } = Route.useLoaderData();
+
+  const breadcrumbOrigin = useLocation({
+    select: (location) => location.state.breadcrumbOrigin,
+  });
+  const breadcrumbs = buildBreadcrumbs(
+    objective.title ?? "Untitled objective",
+    breadcrumbOrigin
+  );
 
   const guideBySlug = new Map(guides.map((g) => [g.slug, g]));
   const nodeById = new Map(snapshot.nodes.map((n) => [n.id, n]));
@@ -135,30 +175,34 @@ function PathPage() {
   return (
     <Shell
       header={
-        <ObjectiveHeader
-          objective={objective}
-          stats={{
-            guides: totalGuides,
-            durationMinutes: totalDuration,
-          }}
-          actions={
-            <div className="flex shrink-0 items-center gap-2">
-              {OBJECTIVE_ACTIONS.map((action: Action) => (
-                <Tooltip key={action.label}>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="lg">
-                      <action.icon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
+        <>
+          <Breadcrumbs crumbs={breadcrumbs} />
 
-                  <TooltipContent>
-                    <p>{action.label}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
-          }
-        />
+          <ObjectiveHeader
+            objective={objective}
+            stats={{
+              guides: totalGuides,
+              durationMinutes: totalDuration,
+            }}
+            actions={
+              <div className="flex shrink-0 items-center gap-2">
+                {OBJECTIVE_ACTIONS.map((action: Action) => (
+                  <Tooltip key={action.label}>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="lg">
+                        <action.icon className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+
+                    <TooltipContent>
+                      <p>{action.label}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            }
+          />
+        </>
       }
     >
       {targets.length === 0 ? (

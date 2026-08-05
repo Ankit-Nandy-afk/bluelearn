@@ -94,6 +94,11 @@ function SubjectPage() {
                   key={objective.id}
                   objective={o}
                   to={ObjectiveRoute.to}
+                  origin={{
+                    type: "subject",
+                    title: subject.name,
+                    path: `/subjects/${slug}`,
+                  }}
                 />
               );
             })}
