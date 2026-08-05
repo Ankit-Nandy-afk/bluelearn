@@ -186,6 +186,20 @@
 }
 
 /* == COMPONENT UTILITIES == */
+@utility btn {
+  @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-mono text-xs uppercase transition-all duration-200;
+}
+
+.btn-cta:hover,
+.btn-pri:hover,
+.btn-sec:hover,
+.btn-outline:hover,
+.btn-reject:hover,
+.btn-danger.btn-danger:hover,
+.btn-approve:hover {
+  transform: scale(1.05);
+}
+
 @layer utilities {
   .mono-micro {
     @apply font-mono text-[11px] font-medium tracking-[0.08em] uppercase;
@@ -207,73 +221,40 @@
     @apply font-bold tracking-[-0.04em];
   }
 
-  /* -- CTA BUTTON -- */
+  /* -- BUTTONS -- */
   .btn-cta {
-    @apply inline-flex items-center justify-center rounded-md bg-brand-cta px-4 py-2 font-mono text-xs font-bold text-white uppercase transition-all duration-200 dark:text-black;
-  }
-
-  .btn-cta:hover {
-    transform: scale(1.05);
+    @apply btn bg-brand-cta font-bold text-white dark:text-black;
   }
 
   .btn-pri {
-    @apply inline-flex items-center justify-center rounded-md bg-brand-bright-blue px-4 py-2 font-mono text-xs font-bold text-white uppercase transition-all duration-200 hover:bg-brand-bright-blue;
-  }
-
-  .btn-pri:hover {
-    transform: scale(1.05);
+    @apply btn bg-brand-bright-blue font-bold text-white;
   }
 
   .btn-sec {
-    @apply inline-flex items-center justify-center rounded-md border-1 border-border bg-muted px-4 py-2 font-mono text-xs font-bold text-foreground uppercase transition-all duration-200 dark:text-white;
-  }
-
-  .btn-sec:hover {
-    transform: scale(1.05);
+    @apply btn border border-border bg-muted font-bold text-foreground dark:text-white;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center rounded-md border-1 border-border bg-muted px-4 py-2 font-mono text-xs text-foreground uppercase transition-all duration-200 hover:bg-input/50 hover:text-foreground;
+    @apply btn border border-border bg-muted text-foreground hover:bg-input/50 hover:text-foreground;
   }
 
-  .btn-outline:hover {
-    transform: scale(1.05);
-  }
-
+  /* Vote buttons, same outline treatment ReviewSidebar renders inline. */
   .btn-reject {
-    @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-mono text-xs font-bold text-white uppercase transition-all duration-200;
-    background: #ff0000;
+    @apply btn border border-red-500/40 font-bold text-red-600 hover:bg-red-500/10 dark:text-red-400;
   }
 
-  .btn-reject:hover {
-    background: #ff0000;
-    transform: scale(1.05);
+  .btn-approve {
+    @apply btn border border-green-600/40 font-bold text-green-700 hover:bg-green-600/10 dark:text-green-400;
   }
 
   /* Doubled class so the red survives the destructive variant's dark:bg rule */
   .btn-danger.btn-danger {
-    @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-mono text-xs font-bold text-white uppercase transition-all duration-200;
-    background: #e11d26;
-  }
-
-  .btn-danger.btn-danger:hover {
-    background: #c4161e;
-    transform: scale(1.05);
-  }
-
-  .btn-approve {
-    @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-mono text-xs font-bold text-foreground uppercase transition-all duration-200;
-    background: #00e408;
-  }
-
-  .btn-approve:hover {
-    background: #00e408;
-    transform: scale(1.05);
+    @apply btn bg-destructive font-bold text-white hover:bg-destructive/90;
   }
 
   /* -- SURFACE BLOCK -- */
   .surface {
-    @apply rounded-lg border-1 border-border bg-card;
+    @apply rounded-lg border border-border bg-card;
   }
 
   .surface:hover {
@@ -377,21 +358,6 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
-
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
 
   /* Brand utilities */
   --color-brand-body: var(--brand-body);
