@@ -11,7 +11,11 @@ import type {
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 import { selectInBatches } from "../lib/batch";
-import { syncDraftTagsAndEdges } from "./guide-revision.service";
+import {
+  resolveRevisionBase,
+  syncDraftTagsAndEdges,
+} from "./guide-revision.service";
+import { claimTodos } from "./todo.service";
 import { readingMinutes } from "../lib/reading";
 import { loadUsernames } from "./identity.service";
 import { listVariantRevisions } from "./variant.service";
@@ -203,6 +207,7 @@ export async function createGuide(
     prerequisites,
     newSubjects,
     todoPrereqs,
+    todoClaims,
   } = input;
 
   const { data: revision_id, error } = await supabase.rpc("create_guide", {
@@ -224,12 +229,21 @@ export async function createGuide(
     todoPrereqs,
   });
 
+  if (todoClaims.length > 0) {
+    const base = await resolveRevisionBase(supabase, revision_id);
+    await claimTodos(supabase, base.id, todoClaims);
+  }
+
   return { revision_id };
 }
 
-// Resolve a guide by slug to its canonical content + subject tags. The prereq/
-// dependent neighborhood is deferred to the graph pass.
-export async function getGuideBySlug(supabase: DB, rawSlug: string) {
+// Resolve a guide by slug to its canonical content + subject tags (or a specified variant).
+// The prereq/dependent neighborhood is deferred to the graph pass.
+export async function getGuideBySlug(
+  supabase: DB,
+  rawSlug: string,
+  rawVariantSlug?: string | null
+) {
   const slug = rawSlug.toLowerCase();
 
   const { data: guide, error } = await supabase
@@ -246,14 +260,39 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
   }
   if (!guide) throw new ServiceError("Guide not found", 404);
 
-  const current = guide.canonical?.current ?? null;
+  let selectedGuide = guide.canonical;
+  if (rawVariantSlug) {
+    const variantSlug = rawVariantSlug.toLowerCase();
+    if (guide.canonical?.slug?.toLowerCase() !== variantSlug) {
+      const { data: variant, error: variantError } = await supabase
+        .from("guides")
+        .select(
+          `id, slug, author_id,
+           current:guide_revisions!guides_current_revision_id_fkey(
+             id, title, summary, body, word_count, created_at
+           )`
+        )
+        .eq("guide_base_id", guide.id)
+        .eq("slug", variantSlug)
+        .maybeSingle();
+
+      if (variantError) {
+        console.error(variantError);
+        throw new ServiceError("Failed to load guide variant", 500);
+      }
+      if (!variant) throw new ServiceError("Variant not found", 404);
+      selectedGuide = variant;
+    }
+  }
+
+  const current = selectedGuide?.current ?? null;
   const subjects = await loadCanonicalTags(supabase, current?.id ?? null);
-  const authorId = guide.canonical?.author_id ?? null;
+  const authorId = selectedGuide?.author_id ?? null;
   const usernames = await loadUsernames(supabase, [authorId]);
 
   const detail: Guide = {
     slug: guide.slug ?? "",
-    variant_slug: guide.canonical?.slug ?? null,
+    variant_slug: selectedGuide?.slug ?? null,
     title: current?.title ?? "",
     author: authorId ? (usernames.get(authorId) ?? "") : "",
     summary: current?.summary ?? null,

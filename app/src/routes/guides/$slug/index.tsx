@@ -80,9 +80,19 @@ function useVote() {
 }
 
 export const Route = createFileRoute("/guides/$slug/")({
-  loader: async ({ params, abortController }) => {
+  validateSearch: (search: Record<string, unknown>): { variant?: string } => ({
+    variant:
+      typeof search.variant === "string" && search.variant.length > 0
+        ? search.variant
+        : undefined,
+  }),
+  loaderDeps: ({ search }) => ({ variant: search.variant }),
+  loader: async ({ params, deps, abortController }) => {
     try {
-      return await getGuide(params.slug, { signal: abortController.signal });
+      return await getGuide(params.slug, {
+        variant: deps.variant,
+        signal: abortController.signal,
+      });
     } catch {
       throw notFound();
     }

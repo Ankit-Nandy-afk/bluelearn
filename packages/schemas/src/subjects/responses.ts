@@ -11,4 +11,16 @@ export const subjectListItemSchema = z.object({
   objectives_total: z.number().int(),
 });
 
+export const subjectGroupSchema = z.object({
+  char: z.string(),
+  subjects: z.array(subjectListItemSchema),
+});
+
 export type SubjectListItem = z.infer<typeof subjectListItemSchema>;
+
+export const subjectGroupSchema = z.object({
+  char: z.string(),
+  subjects: z.array(subjectListItemSchema),
+});
+
+export type SubjectGroup = z.infer<typeof subjectGroupSchema>;

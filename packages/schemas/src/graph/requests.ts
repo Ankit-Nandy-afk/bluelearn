@@ -8,4 +8,5 @@ export const createPrerequisiteSchema = z.object({
 export const createTodoPrerequisiteSchema = z.object({
   guide_base_id: z.uuid(),
   title: z.string().min(1),
+  summary: z.string(),
 });

@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { z } from "zod";
 import { requireUser } from "../middleware/auth.middleware";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
 import { CONTRIBUTION, CREATE, MODERATION } from "../middleware/rateLimits";
@@ -85,11 +86,25 @@ export const guidesRouter = new Hono<HonoEnv>()
     }
   )
 
-  // Returns the guide's canonical content, author, and subject tags.
-  .get("/:slug", async (c) => {
-    const guide = await getGuideBySlug(c.get("supabase"), c.req.param("slug"));
-    return c.json(guide);
-  })
+  // Returns the guide's content (canonical or specified variant), author, and subject tags.
+  .get(
+    "/:slug",
+    zValidator(
+      "query",
+      z.object({
+        variant: z.string().optional(),
+      })
+    ),
+    async (c) => {
+      const { variant } = c.req.valid("query");
+      const guide = await getGuideBySlug(
+        c.get("supabase"),
+        c.req.param("slug"),
+        variant
+      );
+      return c.json(guide);
+    }
+  )
 
   // Archives the guide. 404 if missing or not permitted.
   .delete(

@@ -36,4 +36,4 @@ properties:
     type: array
     description: Full replacement set of free-text missing-prerequisite notes.
     items:
-      type: string
+      $ref: "../guides/TodoPrereq.yaml"
