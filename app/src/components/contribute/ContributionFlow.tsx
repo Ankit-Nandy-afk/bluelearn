@@ -56,6 +56,9 @@ type PropTypes = {
   onPublished?: () => void;
   draftId?: string;
   draftKind?: "guide" | "objective";
+  todoTitle?: string;
+  todoSummary?: string;
+  todoIds: Array<string>;
 };
 
 const createGuideContData = (): GuideContribution => ({
@@ -106,9 +109,12 @@ export default function ContributionFlow({
   onPublished,
   draftId,
   draftKind,
+  todoTitle,
+  todoSummary,
+  todoIds,
 }: PropTypes) {
   const [guideContData, setGuideContData] = useState<GuideContribution>(() => {
-    if (draftId) return createGuideContData();
+    if (draftId || todoTitle) return createGuideContData();
     const stored = getStoredDraft<GuideContribution>("guide");
     return stored?.data ?? createGuideContData();
   });
@@ -166,6 +172,9 @@ export default function ContributionFlow({
           onPublished={onPublished}
           draftId={draftId}
           draftKind={draftKind}
+          todoTitle={todoTitle}
+          todoSummary={todoSummary}
+          todoIds={todoIds}
           guideContData={guideContData}
           setGuideContData={setGuideContData}
           variantContData={variantContData}
@@ -187,6 +196,9 @@ function Inner({
   onPublished,
   draftId,
   draftKind,
+  todoTitle,
+  todoSummary,
+  todoIds,
   guideContData,
   setGuideContData,
   variantContData,
@@ -202,6 +214,9 @@ function Inner({
   onPublished?: () => void;
   draftId?: string;
   draftKind?: "guide" | "objective";
+  todoTitle?: string;
+  todoSummary?: string;
+  todoIds: Array<string>;
 
   guideContData: GuideContribution;
   setGuideContData: Dispatch<SetStateAction<GuideContribution>>;
@@ -234,7 +249,7 @@ function Inner({
 
   const [revisionId, setRevisionId] = useState<string | null>(() => {
     if (draftId) return draftId;
-    if (!type) return null;
+    if (!type || todoTitle) return null;
     const stored = getStoredDraft<unknown>(type);
     return stored?.revisionId ?? null;
   });
@@ -242,12 +257,12 @@ function Inner({
   const [autosaveReady, setAutosaveReady] = useState(!draftId);
 
   useEffect(() => {
-    if (draftId) return;
+    if (draftId || todoTitle) return;
     if (type) {
       const stored = getStoredDraft<unknown>(type);
       setRevisionId(stored?.revisionId ?? null);
     }
-  }, [type, draftId]);
+  }, [type, draftId, todoTitle]);
 
   // Debounced auto-save for guide drafts
   const guideSave = useDebouncedContributionSave(
@@ -273,6 +288,21 @@ function Inner({
   );
 
   const [submitting, setSubmitting] = useState(false);
+
+  // Start from the todo page with the topic's title and summary already filled in.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!todoTitle || seededRef.current) return;
+    seededRef.current = true;
+
+    setGuideContData((prev) => ({
+      ...prev,
+      title: todoTitle,
+      summary: todoSummary ?? prev.summary,
+    }));
+    setType("guide");
+    requestAnimationFrame(() => stepper.goTo("guide-details"));
+  }, [todoTitle, todoSummary]);
 
   // Resume a draft opened from the profile.
   const loadedDraftIdRef = useRef<string | null>(null);
@@ -611,6 +641,7 @@ function Inner({
                   ? "practical"
                   : "theoretical",
               ...draftFields(),
+              todoClaims: todoIds,
             })
           : addGuideVariant(variantContData.baseGuide, variantDraftFields())
       )

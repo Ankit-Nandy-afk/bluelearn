@@ -13,7 +13,7 @@ type DraftTagsAndEdges = {
   tags?: string[];
   prerequisites?: string[];
   newSubjects?: { name: string; summary?: string | null }[];
-  todoPrereqs?: string[];
+  todoPrereqs?: { title: string; summary: string }[];
 };
 
 // The full snapshot of a single revision. RLS exposes a revision once it is
@@ -97,7 +97,7 @@ async function resolveSubjectIds(supabase: DB, ids: string[]) {
   return unique;
 }
 
-async function resolveRevisionBase(supabase: DB, revisionId: string) {
+export async function resolveRevisionBase(supabase: DB, revisionId: string) {
   const { data: rev, error } = await supabase
     .from("guide_revisions")
     .select("guide_id")
@@ -167,7 +167,11 @@ async function replacePrerequisites(
 }
 
 // Replace a draft guide's open todos.
-async function replaceTodos(supabase: DB, baseId: string, titles: string[]) {
+async function replaceTodos(
+  supabase: DB,
+  baseId: string,
+  todos: { title: string; summary: string }[]
+) {
   const { error: delError } = await supabase
     .from("todo_prerequisites")
     .delete()
@@ -178,8 +182,8 @@ async function replaceTodos(supabase: DB, baseId: string, titles: string[]) {
     throw new ServiceError("Unable to update todos", 400);
   }
 
-  for (const title of titles) {
-    await createTodo(supabase, baseId, title);
+  for (const todo of todos) {
+    await createTodo(supabase, baseId, todo.title, todo.summary);
   }
 }
 
@@ -263,7 +267,7 @@ async function loadDraftContext(supabase: DB, guideId: string) {
       .eq("edge_type", "prerequisite"),
     supabase
       .from("todo_prerequisites")
-      .select("title")
+      .select("title, summary")
       .eq("dependent_guide_base_id", baseId)
       .eq("status", "open"),
   ]);
@@ -285,7 +289,10 @@ async function loadDraftContext(supabase: DB, guideId: string) {
     prerequisites: (edgeRes.data ?? [])
       .map((e) => e.from?.slug)
       .filter((s): s is string => s != null),
-    todos: (todoRes.data ?? []).map((t) => t.title),
+    todos: (todoRes.data ?? []).map((t) => ({
+      title: t.title,
+      summary: t.summary,
+    })),
   };
 }
 
