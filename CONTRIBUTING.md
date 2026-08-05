@@ -4,7 +4,7 @@ Thanks for being here. This document is the whole
 contributor path, from "I want to help" to "my change is merged."
 
 > If you only read one thing: open an issue or ping `#contributing` on
-> [Discord](https://discord.gg/bluesystem) **before** large changes. The
+> [Discord](https://discord.gg/bluelearnorg) **before** large changes. The
 > conversation saves you (and reviewers) a lot of time.
 
 ## Table of contents
