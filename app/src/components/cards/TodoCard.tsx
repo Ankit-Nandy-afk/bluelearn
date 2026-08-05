@@ -59,9 +59,9 @@ export const TodoCard = ({ todo }: PropTypes) => {
           )}
         </CardHeader>
 
-        <CardContent className="border-t">
+        <CardContent className="border-t p-6">
           {todo.requestedBy.length > 0 && (
-            <div className="flex min-w-0 flex-col gap-1 pt-3">
+            <div className="flex min-w-0 flex-col gap-1">
               <p className="text-sm">
                 {requestedByLabel(todo.requestedBy.length)}
               </p>
