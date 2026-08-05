@@ -188,11 +188,11 @@ The shortest path:
 
 ## 📈 Star history
 
-<a href="https://star-history.com/#bluelearn-org/bluelearn&Date">
+<a href="https://www.star-history.com/?repos=bluelearn-org%2Fbluelearn&type=date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=bluelearn-org/bluelearn&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=bluelearn-org/bluelearn&type=Date" />
-    <img alt="Star history chart" src="https://api.star-history.com/svg?repos=bluelearn-org/bluelearn&type=Date" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=bluelearn-org/bluelearn&type=date&theme=dark&legend=top-left&sealed_token=tHu4rWhmfq6UHarcgbWdjdUmuxvLVM17memHLbivpSYgSBTSdPPnYAq2hocvWKJU8Ys7fxu-RynqNrhfI6Vqzkq1Tu8HEIy64w7cQ3wmzdsJ9dJLRsWssQNLNGfagPyLCqvY2VAjngyuWoVAByNw4gHn59UN18YSZ4XsYf0H0YWwGD5V66F9w_oKbm3r" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=bluelearn-org/bluelearn&type=date&legend=top-left&sealed_token=tHu4rWhmfq6UHarcgbWdjdUmuxvLVM17memHLbivpSYgSBTSdPPnYAq2hocvWKJU8Ys7fxu-RynqNrhfI6Vqzkq1Tu8HEIy64w7cQ3wmzdsJ9dJLRsWssQNLNGfagPyLCqvY2VAjngyuWoVAByNw4gHn59UN18YSZ4XsYf0H0YWwGD5V66F9w_oKbm3r" />
+    <img alt="Star history chart" src="https://api.star-history.com/chart?repos=bluelearn-org/bluelearn&type=date&legend=top-left&sealed_token=tHu4rWhmfq6UHarcgbWdjdUmuxvLVM17memHLbivpSYgSBTSdPPnYAq2hocvWKJU8Ys7fxu-RynqNrhfI6Vqzkq1Tu8HEIy64w7cQ3wmzdsJ9dJLRsWssQNLNGfagPyLCqvY2VAjngyuWoVAByNw4gHn59UN18YSZ4XsYf0H0YWwGD5V66F9w_oKbm3r" />
   </picture>
 </a>
 
