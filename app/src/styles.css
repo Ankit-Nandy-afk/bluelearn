@@ -24,6 +24,10 @@
   --brand-chip-border: #7fb4ff;
 }
 
+.dark {
+  --brand-cta: var(--brand-surface);
+}
+
 /* == SHADCN UI LAYER == */
 :root {
   --background: var(--brand-surface);
@@ -86,8 +90,6 @@
   --muted: #1c2024;
   --muted-foreground: #c3cad1;
 
-  --brand-cta: var(--brand-surface);
-
   --accent: #1f2b31;
   --accent-foreground: var(--foreground);
 
@@ -116,6 +118,70 @@
 
   html {
     @apply font-sans;
+  }
+
+  .markdown h1 {
+    @apply mt-8 mb-3 text-2xl font-bold tracking-[-0.04em];
+  }
+
+  .markdown h2 {
+    @apply mt-6 mb-2 text-xl font-semibold tracking-[-0.03em];
+  }
+
+  .markdown h3 {
+    @apply mt-4 mb-2 text-lg font-medium;
+  }
+
+  .markdown p {
+    @apply mb-4 text-sm leading-relaxed text-muted-foreground;
+  }
+
+  .markdown strong {
+    @apply text-foreground;
+  }
+
+  .markdown blockquote {
+    @apply border-l-2 border-border pl-4 text-muted-foreground;
+  }
+
+  .markdown ul {
+    @apply list-disc space-y-1 pl-5;
+  }
+
+  .markdown ol {
+    @apply list-decimal space-y-1 pl-5;
+  }
+
+  .markdown pre:not(.codeblock-pre) {
+    @apply my-4 max-w-full overflow-x-auto rounded-lg border border-border bg-muted p-4 font-mono text-sm;
+  }
+
+  .markdown code {
+    @apply rounded border border-border/50 bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground;
+  }
+
+  .markdown pre code {
+    @apply border-0 bg-transparent p-0 text-sm text-current;
+  }
+
+  .markdown table {
+    @apply my-4 block w-full border-collapse overflow-x-auto;
+  }
+
+  .markdown th {
+    @apply border border-border bg-muted px-4 py-2.5 text-left text-sm font-semibold text-foreground;
+  }
+
+  .markdown td {
+    @apply border border-border px-4 py-2.5 text-sm text-muted-foreground;
+  }
+
+  .markdown .katex-display {
+    @apply max-w-full overflow-x-auto overflow-y-hidden py-2;
+  }
+
+  .markdown img {
+    @apply my-4 h-auto max-w-full rounded-lg;
   }
 }
 
@@ -159,8 +225,7 @@
   }
 
   .btn-sec {
-    @apply inline-flex items-center justify-center rounded-md border-1 border-border px-4 py-2 font-mono text-xs font-bold text-foreground uppercase transition-all duration-200 dark:text-white;
-    background: var(--muted);
+    @apply inline-flex items-center justify-center rounded-md border-1 border-border bg-muted px-4 py-2 font-mono text-xs font-bold text-foreground uppercase transition-all duration-200 dark:text-white;
   }
 
   .btn-sec:hover {
@@ -168,7 +233,7 @@
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center rounded-md border-1 border-border bg-muted px-4 py-2 font-mono text-xs text-foreground uppercase transition-all transition-colors duration-200 hover:bg-input/50 hover:text-foreground;
+    @apply inline-flex items-center justify-center rounded-md border-1 border-border bg-muted px-4 py-2 font-mono text-xs text-foreground uppercase transition-all duration-200 hover:bg-input/50 hover:text-foreground;
   }
 
   .btn-outline:hover {
@@ -208,11 +273,11 @@
 
   /* -- SURFACE BLOCK -- */
   .surface {
-    @apply rounded-lg border-1 border-border bg-brand-surface;
+    @apply rounded-lg border-1 border-border bg-card;
   }
 
   .surface:hover {
-    background: var(--brand-surface-hover);
+    @apply bg-muted;
   }
 
   /* -- SIDEBAR ITEM STATES -- */
@@ -342,72 +407,6 @@
   --color-brand-cta: var(--brand-cta);
   --color-brand-surface: var(--brand-surface);
   --color-brand-surface-hover: var(--brand-surface-hover);
-}
-
-@layer base {
-  .markdown h1 {
-    @apply mt-8 mb-3 text-2xl font-bold tracking-[-0.04em];
-  }
-
-  .markdown h2 {
-    @apply mt-6 mb-2 text-xl font-semibold tracking-[-0.03em];
-  }
-
-  .markdown h3 {
-    @apply mt-4 mb-2 text-lg font-medium;
-  }
-
-  .markdown p {
-    @apply mb-4 text-sm leading-relaxed text-muted-foreground;
-  }
-
-  .markdown strong {
-    @apply text-foreground;
-  }
-
-  .markdown blockquote {
-    @apply border-l-2 border-border pl-4 text-muted-foreground;
-  }
-
-  .markdown ul {
-    @apply list-disc space-y-1 pl-5;
-  }
-
-  .markdown ol {
-    @apply list-decimal space-y-1 pl-5;
-  }
-
-  .markdown pre:not(.codeblock-pre) {
-    @apply my-4 max-w-full overflow-x-auto rounded-lg border border-border bg-muted p-4 font-mono text-sm;
-  }
-
-  .markdown code {
-    @apply rounded border border-border/50 bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground;
-  }
-
-  .markdown pre code {
-    @apply border-0 bg-transparent p-0 text-sm text-current;
-  }
-
-  .markdown table {
-    @apply my-4 block w-full border-collapse overflow-x-auto;
-  }
-
-  .markdown th {
-    @apply border border-border bg-muted px-4 py-2.5 text-left text-sm font-semibold text-foreground;
-  }
-
-  .markdown td {
-    @apply border border-border px-4 py-2.5 text-sm text-muted-foreground;
-  }
-
-  .markdown .katex-display {
-    @apply max-w-full overflow-x-auto overflow-y-hidden py-2;
-  }
-
-  .markdown img {
-    @apply my-4 h-auto max-w-full rounded-lg;
-  }
 }
 
 /* Global Scrollbar Styles */
