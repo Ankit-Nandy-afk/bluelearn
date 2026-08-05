@@ -1,24 +1,22 @@
 import { Link } from "@tanstack/react-router";
 
-import type { SubjectReference, SubjectReferences } from "@bluelearn/schemas";
+import type { SubjectGroup } from "@bluelearn/schemas";
 
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 
 import { Route as SubjectRoute } from "@/routes/subjects.$slug";
 
-type SubjectsGroupedByChar = Map<string, SubjectReferences>;
-
 type SubjectsProps = {
-  groupedSubject: SubjectsGroupedByChar;
+  groups: Array<SubjectGroup>;
 };
 
-export const SubjectSidebar = ({ groupedSubject }: SubjectsProps) => {
+export const SubjectSidebar = ({ groups }: SubjectsProps) => {
   return (
     <aside className="hidden overflow-y-auto border-r px-6 md:block">
-      {Array.from(groupedSubject.entries()).map(([char, subjects]) => (
-        <CollapsibleSection key={char} title={char}>
+      {groups.map(({ char, subjects }) => (
+        <CollapsibleSection key={char} title={char} defaultOpen>
           <ul className="space-y-2">
-            {subjects.map((subject: SubjectReference) => (
+            {subjects.map((subject) => (
               <li
                 key={subject.slug}
                 className="pl-1.5 text-sm text-muted-foreground hover:text-foreground"

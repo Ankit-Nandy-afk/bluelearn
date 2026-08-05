@@ -42,12 +42,12 @@ export function GuideGraphNode({
         className={`group relative gap-0 rounded-md border py-0 ring-0 transition-colors ${
           isTarget
             ? isHovered
-              ? "bg-brand-dk-blue/90 text-white"
-              : "bg-brand-dk-blue text-white"
+              ? "bg-brand-dark-navy/90 text-white"
+              : "bg-brand-dark-navy text-white"
             : isHovered || isSelected
               ? "bg-muted"
               : "bg-background"
-        } ${isSelected ? "border-brand-blue" : "border-foreground"}`}
+        } ${isSelected ? "border-brand-bright-blue" : "border-foreground"}`}
       >
         <CardHeader className="[container-type:normal] gap-1 py-3.5">
           <div className="flex items-start gap-3">

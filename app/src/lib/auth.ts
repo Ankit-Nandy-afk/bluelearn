@@ -1,6 +1,7 @@
 import { redirect } from "@tanstack/react-router";
 
 import { supabase } from "./supabase";
+import { clearAllStoredDrafts } from "./contributionStorage";
 import type { Session } from "@supabase/supabase-js";
 
 export async function signIn(email: string, password: string) {
@@ -33,6 +34,7 @@ export async function resendVerification(email: string) {
 }
 
 export async function signOut() {
+  clearAllStoredDrafts();
   return supabase.auth.signOut();
 }
 
