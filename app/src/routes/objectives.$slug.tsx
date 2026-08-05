@@ -138,7 +138,6 @@ function PathPage() {
         <ObjectiveHeader
           objective={objective}
           stats={{
-            subObjectives: targets.length,
             guides: totalGuides,
             durationMinutes: totalDuration,
           }}

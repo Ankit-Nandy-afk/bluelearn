@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, Target, User } from "lucide-react";
+import { BookOpen, Calendar, Clock, User } from "lucide-react";
 
 import type { Objective } from "@bluelearn/schemas";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,6 @@ type PropTypes = {
     "title" | "summary" | "curator" | "created_at" | "tags"
   >;
   stats: {
-    subObjectives: number;
     guides: number;
     durationMinutes: number;
   };
@@ -43,10 +42,6 @@ export const ObjectiveHeader = ({ objective, stats, actions }: PropTypes) => {
         <span className="flex items-center gap-1">
           <Calendar className="h-3 w-3 text-muted-foreground/75" />
           {createdLabel}
-        </span>
-        <span className="flex items-center gap-1">
-          <Target className="h-3 w-3 text-muted-foreground/75" />
-          {stats.subObjectives} sub-objectives
         </span>
         <span className="flex items-center gap-1">
           <BookOpen className="h-3 w-3 text-muted-foreground/75" />
