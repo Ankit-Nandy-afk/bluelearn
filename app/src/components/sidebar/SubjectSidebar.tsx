@@ -14,7 +14,7 @@ export const SubjectSidebar = ({ groups }: SubjectsProps) => {
   return (
     <aside className="hidden overflow-y-auto border-r px-6 md:block">
       {groups.map(({ char, subjects }) => (
-        <CollapsibleSection key={char} title={char}>
+        <CollapsibleSection key={char} title={char} defaultOpen>
           <ul className="space-y-2">
             {subjects.map((subject) => (
               <li
