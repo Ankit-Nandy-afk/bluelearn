@@ -3,7 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import type { TodoGroup } from "@/lib/groupTodos";
 import { Route as GuideRoute } from "@/routes/guides/$slug/index";
 
-import { Card, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 type PropTypes = {
@@ -57,7 +57,9 @@ export const TodoCard = ({ todo }: PropTypes) => {
               {todo.summary}
             </p>
           )}
+        </CardHeader>
 
+        <CardContent className="border-t">
           {todo.requestedBy.length > 0 && (
             <div className="flex min-w-0 flex-col gap-1 pt-3">
               <p className="text-sm">
@@ -101,7 +103,7 @@ export const TodoCard = ({ todo }: PropTypes) => {
               )}
             </div>
           )}
-        </CardHeader>
+        </CardContent>
       </Card>
     </Link>
   );
