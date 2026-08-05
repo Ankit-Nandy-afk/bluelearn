@@ -45,7 +45,7 @@ export const ObjectiveHeader = ({ objective, stats, actions }: PropTypes) => {
         </span>
         <span className="flex items-center gap-1">
           <BookOpen className="h-3 w-3 text-muted-foreground/75" />
-          {stats.guides} guides
+          {stats.guides} {stats.guides === 1 ? "guide" : "guides"}
         </span>
         <span className="flex items-center gap-1">
           <Clock className="h-3 w-3 text-muted-foreground/75" />
