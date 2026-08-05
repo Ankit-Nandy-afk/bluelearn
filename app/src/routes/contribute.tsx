@@ -1,37 +1,94 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { useState } from "react";
 import type { ContributionType } from "@/types/contributions";
 import ContributionFlow from "@/components/contribute/ContributionFlow";
-import { RejectionFeedback } from "@/components/review/RejectionFeedback";
 import { requireSession } from "@/lib/auth";
+import { RejectionFeedback } from "@/components/review/RejectionFeedback";
+
+export type ContributeSearch = {
+  draft?: string;
+  kind?: "guide" | "objective";
+  contributionType?: ContributionType;
+  step?: string;
+  todoTitle?: string;
+  todoSummary?: string;
+  todos?: string;
+};
 
 export const Route = createFileRoute("/contribute")({
   ssr: false,
   beforeLoad: requireSession,
-  validateSearch: (
-    search: Record<string, unknown>
-  ): {
-    draft?: string;
-    kind?: "guide" | "objective";
-    todoTitle?: string;
-    todoSummary?: string;
-    todos?: string;
-  } => ({
-    draft: typeof search.draft === "string" ? search.draft : undefined,
-    kind: search.kind === "objective" ? "objective" : undefined,
-    todoTitle:
-      typeof search.todoTitle === "string" ? search.todoTitle : undefined,
-    todoSummary:
-      typeof search.todoSummary === "string" ? search.todoSummary : undefined,
-    todos: typeof search.todos === "string" ? search.todos : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): ContributeSearch => {
+    const draft = typeof search.draft === "string" ? search.draft : undefined;
+    const kind =
+      search.kind === "objective" || search.kind === "guide"
+        ? search.kind
+        : undefined;
+    const contributionType =
+      search.contributionType === "guide" ||
+      search.contributionType === "variant" ||
+      search.contributionType === "objective"
+        ? search.contributionType
+        : undefined;
+    const step = typeof search.step === "string" ? search.step : undefined;
+    const todoTitle =
+      typeof search.todoTitle === "string" ? search.todoTitle : undefined;
+    const todoSummary =
+      typeof search.todoSummary === "string" ? search.todoSummary : undefined;
+    const todos = typeof search.todos === "string" ? search.todos : undefined;
+
+    return {
+      draft,
+      kind,
+      contributionType,
+      step,
+      todoTitle,
+      todoSummary,
+      todos,
+    };
+  },
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { draft, kind, todoTitle, todoSummary, todos } = Route.useSearch();
-  const [type, setType] = useState<ContributionType | null>(null);
+  const { draft, kind, contributionType, step, todoTitle, todoSummary, todos } =
+    Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+
+  const handleTypeChange = (newType: ContributionType) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        contributionType: newType,
+        // Set the initial step for the selected contribution type
+        step:
+          newType === "guide"
+            ? "guide-details"
+            : newType === "variant"
+              ? "variant-details"
+              : "objective-details",
+      }),
+      replace: true,
+    });
+  };
+
+  const handleStepChange = (newStep: string) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        step: newStep === "type" ? undefined : newStep,
+        contributionType:
+          newStep === "type" ? undefined : prev.contributionType,
+        draft: newStep === "type" ? undefined : prev.draft,
+        kind: newStep === "type" ? undefined : prev.kind,
+      }),
+      replace: true,
+    });
+  };
+
+  const handlePublished = () => {
+    navigate({ search: {}, replace: true });
+  };
 
   // A resumed draft already carries its claims in the database, so the todo page's
   // params only apply to a fresh start.
@@ -42,8 +99,11 @@ function RouteComponent() {
       <section className="relative flex min-h-0 flex-1 gap-8 border-b px-8 py-8 lg:px-16">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <ContributionFlow
-            type={type}
-            setType={setType}
+            type={contributionType ?? null}
+            setType={handleTypeChange}
+            step={step}
+            onStepChange={handleStepChange}
+            onPublished={handlePublished}
             draftId={draft}
             draftKind={kind}
             todoTitle={draft ? undefined : todoTitle}
@@ -51,7 +111,6 @@ function RouteComponent() {
             todoIds={todoIds}
           />
         </div>
-
         {draft && <RejectionFeedback draftId={draft} />}
       </section>
     </div>
