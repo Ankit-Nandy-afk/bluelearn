@@ -1,12 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { History, Users } from "lucide-react";
 
+import type { Action } from "@/components/sidebar/GuideSidebar";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { formatDate, formatDuration } from "@/lib/guideUtils";
 import { getObjective } from "@/lib/api/objectives";
 import { listGuides } from "@/lib/api/guides";
 
 import ObjectiveFlow from "@/components/objective/ObjectiveFlow";
+
+const OBJECTIVE_ACTIONS: Array<Action> = [
+  { icon: Users, label: "View Contributors" },
+  { icon: History, label: "View Revisions" },
+];
 
 export const Route = createFileRoute("/objectives/$slug")({
   loader: async ({ params: { slug }, abortController }) => {
@@ -23,18 +36,22 @@ export const Route = createFileRoute("/objectives/$slug")({
 
 function Shell({
   heading,
+  actions,
   children,
 }: {
   heading: string;
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="mx-auto max-w-[1280px] border-x bg-background">
       <section className="border-b px-8 py-8 lg:px-16">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between gap-4">
           <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
             {heading}
           </h1>
+
+          {actions}
         </div>
 
         <Separator className="mb-4 bg-border" />
@@ -117,6 +134,23 @@ function PathPage() {
   return (
     <Shell
       heading={`Objective: ${objective.title ?? "Untitled"} (${targets.length} sub-objectives | ${totalGuides} guides | ${formatDuration(totalDuration)} total)`}
+      actions={
+        <div className="flex shrink-0 items-center gap-2">
+          {OBJECTIVE_ACTIONS.map((action: Action) => (
+            <Tooltip key={action.label}>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="lg">
+                  <action.icon className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+
+              <TooltipContent>
+                <p>{action.label}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      }
     >
       {targets.length === 0 ? (
         <p className="text-sm text-muted-foreground">
