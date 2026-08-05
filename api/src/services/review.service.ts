@@ -119,9 +119,12 @@ type TagsAndEdges = {
 
 export async function getReviewQueue(
   supabase: DB,
+  service: DB,
   userId: string,
   { page, limit }: Pagination = { page: 1, limit: 20 }
 ) {
+  await sweepExpiredReviewSeats(service);
+
   const { data: raw, error } = await supabase
     .from("panel_members")
     .select(
@@ -172,6 +175,17 @@ export async function getReviewQueue(
     .map((m) => {
       const rc = m.review_panels.review_cases;
       const link = guideLinks.find((l) => l.case_id === rc.id);
+
+      const assigned_at = m.assigned_at;
+      const time_limit = rc.time_limit || "2 days";
+      const timeLimitMs =
+        time_limit === "2 days" || time_limit === "48:00:00"
+          ? 48 * 60 * 60 * 1000
+          : 48 * 60 * 60 * 1000;
+      const expires_at = new Date(
+        new Date(assigned_at).getTime() + timeLimitMs
+      ).toISOString();
+
       return {
         id: rc.id,
         case_type: rc.case_type,
@@ -179,6 +193,9 @@ export async function getReviewQueue(
         title: link?.guide_revisions?.title ?? null,
         created_at: rc.created_at,
         decision: m.review_decisions?.decision ?? null,
+        assigned_at,
+        time_limit,
+        expires_at,
       };
     })
     .sort(
@@ -316,6 +333,8 @@ export async function getReviewCase(
   caseId: string,
   viewerId: string | null
 ) {
+  await sweepExpiredReviewSeats(service);
+
   const { data: raw, error } = await supabase
     .from("review_cases")
     .select(
@@ -420,6 +439,12 @@ export async function getReviewCase(
     throw new ServiceError("Failed to load review case", 500);
   }
 
+  const time_limit = data.time_limit || "2 days";
+  const timeLimitMs =
+    time_limit === "2 days" || time_limit === "48:00:00"
+      ? 48 * 60 * 60 * 1000
+      : 48 * 60 * 60 * 1000;
+
   return {
     case: {
       id: data.id,
@@ -429,12 +454,16 @@ export async function getReviewCase(
       created_by: data.created_by,
       created_at: data.created_at,
       updated_at: data.updated_at,
+      time_limit,
     },
     panel: members.map((pm) => ({
       id: pm.id,
       member_id: pm.member_id,
       status: pm.status,
       assigned_at: pm.assigned_at,
+      expires_at: new Date(
+        new Date(pm.assigned_at).getTime() + timeLimitMs
+      ).toISOString(),
     })),
     decisions: members
       .filter((pm) => pm.review_decisions)
@@ -539,5 +568,12 @@ export async function assemblePendingPanels(supabase: DB) {
     });
     // One case failing to seat must not stall the rest of the batch.
     if (rpcError) console.error(rpcError);
+  }
+}
+
+export async function sweepExpiredReviewSeats(supabase: DB) {
+  const { error } = await supabase.rpc("sweep_expired_review_seats");
+  if (error) {
+    console.error(error);
   }
 }
