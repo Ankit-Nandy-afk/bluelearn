@@ -61,7 +61,75 @@ const SIDEBAR_ACTIONS: Array<Action> = [
   { icon: History, label: "View Revisions" },
 ];
 
-function DownvoteDialog({ isOpen, onOpenChange }) {
+function useVote(slug: string) {
+  const [vote, setVote] = useState<"up" | "down" | null>(null);
+  const thisSlug = slug;
+
+  const toggleVote = (type: "up" | "down") => {
+    const next = vote === type ? null : type;
+    setVote(next);
+    return next;
+  };
+
+  const submitVote = async (
+    type: "up" | "down" | null,
+    reason: string | null = null,
+    note: string | null = null
+  ) => {
+    const prev = vote;
+
+    const token = await getAuthToken();
+    if (!token) {
+      console.error("Unauthorized");
+      setVote(prev); // revert on auth failure
+      return;
+    }
+
+    const variantId = await getVariantId(thisSlug);
+    const api = import.meta.env.VITE_API_BASE;
+    const votingApi = `${api}/variants/${variantId}/vote`;
+
+    const method = type === null ? "DELETE" : "PUT";
+    const direction = type === null ? undefined : type;
+
+    const response = await fetch(votingApi, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        direction,
+        reason,
+        note,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Vote request failed:", response.status);
+      setVote(prev); // revert on submission failure
+    }
+  };
+
+  return {
+    vote,
+    upvote: async () => {
+      const next = toggleVote("up");
+      await submitVote(next);
+    },
+    downvote: () => toggleVote("down"),
+    submitDownvote: async (reason: string, note: string) => {
+      await submitVote("down", reason, note);
+    },
+    nullVote: async () => {
+      setVote(null);
+      await submitVote(null);
+    },
+    setVote,
+  };
+}
+
+function DownvoteDialog({ isOpen, setIsOpen, setVote }) {
   const reasons: Array<ComboboxItem> = [
     {
       value: "unclear",
@@ -106,9 +174,31 @@ function DownvoteDialog({ isOpen, onOpenChange }) {
   ];
 
   const [selectedReason, setSelectedReason] = useState<string>("");
+  const [note, setNote] = useState<string>("");
+
+  const { slug } = Route.useParams();
+  const { vote, submitDownvote } = useVote(slug);
+
+  const handleVoteSubmit = async (reason: string, note: string) => {
+    await submitDownvote(reason, note);
+  };
+
+  const handleDialogClose = () => {
+    setIsOpen(false);
+
+    // Do not erase downvote if user has already downvoted
+    setVote(null);
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          handleDialogClose();
+        } else setIsOpen(open);
+      }}
+    >
       <DialogContent>
         <DialogTitle>Downvote</DialogTitle>
         <DialogDescription className="sr-only">
@@ -123,104 +213,25 @@ function DownvoteDialog({ isOpen, onOpenChange }) {
         />
 
         <DialogHeader>Note</DialogHeader>
-        <Textarea placeholder="State your reason here."></Textarea>
+        <Textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="State your reason here."
+        />
 
-        <Button variant="default" size="lg" onClick={() => {}}>
+        <Button
+          variant="default"
+          size="lg"
+          onClick={async () => {
+            await handleVoteSubmit(selectedReason, note);
+            setIsOpen(false);
+          }}
+        >
           Submit
         </Button>
       </DialogContent>
     </Dialog>
   );
-}
-
-function useVote(slug: string) {
-  const [vote, setVote] = useState<"up" | "down" | null>(null);
-  const thisSlug = slug;
-
-  const toggleVote = async (type: "up" | "down") => {
-    const prev = vote;
-    const next = prev === type ? null : type;
-
-    // Display vote on frontend before updating database for better UX
-    setVote(next);
-
-    const token = await getAuthToken();
-
-    if (!token) {
-      // TODO: Add a notice saying user is not authorized or signed in!
-      console.error("Unauthorized");
-      setVote(prev);
-    }
-
-    // Payload to update user vote in database
-    const payload: {
-      method: string | undefined;
-      direction: string | undefined;
-      headers: {
-        Authorization: string;
-      };
-    } = {
-      method: undefined,
-      direction: undefined,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-
-    switch (next) {
-      case null:
-        // DELETE retracts the vote
-        payload.method = "DELETE";
-        payload.direction = undefined;
-        break;
-      case "up":
-        payload.method = "PUT";
-        payload.direction = "up";
-        break;
-      case "down":
-        payload.method = "PUT";
-        payload.direction = "down";
-        break;
-      default:
-        console.error("Invalid vote selected");
-        break;
-    }
-
-    const variantId = await getVariantId(thisSlug);
-    const api = import.meta.env.VITE_API_BASE;
-    const votingApi = `${api}/variants/${variantId}/vote`;
-
-    const responseBody = JSON.stringify({
-      direction: payload.direction,
-      reason: undefined,
-      note: undefined,
-    });
-
-    const response = await fetch(votingApi, {
-      method: payload.method,
-      headers: {
-        ...payload.headers,
-        "Content-Type": "application/json",
-      },
-      body: responseBody,
-    });
-
-    if (!response.ok) {
-      // TODO: Add user pop up showing that vote failed to be uploaded
-      console.log("Unable to update vote. vote:", payload.direction);
-
-      const errorBody = await response.json().catch(() => null);
-      console.error("Vote request failed:", response.status, errorBody);
-
-      setVote(prev);
-    }
-  };
-
-  return {
-    vote,
-    upvote: () => toggleVote("up"),
-    downvote: () => toggleVote("down"),
-  };
 }
 
 export const Route = createFileRoute("/guides/$slug/")({
@@ -238,7 +249,7 @@ function RouteComponent() {
   const { slug } = Route.useParams();
   const guide = Route.useLoaderData();
 
-  const { vote, upvote, downvote } = useVote(slug);
+  const { vote, setVote, upvote, downvote } = useVote(slug);
 
   const breadcrumbOrigin = useLocation({
     select: (location) => location.state.breadcrumbOrigin,
@@ -355,7 +366,11 @@ function RouteComponent() {
                   fill={vote == "down" ? "#3D80DD" : "#FFFFFF"}
                 />
               </Button>
-              <DownvoteDialog isOpen={isOpen} onOpenChange={setIsOpen} />
+              <DownvoteDialog
+                isOpen={isOpen}
+                setIsOpen={setIsOpen}
+                setVote={setVote}
+              />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
