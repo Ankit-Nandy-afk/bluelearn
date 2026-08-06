@@ -10,6 +10,8 @@ export type ContributeSearch = {
   kind?: "guide" | "objective";
   contributionType?: ContributionType;
   step?: string;
+  source?: string;
+  edit?: string;
   todoTitle?: string;
   todoSummary?: string;
   todos?: string;
@@ -31,6 +33,9 @@ export const Route = createFileRoute("/contribute")({
         ? search.contributionType
         : undefined;
     const step = typeof search.step === "string" ? search.step : undefined;
+    const source =
+      typeof search.source === "string" ? search.source : undefined;
+    const edit = typeof search.edit === "string" ? search.edit : undefined;
     const todoTitle =
       typeof search.todoTitle === "string" ? search.todoTitle : undefined;
     const todoSummary =
@@ -42,6 +47,8 @@ export const Route = createFileRoute("/contribute")({
       kind,
       contributionType,
       step,
+      source,
+      edit,
       todoTitle,
       todoSummary,
       todos,
@@ -51,9 +58,21 @@ export const Route = createFileRoute("/contribute")({
 });
 
 function RouteComponent() {
-  const { draft, kind, contributionType, step, todoTitle, todoSummary, todos } =
-    Route.useSearch();
+  const {
+    draft,
+    kind,
+    contributionType,
+    step,
+    source,
+    edit,
+    todoTitle,
+    todoSummary,
+    todos,
+  } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+
+  const type =
+    contributionType ?? (edit || kind === "objective" ? "objective" : null);
 
   const handleTypeChange = (newType: ContributionType) => {
     navigate({
@@ -81,6 +100,8 @@ function RouteComponent() {
           newStep === "type" ? undefined : prev.contributionType,
         draft: newStep === "type" ? undefined : prev.draft,
         kind: newStep === "type" ? undefined : prev.kind,
+        source: newStep === "type" ? undefined : prev.source,
+        edit: newStep === "type" ? undefined : prev.edit,
       }),
       replace: true,
     });
@@ -99,13 +120,15 @@ function RouteComponent() {
       <section className="relative flex min-h-0 flex-1 gap-8 border-b px-8 py-8 lg:px-16">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <ContributionFlow
-            type={contributionType ?? null}
+            type={type}
             setType={handleTypeChange}
             step={step}
             onStepChange={handleStepChange}
             onPublished={handlePublished}
             draftId={draft}
             draftKind={kind}
+            sourceRevisionId={source}
+            editSlug={edit}
             todoTitle={draft ? undefined : todoTitle}
             todoSummary={draft ? undefined : todoSummary}
             todoIds={todoIds}
