@@ -96,6 +96,14 @@
                   oneOf:
                     - $ref: "../components/schemas/reviews/ReviewDecision.yaml"
                     - type: "null"
+                viewer_expires_at:
+                  description: >
+                    The expiration timestamp for the authenticated caller's active seat on this panel.
+                    Null if the caller is not an assigned panelist or the seat has no expiration.
+                  oneOf:
+                    - type: string
+                      format: date-time
+                    - type: "null"
                 revision:
                   oneOf:
                     - $ref: "../components/schemas/reviews/GuideRevisionSummary.yaml"
@@ -130,6 +138,7 @@
                   decisions,
                   viewer_role,
                   viewer_decision,
+                  viewer_expires_at,
                   revision,
                   prerequisites,
                   todos,

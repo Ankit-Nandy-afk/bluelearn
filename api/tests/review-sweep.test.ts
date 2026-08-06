@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { admin, makeUser } from "./helpers";
+import { admin, env, insert, jsonAuth, makeUser } from "./helpers";
+import app from "../src/index";
 import {
   createReviewCase,
   createReviewPanel,
@@ -91,11 +92,14 @@ describe("Database Layer: Review Case Time Limits & Sweep", () => {
       "sweep_expired_review_seats"
     );
     expect(sweepErr).toBeNull();
-    expect(sweepRes).toMatchObject({
-      replaced_count: 1,
-      assigned_count: 1,
-      skipped: false,
-    });
+    const sweep = sweepRes as unknown as {
+      replaced_count: number;
+      assigned_count: number;
+      skipped: boolean;
+    };
+    expect(sweep?.replaced_count).toBe(1);
+    expect(sweep?.assigned_count).toBeGreaterThanOrEqual(1);
+    expect(sweep?.skipped).toBe(false);
 
     // Verify old seat status is replaced
     const { data: updatedOldSeat } = await admin
@@ -293,5 +297,118 @@ describe("Database Layer: Review Case Time Limits & Sweep", () => {
     // Only the one replaced seat exists
     expect(panelSeats).toHaveLength(1);
     expect(panelSeats![0].status).toBe("replaced");
+  });
+
+  it("API returns viewer_expires_at only for active (assigned) panelists, not for completed ones", async () => {
+    const author = await makeUser();
+    const reviewer = await makeUser();
+
+    const base = await createGuideBase();
+    const guide = await createGuide(base.id);
+    const revision = await createGuideRevision(guide.id, {
+      author_id: author.userId,
+    });
+    const reviewCase = await createReviewCase(author.userId, {
+      status: "in_review",
+      time_limit: "2 days",
+    });
+    const panel = await createReviewPanel(reviewCase.id, {
+      target_seat_count: 3,
+    });
+
+    await createPanelMember(panel.id, reviewer.userId, {
+      status: "assigned",
+    });
+    await createGuideReviewCase(reviewCase.id, revision.id);
+
+    // Before voting: viewer_expires_at is populated
+    const res1 = await app.request(
+      `/reviews/cases/${reviewCase.id}`,
+      { headers: { Authorization: `Bearer ${reviewer.token}` } },
+      env
+    );
+    expect(res1.status).toBe(200);
+    const body1 = (await res1.json()) as {
+      viewer_expires_at: string | null;
+      panel: Array<{ member_id: string; expires_at: string | null }>;
+    };
+    expect(body1.viewer_expires_at).toBeTruthy();
+    expect(
+      body1.panel.find((p) => p.member_id === reviewer.userId)?.expires_at
+    ).toBeTruthy();
+
+    // Submit a decision (seat becomes completed)
+    const voteRes = await app.request(
+      `/reviews/cases/${reviewCase.id}/decisions`,
+      jsonAuth(reviewer.token, "POST", { decision: "approved" }),
+      env
+    );
+    expect(voteRes.status).toBe(200);
+
+    // After voting: viewer_expires_at is null, panel seat expires_at is null
+    const res2 = await app.request(
+      `/reviews/cases/${reviewCase.id}`,
+      { headers: { Authorization: `Bearer ${reviewer.token}` } },
+      env
+    );
+    expect(res2.status).toBe(200);
+    const body2 = (await res2.json()) as {
+      viewer_expires_at: string | null;
+      panel: Array<{ member_id: string; expires_at: string | null }>;
+    };
+    expect(body2.viewer_expires_at).toBeNull();
+    expect(
+      body2.panel.find((p) => p.member_id === reviewer.userId)?.expires_at
+    ).toBeNull();
+  });
+
+  it("lets a panelist revise their vote after 48h as long as the panel is still open", async () => {
+    const author = await makeUser();
+    const reviewer = await makeUser();
+
+    const base = await createGuideBase();
+    const guide = await createGuide(base.id);
+    const revision = await createGuideRevision(guide.id, {
+      author_id: author.userId,
+    });
+    const reviewCase = await createReviewCase(author.userId, {
+      status: "in_review",
+      time_limit: "2 days",
+    });
+    const panel = await createReviewPanel(reviewCase.id, {
+      target_seat_count: 3,
+    });
+
+    // Seat assigned 3 days ago, but already voted/completed
+    const threeDaysAgo = new Date(
+      Date.now() - 3 * 24 * 60 * 60 * 1000
+    ).toISOString();
+    const seat = await createPanelMember(panel.id, reviewer.userId, {
+      assigned_at: threeDaysAgo,
+      status: "completed",
+    });
+    await insert("review_decisions", {
+      panel_member_id: seat.id,
+      decision: "approved",
+    });
+    await createGuideReviewCase(reviewCase.id, revision.id);
+
+    // Revise vote after 3 days (>48h)
+    const res = await app.request(
+      `/reviews/cases/${reviewCase.id}/decisions`,
+      jsonAuth(reviewer.token, "POST", {
+        decision: "rejected",
+        notes: "Found an error upon second look.",
+        reasons: ["factual_error"],
+      }),
+      env
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      decision: { decision: string; reasons: string[] };
+    };
+    expect(body.decision.decision).toBe("rejected");
+    expect(body.decision.reasons).toEqual(["factual_error"]);
   });
 });

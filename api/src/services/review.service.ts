@@ -5,6 +5,7 @@ import { ServiceError } from "../lib/service-error";
 import { PANEL_POLICY_DEFAULTS } from "../lib/review-policy";
 import { readingMinutes } from "../lib/reading";
 import { loadUsernames } from "./identity.service";
+import { parsePostgresInterval } from "../lib/interval";
 
 type DB = SupabaseClient<Database>;
 type ReviewOutcome = Database["public"]["Enums"]["review_outcome"];
@@ -178,10 +179,7 @@ export async function getReviewQueue(
 
       const assigned_at = m.assigned_at;
       const time_limit = rc.time_limit || "2 days";
-      const timeLimitMs =
-        time_limit === "2 days" || time_limit === "48:00:00"
-          ? 48 * 60 * 60 * 1000
-          : 48 * 60 * 60 * 1000;
+      const timeLimitMs = parsePostgresInterval(time_limit);
       const expires_at = new Date(
         new Date(assigned_at).getTime() + timeLimitMs
       ).toISOString();
@@ -440,10 +438,23 @@ export async function getReviewCase(
   }
 
   const time_limit = data.time_limit || "2 days";
-  const timeLimitMs =
-    time_limit === "2 days" || time_limit === "48:00:00"
-      ? 48 * 60 * 60 * 1000
-      : 48 * 60 * 60 * 1000;
+  const timeLimitMs = parsePostgresInterval(time_limit);
+
+  const viewerSeat =
+    viewerId !== null
+      ? (members.find(
+          (pm) => pm.member_id === viewerId && pm.status === "assigned"
+        ) ??
+        members.find((pm) => pm.member_id === viewerId) ??
+        null)
+      : null;
+
+  const viewerExpiresAt =
+    viewerSeat?.assigned_at && viewerSeat.status === "assigned"
+      ? new Date(
+          new Date(viewerSeat.assigned_at).getTime() + timeLimitMs
+        ).toISOString()
+      : null;
 
   return {
     case: {
@@ -461,17 +472,19 @@ export async function getReviewCase(
       member_id: pm.member_id,
       status: pm.status,
       assigned_at: pm.assigned_at,
-      expires_at: pm.assigned_at
-        ? new Date(
-            new Date(pm.assigned_at).getTime() + timeLimitMs
-          ).toISOString()
-        : null,
+      expires_at:
+        pm.assigned_at && pm.status === "assigned"
+          ? new Date(
+              new Date(pm.assigned_at).getTime() + timeLimitMs
+            ).toISOString()
+          : null,
     })),
     decisions: members
       .filter((pm) => pm.review_decisions)
       .map((pm) => mapDecision(pm.review_decisions!, pm.member_id)),
     viewer_decision: viewerVote ? mapDecision(viewerVote, viewerId) : null,
     viewer_role: viewerRole,
+    viewer_expires_at: viewerExpiresAt,
     revise_draft_id: reviseDraft?.data?.id ?? null,
     revision: revision
       ? {

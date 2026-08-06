@@ -52,6 +52,18 @@ export const reviewCaseDetailResponseSchema = z.object({
       created_at: z.string(),
     })
   ),
+  viewer_role: z.enum(["author", "panelist", "public"]),
+  viewer_decision: z
+    .object({
+      id: z.string(),
+      decision: z.string(),
+      notes: z.string().nullable(),
+      reasons: z.array(z.string()),
+      created_at: z.string(),
+    })
+    .nullable(),
+  viewer_expires_at: z.string().nullable(),
+  revise_draft_id: z.string().nullable(),
   revision: z
     .object({
       id: z.string(),
@@ -62,6 +74,18 @@ export const reviewCaseDetailResponseSchema = z.object({
       created_at: z.string(),
     })
     .nullable(),
+  prerequisites: z.array(
+    z.object({
+      slug: z.string(),
+      title: z.string().nullable().optional(),
+    })
+  ),
+  todos: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+    })
+  ),
 });
 
 export type ReviewCaseListItem = z.infer<typeof reviewCaseListItemSchema>;

@@ -3,7 +3,7 @@
 -- reference: users 0..., subjects 1..., bases 2..., guides 3..., revisions 4...
 --
 -- Login for the seed author: seed@bluelearn.org / password123
--- Verifiers: verifier{1,2,3}@bluelearn.dev / password123
+-- Verifiers: verifier{1,2,3}@gmail.com / password
 --
 -- After seeding, rebuild the search index:
 --   bun api/scripts/typesense-sync.ts --force
@@ -39,7 +39,7 @@ values
 on conflict (provider_id, provider) do nothing;
 
 -- ---------------------------------------------------------------------------
--- Three verifiers (login: verifier{1,2,3}@bluelearn.dev / password123)
+-- Three verifiers (login: verifier{1,2,3}@gmail.com / password)
 -- ---------------------------------------------------------------------------
 
 do $$
@@ -56,13 +56,16 @@ begin
        confirmation_token, recovery_token, email_change, email_change_token_new)
     values
       ('00000000-0000-0000-0000-000000000000', v_id,
-       'authenticated', 'authenticated', 'verifier' || i || '@bluelearn.dev',
-       extensions.crypt('password123', extensions.gen_salt('bf')), now(),
+       'authenticated', 'authenticated', 'verifier' || i || '@gmail.com',
+       extensions.crypt('password', extensions.gen_salt('bf')), now(),
        '{"provider":"email","providers":["email"]}',
        jsonb_build_object('username', 'verifier' || i),
        now(), now(),
        '', '', '', '')
-    on conflict (id) do nothing;
+    on conflict (id) do update set
+      email = 'verifier' || i || '@gmail.com',
+      encrypted_password = extensions.crypt('password', extensions.gen_salt('bf')),
+      raw_user_meta_data = jsonb_build_object('username', 'verifier' || i);
 
     insert into auth.identities
       (id, user_id, provider_id, identity_data, provider,
@@ -71,11 +74,16 @@ begin
       (gen_random_uuid(), v_id, v_id::text,
        jsonb_build_object(
          'sub', v_id::text,
-         'email', 'verifier' || i || '@bluelearn.dev',
+         'email', 'verifier' || i || '@gmail.com',
          'email_verified', true
        ),
        'email', now(), now(), now())
-    on conflict (provider_id, provider) do nothing;
+    on conflict (provider_id, provider) do update set
+      identity_data = jsonb_build_object(
+        'sub', v_id::text,
+        'email', 'verifier' || i || '@gmail.com',
+        'email_verified', true
+      );
 
     insert into public.user_roles (user_id, role)
     values (v_id, 'verifier')
