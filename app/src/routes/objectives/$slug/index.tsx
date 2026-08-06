@@ -1,36 +1,34 @@
 import { Link, createFileRoute, useLocation } from "@tanstack/react-router";
-import { History, House, Users } from "lucide-react";
+import { Ellipsis, House, Pencil } from "lucide-react";
 
-import type { Action } from "@/components/sidebar/GuideSidebar";
 import type { Breadcrumb } from "@/lib/breadcrumbs";
 import { buildBreadcrumbs } from "@/lib/breadcrumbs";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 
 import { formatDate, formatDuration } from "@/lib/guideUtils";
 import { getObjective } from "@/lib/api/objectives";
+import { getMyIdentity } from "@/lib/api/identity";
 import { listGuides } from "@/lib/api/guides";
 
 import ObjectiveFlow from "@/components/objective/ObjectiveFlow";
+import { ObjectiveActions } from "@/components/objective/ObjectiveActions";
 import { ObjectiveHeader } from "@/components/objective/ObjectiveHeader";
-
-const OBJECTIVE_ACTIONS: Array<Action> = [
-  { icon: Users, label: "View Contributors" },
-  { icon: History, label: "View Revisions" },
-];
 
 export const Route = createFileRoute("/objectives/$slug/")({
   loader: async ({ params: { slug }, abortController }) => {
-    const [objective, guides] = await Promise.all([
+    const [objective, guides, identity] = await Promise.all([
       getObjective(slug, { signal: abortController.signal }),
       listGuides({ signal: abortController.signal }),
+      getMyIdentity({ signal: abortController.signal }).catch(() => null),
     ]);
-    return { ...objective, guides };
+    return { ...objective, guides, identity };
   },
   pendingComponent: ObjectivePending,
   errorComponent: ObjectiveError,
@@ -113,8 +111,41 @@ function ObjectiveError({ error }: { error: Error }) {
   );
 }
 
+function ObjectiveMenu({
+  slug,
+  sourceRevisionId,
+}: {
+  slug: string;
+  sourceRevisionId: string;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-md">
+          <Ellipsis className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end" className="w-48 font-mono">
+        <DropdownMenuItem asChild>
+          <Link
+            to="/contribute"
+            search={{ source: sourceRevisionId, edit: slug }}
+            className="cursor-pointer text-xs"
+          >
+            <Pencil className="h-4 w-4" />
+            Edit Objective
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function PathPage() {
-  const { objective, snapshot, guides } = Route.useLoaderData();
+  const { slug } = Route.useParams();
+  const { objective, snapshot, guides, identity } = Route.useLoaderData();
+  const isCurator = identity?.roles.includes("curator") ?? false;
 
   const breadcrumbOrigin = useLocation({
     select: (location) => location.state.breadcrumbOrigin,
@@ -180,19 +211,14 @@ function PathPage() {
             <Breadcrumbs crumbs={breadcrumbs} />
 
             <div className="flex shrink-0 items-center gap-2">
-              {OBJECTIVE_ACTIONS.map((action: Action) => (
-                <Tooltip key={action.label}>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="lg">
-                      <action.icon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
+              <ObjectiveActions slug={slug} />
 
-                  <TooltipContent>
-                    <p>{action.label}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
+              {isCurator && objective.current_revision_id ? (
+                <ObjectiveMenu
+                  slug={slug}
+                  sourceRevisionId={objective.current_revision_id}
+                />
+              ) : null}
             </div>
           </div>
 

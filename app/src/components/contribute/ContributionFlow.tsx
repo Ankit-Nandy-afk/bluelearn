@@ -16,7 +16,7 @@ import type { Guide } from "@bluelearn/schemas";
 import { addGuideVariant, createGuide, listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
-import { createObjective } from "@/lib/api/objectives";
+import { createObjective, createObjectiveRevision } from "@/lib/api/objectives";
 import {
   getObjectiveRevision,
   submitObjectiveRevision,
@@ -56,6 +56,8 @@ type PropTypes = {
   onPublished?: () => void;
   draftId?: string;
   draftKind?: "guide" | "objective";
+  sourceRevisionId?: string;
+  editSlug?: string;
   todoTitle?: string;
   todoSummary?: string;
   todoIds: Array<string>;
@@ -85,11 +87,46 @@ const createVariantContData = (): VariantContribution => ({
 const createObjectiveContData = (): ObjectiveContribution => ({
   title: "",
   summary: "",
+  changeSummary: "",
   targets: [],
   featuredSubObjective: "",
   subObjectives: [],
   subjects: [],
 });
+
+type ObjectiveRevisionData = Awaited<ReturnType<typeof getObjectiveRevision>>;
+
+const objectiveDataFromRevision = (
+  data: ObjectiveRevisionData
+): ObjectiveContribution => {
+  const slugByNodeId = new Map(data.snapshot.nodes.map((n) => [n.id, n.slug]));
+  const targetNodes = data.snapshot.nodes
+    .filter((n): n is typeof n & { slug: string } => n.is_target && !!n.slug)
+    .sort((a, b) => (a.target_position ?? 0) - (b.target_position ?? 0));
+
+  return {
+    title: data.revision.title ?? "",
+    summary: data.revision.summary ?? "",
+    changeSummary: data.revision.change_summary ?? "",
+    targets: targetNodes.map((n) => n.slug),
+    featuredSubObjective: targetNodes.find((n) => n.is_featured)?.slug ?? "",
+    subObjectives: targetNodes.flatMap((n) => {
+      const sequence = data.snapshot.orders
+        .filter((o) => o.target_node_id === n.id)
+        .map((o) => slugByNodeId.get(o.node_id))
+        .filter((slug): slug is string => !!slug);
+      if (sequence.length === 0) return [];
+      return [
+        {
+          targetSlug: n.slug,
+          selectedSlugs: sequence,
+          curatedSequence: sequence,
+        },
+      ];
+    }),
+    subjects: data.subjects.map((s) => s.id),
+  };
+};
 
 type NewSubject = { id?: string; name: string; summary: string };
 
@@ -109,6 +146,8 @@ export default function ContributionFlow({
   onPublished,
   draftId,
   draftKind,
+  sourceRevisionId,
+  editSlug,
   todoTitle,
   todoSummary,
   todoIds,
@@ -127,18 +166,24 @@ export default function ContributionFlow({
   );
   const [objectiveContData, setObjectiveContData] =
     useState<ObjectiveContribution>(() => {
-      if (draftId) return createObjectiveContData();
+      if (draftId || editSlug) return createObjectiveContData();
       const stored = getStoredDraft<ObjectiveContribution>("objective");
       return stored?.data ?? createObjectiveContData();
     });
+
+  const skipTypeStep = !!editSlug || !!draftId;
 
   const StepperInstance = useMemo(() => {
     if (!type) {
       return defineStepper(typeStep);
     }
 
+    if (skipTypeStep) {
+      return defineStepper(flows[type]);
+    }
+
     return defineStepper([...typeStep, ...flows[type]]);
-  }, [type]);
+  }, [type, skipTypeStep]);
 
   const { Stepper } = StepperInstance;
 
@@ -168,10 +213,13 @@ export default function ContributionFlow({
           stepper={stepper}
           type={type}
           setType={setType}
+          skipTypeStep={skipTypeStep}
           step={step}
           onPublished={onPublished}
           draftId={draftId}
           draftKind={draftKind}
+          sourceRevisionId={sourceRevisionId}
+          editSlug={editSlug}
           todoTitle={todoTitle}
           todoSummary={todoSummary}
           todoIds={todoIds}
@@ -192,10 +240,13 @@ function Inner({
   stepper,
   type,
   setType,
+  skipTypeStep,
   step,
   onPublished,
   draftId,
   draftKind,
+  sourceRevisionId,
+  editSlug,
   todoTitle,
   todoSummary,
   todoIds,
@@ -210,10 +261,13 @@ function Inner({
   stepper: any;
   type: ContributionType | null;
   setType: (value: ContributionType) => void;
+  skipTypeStep: boolean;
   step?: string;
   onPublished?: () => void;
   draftId?: string;
   draftKind?: "guide" | "objective";
+  sourceRevisionId?: string;
+  editSlug?: string;
   todoTitle?: string;
   todoSummary?: string;
   todoIds: Array<string>;
@@ -249,20 +303,20 @@ function Inner({
 
   const [revisionId, setRevisionId] = useState<string | null>(() => {
     if (draftId) return draftId;
-    if (!type || todoTitle) return null;
+    if (!type || editSlug || todoTitle) return null;
     const stored = getStoredDraft<unknown>(type);
     return stored?.revisionId ?? null;
   });
 
-  const [autosaveReady, setAutosaveReady] = useState(!draftId);
+  const [autosaveReady, setAutosaveReady] = useState(!draftId && !editSlug);
 
   useEffect(() => {
-    if (draftId || todoTitle) return;
+    if (draftId || editSlug || todoTitle) return;
     if (type) {
       const stored = getStoredDraft<unknown>(type);
       setRevisionId(stored?.revisionId ?? null);
     }
-  }, [type, draftId, todoTitle]);
+  }, [type, draftId, editSlug, todoTitle]);
 
   // Debounced auto-save for guide drafts
   const guideSave = useDebouncedContributionSave(
@@ -288,6 +342,8 @@ function Inner({
   );
 
   const [submitting, setSubmitting] = useState(false);
+  const [publishAttempted, setPublishAttempted] = useState(false);
+  const [showChangeSummary, setShowChangeSummary] = useState(false);
 
   // Start from the todo page with the topic's title and summary already filled in.
   const seededRef = useRef(false);
@@ -313,43 +369,10 @@ function Inner({
     if (draftKind === "objective") {
       getObjectiveRevision(draftId)
         .then((data) => {
-          const slugByNodeId = new Map(
-            data.snapshot.nodes.map((n) => [n.id, n.slug])
-          );
-          const targetNodes = data.snapshot.nodes
-            .filter(
-              (n): n is typeof n & { slug: string } => n.is_target && !!n.slug
-            )
-            .sort(
-              (a, b) => (a.target_position ?? 0) - (b.target_position ?? 0)
-            );
-
-          const objData: ObjectiveContribution = {
-            title: data.revision.title ?? "",
-            summary: data.revision.summary ?? "",
-            targets: targetNodes.map((n) => n.slug),
-            featuredSubObjective:
-              targetNodes.find((n) => n.is_featured)?.slug ?? "",
-            // An uncurated target is left out, so the order step still seeds it
-            // on draft resume.
-            subObjectives: targetNodes.flatMap((n) => {
-              const sequence = data.snapshot.orders
-                .filter((o) => o.target_node_id === n.id)
-                .map((o) => slugByNodeId.get(o.node_id))
-                .filter((slug): slug is string => !!slug);
-              if (sequence.length === 0) return [];
-              return [
-                {
-                  targetSlug: n.slug,
-                  selectedSlugs: sequence,
-                  curatedSequence: sequence,
-                },
-              ];
-            }),
-            subjects: data.subjects.map((s) => s.id),
-          };
+          const objData = objectiveDataFromRevision(data);
 
           setObjectiveContData(objData);
+          setShowChangeSummary(!!data.objective.current_revision_id);
           setStoredDraft("objective", {
             data: objData,
             revisionId: draftId,
@@ -433,6 +456,26 @@ function Inner({
         toast.error("Could not load draft");
       });
   }, [draftId]);
+
+  const seededSourceRef = useRef(false);
+  useEffect(() => {
+    if (!sourceRevisionId || !editSlug || seededSourceRef.current) return;
+    seededSourceRef.current = true;
+
+    getObjectiveRevision(sourceRevisionId)
+      .then((data) => {
+        setObjectiveContData({
+          ...objectiveDataFromRevision(data),
+          changeSummary: "",
+        });
+        setShowChangeSummary(!!data.objective.current_revision_id);
+        setType("objective");
+        requestAnimationFrame(() => stepper.goTo("objective-details"));
+      })
+      .catch(() => {
+        toast.error("Could not load objective");
+      });
+  }, [sourceRevisionId, editSlug]);
 
   const [subjectOptions, setSubjectOptions] = useState<
     Awaited<ReturnType<typeof listSubjects>>
@@ -595,10 +638,32 @@ function Inner({
         await updateObjectiveRevision(revisionId, {
           title: objectiveContData.title || undefined,
           summary: objectiveContData.summary || undefined,
+          change_summary: objectiveContData.changeSummary || null,
           tags: objectiveContData.subjects,
           targets: objectiveTargets(),
         });
         return revisionId;
+      }
+
+      if (editSlug) {
+        if (!creatingRef.current) {
+          creatingRef.current = createObjectiveRevision(editSlug)
+            .then(async (id) => {
+              await updateObjectiveRevision(id, {
+                title: objectiveContData.title || undefined,
+                summary: objectiveContData.summary || undefined,
+                change_summary: objectiveContData.changeSummary || null,
+                tags: objectiveContData.subjects,
+                targets: objectiveTargets(),
+              });
+              setRevisionId(id);
+              return id;
+            })
+            .finally(() => {
+              creatingRef.current = null;
+            });
+        }
+        return creatingRef.current;
       }
 
       if (!creatingRef.current) {
@@ -675,7 +740,7 @@ function Inner({
     setSubmitting(true);
     try {
       const id = await persistDraft();
-      if (type) {
+      if (type && !editSlug) {
         const currentData =
           type === "guide"
             ? guideContData
@@ -698,15 +763,28 @@ function Inner({
   };
 
   const missingObjectiveFields = () => {
-    const missing: Array<string> = [];
-    if (!objectiveContData.title.trim()) missing.push("a title");
-    if (!objectiveContData.summary.trim()) missing.push("a summary");
-    if (objectiveContData.subjects.length === 0) missing.push("a subject");
-    if (objectiveContData.targets.length === 0) missing.push("a target guide");
+    const missing: Array<{ field: string; label: string }> = [];
+    if (!objectiveContData.title.trim())
+      missing.push({ field: "title", label: "a title" });
+    if (!objectiveContData.summary.trim())
+      missing.push({ field: "summary", label: "a summary" });
+    if (showChangeSummary && !objectiveContData.changeSummary.trim())
+      missing.push({ field: "changeSummary", label: "a change summary" });
+    if (objectiveContData.subjects.length === 0)
+      missing.push({ field: "subjects", label: "a subject" });
+    if (objectiveContData.targets.length === 0)
+      missing.push({ field: "targets", label: "a target guide" });
     else if (!objectiveContData.featuredSubObjective)
-      missing.push("a featured sub-objective");
+      missing.push({
+        field: "featuredSubObjective",
+        label: "a featured sub-objective",
+      });
     return missing;
   };
+
+  const invalidObjectiveFields = publishAttempted
+    ? new Set(missingObjectiveFields().map((m) => m.field))
+    : undefined;
 
   const publish = async () => {
     setSubmitting(true);
@@ -714,8 +792,13 @@ function Inner({
       if (type === "objective") {
         const missing = missingObjectiveFields();
         if (missing.length > 0) {
-          throw new Error(`Your objective is missing ${missing.join(", ")}`);
+          setPublishAttempted(true);
+          stepper.goTo("objective-details");
+          throw new Error(
+            `Your objective is missing ${missing.map((m) => m.label).join(", ")}`
+          );
         }
+        setPublishAttempted(false);
       }
 
       const id = await persistDraft();
@@ -723,7 +806,7 @@ function Inner({
       if (type === "objective") {
         await submitObjectiveRevision(id);
         objectiveSave.cancel();
-        clearStoredDraft("objective");
+        if (!editSlug) clearStoredDraft("objective");
         setObjectiveContData(createObjectiveContData());
         setRevisionId(null);
         onPublished?.();
@@ -756,6 +839,8 @@ function Inner({
     }
   };
 
+  if (skipTypeStep && !type) return null;
+
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col gap-6">
       {/* horizontal breadcrumb stepper */}
@@ -782,7 +867,9 @@ function Inner({
 
       {/* content */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <SelectType pickType={pickType} type={type} Stepper={Stepper} />
+        {!skipTypeStep && (
+          <SelectType pickType={pickType} type={type} Stepper={Stepper} />
+        )}
 
         <GuideDetails
           Stepper={Stepper}
@@ -790,6 +877,7 @@ function Inner({
           setGuideContData={setGuideContData}
           subjects={subjectOptions}
           guides={guideOptions}
+          hideBackBtn={skipTypeStep}
           onSaveDraft={saveDraft}
           submitting={submitting}
         />
@@ -800,6 +888,7 @@ function Inner({
           setVariantContData={setVariantContData}
           guides={guideOptions}
           subjects={subjectOptions}
+          hideBackBtn={skipTypeStep}
           onSaveDraft={saveDraft}
           submitting={submitting}
         />
@@ -810,6 +899,9 @@ function Inner({
           setObjectiveContData={setObjectiveContData}
           subjects={subjectOptions}
           guides={guideOptions}
+          showChangeSummary={showChangeSummary}
+          invalidFields={invalidObjectiveFields}
+          hideBackBtn={skipTypeStep}
           onSaveDraft={saveDraft}
           submitting={submitting}
         />

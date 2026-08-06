@@ -292,6 +292,7 @@ function RouteComponent() {
                   onSaveDraft={saveDraft}
                   submitting={submitting}
                   showBaseFields={false}
+                  hideBackBtn
                   title="Edit Details"
                   changeSummary={changeSummary}
                   onChangeSummaryChange={setChangeSummary}

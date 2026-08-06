@@ -12,6 +12,7 @@ import {
   getRevisionSnapshot,
   loadRevisionTags,
   replaceRevisionTags,
+  requireCurator,
 } from "./objective-revision.service";
 import { selectInBatches } from "../lib/batch";
 import { loadUsernames } from "./identity.service";
@@ -78,17 +79,18 @@ function buildFeaturedSubObjective(
   if (!featured) return [];
 
   const byId = new Map(nodes.map((n) => [n.id, n]));
-  return orders
-    .filter((o) => o.target_node_id === featured.id)
+  const prereqs = orders
+    .filter(
+      (o) => o.target_node_id === featured.id && o.node_id !== featured.id
+    )
     .sort((a, b) => a.position - b.position)
-    .map((o, i) => {
-      const node = byId.get(o.node_id);
-      return {
-        position: i + 1,
-        slug: node?.slug ?? null,
-        title: node?.title ?? null,
-      };
-    });
+    .map((o) => byId.get(o.node_id));
+
+  return [...prereqs, featured].map((node, i) => ({
+    position: i + 1,
+    slug: node?.slug ?? null,
+    title: node?.title ?? null,
+  }));
 }
 
 async function loadGuideBaseMeta(supabase: DB, baseIds: string[]) {
@@ -303,6 +305,57 @@ export async function createObjective(
   }
 
   return { revision_id };
+}
+
+// Start a new draft revision on a live objective, seeded from its published
+// title and summary. Nodes, curation and tags are not copied: the editor
+// prefills from the live revision and its first save rebuilds them through
+// updateObjectiveRevision.
+export async function createObjectiveRevision(
+  supabase: DB,
+  authorId: string,
+  rawSlug: string
+) {
+  await requireCurator(supabase, authorId);
+
+  const objective = await resolveObjective(supabase, rawSlug);
+
+  if (!objective.current_revision_id) {
+    throw new ServiceError(
+      "Objective has no published revision to revise",
+      409
+    );
+  }
+
+  const { data: source, error: sourceError } = await supabase
+    .from("objective_revisions")
+    .select("title, summary")
+    .eq("id", objective.current_revision_id)
+    .maybeSingle();
+
+  if (sourceError) {
+    console.error(sourceError);
+    throw new ServiceError("Failed to load objective", 500);
+  }
+
+  const { data, error } = await supabase
+    .from("objective_revisions")
+    .insert({
+      objective_id: objective.id,
+      title: source?.title ?? null,
+      summary: source?.summary ?? null,
+      author_id: authorId,
+      status: "draft",
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error(error);
+    throw new ServiceError("Failed to create revision", 500);
+  }
+
+  return { revision_id: data.id };
 }
 
 // Resolve a objective by slug. Includes every node (included or skipped) and both the
