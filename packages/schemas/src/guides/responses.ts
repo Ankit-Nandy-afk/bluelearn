@@ -5,6 +5,7 @@ import { guideReferenceSchema } from "./references";
 
 export const guideSchema = z.object({
   slug: z.string(),
+  variant_id: z.string().nullable(),
   variant_slug: z.string().nullable(),
   title: z.string(),
   author: z.string(),
@@ -77,13 +78,12 @@ export const guideContributorSchema = z.object({
   id: z.string(),
   username: z.string(),
   name: z.string().nullable(),
-  avatar_url: z.string().nullable(),
 });
 export type GuideContributor = z.infer<typeof guideContributorSchema>;
 
 export const guideRevisionListItemSchema = z.object({
   id: z.string(),
-  status: z.enum(["draft", "submitted", "approved"]).optional(),
+  status: z.literal("approved"),
   change_summary: z.string().nullable(),
   created_at: z.string(),
   approved_at: z.string().nullable(),

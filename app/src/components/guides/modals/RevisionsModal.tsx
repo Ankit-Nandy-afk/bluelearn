@@ -3,32 +3,32 @@ import { GitCommit, History, Sparkles } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideRevisionListItem } from "@bluelearn/schemas";
 import { Badge } from "@/components/ui/badge";
-import { getGuideRevisions } from "@/lib/api/guides";
+import { getVariantRevisions } from "@/lib/api/variants";
 import { formatDate } from "@/lib/guideUtils";
 
 type RevisionsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  slug: string;
+  variantId: string | null;
 };
 
 export function RevisionsModal({
   open,
   onOpenChange,
-  slug,
+  variantId,
 }: RevisionsModalProps) {
   const [revisions, setRevisions] = useState<Array<GuideRevisionListItem>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !variantId) return;
 
     let ignore = false;
     setLoading(true);
     setError(null);
 
-    getGuideRevisions(slug)
+    getVariantRevisions(variantId)
       .then((res) => {
         if (!ignore) {
           setRevisions(res.revisions);
@@ -49,7 +49,7 @@ export function RevisionsModal({
     return () => {
       ignore = true;
     };
-  }, [open, slug]);
+  }, [open, variantId]);
 
   return (
     <BaseGuideModal

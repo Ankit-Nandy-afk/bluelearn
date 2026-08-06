@@ -1,17 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import type { Guide, GuideReference } from "@bluelearn/schemas";
-import type { LucideIcon } from "lucide-react";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { extractHeadings } from "@/lib/guideUtils";
 
-export type Action = {
-  icon: LucideIcon;
-  label: string;
-};
-
 type PropTypes = {
-  guide: Guide;
+  guide: Omit<Guide, "variant_id">;
   slug: string;
   sidebarActions?: React.ReactNode;
   reviewSection?: React.ReactNode;

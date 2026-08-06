@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { Check, GitFork, Sparkles } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideVariantListItem } from "@bluelearn/schemas";
@@ -22,7 +22,6 @@ export function VariantsModal({
   const [variants, setVariants] = useState<Array<GuideVariantListItem>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!open) return;
@@ -54,18 +53,6 @@ export function VariantsModal({
     };
   }, [open, slug]);
 
-  const handleSelectVariant = (variantSlug: string) => {
-    onOpenChange(false);
-    navigate({
-      to: "/guides/$slug",
-      params: { slug },
-      search: (prev: Record<string, unknown>) => ({
-        ...prev,
-        variant: variantSlug,
-      }),
-    });
-  };
-
   return (
     <BaseGuideModal
       open={open}
@@ -95,10 +82,12 @@ export function VariantsModal({
           Boolean(currentVariantSlug) && variant.slug === currentVariantSlug;
 
         return (
-          <div
+          <Link
             key={variant.id || variant.slug}
-            onClick={() => handleSelectVariant(variant.slug)}
-            className={`group relative flex w-full cursor-pointer flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:bg-muted ${
+            to="/guides/$slug/$variantSlug"
+            params={{ slug, variantSlug: variant.slug }}
+            onClick={() => onOpenChange(false)}
+            className={`group relative flex w-full flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:bg-muted ${
               isCurrent
                 ? "border-primary/50 bg-primary/5"
                 : "border-border bg-card"
@@ -123,7 +112,7 @@ export function VariantsModal({
                 {variant.summary}
               </p>
             )}
-          </div>
+          </Link>
         );
       })}
     </BaseGuideModal>

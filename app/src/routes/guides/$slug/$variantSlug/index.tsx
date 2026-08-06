@@ -9,16 +9,11 @@ import {
   ArrowBigDown,
   ArrowBigUp,
   Ellipsis,
-  History,
   House,
   Pencil,
   Plus,
-  Replace,
-  Target,
-  Users,
 } from "lucide-react";
 
-import type { Action } from "@/components/sidebar/GuideSidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
@@ -34,18 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-const SIDEBAR_ACTIONS: Array<Action> = [
-  { icon: Replace, label: "View Variants" },
-  { icon: Target, label: "View Objectives" },
-  { icon: Users, label: "View Contributors" },
-  { icon: History, label: "View Revisions" },
-];
+import { GuideSidebarActions } from "@/components/guides/GuideSidebarActions";
 
 function useVote() {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
@@ -120,21 +104,11 @@ function RouteComponent() {
       <section className="grid grid-cols-[320px_1fr] border-b">
         <GuideSidebar
           sidebarActions={
-            <div className="flex items-center justify-start gap-4">
-              {SIDEBAR_ACTIONS.map((action: Action) => (
-                <Tooltip key={action.label}>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="lg">
-                      <action.icon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-
-                  <TooltipContent>
-                    <p>{action.label}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
+            <GuideSidebarActions
+              slug={slug}
+              currentVariantSlug={variant.slug}
+              variantId={variant.id}
+            />
           }
           guide={guide}
           slug={slug}

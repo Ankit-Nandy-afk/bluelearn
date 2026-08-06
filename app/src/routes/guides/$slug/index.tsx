@@ -9,13 +9,9 @@ import {
   ArrowBigDown,
   ArrowBigUp,
   Ellipsis,
-  History,
   House,
   Pencil,
   Plus,
-  Replace,
-  Target,
-  Users,
 } from "lucide-react";
 
 import { Separator } from "@/components/ui/separator";
@@ -33,37 +29,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
 import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
-import { VariantsModal } from "@/components/guides/modals/VariantsModal";
-import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
-import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
-import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
-
-type ModalType =
-  | "variants"
-  | "objectives"
-  | "contributors"
-  | "revisions"
-  | null;
-
-type SidebarActionItem = {
-  icon: typeof Replace;
-  label: string;
-  type: NonNullable<ModalType>;
-};
-
-const SIDEBAR_ACTIONS: Array<SidebarActionItem> = [
-  { icon: Replace, label: "View Variants", type: "variants" },
-  { icon: Target, label: "View Objectives", type: "objectives" },
-  { icon: Users, label: "View Contributors", type: "contributors" },
-  { icon: History, label: "View Revisions", type: "revisions" },
-];
+import { GuideSidebarActions } from "@/components/guides/GuideSidebarActions";
 
 function useVote() {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
@@ -80,19 +47,9 @@ function useVote() {
 }
 
 export const Route = createFileRoute("/guides/$slug/")({
-  validateSearch: (search: Record<string, unknown>): { variant?: string } => ({
-    variant:
-      typeof search.variant === "string" && search.variant.length > 0
-        ? search.variant
-        : undefined,
-  }),
-  loaderDeps: ({ search }) => ({ variant: search.variant }),
-  loader: async ({ params, deps, abortController }) => {
+  loader: async ({ params, abortController }) => {
     try {
-      return await getGuide(params.slug, {
-        variant: deps.variant,
-        signal: abortController.signal,
-      });
+      return await getGuide(params.slug, { signal: abortController.signal });
     } catch {
       throw notFound();
     }
@@ -104,7 +61,6 @@ function RouteComponent() {
   const { slug } = Route.useParams();
   const guide = Route.useLoaderData();
 
-  const [activeModal, setActiveModal] = useState<ModalType>(null);
   const { vote, upvote, downvote } = useVote();
 
   const breadcrumbOrigin = useLocation({
@@ -132,26 +88,11 @@ function RouteComponent() {
       <section className="grid grid-cols-[320px_1fr] border-b">
         <GuideSidebar
           sidebarActions={
-            <div className="flex items-center justify-start gap-4">
-              {SIDEBAR_ACTIONS.map((action: SidebarActionItem) => (
-                <Tooltip key={action.label}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => setActiveModal(action.type)}
-                      aria-label={action.label}
-                    >
-                      <action.icon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-
-                  <TooltipContent>
-                    <p>{action.label}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
+            <GuideSidebarActions
+              slug={slug}
+              currentVariantSlug={guide.variant_slug}
+              variantId={guide.variant_id}
+            />
           }
           guide={guide}
           slug={slug}
@@ -250,32 +191,6 @@ function RouteComponent() {
           <GuideReader guide={guide} />
         </main>
       </section>
-
-      {/* Action Modals */}
-      <VariantsModal
-        open={activeModal === "variants"}
-        onOpenChange={(open) => !open && setActiveModal(null)}
-        slug={slug}
-        currentVariantSlug={guide.variant_slug}
-      />
-
-      <ObjectivesModal
-        open={activeModal === "objectives"}
-        onOpenChange={(open) => !open && setActiveModal(null)}
-        slug={slug}
-      />
-
-      <ContributorsModal
-        open={activeModal === "contributors"}
-        onOpenChange={(open) => !open && setActiveModal(null)}
-        slug={slug}
-      />
-
-      <RevisionsModal
-        open={activeModal === "revisions"}
-        onOpenChange={(open) => !open && setActiveModal(null)}
-        slug={slug}
-      />
     </div>
   );
 }
