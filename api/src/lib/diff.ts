@@ -1,41 +1,15 @@
-// Shared diff helpers used by both the guide-revision and objective-revision
-// diff endpoints, over text fields and over ordered sequences alike (a
-// sub-objective's curated guide order diffs the same way a body's lines do).
-//
-// The diff format is unified-diff-style: lines starting with " " are
-// unchanged, "-" only in `from`, "+" only in `to`. Matches `git diff
-// --unified=0` for the simple cases that matter to us (no hunk headers, no
-// context lines).
-//
-// In addition to the legacy unified-diff string, `diffField` also returns a
-// structured `lines` array of `{ type, text }` tokens. Split-view renderers
-// should consume `lines` directly rather than re-splitting the string on
-// "\n" and stripping the prefix -- the tokens are the primary output, the
-// string is derived from them for backward compatibility with clients that
-// already parse unified-diff.
-
-// One row of a rendered field diff. `type` tells a split-view renderer which
-// column the line belongs in (left only, right only, or both); `text` is the
-// line content without the unified-diff prefix character.
 export type DiffLine = {
   type: "unchanged" | "added" | "removed";
   text: string;
 };
 
-// One field's rendered diff. `changed: false` + `diff: null` + `lines: null`
-// means the field is byte-identical between the two revisions (including
-// both null); the frontend can collapse it. When changed, both `diff` (the
-// unified-diff string) and `lines` (the structured tokens) are populated
-// from a single LCS walk. Matches the OpenAPI `FieldDiff` schema.
 export type FieldDiff = {
   changed: boolean;
   diff: string | null;
   lines: DiffLine[] | null;
 };
 
-// Compare two nullable string fields. null === null (and any identical pair)
-// is unchanged. Otherwise builds both the unified-diff string and the
-// structured token list via `createFieldDiffLines`, so the LCS walk runs once.
+// Compare two nullable string fields.
 export function diffField(from: string | null, to: string | null): FieldDiff {
   if (from === to) return { changed: false, diff: null, lines: null };
   const lines = createFieldDiffLines(from, to);
@@ -54,7 +28,7 @@ export function diffField(from: string | null, to: string | null): FieldDiff {
   };
 }
 
-// Minimal LCS-based diff over any two ordered sequences, producing a
+// LCS-based diff over any two ordered sequences, producing a
 // structured token list.
 export function diffSequences<T>(
   from: T[],
