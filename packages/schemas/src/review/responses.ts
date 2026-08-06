@@ -16,6 +16,9 @@ export const reviewCaseListItemSchema = z.object({
 
 export const reviewQueueItemSchema = reviewCaseListItemSchema.extend({
   decision: reviewOutcomeSchema.nullable(),
+  assigned_at: z.string(),
+  time_limit: z.string(),
+  expires_at: z.string(),
 });
 
 export const reviewCaseDetailSchema = z.object({
@@ -26,6 +29,7 @@ export const reviewCaseDetailSchema = z.object({
   created_by: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
+  time_limit: z.string().nullable(),
 });
 
 export const reviewCaseDetailResponseSchema = z.object({
@@ -35,7 +39,8 @@ export const reviewCaseDetailResponseSchema = z.object({
       id: z.string(),
       member_id: z.string().nullable(),
       status: z.string(),
-      assigned_at: z.string(),
+      assigned_at: z.string().nullable(),
+      expires_at: z.string().nullable(),
     })
   ),
   decisions: z.array(

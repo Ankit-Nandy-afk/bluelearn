@@ -5,11 +5,19 @@ properties:
   id:
     $ref: "../common/Uuid.yaml"
   member_id:
-    $ref: "../common/Uuid.yaml"
+    oneOf:
+      - $ref: "../common/Uuid.yaml"
+      - type: "null"
   status:
     type: string
-    enum: [assigned, recused, replaced, completed]
+    enum: [assigned, recused, replaced, completed, pending]
     example: assigned
   assigned_at:
-    $ref: "../common/Timestamp.yaml"
+    oneOf:
+      - $ref: "../common/Timestamp.yaml"
+      - type: "null"
+  expires_at:
+    oneOf:
+      - $ref: "../common/Timestamp.yaml"
+      - type: "null"
 required: [id, member_id, status]

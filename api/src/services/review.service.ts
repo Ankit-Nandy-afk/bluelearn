@@ -461,9 +461,11 @@ export async function getReviewCase(
       member_id: pm.member_id,
       status: pm.status,
       assigned_at: pm.assigned_at,
-      expires_at: new Date(
-        new Date(pm.assigned_at).getTime() + timeLimitMs
-      ).toISOString(),
+      expires_at: pm.assigned_at
+        ? new Date(
+            new Date(pm.assigned_at).getTime() + timeLimitMs
+          ).toISOString()
+        : null,
     })),
     decisions: members
       .filter((pm) => pm.review_decisions)

@@ -17,4 +17,7 @@ properties:
     $ref: "../common/Timestamp.yaml"
   updated_at:
     $ref: "../common/Timestamp.yaml"
+  time_limit:
+    type: string
+    example: 2 days
 required: [id, case_type, status]

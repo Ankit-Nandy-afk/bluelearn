@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -1183,10 +1203,7 @@ export type Database = {
         Args: { p_revision_id: string }
         Returns: string
       }
-      sweep_expired_review_seats: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      sweep_expired_review_seats: { Args: never; Returns: Json }
       wilson_lower_bound: {
         Args: { downvotes: number; upvotes: number; z?: number }
         Returns: number
@@ -1218,7 +1235,7 @@ export type Database = {
       objective_revision_status: "draft" | "published"
       review_outcome: "approved" | "rejected"
       revision_status: "draft" | "submitted"
-      seat_status: "assigned" | "recused" | "replaced" | "completed"
+      seat_status: "assigned" | "recused" | "replaced" | "completed" | "pending"
       subject_status: "draft" | "published"
       todo_status: "open" | "resolved"
       vote_direction: "up" | "down"
@@ -1347,6 +1364,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["verifier", "moderator", "curator", "admin"],
@@ -1376,10 +1396,11 @@ export const Constants = {
       objective_revision_status: ["draft", "published"],
       review_outcome: ["approved", "rejected"],
       revision_status: ["draft", "submitted"],
-      seat_status: ["assigned", "recused", "replaced", "completed"],
+      seat_status: ["assigned", "recused", "replaced", "completed", "pending"],
       subject_status: ["draft", "published"],
       todo_status: ["open", "resolved"],
       vote_direction: ["up", "down"],
     },
   },
 } as const
+

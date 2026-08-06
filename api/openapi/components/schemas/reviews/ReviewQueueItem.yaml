@@ -19,4 +19,22 @@ properties:
     enum: [approved, rejected, null]
     description: The caller's own vote on this case, or null if not yet cast.
     example: approved
-required: [id, case_type, status, title, created_at, decision]
+  assigned_at:
+    $ref: "../common/Timestamp.yaml"
+  time_limit:
+    type: string
+    example: 2 days
+  expires_at:
+    $ref: "../common/Timestamp.yaml"
+required:
+  [
+    id,
+    case_type,
+    status,
+    title,
+    created_at,
+    decision,
+    assigned_at,
+    time_limit,
+    expires_at,
+  ]

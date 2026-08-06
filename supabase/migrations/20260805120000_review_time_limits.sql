@@ -89,8 +89,6 @@ declare
   v_needed integer;
   v_replaced_count integer := 0;
   v_assigned_count integer := 0;
-  v_pending_count integer := 0;
-  v_filled integer := 0;
 begin
   -- Use transaction-level advisory lock to prevent concurrent sweeps
   v_lock_acquired := pg_try_advisory_xact_lock(hashtext('sweep_expired_review_seats'));
@@ -145,7 +143,6 @@ begin
     v_needed := v_panel.target_seat_count - v_active_seats;
 
     if v_needed > 0 then
-      v_filled := 0;
       for v_new_member in (
         select p.id
         from public.user_roles ur
@@ -164,27 +161,17 @@ begin
         insert into public.panel_members (panel_id, member_id, status, assigned_at)
           values (v_panel.panel_id, v_new_member.id, 'assigned', now());
         v_assigned_count := v_assigned_count + 1;
-        v_filled := v_filled + 1;
       end loop;
-      
-      -- Insert pending seats for the shortfall to maintain target_seat_count
-      if v_filled < v_needed then
-        for i in 1 .. (v_needed - v_filled) loop
-          insert into public.panel_members (panel_id, member_id, status)
-            values (v_panel.panel_id, null, 'pending');
-          v_pending_count := v_pending_count + 1;
-        end loop;
-      end if;
     end if;
   end loop;
 
   return jsonb_build_object(
     'replaced_count', v_replaced_count,
     'assigned_count', v_assigned_count,
-    'pending_count', v_pending_count,
     'skipped', false
   );
 end;
 $$;
 
 grant execute on function public.sweep_expired_review_seats() to service_role, authenticated;
+
