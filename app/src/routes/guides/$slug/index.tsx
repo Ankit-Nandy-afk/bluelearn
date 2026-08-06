@@ -20,6 +20,7 @@ import {
 
 import type { Action } from "@/components/sidebar/GuideSidebar";
 import type { ComboboxItem } from "@/components/ui/combobox";
+
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
@@ -51,14 +52,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
 import { Combobox } from "@/components/ui/combobox";
 import { Textarea } from "@/components/ui/textarea";
 
-const SIDEBAR_ACTIONS: Array<Action> = [
-  { icon: Replace, label: "View Variants" },
-  { icon: Target, label: "View Objectives" },
-  { icon: Users, label: "View Contributors" },
-  { icon: History, label: "View Revisions" },
+import { VariantsModal } from "@/components/guides/modals/VariantsModal";
+import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
+import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
+import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
+
+type ModalType =
+  | "variants"
+  | "objectives"
+  | "contributors"
+  | "revisions"
+  | null;
+
+type SidebarActionItem = {
+  icon: typeof Replace;
+  label: string;
+  type: NonNullable<ModalType>;
+};
+
+const SIDEBAR_ACTIONS: Array<SidebarActionItem> = [
+  { icon: Replace, label: "View Variants", type: "variants" },
+  { icon: Target, label: "View Objectives", type: "objectives" },
+  { icon: Users, label: "View Contributors", type: "contributors" },
+  { icon: History, label: "View Revisions", type: "revisions" },
 ];
 
 function useVote(slug: string) {
@@ -235,9 +255,19 @@ function DownvoteDialog({ isOpen, setIsOpen, setVote }) {
 }
 
 export const Route = createFileRoute("/guides/$slug/")({
-  loader: async ({ params, abortController }) => {
+  validateSearch: (search: Record<string, unknown>): { variant?: string } => ({
+    variant:
+      typeof search.variant === "string" && search.variant.length > 0
+        ? search.variant
+        : undefined,
+  }),
+  loaderDeps: ({ search }) => ({ variant: search.variant }),
+  loader: async ({ params, deps, abortController }) => {
     try {
-      return await getGuide(params.slug, { signal: abortController.signal });
+      return await getGuide(params.slug, {
+        variant: deps.variant,
+        signal: abortController.signal,
+      });
     } catch {
       throw notFound();
     }
@@ -250,6 +280,8 @@ function RouteComponent() {
   const guide = Route.useLoaderData();
 
   const { vote, setVote, upvote, downvote } = useVote(slug);
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
+
 
   const breadcrumbOrigin = useLocation({
     select: (location) => location.state.breadcrumbOrigin,
@@ -280,10 +312,15 @@ function RouteComponent() {
         <GuideSidebar
           sidebarActions={
             <div className="flex items-center justify-start gap-4">
-              {SIDEBAR_ACTIONS.map((action: Action) => (
+              {SIDEBAR_ACTIONS.map((action: SidebarActionItem) => (
                 <Tooltip key={action.label}>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="lg">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => setActiveModal(action.type)}
+                      aria-label={action.label}
+                    >
                       <action.icon className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -404,6 +441,32 @@ function RouteComponent() {
           <GuideReader guide={guide} />
         </main>
       </section>
+
+      {/* Action Modals */}
+      <VariantsModal
+        open={activeModal === "variants"}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+        slug={slug}
+        currentVariantSlug={guide.variant_slug}
+      />
+
+      <ObjectivesModal
+        open={activeModal === "objectives"}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+        slug={slug}
+      />
+
+      <ContributorsModal
+        open={activeModal === "contributors"}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+        slug={slug}
+      />
+
+      <RevisionsModal
+        open={activeModal === "revisions"}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+        slug={slug}
+      />
     </div>
   );
 }

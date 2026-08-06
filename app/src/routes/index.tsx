@@ -70,28 +70,28 @@ function RouteComponent() {
             </p>
             <h1 className="max-w-3xl text-4xl font-bold tracking-[-0.04em] lg:text-6xl">
               Welcome to{" "}
-              <span className="text-brand-blue italic">Bluelearn</span>,
+              <span className="text-brand-bright-blue italic">Bluelearn</span>,
               <br />
               have a look around...
             </h1>
             <p className="mt-6 max-w-xl font-mono text-sm text-muted-foreground">
               anything and everything you think of can be found
-              <span className="font font-bold text-brand-blue">*</span>
+              <span className="font font-bold text-brand-bright-blue">*</span>
             </p>
           </div>
           {/* Right */}
           <div className="flex flex-col items-end">
             <div className="aspect-[4/3] w-full overflow-hidden">
               <img
-                src="/assets/atom/atom-dot-2.png"
+                src="/assets/adam/adam-sphere-smile.png"
                 alt="Bluelearn"
                 className="h-full w-full object-cover"
               />
             </div>
 
             <p className="mt-3 text-right font-mono text-xs tracking-[0.08em] text-muted-foreground">
-              <span className="font-bold text-brand-blue">*</span>can't find
-              your subject area,
+              <span className="font-bold text-brand-bright-blue">*</span>can't
+              find your subject area?
               <br />
               contribute a guide
             </p>
@@ -204,7 +204,7 @@ function RouteComponent() {
               <p className="text-[13px] leading-normal text-muted-foreground">
                 {concept.blurb}
               </p>
-              <span className="mono-micro mt-auto inline-flex items-center tracking-[0.08em] text-muted-foreground uppercase group-hover:text-brand-blue">
+              <span className="mono-micro mt-auto inline-flex items-center tracking-[0.08em] text-muted-foreground uppercase group-hover:text-brand-bright-blue">
                 Read
                 <ChevronRight className="h-3.5 w-3.5" />
               </span>

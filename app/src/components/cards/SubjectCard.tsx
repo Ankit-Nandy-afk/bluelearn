@@ -43,9 +43,11 @@ export const SubjectCard = ({ subject, to }: PropTypes) => {
             {subject.name}
           </h3>
 
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            {subject.summary}
-          </p>
+          {subject.summary && (
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              {subject.summary}
+            </p>
+          )}
         </CardHeader>
 
         {/* Footer */}

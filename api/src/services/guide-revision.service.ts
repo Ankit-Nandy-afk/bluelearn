@@ -13,7 +13,7 @@ type DraftTagsAndEdges = {
   tags?: string[];
   prerequisites?: string[];
   newSubjects?: { name: string; summary?: string | null }[];
-  todoPrereqs?: string[];
+  todoPrereqs?: { title: string; summary: string }[];
 };
 
 // The full snapshot of a single revision. RLS exposes a revision once it is
@@ -97,7 +97,7 @@ async function resolveSubjectIds(supabase: DB, ids: string[]) {
   return unique;
 }
 
-async function resolveRevisionBase(supabase: DB, revisionId: string) {
+export async function resolveRevisionBase(supabase: DB, revisionId: string) {
   const { data: rev, error } = await supabase
     .from("guide_revisions")
     .select("guide_id")
@@ -167,7 +167,11 @@ async function replacePrerequisites(
 }
 
 // Replace a draft guide's open todos.
-async function replaceTodos(supabase: DB, baseId: string, titles: string[]) {
+async function replaceTodos(
+  supabase: DB,
+  baseId: string,
+  todos: { title: string; summary: string }[]
+) {
   const { error: delError } = await supabase
     .from("todo_prerequisites")
     .delete()
@@ -178,8 +182,8 @@ async function replaceTodos(supabase: DB, baseId: string, titles: string[]) {
     throw new ServiceError("Unable to update todos", 400);
   }
 
-  for (const title of titles) {
-    await createTodo(supabase, baseId, title);
+  for (const todo of todos) {
+    await createTodo(supabase, baseId, todo.title, todo.summary);
   }
 }
 
@@ -234,12 +238,13 @@ async function loadDraftContext(supabase: DB, guideId: string) {
     knowledge_type: null,
     is_variant: false,
     base_slug: null,
+    variant_slug: null,
     prerequisites: [],
     todos: [],
   };
   const { data: guide, error: guideError } = await supabase
     .from("guides")
-    .select("guide_base_id")
+    .select("guide_base_id, slug")
     .eq("id", guideId)
     .maybeSingle();
   if (guideError) {
@@ -262,7 +267,7 @@ async function loadDraftContext(supabase: DB, guideId: string) {
       .eq("edge_type", "prerequisite"),
     supabase
       .from("todo_prerequisites")
-      .select("title")
+      .select("title, summary")
       .eq("dependent_guide_base_id", baseId)
       .eq("status", "open"),
   ]);
@@ -278,19 +283,46 @@ async function loadDraftContext(supabase: DB, guideId: string) {
     knowledge_type: baseRes.data?.knowledge_type ?? null,
     is_variant: canonical != null && canonical !== guideId,
     base_slug: baseRes.data?.slug ?? null,
+    // Only set once the guide is published, so it tells whether the editor
+    // route or the contribute flow owns this draft.
+    variant_slug: guide.slug,
     prerequisites: (edgeRes.data ?? [])
       .map((e) => e.from?.slug)
       .filter((s): s is string => s != null),
-    todos: (todoRes.data ?? []).map((t) => t.title),
+    todos: (todoRes.data ?? []).map((t) => ({
+      title: t.title,
+      summary: t.summary,
+    })),
   };
+}
+
+// The rejected case this draft was forked from, so the editor can show the
+// panel's feedback next to the fields being fixed.
+async function loadRevisedFromCaseId(
+  supabase: DB,
+  revisedFromRevisionId: string | null
+) {
+  if (!revisedFromRevisionId) return null;
+
+  const { data, error } = await supabase
+    .from("guide_review_cases")
+    .select("case_id")
+    .eq("guide_revision_id", revisedFromRevisionId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+    throw new ServiceError("Failed to load revision", 500);
+  }
+  return data?.case_id ?? null;
 }
 
 // Includes revision with subject tags, and draft context (knowledge type,
 // prerequisites, todos).
 export async function getRevision(supabase: DB, id: string) {
-  const { data: revision, error } = await supabase
+  const { data, error } = await supabase
     .from("guide_revisions")
-    .select(REVISION_DETAIL)
+    .select(`${REVISION_DETAIL}, revised_from_revision_id`)
     .eq("id", id)
     .maybeSingle();
 
@@ -298,20 +330,54 @@ export async function getRevision(supabase: DB, id: string) {
     console.error(error);
     throw new ServiceError("Failed to load revision", 500);
   }
-  if (!revision) throw new ServiceError("Revision not found", 404);
-
+  if (!data) throw new ServiceError("Revision not found", 404);
+  const { revised_from_revision_id, ...revision } = data;
   const subjects = await loadRevisionTags(supabase, id);
-  const { knowledge_type, is_variant, base_slug, prerequisites, todos } =
-    await loadDraftContext(supabase, revision.guide_id);
+  const [context, revised_from_case_id] = await Promise.all([
+    loadDraftContext(supabase, revision.guide_id),
+    loadRevisedFromCaseId(supabase, revised_from_revision_id),
+  ]);
+  const {
+    knowledge_type,
+    is_variant,
+    base_slug,
+    variant_slug,
+    prerequisites,
+    todos,
+  } = context;
   return {
     revision,
     subjects,
     knowledge_type,
     is_variant,
     base_slug,
+    variant_slug,
     prerequisites,
     todos,
+    revised_from_case_id,
   };
+}
+
+// Fork a rejected revision into a fresh draft, so the author can fix it and
+// resubmit.
+export async function reviseRevision(supabase: DB, id: string) {
+  const { data: revision_id, error } = await supabase.rpc(
+    "revise_guide_revision",
+    { p_revision_id: id }
+  );
+
+  if (error) {
+    if (error.code === "P0002") {
+      throw new ServiceError(
+        "Revision not found or not a rejected submission",
+        404
+      );
+    }
+    console.error(error);
+    throw new ServiceError("Unable to revise revision", 500);
+  }
+
+  return { revision_id };
 }
 
 // Overwrite a draft revision in place. RLS permits this only on the author's own
@@ -473,13 +539,16 @@ export async function diffWithPrevious(supabase: DB, id: string) {
   }
   if (!current) throw new ServiceError("Revision not found", 404);
 
-  const { data: prev, error: prevError } = await supabase
+  let query = supabase
     .from("guide_revisions")
     .select("id")
     .eq("guide_id", current.guide_id)
     .not("approved_at", "is", null)
-    .neq("id", id)
-    .lt("approved_at", current.approved_at)
+    .neq("id", id);
+
+  if (current.approved_at) query = query.lt("approved_at", current.approved_at);
+
+  const { data: prev, error: prevError } = await query
     .order("approved_at", { ascending: false })
     .limit(1)
     .maybeSingle();

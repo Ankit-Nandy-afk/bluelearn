@@ -30,3 +30,16 @@ export async function getMyActivity({ signal }: FetchOptions = {}) {
 
   return await res.json();
 }
+
+export async function getPublicProfile(
+  username: string,
+  { signal }: FetchOptions = {}
+) {
+  const res = await client.profiles[":username"].$get(
+    { param: { username } },
+    { init: { signal } }
+  );
+  await assertOk(res);
+
+  return await res.json();
+}

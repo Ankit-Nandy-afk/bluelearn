@@ -18,12 +18,16 @@ import {
 import { createVariantRevision, getVariantBySlug } from "@/lib/api/variants";
 import { uploadMedia } from "@/lib/api/media";
 import { estimateReadMinutes } from "@/lib/guideUtils";
+import { requireSession } from "@/lib/auth";
 
 import { GuideDetails } from "@/components/contribute/steps/GuideDetails";
 import { Content } from "@/components/contribute/steps/Content";
 import { Submit } from "@/components/contribute/steps/Submit";
+import { RejectionFeedback } from "@/components/review/RejectionFeedback";
 
 export const Route = createFileRoute("/guides/$slug/$variantSlug/edit")({
+  ssr: false,
+  beforeLoad: requireSession,
   validateSearch: (search: Record<string, unknown>): { draft?: string } => ({
     draft: typeof search.draft === "string" ? search.draft : undefined,
   }),
@@ -249,10 +253,10 @@ function RouteComponent() {
 
   return (
     <div className="mx-auto flex min-h-[max(calc(100vh-65px),750px)] w-full max-w-[1280px] flex-col border-x bg-background">
-      <section className="flex min-h-0 flex-1 flex-col border-b px-8 py-8 lg:px-16">
+      <section className="relative flex min-h-0 flex-1 gap-8 border-b px-8 py-8 lg:px-16">
         <Stepper.Root
           linear
-          className="flex min-h-0 w-full flex-1 flex-col gap-8"
+          className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-8"
         >
           {() => (
             <>
@@ -318,6 +322,8 @@ function RouteComponent() {
             </>
           )}
         </Stepper.Root>
+
+        {draftId && <RejectionFeedback draftId={draftId} />}
       </section>
     </div>
   );

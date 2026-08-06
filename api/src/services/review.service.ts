@@ -4,6 +4,7 @@ import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 import { PANEL_POLICY_DEFAULTS } from "../lib/review-policy";
 import { readingMinutes } from "../lib/reading";
+import { loadUsernames } from "./identity.service";
 
 type DB = SupabaseClient<Database>;
 type ReviewOutcome = Database["public"]["Enums"]["review_outcome"];
@@ -97,6 +98,7 @@ type CaseDetailRow = {
       title: string | null;
       summary: string | null;
       body: string | null;
+      change_summary: string | null;
       status: string;
       created_at: string;
       word_count: number;
@@ -108,9 +110,17 @@ type CaseDetailRow = {
 };
 
 type TagsAndEdges = {
+  knowledge_type: Database["public"]["Enums"]["knowledge_type"] | null;
+  base: { slug: string; title: string | null } | null;
   tags: Array<{ id: string; name: string; status: string }>;
   prerequisites: Array<{ slug: string; title: string | null }>;
   todos: Array<{ id: string; title: string }>;
+  claimedTodos: Array<{
+    id: string;
+    title: string;
+    summary: string;
+    requested_by: { slug: string; title: string | null } | null;
+  }>;
 };
 
 export async function getReviewQueue(
@@ -219,8 +229,8 @@ export async function listReviewCases(supabase: DB) {
   }));
 }
 
-// The tags and edges a revision proposes. Uses service client because
-// draft tags and edges are unreachable through RLS.
+// The knowledge type, tags, and edges a revision proposes. Uses service client
+// because a draft base and its tags and edges are unreachable through RLS.
 async function loadTagsAndEdges(
   service: DB,
   revisionId: string,
@@ -228,7 +238,16 @@ async function loadTagsAndEdges(
 ): Promise<TagsAndEdges> {
   const { data: guide, error: guideError } = await service
     .from("guides")
-    .select("guide_base_id")
+    .select(
+      `guide_base_id,
+       guide_bases!guides_guide_base_id_fkey(
+         knowledge_type,
+         slug,
+         canonical:guides!guide_bases_canonical_guide_id_fkey(
+           current:guide_revisions!guides_current_revision_id_fkey(title)
+         )
+       )`
+    )
     .eq("id", guideId)
     .maybeSingle();
 
@@ -239,7 +258,7 @@ async function loadTagsAndEdges(
 
   const baseId = guide?.guide_base_id ?? null;
 
-  const [tagRes, edgeRes, todoRes] = await Promise.all([
+  const [tagRes, edgeRes, todoRes, claimRes] = await Promise.all([
     service
       .from("guide_revision_subjects")
       .select("subjects(id, name, status)")
@@ -265,14 +284,44 @@ async function loadTagsAndEdges(
           .eq("dependent_guide_base_id", baseId)
           .eq("status", "open")
       : { data: [], error: null },
+    // The todos this submission was written to fill. Approving it resolves them,
+    // so the panel has to see them before voting.
+    baseId
+      ? service
+          .from("todo_claims")
+          .select(
+            `todo:todo_prerequisites!inner(
+               id, title, summary,
+               requester:guide_bases!todo_prerequisites_dependent_guide_base_id_fkey(
+                 slug,
+                 canonical:guides!guide_bases_canonical_guide_id_fkey(
+                   current:guide_revisions!guides_current_revision_id_fkey(title)
+                 )
+               )
+             )`
+          )
+          .eq("guide_base_id", baseId)
+          .eq("todo.status", "open")
+      : { data: [], error: null },
   ]);
 
-  if (tagRes.error || edgeRes.error || todoRes.error) {
-    console.error(tagRes.error ?? edgeRes.error ?? todoRes.error);
+  if (tagRes.error || edgeRes.error || todoRes.error || claimRes.error) {
+    console.error(
+      tagRes.error ?? edgeRes.error ?? todoRes.error ?? claimRes.error
+    );
     throw new ServiceError("Failed to load revision tags and edges", 500);
   }
 
+  const baseSlug = guide?.guide_bases?.slug ?? null;
+
   return {
+    knowledge_type: guide?.guide_bases?.knowledge_type ?? null,
+    base: baseSlug
+      ? {
+          slug: baseSlug,
+          title: guide?.guide_bases?.canonical?.current?.title ?? null,
+        }
+      : null,
     tags: (tagRes.data ?? [])
       .map((r) => r.subjects)
       .filter((s): s is NonNullable<typeof s> => !!s)
@@ -285,6 +334,20 @@ async function loadTagsAndEdges(
         title: b.canonical?.current?.title ?? null,
       })),
     todos: (todoRes.data ?? []).map((t) => ({ id: t.id, title: t.title })),
+    claimedTodos: (claimRes.data ?? [])
+      .map((c) => c.todo)
+      .filter((t): t is NonNullable<typeof t> => !!t)
+      .map((t) => ({
+        id: t.id,
+        title: t.title,
+        summary: t.summary,
+        requested_by: t.requester?.slug
+          ? {
+              slug: t.requester.slug,
+              title: t.requester.canonical?.current?.title ?? null,
+            }
+          : null,
+      })),
   };
 }
 
@@ -311,7 +374,7 @@ export async function getReviewCase(
        guide_review_cases(
          guide_revision_id,
          guide_revisions(
-           id, guide_id, author_id, title, summary, body, status, created_at, word_count,
+           id, guide_id, author_id, title, summary, body, change_summary, status, created_at, word_count,
            guide_revision_subjects(subjects(id, name, status))
          )
        )`
@@ -331,16 +394,24 @@ export async function getReviewCase(
   const latestPanel = data.review_panels[0] ?? null;
   const members = latestPanel?.panel_members ?? [];
 
+  const usernames = await loadUsernames(supabase, [
+    ...members.map((pm) => pm.member_id),
+    revision?.author_id ?? null,
+  ]);
+
   const mapDecision = (
     d: NonNullable<
       CaseDetailRow["review_panels"][number]["panel_members"][number]["review_decisions"]
-    >
+    >,
+    memberId: string | null
   ) => ({
     id: d.id,
     decision: d.decision,
     notes: d.notes,
     reasons: d.review_decision_reasons?.map((r) => r.reason) ?? [],
     created_at: d.created_at,
+    member_id: memberId,
+    member_username: memberId ? (usernames.get(memberId) ?? null) : null,
   });
 
   // Lets the reviewer come back to a review decision with their own data reseeded
@@ -373,6 +444,23 @@ export async function getReviewCase(
       ? await loadTagsAndEdges(service, revision.id, revision.guide_id)
       : null;
 
+  // A rejection can only be revised once at a time, so the author's open fork
+  // decides whether the case offers to start one or resume it.
+  const reviseDraft =
+    isAuthor && data.status === "rejected" && revision
+      ? await supabase
+          .from("guide_revisions")
+          .select("id")
+          .eq("revised_from_revision_id", revision.id)
+          .eq("status", "draft")
+          .maybeSingle()
+      : null;
+
+  if (reviseDraft?.error) {
+    console.error(reviseDraft.error);
+    throw new ServiceError("Failed to load review case", 500);
+  }
+
   return {
     case: {
       id: data.id,
@@ -391,15 +479,23 @@ export async function getReviewCase(
     })),
     decisions: members
       .filter((pm) => pm.review_decisions)
-      .map((pm) => mapDecision(pm.review_decisions!)),
-    viewer_decision: viewerVote ? mapDecision(viewerVote) : null,
+      .map((pm) => mapDecision(pm.review_decisions!, pm.member_id)),
+    viewer_decision: viewerVote ? mapDecision(viewerVote, viewerId) : null,
     viewer_role: viewerRole,
+    revise_draft_id: reviseDraft?.data?.id ?? null,
     revision: revision
       ? {
           id: revision.id,
+          author_id: revision.author_id,
+          author_username: revision.author_id
+            ? (usernames.get(revision.author_id) ?? null)
+            : null,
+          knowledge_type: tagsAndEdges?.knowledge_type ?? null,
+          base: tagsAndEdges?.base ?? null,
           title: revision.title,
           summary: revision.summary,
           body: revision.body,
+          change_summary: revision.change_summary,
           status: revision.status,
           created_at: revision.created_at,
           duration_minutes: readingMinutes(revision.word_count),
@@ -412,6 +508,7 @@ export async function getReviewCase(
       : null,
     prerequisites: tagsAndEdges?.prerequisites ?? [],
     todos: tagsAndEdges?.todos ?? [],
+    claimed_todos: tagsAndEdges?.claimedTodos ?? [],
   };
 }
 

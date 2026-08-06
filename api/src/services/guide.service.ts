@@ -11,9 +11,14 @@ import type {
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 import { selectInBatches } from "../lib/batch";
-import { syncDraftTagsAndEdges } from "./guide-revision.service";
+import {
+  resolveRevisionBase,
+  syncDraftTagsAndEdges,
+} from "./guide-revision.service";
+import { claimTodos } from "./todo.service";
 import { readingMinutes } from "../lib/reading";
 import { loadUsernames } from "./identity.service";
+import { listVariantRevisions } from "./variant.service";
 
 type DB = SupabaseClient<Database>;
 
@@ -202,6 +207,7 @@ export async function createGuide(
     prerequisites,
     newSubjects,
     todoPrereqs,
+    todoClaims,
   } = input;
 
   const { data: revision_id, error } = await supabase.rpc("create_guide", {
@@ -223,12 +229,21 @@ export async function createGuide(
     todoPrereqs,
   });
 
+  if (todoClaims.length > 0) {
+    const base = await resolveRevisionBase(supabase, revision_id);
+    await claimTodos(supabase, base.id, todoClaims);
+  }
+
   return { revision_id };
 }
 
-// Resolve a guide by slug to its canonical content + subject tags. The prereq/
-// dependent neighborhood is deferred to the graph pass.
-export async function getGuideBySlug(supabase: DB, rawSlug: string) {
+// Resolve a guide by slug to its canonical content + subject tags (or a specified variant).
+// The prereq/dependent neighborhood is deferred to the graph pass.
+export async function getGuideBySlug(
+  supabase: DB,
+  rawSlug: string,
+  rawVariantSlug?: string | null
+) {
   const slug = rawSlug.toLowerCase();
 
   const { data: guide, error } = await supabase
@@ -245,14 +260,39 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
   }
   if (!guide) throw new ServiceError("Guide not found", 404);
 
-  const current = guide.canonical?.current ?? null;
+  let selectedGuide = guide.canonical;
+  if (rawVariantSlug) {
+    const variantSlug = rawVariantSlug.toLowerCase();
+    if (guide.canonical?.slug?.toLowerCase() !== variantSlug) {
+      const { data: variant, error: variantError } = await supabase
+        .from("guides")
+        .select(
+          `id, slug, author_id,
+           current:guide_revisions!guides_current_revision_id_fkey(
+             id, title, summary, body, word_count, created_at
+           )`
+        )
+        .eq("guide_base_id", guide.id)
+        .eq("slug", variantSlug)
+        .maybeSingle();
+
+      if (variantError) {
+        console.error(variantError);
+        throw new ServiceError("Failed to load guide variant", 500);
+      }
+      if (!variant) throw new ServiceError("Variant not found", 404);
+      selectedGuide = variant;
+    }
+  }
+
+  const current = selectedGuide?.current ?? null;
   const subjects = await loadCanonicalTags(supabase, current?.id ?? null);
-  const authorId = guide.canonical?.author_id ?? null;
+  const authorId = selectedGuide?.author_id ?? null;
   const usernames = await loadUsernames(supabase, [authorId]);
 
   const detail: Guide = {
     slug: guide.slug ?? "",
-    variant_slug: guide.canonical?.slug ?? null,
+    variant_slug: selectedGuide?.slug ?? null,
     title: current?.title ?? "",
     author: authorId ? (usernames.get(authorId) ?? "") : "",
     summary: current?.summary ?? null,
@@ -412,4 +452,136 @@ export async function getVariantBySlug(
       votes: { up: tally?.upvotes ?? 0, down: tally?.downvotes ?? 0 },
     },
   };
+}
+
+// List published objectives that include this guide base in their current revision.
+export async function listObjectivesForGuide(supabase: DB, rawSlug: string) {
+  const baseId = await resolveBaseId(supabase, rawSlug);
+
+  const { data: nodes, error: nodeError } = await supabase
+    .from("objective_revision_nodes")
+    .select("revision_id")
+    .eq("guide_base_id", baseId);
+
+  if (nodeError) {
+    console.error(nodeError);
+    throw new ServiceError("Failed to load objectives for guide", 500);
+  }
+
+  const revisionIds = [...new Set((nodes ?? []).map((n) => n.revision_id))];
+  if (revisionIds.length === 0) return { objectives: [], total: 0 };
+
+  const { data: objectives, error: objError } = await selectInBatches(
+    revisionIds,
+    (batch) =>
+      supabase
+        .from("objectives")
+        .select(
+          `id, slug, status,
+       current:objective_revisions!objectives_current_revision_id_fkey(title, summary)`
+        )
+        .in("current_revision_id", batch)
+        .eq("status", "published")
+  );
+
+  if (objError) {
+    console.error(objError);
+    throw new ServiceError("Failed to load objectives for guide", 500);
+  }
+
+  const list = (objectives ?? [])
+    .filter((o) => o.slug !== null)
+    .map((o) => ({
+      id: o.id,
+      slug: o.slug!,
+      title: o.current?.title ?? "",
+      summary: o.current?.summary ?? null,
+    }));
+
+  return { objectives: list, total: list.length };
+}
+
+// List distinct contributors (authors) across all revisions of this guide base.
+export async function listGuideContributors(supabase: DB, rawSlug: string) {
+  const baseId = await resolveBaseId(supabase, rawSlug);
+
+  const { data: guides, error: guideError } = await supabase
+    .from("guides")
+    .select("id")
+    .eq("guide_base_id", baseId);
+
+  if (guideError) {
+    console.error(guideError);
+    throw new ServiceError("Failed to load guide contributors", 500);
+  }
+
+  const guideIds = (guides ?? []).map((g) => g.id);
+  if (guideIds.length === 0) return { contributors: [] };
+
+  const { data: revisions, error: revError } = await selectInBatches(
+    guideIds,
+    (batch) =>
+      supabase.from("guide_revisions").select("author_id").in("guide_id", batch)
+  );
+
+  if (revError) {
+    console.error(revError);
+    throw new ServiceError("Failed to load revisions for contributors", 500);
+  }
+
+  const authorIds = [
+    ...new Set(
+      (revisions ?? [])
+        .map((r) => r.author_id)
+        .filter((id): id is string => !!id)
+    ),
+  ];
+  if (authorIds.length === 0) return { contributors: [] };
+
+  const { data: profiles, error: profError } = await selectInBatches(
+    authorIds,
+    (batch) =>
+      supabase
+        .from("profiles")
+        .select("id, username, display_name")
+        .in("id", batch)
+  );
+
+  if (profError) {
+    console.error(profError);
+    throw new ServiceError("Failed to load contributor profiles", 500);
+  }
+
+  const contributors = (profiles ?? []).map((p) => ({
+    id: p.id,
+    username: p.username,
+    name: p.display_name ?? null,
+    avatar_url: null,
+  }));
+
+  return { contributors };
+}
+
+// List revisions for a guide by slug (uses the canonical variant or specified variant).
+export async function listGuideRevisions(
+  supabase: DB,
+  rawSlug: string,
+  { page, limit }: Pagination = { page: 1, limit: 20 }
+) {
+  const baseId = await resolveBaseId(supabase, rawSlug);
+
+  const { data: base, error: baseError } = await supabase
+    .from("guide_bases")
+    .select("canonical_guide_id")
+    .eq("id", baseId)
+    .maybeSingle();
+
+  if (baseError || !base?.canonical_guide_id) {
+    throw new ServiceError("Failed to load canonical guide", 500);
+  }
+
+  return listVariantRevisions(supabase, base.canonical_guide_id, {
+    page,
+    limit,
+  });
 }

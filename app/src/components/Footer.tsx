@@ -8,6 +8,8 @@ import {
 } from "react-icons/fa6";
 import type { IconType } from "react-icons";
 
+const BLUELEARN_OFFICIAL = import.meta.env.VITE_BLUELEARN_OFFICIAL;
+
 // Link legal pages to marketing site.
 const SITE = "https://bluelearn.org";
 
@@ -42,7 +44,19 @@ export function Footer() {
     <footer className="border-t bg-background">
       <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-8 py-6 lg:px-16">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-light text-muted-foreground">
-          <span>&copy; {new Date().getFullYear()} Bluelearn</span>
+          {BLUELEARN_OFFICIAL == "true" ? (
+            <span>&copy; {new Date().getFullYear()} Bluelearn</span>
+          ) : (
+            <div className="flex gap-1">
+              <span>Powered by</span>
+              <a
+                href="https://bluelearn.org"
+                className="underline transition-colors hover:text-foreground"
+              >
+                Bluelearn
+              </a>
+            </div>
+          )}
           <nav className="flex items-center gap-6">
             {LEGAL.map((link) => (
               <a
