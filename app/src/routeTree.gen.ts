@@ -26,6 +26,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SubjectsIndexRouteImport } from './routes/subjects.index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as ReviewIndexRouteImport } from './routes/review.index'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as ObjectivesIndexRouteImport } from './routes/objectives.index'
 import { Route as GuidesIndexRouteImport } from './routes/guides/index'
 import { Route as SubjectsSlugRouteImport } from './routes/subjects.$slug'
@@ -33,6 +34,7 @@ import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings.appearance'
 import { Route as SettingsAccountRouteImport } from './routes/settings.account'
 import { Route as ReviewCaseIdRouteImport } from './routes/review.$caseId'
+import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
 import { Route as ObjectivesSlugRouteImport } from './routes/objectives.$slug'
 import { Route as GuidesSlugRouteImport } from './routes/guides/$slug'
 import { Route as GuidesSlugIndexRouteImport } from './routes/guides/$slug/index'
@@ -125,6 +127,11 @@ const ReviewIndexRoute = ReviewIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ReviewRoute,
 } as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const ObjectivesIndexRoute = ObjectivesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -159,6 +166,11 @@ const ReviewCaseIdRoute = ReviewCaseIdRouteImport.update({
   id: '/$caseId',
   path: '/$caseId',
   getParentRoute: () => ReviewRoute,
+} as any)
+const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
+  id: '/$username',
+  path: '/$username',
+  getParentRoute: () => ProfileRoute,
 } as any)
 const ObjectivesSlugRoute = ObjectivesSlugRouteImport.update({
   id: '/$slug',
@@ -200,7 +212,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/objectives': typeof ObjectivesRouteWithChildren
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRouteWithChildren
@@ -210,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/guides/$slug': typeof GuidesSlugRouteWithChildren
   '/objectives/$slug': typeof ObjectivesSlugRoute
+  '/profile/$username': typeof ProfileUsernameRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -217,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides/': typeof GuidesIndexRoute
   '/objectives/': typeof ObjectivesIndexRoute
+  '/profile/': typeof ProfileIndexRoute
   '/review/': typeof ReviewIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/subjects/': typeof SubjectsIndexRoute
@@ -231,12 +245,12 @@ export interface FileRoutesByTo {
   '/contribute': typeof ContributeRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
-  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/todos': typeof TodosRoute
   '/verify-email': typeof VerifyEmailRoute
   '/objectives/$slug': typeof ObjectivesSlugRoute
+  '/profile/$username': typeof ProfileUsernameRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -244,6 +258,7 @@ export interface FileRoutesByTo {
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides': typeof GuidesIndexRoute
   '/objectives': typeof ObjectivesIndexRoute
+  '/profile': typeof ProfileIndexRoute
   '/review': typeof ReviewIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/subjects': typeof SubjectsIndexRoute
@@ -260,7 +275,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/objectives': typeof ObjectivesRouteWithChildren
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRouteWithChildren
@@ -270,6 +285,7 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/guides/$slug': typeof GuidesSlugRouteWithChildren
   '/objectives/$slug': typeof ObjectivesSlugRoute
+  '/profile/$username': typeof ProfileUsernameRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -277,6 +293,7 @@ export interface FileRoutesById {
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides/': typeof GuidesIndexRoute
   '/objectives/': typeof ObjectivesIndexRoute
+  '/profile/': typeof ProfileIndexRoute
   '/review/': typeof ReviewIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/subjects/': typeof SubjectsIndexRoute
@@ -304,6 +321,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/guides/$slug'
     | '/objectives/$slug'
+    | '/profile/$username'
     | '/review/$caseId'
     | '/settings/account'
     | '/settings/appearance'
@@ -311,6 +329,7 @@ export interface FileRouteTypes {
     | '/subjects/$slug'
     | '/guides/'
     | '/objectives/'
+    | '/profile/'
     | '/review/'
     | '/settings/'
     | '/subjects/'
@@ -325,12 +344,12 @@ export interface FileRouteTypes {
     | '/contribute'
     | '/forgot-password'
     | '/login'
-    | '/profile'
     | '/register'
     | '/reset-password'
     | '/todos'
     | '/verify-email'
     | '/objectives/$slug'
+    | '/profile/$username'
     | '/review/$caseId'
     | '/settings/account'
     | '/settings/appearance'
@@ -338,6 +357,7 @@ export interface FileRouteTypes {
     | '/subjects/$slug'
     | '/guides'
     | '/objectives'
+    | '/profile'
     | '/review'
     | '/settings'
     | '/subjects'
@@ -363,6 +383,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/guides/$slug'
     | '/objectives/$slug'
+    | '/profile/$username'
     | '/review/$caseId'
     | '/settings/account'
     | '/settings/appearance'
@@ -370,6 +391,7 @@ export interface FileRouteTypes {
     | '/subjects/$slug'
     | '/guides/'
     | '/objectives/'
+    | '/profile/'
     | '/review/'
     | '/settings/'
     | '/subjects/'
@@ -386,7 +408,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   ObjectivesRoute: typeof ObjectivesRouteWithChildren
-  ProfileRoute: typeof ProfileRoute
+  ProfileRoute: typeof ProfileRouteWithChildren
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ReviewRoute: typeof ReviewRouteWithChildren
@@ -519,6 +541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReviewIndexRouteImport
       parentRoute: typeof ReviewRoute
     }
+    '/profile/': {
+      id: '/profile/'
+      path: '/'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/objectives/': {
       id: '/objectives/'
       path: '/'
@@ -567,6 +596,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/review/$caseId'
       preLoaderRoute: typeof ReviewCaseIdRouteImport
       parentRoute: typeof ReviewRoute
+    }
+    '/profile/$username': {
+      id: '/profile/$username'
+      path: '/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof ProfileUsernameRouteImport
+      parentRoute: typeof ProfileRoute
     }
     '/objectives/$slug': {
       id: '/objectives/$slug'
@@ -626,6 +662,19 @@ const ObjectivesRouteChildren: ObjectivesRouteChildren = {
 const ObjectivesRouteWithChildren = ObjectivesRoute._addFileChildren(
   ObjectivesRouteChildren,
 )
+
+interface ProfileRouteChildren {
+  ProfileUsernameRoute: typeof ProfileUsernameRoute
+  ProfileIndexRoute: typeof ProfileIndexRoute
+}
+
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileUsernameRoute: ProfileUsernameRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
+}
+
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren)
 
 interface ReviewRouteChildren {
   ReviewCaseIdRoute: typeof ReviewCaseIdRoute
@@ -697,7 +746,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   ObjectivesRoute: ObjectivesRouteWithChildren,
-  ProfileRoute: ProfileRoute,
+  ProfileRoute: ProfileRouteWithChildren,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ReviewRoute: ReviewRouteWithChildren,
