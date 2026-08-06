@@ -71,7 +71,15 @@
   get:
     tags: [guides]
     summary: Get a guide by slug
-    description: Canonical content of the guide with its author, tags, and prerequisites.
+    description: Content of the canonical guide (or specified variant) with its author, tags, and prerequisites.
+    parameters:
+      - name: variant
+        in: query
+        required: false
+        description: Specific variant slug to load instead of the canonical variant.
+        schema:
+          type: string
+        example: physics-based
     operationId: getGuide
     responses:
       "200":

@@ -170,6 +170,44 @@ describe("GET /guides/{slug}", () => {
     expect(body.variant_slug).toBe("original");
   });
 
+  it("returns a specific variant when requested via query param", async () => {
+    const { base } = await createPublishedGuide({
+      variantSlug: "canonical-var",
+      title: "Canonical Title",
+    });
+    const sibling = await publishSiblingVariant(base.id, "Sibling Title");
+
+    const res = await app.request(
+      `/guides/${base.slug}?variant=${sibling.slug}`,
+      {},
+      env
+    );
+
+    expect(res.status).toBe(200);
+    await expectToMatchSpec(res, "GET", "/guides/{slug}");
+    const body = (await res.json()) as {
+      slug: string;
+      variant_slug: string | null;
+      title: string;
+    };
+    expect(body.slug).toBe(base.slug);
+    expect(body.variant_slug).toBe(sibling.slug);
+    expect(body.title).toBe("Sibling Title");
+  });
+
+  it("404s when requesting a nonexistent variant", async () => {
+    const { base } = await createPublishedGuide();
+
+    const res = await app.request(
+      `/guides/${base.slug}?variant=non-existent-variant`,
+      {},
+      env
+    );
+
+    expect(res.status).toBe(404);
+    await expectToMatchSpec(res, "GET", "/guides/{slug}");
+  });
+
   it("hides another author's draft guide", async () => {
     const { token } = await makeUser();
     const draft = await createGuideBase();
