@@ -7,13 +7,16 @@ const reviews = client.reviews;
 
 type FetchOptions = { signal?: AbortSignal };
 
-type QueueCase = {
+export type QueueCase = {
   id: string;
   case_type: string;
   status: string;
   title: string | null;
   created_at: string;
   decision: "approved" | "rejected" | null;
+  assigned_at: string;
+  time_limit: string;
+  expires_at: string;
 };
 
 export async function getReviewQueue({ signal }: FetchOptions = {}) {

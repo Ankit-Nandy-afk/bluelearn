@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import { Check, ExternalLink, X } from "lucide-react";
-import { useRef, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
@@ -41,6 +41,24 @@ const DetailRow = ({
   </div>
 );
 
+function formatRemainingTime(diffMs: number): string {
+  if (diffMs <= 0) return "Expired";
+
+  const totalSec = Math.floor(diffMs / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const secs = totalSec % 60;
+
+  if (days >= 1) {
+    return `${days}d ${hours}h ${mins}m remaining`;
+  }
+  if (hours >= 1) {
+    return `${hours}h ${mins}m ${secs.toString().padStart(2, "0")}s remaining`;
+  }
+  return `${mins}m ${secs.toString().padStart(2, "0")}s remaining`;
+}
+
 export const ReviewSidebar = ({
   caseId,
   revision,
@@ -50,6 +68,7 @@ export const ReviewSidebar = ({
   const [revising, setRevising] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const navigate = useNavigate();
+  const router = useRouter();
 
   const subjects = revision?.tags ?? [];
 
@@ -57,6 +76,27 @@ export const ReviewSidebar = ({
 
   // Reviewers can revote while the case is open, so start from their last vote.
   const priorDecision = revisionData.viewer_decision;
+  const hasVoted = priorDecision !== null;
+
+  // Expiration time for the authenticated panelist's seat
+  const expiresAt = revisionData.viewer_expires_at ?? null;
+
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!expiresAt || hasVoted) return;
+    const interval = setInterval(() => {
+      const currentNow = Date.now();
+      setNow(currentNow);
+      if (new Date(expiresAt).getTime() - currentNow <= 0) {
+        router.invalidate();
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt, hasVoted, router]);
+
+  const diffMs = expiresAt ? new Date(expiresAt).getTime() - now : null;
+  const isExpired = !hasVoted && diffMs !== null && diffMs <= 0;
 
   const caseOpen =
     revisionData.case.status !== "approved" &&
@@ -92,10 +132,17 @@ export const ReviewSidebar = ({
 
     try {
       await castDecision(caseId, review, { signal: controller.signal });
-      toast.success("Decision submitted", { id: toastId });
+      toast.success(hasVoted ? "Decision updated" : "Decision submitted", {
+        id: toastId,
+      });
+      router.invalidate();
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
-        toast.error("There was an unexpected error with your submission", {
+        const message =
+          e instanceof Error && e.message
+            ? e.message
+            : "There was an unexpected error with your submission";
+        toast.error(message, {
           id: toastId,
         });
       } else {
@@ -221,6 +268,23 @@ export const ReviewSidebar = ({
             title={<p className="ml-auto">Review Decision</p>}
           >
             <section className="space-y-4">
+              {expiresAt && diffMs !== null && !hasVoted && (
+                <DetailRow
+                  label="Time Remaining"
+                  value={
+                    isExpired ? (
+                      <span className="font-mono text-xs text-destructive">
+                        Expired
+                      </span>
+                    ) : (
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {formatRemainingTime(diffMs)}
+                      </span>
+                    )
+                  }
+                />
+              )}
+
               <FieldGroup>
                 <Field className="space-y-4">
                   <FieldLabel className="font-mono tracking-[0.08em] uppercase">
@@ -323,12 +387,12 @@ export const ReviewSidebar = ({
               <Button
                 className="btn-pri w-full py-2.5"
                 size="lg"
-                disabled={submitting}
+                disabled={submitting || isExpired}
                 onClick={() => {
                   submitDecision();
                 }}
               >
-                Submit Decision
+                {hasVoted ? "Update Decision" : "Submit Decision"}
               </Button>
             </section>
           </CollapsibleSection>
