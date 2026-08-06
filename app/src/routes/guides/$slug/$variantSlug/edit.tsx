@@ -131,6 +131,7 @@ function RouteComponent() {
 
     return {
       slug: snapshot.base_slug ?? "",
+      variant_id: variant.id,
       variant_slug: variant.slug,
       title: guideContData.title || "Untitled guide",
       author: username ?? "",
@@ -291,6 +292,7 @@ function RouteComponent() {
                   onSaveDraft={saveDraft}
                   submitting={submitting}
                   showBaseFields={false}
+                  hideBackBtn
                   title="Edit Details"
                   changeSummary={changeSummary}
                   onChangeSummaryChange={setChangeSummary}

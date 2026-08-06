@@ -1,17 +1,19 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { updateProfileSchema } from "@bluelearn/schemas";
-import { getServiceSupabase, requireUser } from "../middleware/auth.middleware";
+import {
+  getAuthenticatedUser,
+  getServiceSupabase,
+  requireUser,
+} from "../middleware/auth.middleware";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
 import { CONTRIBUTION, DESTRUCTIVE } from "../middleware/rateLimits";
 import type { HonoEnv } from "../types";
 import {
   deleteMyAccount,
-  getMyActivity,
   getMyDrafts,
   getMyIdentity,
-  getMyProfileStats,
-  getPublicProfile,
+  getProfilePage,
   updateMyProfile,
 } from "../services/identity.service";
 
@@ -29,19 +31,6 @@ export const meRouter = new Hono<HonoEnv>()
   .get("/drafts", requireUser, async (c) => {
     const drafts = await getMyDrafts(c.get("supabase"), c.get("user").id);
     return c.json(drafts);
-  })
-
-  // Returns the number of caller's votes received, contributions, and reviews.
-  .get("/stats", requireUser, async (c) => {
-    const stats = await getMyProfileStats(c.get("supabase"), c.get("user").id);
-    return c.json(stats);
-  })
-
-  // The caller's activity feed, which includes authored guide and objective
-  // revisions and review cases they voted on, sorted by newest first.
-  .get("/activity", requireUser, async (c) => {
-    const activity = await getMyActivity(c.get("supabase"), c.get("user").id);
-    return c.json(activity);
   })
 
   // Updates the caller's profile. 409 if the username is taken.
@@ -74,12 +63,16 @@ export const meRouter = new Hono<HonoEnv>()
   );
 
 export const profilesRouter = new Hono<HonoEnv>()
-  // Returns a public profile and badges by username. 404 if missing or suspended.
+  // Returns a profile, badges, stats, and activity by username. Drafts and
+  // in-flight work are only in the payload when the caller owns the profile.
+  // 404 if missing or suspended.
   .get("/:username", async (c) => {
-    const { profile, roles } = await getPublicProfile(
+    const { user } = await getAuthenticatedUser(c);
+    const page = await getProfilePage(
       c.get("supabase"),
       getServiceSupabase(c),
-      c.req.param("username")
+      c.req.param("username"),
+      user?.id ?? null
     );
-    return c.json({ profile, roles });
+    return c.json(page);
   });
