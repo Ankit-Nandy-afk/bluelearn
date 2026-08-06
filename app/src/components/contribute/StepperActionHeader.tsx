@@ -1,6 +1,8 @@
 import { Save, Scroll } from "lucide-react";
 
+import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
+import { GuidelinesModal } from "@/components/guides/modals/GuidelinesModal";
 
 type PropTypes = {
   title: string;
@@ -12,7 +14,6 @@ type PropTypes = {
   publishLabel?: string;
   onSaveDraft?: () => void;
   onPublish?: () => void;
-  onViewGuideline?: () => void;
 };
 
 export const StepperActionHeader = ({
@@ -25,8 +26,10 @@ export const StepperActionHeader = ({
   hideBackBtn,
   onSaveDraft,
   onPublish,
-  onViewGuideline,
 }: PropTypes) => {
+  const [open, setOpen] = useState(true);
+  const toggleModalView = () => setOpen(!open);
+
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
@@ -38,7 +41,7 @@ export const StepperActionHeader = ({
           <button
             type="button"
             className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
-            onClick={onViewGuideline}
+            onClick={toggleModalView}
           >
             <Scroll className="size-4" />
             View Guidelines
@@ -80,6 +83,8 @@ export const StepperActionHeader = ({
       </div>
 
       <Separator className="mb-8 bg-border" />
+
+      <GuidelinesModal open={open} onOpenChange={toggleModalView} />
     </>
   );
 };
