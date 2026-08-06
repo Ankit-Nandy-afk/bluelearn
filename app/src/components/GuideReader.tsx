@@ -32,7 +32,9 @@ const sanitizeSchema = {
 // subjects whose slug is not minted yet, so either identifier will do.
 type ReaderTag = { id?: string; slug?: string; name: string };
 
-export type ReaderGuide = Omit<Guide, "tags"> & { tags: Array<ReaderTag> };
+export type ReaderGuide = Omit<Guide, "tags" | "variant_id"> & {
+  tags: Array<ReaderTag>;
+};
 
 type PropTypes = {
   guide: ReaderGuide;

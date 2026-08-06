@@ -1,20 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import type { Guide, GuideReference } from "@bluelearn/schemas";
-import type { LucideIcon } from "lucide-react";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { extractHeadings } from "@/lib/guideUtils";
 
-export type Action = {
-  icon: LucideIcon;
-  label: string;
-};
-
 type PropTypes = {
-  guide: Guide;
+  guide: Omit<Guide, "variant_id">;
   slug: string;
   sidebarActions?: React.ReactNode;
   reviewSection?: React.ReactNode;
+  showPrerequisites?: boolean;
 };
 
 export const GuideSidebar = ({
@@ -22,6 +17,7 @@ export const GuideSidebar = ({
   slug,
   sidebarActions,
   reviewSection,
+  showPrerequisites = true,
 }: PropTypes) => {
   const headings = useMemo(
     () => extractHeadings(guide.body ?? ""),
@@ -33,33 +29,35 @@ export const GuideSidebar = ({
       {sidebarActions}
 
       {/* Prerequisites */}
-      <CollapsibleSection title={<p className="ml-auto">Prerequisites</p>}>
-        <ul className="space-y-2">
-          {guide.prerequisites.map((prereq: GuideReference) => (
-            <li
-              key={prereq.slug}
-              className="text-sm text-muted-foreground hover:text-foreground"
-              style={{
-                paddingLeft: 6,
-              }}
-            >
-              <Link
-                to="/guides/$slug"
-                params={{ slug: prereq.slug }}
-                state={{
-                  breadcrumbOrigin: {
-                    type: "guide",
-                    title: guide.title,
-                    path: `/guides/${slug}`,
-                  },
+      {showPrerequisites && (
+        <CollapsibleSection title={<p className="ml-auto">Prerequisites</p>}>
+          <ul className="space-y-2">
+            {guide.prerequisites.map((prereq: GuideReference) => (
+              <li
+                key={prereq.slug}
+                className="text-sm text-muted-foreground hover:text-foreground"
+                style={{
+                  paddingLeft: 6,
                 }}
               >
-                {prereq.title}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </CollapsibleSection>
+                <Link
+                  to="/guides/$slug"
+                  params={{ slug: prereq.slug }}
+                  state={{
+                    breadcrumbOrigin: {
+                      type: "guide",
+                      title: guide.title,
+                      path: `/guides/${slug}`,
+                    },
+                  }}
+                >
+                  {prereq.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </CollapsibleSection>
+      )}
 
       {/* TOC */}
       <CollapsibleSection

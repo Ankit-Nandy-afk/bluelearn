@@ -60,8 +60,13 @@ export const todosRouter = new Hono<HonoEnv>()
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "todo-create" }),
     zValidator("json", createTodoPrerequisiteSchema),
     async (c) => {
-      const { guide_base_id, title } = c.req.valid("json");
-      const todo = await createTodo(c.get("supabase"), guide_base_id, title);
+      const { guide_base_id, title, summary } = c.req.valid("json");
+      const todo = await createTodo(
+        c.get("supabase"),
+        guide_base_id,
+        title,
+        summary
+      );
       return c.json({ todo }, 201);
     }
   );

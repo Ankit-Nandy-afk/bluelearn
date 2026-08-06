@@ -71,7 +71,7 @@
   get:
     tags: [guides]
     summary: Get a guide by slug
-    description: Canonical content of the guide with its author, tags, and prerequisites.
+    description: Content of the canonical guide with its author, tags, and prerequisites.
     operationId: getGuide
     responses:
       "200":

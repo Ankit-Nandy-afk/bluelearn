@@ -20,6 +20,7 @@ import {
   getVariantBySlug,
   getWalkthrough,
   listGuideVariants,
+  listObjectivesForGuide,
   listPublishedGuides,
 } from "../services/guide.service";
 import {
@@ -27,6 +28,7 @@ import {
   castVote,
   createVariantRevision,
   getVariant,
+  listVariantContributors,
   listVariantRevisions,
   retractVote,
   rollbackVariant,
@@ -82,7 +84,7 @@ export const guidesRouter = new Hono<HonoEnv>()
     }
   )
 
-  // Returns the guide's canonical content, author, and subject tags.
+  // Returns the canonical variant's content, author, and subject tags.
   .get("/:slug", async (c) => {
     const guide = await getGuideBySlug(c.get("supabase"), c.req.param("slug"));
     return c.json(guide);
@@ -140,6 +142,15 @@ export const guidesRouter = new Hono<HonoEnv>()
       return c.json({ revision_id }, 201);
     }
   )
+
+  // Returns objectives containing this guide.
+  .get("/:slug/objectives", async (c) => {
+    const { objectives, total } = await listObjectivesForGuide(
+      c.get("supabase"),
+      c.req.param("slug")
+    );
+    return c.json({ objectives, total });
+  })
 
   // Returns one published variant with its vote tally.
   .get("/:slug/:variantSlug", async (c) => {
@@ -199,6 +210,15 @@ export const variantsRouter = new Hono<HonoEnv>()
       return c.body(null, 204);
     }
   )
+
+  // Returns the distinct authors of this variant's revisions as { contributors }.
+  .get("/:id/contributors", async (c) => {
+    const { contributors } = await listVariantContributors(
+      c.get("supabase"),
+      c.req.param("id")
+    );
+    return c.json({ contributors });
+  })
 
   // Returns the published versions as { revisions }, newest live first.
   .get("/:id/revisions", zValidator("query", paginationSchema), async (c) => {

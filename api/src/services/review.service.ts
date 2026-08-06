@@ -115,6 +115,12 @@ type TagsAndEdges = {
   tags: Array<{ id: string; name: string; status: string }>;
   prerequisites: Array<{ slug: string; title: string | null }>;
   todos: Array<{ id: string; title: string }>;
+  claimedTodos: Array<{
+    id: string;
+    title: string;
+    summary: string;
+    requested_by: { slug: string; title: string | null } | null;
+  }>;
 };
 
 export async function getReviewQueue(
@@ -252,7 +258,7 @@ async function loadTagsAndEdges(
 
   const baseId = guide?.guide_base_id ?? null;
 
-  const [tagRes, edgeRes, todoRes] = await Promise.all([
+  const [tagRes, edgeRes, todoRes, claimRes] = await Promise.all([
     service
       .from("guide_revision_subjects")
       .select("subjects(id, name, status)")
@@ -278,10 +284,31 @@ async function loadTagsAndEdges(
           .eq("dependent_guide_base_id", baseId)
           .eq("status", "open")
       : { data: [], error: null },
+    // The todos this submission was written to fill. Approving it resolves them,
+    // so the panel has to see them before voting.
+    baseId
+      ? service
+          .from("todo_claims")
+          .select(
+            `todo:todo_prerequisites!inner(
+               id, title, summary,
+               requester:guide_bases!todo_prerequisites_dependent_guide_base_id_fkey(
+                 slug,
+                 canonical:guides!guide_bases_canonical_guide_id_fkey(
+                   current:guide_revisions!guides_current_revision_id_fkey(title)
+                 )
+               )
+             )`
+          )
+          .eq("guide_base_id", baseId)
+          .eq("todo.status", "open")
+      : { data: [], error: null },
   ]);
 
-  if (tagRes.error || edgeRes.error || todoRes.error) {
-    console.error(tagRes.error ?? edgeRes.error ?? todoRes.error);
+  if (tagRes.error || edgeRes.error || todoRes.error || claimRes.error) {
+    console.error(
+      tagRes.error ?? edgeRes.error ?? todoRes.error ?? claimRes.error
+    );
     throw new ServiceError("Failed to load revision tags and edges", 500);
   }
 
@@ -307,6 +334,20 @@ async function loadTagsAndEdges(
         title: b.canonical?.current?.title ?? null,
       })),
     todos: (todoRes.data ?? []).map((t) => ({ id: t.id, title: t.title })),
+    claimedTodos: (claimRes.data ?? [])
+      .map((c) => c.todo)
+      .filter((t): t is NonNullable<typeof t> => !!t)
+      .map((t) => ({
+        id: t.id,
+        title: t.title,
+        summary: t.summary,
+        requested_by: t.requester?.slug
+          ? {
+              slug: t.requester.slug,
+              title: t.requester.canonical?.current?.title ?? null,
+            }
+          : null,
+      })),
   };
 }
 
@@ -467,6 +508,7 @@ export async function getReviewCase(
       : null,
     prerequisites: tagsAndEdges?.prerequisites ?? [],
     todos: tagsAndEdges?.todos ?? [],
+    claimed_todos: tagsAndEdges?.claimedTodos ?? [],
   };
 }
 

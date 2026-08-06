@@ -5,6 +5,7 @@ import { guideReferenceSchema } from "./references";
 
 export const guideSchema = z.object({
   slug: z.string(),
+  variant_id: z.string().nullable(),
   variant_slug: z.string().nullable(),
   title: z.string(),
   author: z.string(),
@@ -54,3 +55,44 @@ export const guideListItemSchema = z.object({
 export type Guide = z.infer<typeof guideSchema>;
 export type GuideListItem = z.infer<typeof guideListItemSchema>;
 export type Walkthrough = z.infer<typeof walkthroughSchema>;
+
+export const guideVariantListItemSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  summary: z.string().nullable(),
+  is_canonical: z.boolean(),
+  author: z.string().nullable(),
+  updated_at: z.string().nullable(),
+  votes: z.object({ up: z.number(), down: z.number() }),
+});
+export type GuideVariantListItem = z.infer<typeof guideVariantListItemSchema>;
+
+export const guideObjectiveListItemSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  summary: z.string().nullable(),
+  author: z.string().nullable(),
+  updated_at: z.string().nullable(),
+});
+export type GuideObjectiveListItem = z.infer<
+  typeof guideObjectiveListItemSchema
+>;
+
+export const guideContributorSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  name: z.string().nullable(),
+});
+export type GuideContributor = z.infer<typeof guideContributorSchema>;
+
+export const guideRevisionListItemSchema = z.object({
+  id: z.string(),
+  status: z.literal("approved"),
+  change_summary: z.string().nullable(),
+  created_at: z.string(),
+  approved_at: z.string().nullable(),
+  author: z.string().nullable(),
+});
+export type GuideRevisionListItem = z.infer<typeof guideRevisionListItemSchema>;

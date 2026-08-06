@@ -76,3 +76,29 @@ export async function addGuideVariant(
   const { revision_id } = await res.json();
   return revision_id;
 }
+
+export async function getGuideVariants(
+  slug: string,
+  { signal }: FetchOptions = {}
+) {
+  const res = await guides[":slug"].variants.$get(
+    { param: { slug }, query: { page: "1", limit: "100" } },
+    { init: { signal } }
+  );
+  if (!res.ok) return assertOk(res) as Promise<never>;
+
+  return res.json();
+}
+
+export async function getGuideObjectives(
+  slug: string,
+  { signal }: FetchOptions = {}
+) {
+  const res = await guides[":slug"].objectives.$get(
+    { param: { slug } },
+    { init: { signal } }
+  );
+  if (!res.ok) return assertOk(res) as Promise<never>;
+
+  return res.json();
+}

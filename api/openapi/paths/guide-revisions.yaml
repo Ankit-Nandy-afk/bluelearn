@@ -54,10 +54,10 @@
                   items:
                     type: string
                 todos:
-                  description: Titles of the guide's open todo prerequisites.
+                  description: The guide's open todo prerequisites.
                   type: array
                   items:
-                    type: string
+                    $ref: "../components/schemas/guides/TodoPrereq.yaml"
                 revised_from_case_id:
                   description: >
                     Review case that rejected the revision this draft was forked

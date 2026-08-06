@@ -115,6 +115,13 @@
                     Gated the same way as prerequisites.
                   items:
                     $ref: "../components/schemas/reviews/SubmittedTodo.yaml"
+                claimed_todos:
+                  type: array
+                  description: >
+                    Open todos this submission claimed, which approving it
+                    resolves. Gated the same way as prerequisites.
+                  items:
+                    $ref: "../components/schemas/reviews/ClaimedTodo.yaml"
                 revise_draft_id:
                   description: >
                     Draft the author already forked off this rejection, so the
@@ -133,6 +140,7 @@
                   revision,
                   prerequisites,
                   todos,
+                  claimed_todos,
                   revise_draft_id,
                 ]
       "403":
