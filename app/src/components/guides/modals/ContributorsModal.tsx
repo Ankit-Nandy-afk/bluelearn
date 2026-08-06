@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, User, Users } from "lucide-react";
+import { ExternalLink, User } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideContributor } from "@bluelearn/schemas";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -67,7 +67,6 @@ export function ContributorsModal({
       onOpenChange={onOpenChange}
       title="Guide Contributors"
       description="Authors and editors who created revisions and variants for this guide."
-      icon={<Users className="h-4 w-4 text-primary" />}
       loading={loading}
       loadingText="Loading contributors..."
       error={error}

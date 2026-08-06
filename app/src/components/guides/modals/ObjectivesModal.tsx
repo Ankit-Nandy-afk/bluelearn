@@ -58,7 +58,6 @@ export function ObjectivesModal({
       onOpenChange={onOpenChange}
       title="Included in Objectives"
       description="Curated learning paths and educational objectives that feature this guide."
-      icon={<Target className="h-4 w-4 text-primary" />}
       loading={loading}
       loadingText="Loading objectives..."
       error={error}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GitCommit, History, Sparkles } from "lucide-react";
+import { GitCommit, Sparkles } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideRevisionListItem } from "@bluelearn/schemas";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +57,6 @@ export function RevisionsModal({
       onOpenChange={onOpenChange}
       title="Revision History"
       description="Chronological log of changes and published revisions for this guide."
-      icon={<History className="h-4 w-4 text-primary" />}
       loading={loading}
       loadingText="Loading revisions..."
       error={error}

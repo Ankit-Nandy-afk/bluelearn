@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Check, GitFork, Sparkles } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideVariantListItem } from "@bluelearn/schemas";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +59,6 @@ export function VariantsModal({
       onOpenChange={onOpenChange}
       title="Guide Variants"
       description="Alternative approaches, methods, and explanations for this guide."
-      icon={<GitFork className="h-4 w-4 text-primary" />}
       loading={loading}
       loadingText="Loading variants..."
       error={error}
