@@ -18,7 +18,6 @@ import {
   Users,
 } from "lucide-react";
 
-import type { Action } from "@/components/sidebar/GuideSidebar";
 import type { ComboboxItem } from "@/components/ui/combobox";
 
 import { Separator } from "@/components/ui/separator";
@@ -281,7 +280,6 @@ function RouteComponent() {
 
   const { vote, setVote, upvote, downvote } = useVote(slug);
   const [activeModal, setActiveModal] = useState<ModalType>(null);
-
 
   const breadcrumbOrigin = useLocation({
     select: (location) => location.state.breadcrumbOrigin,
