@@ -3,7 +3,7 @@ import type { HydratedObjective } from "@/types/objectives";
 import { Separator } from "@/components/ui/separator";
 import { ObjectiveCard } from "@/components/cards/ObjectiveCard";
 
-import { Route as ObjectiveRoute } from "@/routes/objectives.$slug";
+import { Route as ObjectiveRoute } from "@/routes/objectives/$slug/index";
 
 type PropTypes = {
   objectives: Array<HydratedObjective>;

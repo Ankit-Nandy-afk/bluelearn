@@ -121,15 +121,6 @@ export const objectiveRevisionDiffSchema = z.object({
   // In the curator's own order on the `to` revision, with sub-objectives that
   // only exist on `from` appended.
   targets: z.array(objectiveTargetDiffSchema),
-  nodes: z.object({
-    added: z.array(objectiveSnapshotNodeSchema),
-    removed: z.array(objectiveSnapshotNodeSchema),
-    changed: z.array(objectiveNodeChangeSchema),
-  }),
-  edges: z.object({
-    added: z.array(objectiveSnapshotEdgeSchema),
-    removed: z.array(objectiveSnapshotEdgeSchema),
-  }),
 });
 
 export type ObjectiveSnapshotNode = z.infer<typeof objectiveSnapshotNodeSchema>;

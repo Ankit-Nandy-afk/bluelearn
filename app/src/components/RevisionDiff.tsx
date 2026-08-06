@@ -1,22 +1,14 @@
 import { ChevronsUpDown } from "lucide-react";
 import { Fragment, useState } from "react";
 
+import type { DiffLine, FieldDiff, RevisionRef } from "@bluelearn/schemas";
 import { cn } from "@/lib/utils";
 
-export type DiffLine = {
-  type: "unchanged" | "added" | "removed";
-  text: string;
-};
-
-export type FieldDiff = {
-  changed: boolean;
-  diff?: string | null;
-  lines?: Array<DiffLine> | null;
-};
+export type { DiffLine, FieldDiff };
 
 export type RevisionDiffData = {
-  from: { id: string; created_at: string };
-  to: { id: string; created_at: string };
+  from: RevisionRef;
+  to: RevisionRef;
   fields: {
     title: FieldDiff;
     summary: FieldDiff;
@@ -151,7 +143,13 @@ const LineCell = ({
   );
 };
 
-const Field = ({ label, field }: { label: string; field: FieldDiff }) => {
+export const DiffField = ({
+  label,
+  field,
+}: {
+  label: string;
+  field: FieldDiff;
+}) => {
   const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
 
   if (!field.changed || !field.lines) {
@@ -243,9 +241,9 @@ export const RevisionDiff = ({
         </p>
       </div>
 
-      <Field label="Title" field={diff.fields.title} />
-      <Field label="Summary" field={diff.fields.summary} />
-      <Field label="Body" field={diff.fields.body} />
+      <DiffField label="Title" field={diff.fields.title} />
+      <DiffField label="Summary" field={diff.fields.summary} />
+      <DiffField label="Body" field={diff.fields.body} />
     </div>
   );
 };

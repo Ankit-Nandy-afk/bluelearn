@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 
-import { formatDate, formatDuration } from "@/lib/guideUtils";
+import { buildObjectiveFlow } from "@/lib/objectiveSnapshot";
 import { getObjective } from "@/lib/api/objectives";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listGuides } from "@/lib/api/guides";
@@ -155,53 +155,10 @@ function PathPage() {
     breadcrumbOrigin
   );
 
-  const guideBySlug = new Map(guides.map((g) => [g.slug, g]));
-  const nodeById = new Map(snapshot.nodes.map((n) => [n.id, n]));
-
-  const targets = snapshot.nodes
-    .filter((n) => n.is_target)
-    .sort((a, b) => (a.target_position ?? 0) - (b.target_position ?? 0))
-    .map((target) => {
-      const sequence = [
-        ...snapshot.orders
-          .filter((o) => o.target_node_id === target.id)
-          .sort((a, b) => a.position - b.position)
-          .map((o) => nodeById.get(o.node_id))
-          .filter((node) => node !== undefined),
-        target,
-      ];
-
-      return {
-        slug: target.slug ?? target.id,
-        title: target.title ?? "Untitled guide",
-        summary: null,
-        guides: sequence.map((node) => {
-          const guide = node.slug ? guideBySlug.get(node.slug) : undefined;
-          return {
-            guide: {
-              slug: node.slug ?? "",
-              title: node.title ?? "Untitled guide",
-              author: guide?.author,
-              summary: guide?.summary,
-              created_at: guide
-                ? formatDate(new Date(guide.created_at))
-                : undefined,
-              tags: guide?.tags,
-              duration: formatDuration(guide?.duration_minutes ?? 0),
-            },
-          };
-        }),
-      };
-    });
-
-  const totalGuides = targets.reduce((acc, t) => acc + t.guides.length, 0);
-  const totalDuration = snapshot.nodes
-    .filter((n) => n.is_included)
-    .reduce(
-      (acc, n) =>
-        acc + (n.slug ? (guideBySlug.get(n.slug)?.duration_minutes ?? 0) : 0),
-      0
-    );
+  const { targets, totalGuides, totalDuration } = buildObjectiveFlow(
+    snapshot,
+    guides
+  );
 
   return (
     <Shell

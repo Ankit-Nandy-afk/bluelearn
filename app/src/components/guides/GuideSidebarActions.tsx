@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { History, Replace, Target, Users } from "lucide-react";
 
+import {
+  getVariantContributors,
+  getVariantRevisions,
+} from "@/lib/api/variants";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -38,6 +42,21 @@ export function GuideSidebarActions({
 }: GuideSidebarActionsProps) {
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
   const close = (open: boolean) => !open && setActiveModal(null);
+
+  const fetchContributors = useCallback(
+    () => getVariantContributors(variantId ?? ""),
+    [variantId]
+  );
+
+  const fetchRevisions = useCallback(async () => {
+    const { revisions } = await getVariantRevisions(variantId ?? "");
+    return revisions.map((rev) => ({
+      id: rev.id,
+      change_summary: rev.change_summary,
+      author: rev.author,
+      date: rev.approved_at,
+    }));
+  }, [variantId]);
 
   return (
     <>
@@ -78,15 +97,27 @@ export function GuideSidebarActions({
       <ContributorsModal
         open={activeModal === "contributors"}
         onOpenChange={close}
-        variantId={variantId}
+        fetchContributors={fetchContributors}
+        enabled={Boolean(variantId)}
       />
 
       <RevisionsModal
         open={activeModal === "revisions"}
         onOpenChange={close}
-        slug={slug}
-        variantSlug={currentVariantSlug}
-        variantId={variantId}
+        fetchRevisions={fetchRevisions}
+        enabled={Boolean(variantId)}
+        linkTo={(rev) =>
+          currentVariantSlug
+            ? {
+                to: "/guides/$slug/$variantSlug/revisions/$revisionId",
+                params: {
+                  slug,
+                  variantSlug: currentVariantSlug,
+                  revisionId: rev.id,
+                },
+              }
+            : null
+        }
       />
     </>
   );

@@ -431,9 +431,10 @@ export async function listObjectiveRevisions(
 
   const { data, count, error } = await supabase
     .from("objective_revisions")
-    .select("id, title, change_summary, status, created_at, published_at", {
-      count: "exact",
-    })
+    .select(
+      "id, title, change_summary, status, created_at, published_at, author_id",
+      { count: "exact" }
+    )
     .eq("objective_id", id)
     .order("created_at", { ascending: false })
     .range(from, to);
@@ -442,5 +443,57 @@ export async function listObjectiveRevisions(
     console.error(error);
     throw new ServiceError("Failed to load revisions", 500);
   }
-  return { data: data ?? [], total: count ?? 0 };
+
+  const usernames = await loadUsernames(
+    supabase,
+    (data ?? []).map((rev) => rev.author_id)
+  );
+
+  return {
+    data: (data ?? []).map(({ author_id, ...rev }) => ({
+      ...rev,
+      author: author_id ? (usernames.get(author_id) ?? null) : null,
+    })),
+    total: count ?? 0,
+  };
+}
+
+export async function listObjectiveContributors(supabase: DB, rawSlug: string) {
+  const { id } = await resolveObjective(supabase, rawSlug);
+
+  const { data: revisions, error: revError } = await supabase
+    .from("objective_revisions")
+    .select("author_id")
+    .eq("objective_id", id);
+
+  if (revError) {
+    console.error(revError);
+    throw new ServiceError("Failed to load objective contributors", 500);
+  }
+
+  const authorIds = [
+    ...new Set(
+      (revisions ?? []).map((r) => r.author_id).filter((v): v is string => !!v)
+    ),
+  ];
+  if (authorIds.length === 0) return { contributors: [] };
+
+  const { data: profiles, error: profError } = await supabase
+    .from("profiles")
+    .select("id, username, display_name")
+    .in("id", authorIds)
+    .eq("is_suspended", false);
+
+  if (profError) {
+    console.error(profError);
+    throw new ServiceError("Failed to load contributor profiles", 500);
+  }
+
+  return {
+    contributors: (profiles ?? []).map((p) => ({
+      id: p.id,
+      username: p.username,
+      name: p.display_name ?? null,
+    })),
+  };
 }

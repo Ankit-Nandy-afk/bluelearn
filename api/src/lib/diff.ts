@@ -1,6 +1,8 @@
-// Shared line-diff helpers used by both the guide-revision and objective-
-// revision diff endpoints. Extracted into one place so the wire format stays
-// identical across the two endpoints and the LCS walk is implemented once.
+// Shared diff helpers used by both the guide-revision and objective-revision
+// diff endpoints, over text fields and over ordered sequences alike (a
+// sub-objective's curated guide order diffs the same way a body's lines do).
+// Extracted into one place so the wire format stays identical across the two
+// endpoints and the LCS walk is implemented once.
 //
 // The diff format is unified-diff-style: lines starting with " " are
 // unchanged, "-" only in `from`, "+" only in `to`. Matches `git diff
@@ -54,34 +56,33 @@ export function diffField(from: string | null, to: string | null): FieldDiff {
   };
 }
 
-// Minimal LCS-based line diff producing a structured token list. Kept
-// dependency-free so the Workers bundle stays small; for typical revision
-// bodies (a few KB of markdown) the O(m*n) walk is well under a millisecond.
+// Minimal LCS-based diff over any two ordered sequences, producing a
+// structured token list. `key` decides when two items are the same item;
+// `label` renders one into its diff line. An item that moved reads as a
+// removal on the left and an addition on the right, the same way a reordered
+// line renders in a text diff.
 //
-// Edge cases:
-//   - null on either side is coalesced to "" before splitting, so null vs
-//     "abc" diffs as a single "+" line (and "abc" vs null as a single "-"
-//     line). This matches `git diff` semantics for an empty file vs. a
-//     one-line file.
-//   - A trailing newline produces a trailing empty element after split, so
-//     "abc\n" vs "abc" diffs as an extra "-" line (the empty string). This
-//     mirrors `git diff`'s "no newline at end of file" behavior.
-function createFieldDiffLines(
-  from: string | null,
-  to: string | null
+// Kept dependency-free so the Workers bundle stays small; for typical
+// revision bodies (a few KB of markdown) the O(m*n) walk is well under a
+// millisecond.
+export function diffSequences<T>(
+  from: T[],
+  to: T[],
+  key: (item: T) => string,
+  label: (item: T) => string
 ): DiffLine[] {
-  const fromLines = (from ?? "").split("\n");
-  const toLines = (to ?? "").split("\n");
+  const m = from.length;
+  const n = to.length;
+  const fromKeys = from.map(key);
+  const toKeys = to.map(key);
 
-  const m = fromLines.length;
-  const n = toLines.length;
-  // dp[i][j] = length of LCS of fromLines[i..] and toLines[j..]
+  // dp[i][j] = length of LCS of from[i..] and to[j..]
   const dp: number[][] = Array.from({ length: m + 1 }, () =>
     new Array<number>(n + 1).fill(0)
   );
   for (let i = m - 1; i >= 0; i--) {
     for (let j = n - 1; j >= 0; j--) {
-      if (fromLines[i] === toLines[j]) {
+      if (fromKeys[i] === toKeys[j]) {
         dp[i][j] = dp[i + 1][j + 1] + 1;
       } else {
         dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
@@ -96,26 +97,49 @@ function createFieldDiffLines(
   let i = 0;
   let j = 0;
   while (i < m && j < n) {
-    if (fromLines[i] === toLines[j]) {
-      out.push({ type: "unchanged", text: fromLines[i] });
+    if (fromKeys[i] === toKeys[j]) {
+      out.push({ type: "unchanged", text: label(to[j]) });
       i++;
       j++;
     } else if (dp[i + 1][j] >= dp[i][j + 1]) {
-      out.push({ type: "removed", text: fromLines[i] });
+      out.push({ type: "removed", text: label(from[i]) });
       i++;
     } else {
-      out.push({ type: "added", text: toLines[j] });
+      out.push({ type: "added", text: label(to[j]) });
       j++;
     }
   }
   while (i < m) {
-    out.push({ type: "removed", text: fromLines[i] });
+    out.push({ type: "removed", text: label(from[i]) });
     i++;
   }
   while (j < n) {
-    out.push({ type: "added", text: toLines[j] });
+    out.push({ type: "added", text: label(to[j]) });
     j++;
   }
 
   return out;
+}
+
+// Split two nullable field values into lines and diff them.
+//
+// Edge cases:
+//   - null on either side is coalesced to "" before splitting, so null vs
+//     "abc" diffs as a single "+" line (and "abc" vs null as a single "-"
+//     line). This matches `git diff` semantics for an empty file vs. a
+//     one-line file.
+//   - A trailing newline produces a trailing empty element after split, so
+//     "abc\n" vs "abc" diffs as an extra "-" line (the empty string). This
+//     mirrors `git diff`'s "no newline at end of file" behavior.
+function createFieldDiffLines(
+  from: string | null,
+  to: string | null
+): DiffLine[] {
+  const identity = (line: string) => line;
+  return diffSequences(
+    (from ?? "").split("\n"),
+    (to ?? "").split("\n"),
+    identity,
+    identity
+  );
 }
