@@ -41,3 +41,11 @@ export async function createObjective(
   const { revision_id } = await res.json();
   return revision_id;
 }
+
+export async function createObjectiveRevision(slug: string) {
+  const res = await objectives[":slug"].revisions.$post({ param: { slug } });
+  await assertOk(res);
+
+  const { revision_id } = await res.json();
+  return revision_id;
+}

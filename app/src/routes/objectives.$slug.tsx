@@ -1,20 +1,30 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { Ellipsis, Pencil } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 
 import { formatDate, formatDuration } from "@/lib/guideUtils";
 import { getObjective } from "@/lib/api/objectives";
+import { getMyIdentity } from "@/lib/api/identity";
 import { listGuides } from "@/lib/api/guides";
 
 import ObjectiveFlow from "@/components/objective/ObjectiveFlow";
 
 export const Route = createFileRoute("/objectives/$slug")({
   loader: async ({ params: { slug }, abortController }) => {
-    const [objective, guides] = await Promise.all([
+    const [objective, guides, identity] = await Promise.all([
       getObjective(slug, { signal: abortController.signal }),
       listGuides({ signal: abortController.signal }),
+      getMyIdentity({ signal: abortController.signal }).catch(() => null),
     ]);
-    return { ...objective, guides };
+    return { ...objective, guides, identity };
   },
   pendingComponent: ObjectivePending,
   errorComponent: ObjectiveError,
@@ -23,9 +33,11 @@ export const Route = createFileRoute("/objectives/$slug")({
 
 function Shell({
   heading,
+  actions,
   children,
 }: {
   heading: string;
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -35,6 +47,8 @@ function Shell({
           <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
             {heading}
           </h1>
+
+          {actions}
         </div>
 
         <Separator className="mb-4 bg-border" />
@@ -63,8 +77,41 @@ function ObjectiveError({ error }: { error: Error }) {
   );
 }
 
+function ObjectiveMenu({
+  slug,
+  sourceRevisionId,
+}: {
+  slug: string;
+  sourceRevisionId: string;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-md">
+          <Ellipsis className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end" className="w-48 font-mono">
+        <DropdownMenuItem asChild>
+          <Link
+            to="/contribute"
+            search={{ source: sourceRevisionId, edit: slug }}
+            className="cursor-pointer text-xs"
+          >
+            <Pencil className="h-4 w-4" />
+            Edit Objective
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function PathPage() {
-  const { objective, snapshot, guides } = Route.useLoaderData();
+  const { slug } = Route.useParams();
+  const { objective, snapshot, guides, identity } = Route.useLoaderData();
+  const isCurator = identity?.roles.includes("curator") ?? false;
 
   const guideBySlug = new Map(guides.map((g) => [g.slug, g]));
   const nodeById = new Map(snapshot.nodes.map((n) => [n.id, n]));
@@ -117,6 +164,14 @@ function PathPage() {
   return (
     <Shell
       heading={`Objective: ${objective.title ?? "Untitled"} (${targets.length} sub-objectives | ${totalGuides} guides | ${formatDuration(totalDuration)} total)`}
+      actions={
+        isCurator && objective.current_revision_id ? (
+          <ObjectiveMenu
+            slug={slug}
+            sourceRevisionId={objective.current_revision_id}
+          />
+        ) : null
+      }
     >
       {targets.length === 0 ? (
         <p className="text-sm text-muted-foreground">

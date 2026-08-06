@@ -203,9 +203,11 @@ export async function replaceRevisionTags(
 }
 
 export async function getObjectiveRevision(supabase: DB, revisionId: string) {
-  const { data: revision, error } = await supabase
+  const { data: row, error } = await supabase
     .from("objective_revisions")
-    .select(REVISION_META)
+    .select(
+      `${REVISION_META}, objective:objectives!objective_revisions_objective_id_fkey(id, current_revision_id)`
+    )
     .eq("id", revisionId)
     .maybeSingle();
 
@@ -213,7 +215,9 @@ export async function getObjectiveRevision(supabase: DB, revisionId: string) {
     console.error(error);
     throw new ServiceError("Failed to load revision", 500);
   }
-  if (!revision) throw new ServiceError("Revision not found", 404);
+  if (!row) throw new ServiceError("Revision not found", 404);
+
+  const { objective, ...revision } = row;
 
   const snapshot = await getRevisionSnapshot(
     supabase,
@@ -221,7 +225,7 @@ export async function getObjectiveRevision(supabase: DB, revisionId: string) {
     revision.status === "published" ? "frozen" : "live"
   );
   const subjects = await loadRevisionTags(supabase, revisionId);
-  return { revision, snapshot, subjects };
+  return { revision, objective, snapshot, subjects };
 }
 
 // Overwrite a draft revision's metadata and/or subject tags.
@@ -357,7 +361,7 @@ async function loadClosure(supabase: DB, targetIds: string[]) {
   return (data ?? []).map((r) => r.guide_base_id);
 }
 
-async function requireCurator(supabase: DB, userId: string) {
+export async function requireCurator(supabase: DB, userId: string) {
   const { data, error } = await supabase
     .from("user_roles")
     .select("role")
@@ -496,7 +500,24 @@ export async function syncDraftCuration(
   const sequenced = new Set(targets.flatMap((t) => t.sequence ?? []));
   const unreached = [...sequenced].find((id) => !closureSet.has(id));
   if (unreached) {
-    throw new ServiceError("Sequenced topic is not in this objective", 400);
+    const { data: base } = await supabase
+      .from("guide_bases")
+      .select(
+        `slug,
+         canonical:guides!guide_bases_canonical_guide_id_fkey(
+           current:guide_revisions!guides_current_revision_id_fkey(title)
+         )`
+      )
+      .eq("id", unreached)
+      .maybeSingle();
+
+    const name = base?.canonical?.current?.title ?? base?.slug;
+    throw new ServiceError(
+      name
+        ? `"${name}" is not a prerequisite of any target guide, so it cannot be ordered here`
+        : "A guide in the sequence is not a prerequisite of any target guide",
+      400
+    );
   }
 
   const { data: nodes, error: nodesError } = await supabase
