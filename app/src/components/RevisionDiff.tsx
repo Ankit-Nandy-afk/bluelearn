@@ -119,18 +119,16 @@ const LineCell = ({
     <div
       className={cn(
         "flex gap-3 font-mono text-xs leading-relaxed",
-        shade === "removed" &&
-          "bg-red-500/10 text-red-900 dark:bg-red-500/15 dark:text-red-200",
-        shade === "added" &&
-          "bg-green-600/10 text-green-900 dark:bg-green-600/15 dark:text-green-200",
+        shade === "removed" && "diff-removed",
+        shade === "added" && "diff-added",
         text === null && "bg-muted/40"
       )}
     >
       <span
         className={cn(
           "w-10 shrink-0 py-0.5 text-center tabular-nums opacity-70 select-none",
-          shade === "removed" && "bg-red-500/20 dark:bg-red-500/25",
-          shade === "added" && "bg-green-600/20 dark:bg-green-600/25",
+          shade === "removed" && "diff-gutter-removed",
+          shade === "added" && "diff-gutter-added",
           !shade && "opacity-50"
         )}
       >

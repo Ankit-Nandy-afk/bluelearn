@@ -12,12 +12,10 @@ import { cn } from "@/lib/utils";
 type Status = ObjectiveTargetDiff["status"];
 
 const TONE_STYLES: Record<Status, string> = {
-  added:
-    "border-green-600/40 bg-green-600/10 text-green-900 dark:text-green-200",
-  removed: "border-red-500/40 bg-red-500/10 text-red-900 dark:text-red-200",
-  changed:
-    "border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200",
-  unchanged: "border-border bg-muted text-muted-foreground",
+  added: "diff-status-added",
+  removed: "diff-status-removed",
+  changed: "diff-status-changed",
+  unchanged: "diff-status-unchanged",
 };
 
 const STATUS_LABELS: Record<Status, string> = {
@@ -34,9 +32,6 @@ type StepRow = {
   rightNumber: number | null;
 };
 
-// The API hands back one flat stream of the sub-objective's steps. A run of
-// removed steps sits across from the run of additions that replaced it,
-// shorter side padded; a step that survived spans both columns.
 function toStepRows(lines: Array<DiffLine>): Array<StepRow> {
   const rows: Array<StepRow> = [];
   let removed: Array<DiffLine> = [];
@@ -78,12 +73,10 @@ function toStepRows(lines: Array<DiffLine>): Array<StepRow> {
   return rows;
 }
 
-const BADGE_STYLES: Record<"added" | "removed" | "unchanged", string> = {
-  added:
-    "border-green-600/40 bg-green-600/20 text-green-900 dark:bg-green-600/25 dark:text-green-200",
-  removed:
-    "border-red-500/40 bg-red-500/20 text-red-900 dark:bg-red-500/25 dark:text-red-200",
-  unchanged: "border-badge-border bg-badge text-badge-foreground",
+const BADGE_STYLES: Record<DiffLine["type"], string> = {
+  added: "diff-num-added",
+  removed: "diff-num-removed",
+  unchanged: "diff-num-unchanged",
 };
 
 // One side of a step row. A null step is padding opposite a longer run.
@@ -100,10 +93,8 @@ function StepCell({
     <div
       className={cn(
         "flex items-start gap-3 px-3 py-2",
-        line.type === "removed" &&
-          "bg-red-500/10 text-red-900 dark:bg-red-500/15 dark:text-red-200",
-        line.type === "added" &&
-          "bg-green-600/10 text-green-900 dark:bg-green-600/15 dark:text-green-200"
+        line.type === "removed" && "diff-removed",
+        line.type === "added" && "diff-added"
       )}
     >
       <div
