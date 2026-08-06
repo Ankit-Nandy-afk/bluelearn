@@ -1,8 +1,6 @@
 // Shared diff helpers used by both the guide-revision and objective-revision
 // diff endpoints, over text fields and over ordered sequences alike (a
 // sub-objective's curated guide order diffs the same way a body's lines do).
-// Extracted into one place so the wire format stays identical across the two
-// endpoints and the LCS walk is implemented once.
 //
 // The diff format is unified-diff-style: lines starting with " " are
 // unchanged, "-" only in `from`, "+" only in `to`. Matches `git diff
@@ -57,14 +55,7 @@ export function diffField(from: string | null, to: string | null): FieldDiff {
 }
 
 // Minimal LCS-based diff over any two ordered sequences, producing a
-// structured token list. `key` decides when two items are the same item;
-// `label` renders one into its diff line. An item that moved reads as a
-// removal on the left and an addition on the right, the same way a reordered
-// line renders in a text diff.
-//
-// Kept dependency-free so the Workers bundle stays small; for typical
-// revision bodies (a few KB of markdown) the O(m*n) walk is well under a
-// millisecond.
+// structured token list.
 export function diffSequences<T>(
   from: T[],
   to: T[],
@@ -75,8 +66,6 @@ export function diffSequences<T>(
   const n = to.length;
   const fromKeys = from.map(key);
   const toKeys = to.map(key);
-
-  // dp[i][j] = length of LCS of from[i..] and to[j..]
   const dp: number[][] = Array.from({ length: m + 1 }, () =>
     new Array<number>(n + 1).fill(0)
   );
@@ -121,16 +110,6 @@ export function diffSequences<T>(
   return out;
 }
 
-// Split two nullable field values into lines and diff them.
-//
-// Edge cases:
-//   - null on either side is coalesced to "" before splitting, so null vs
-//     "abc" diffs as a single "+" line (and "abc" vs null as a single "-"
-//     line). This matches `git diff` semantics for an empty file vs. a
-//     one-line file.
-//   - A trailing newline produces a trailing empty element after split, so
-//     "abc\n" vs "abc" diffs as an extra "-" line (the empty string). This
-//     mirrors `git diff`'s "no newline at end of file" behavior.
 function createFieldDiffLines(
   from: string | null,
   to: string | null

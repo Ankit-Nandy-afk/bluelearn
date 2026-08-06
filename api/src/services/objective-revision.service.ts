@@ -655,10 +655,6 @@ type SnapshotNode = {
   note: string | null;
 };
 
-// Rendered diff between two revision snapshots: the versioned metadata fields
-// and, per sub-objective, how its curated sequence changed. Each side's
-// snapshot is read with the correct projection (frozen for published, live for
-// draft). RLS still applies; a hidden revision 404s.
 export async function diffObjectiveRevisions(
   supabase: DB,
   id: string,

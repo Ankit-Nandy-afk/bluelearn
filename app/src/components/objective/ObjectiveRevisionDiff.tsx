@@ -79,7 +79,6 @@ const BADGE_STYLES: Record<DiffLine["type"], string> = {
   unchanged: "diff-num-unchanged",
 };
 
-// One side of a step row. A null step is padding opposite a longer run.
 function StepCell({
   line,
   number,
