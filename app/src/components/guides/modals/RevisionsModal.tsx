@@ -1,34 +1,39 @@
 import { useEffect, useState } from "react";
-import { GitCommit, History, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { GitCommit, Sparkles } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideRevisionListItem } from "@bluelearn/schemas";
 import { Badge } from "@/components/ui/badge";
-import { getGuideRevisions } from "@/lib/api/guides";
+import { getVariantRevisions } from "@/lib/api/variants";
 import { formatDate } from "@/lib/guideUtils";
 
 type RevisionsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   slug: string;
+  variantSlug: string | null;
+  variantId: string | null;
 };
 
 export function RevisionsModal({
   open,
   onOpenChange,
   slug,
+  variantSlug,
+  variantId,
 }: RevisionsModalProps) {
   const [revisions, setRevisions] = useState<Array<GuideRevisionListItem>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !variantId) return;
 
     let ignore = false;
     setLoading(true);
     setError(null);
 
-    getGuideRevisions(slug)
+    getVariantRevisions(variantId)
       .then((res) => {
         if (!ignore) {
           setRevisions(res.revisions);
@@ -49,7 +54,7 @@ export function RevisionsModal({
     return () => {
       ignore = true;
     };
-  }, [open, slug]);
+  }, [open, variantId]);
 
   return (
     <BaseGuideModal
@@ -57,7 +62,6 @@ export function RevisionsModal({
       onOpenChange={onOpenChange}
       title="Revision History"
       description="Chronological log of changes and published revisions for this guide."
-      icon={<History className="h-4 w-4 text-primary" />}
       loading={loading}
       loadingText="Loading revisions..."
       error={error}
@@ -73,15 +77,12 @@ export function RevisionsModal({
           : "Unknown date";
         const isLatest = index === 0;
 
-        return (
-          <div
-            key={rev.id}
-            className={`relative flex w-full flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:bg-muted ${
-              isLatest
-                ? "border-primary/50 bg-primary/5"
-                : "border-border bg-card"
-            }`}
-          >
+        const className = `relative flex w-full flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:bg-muted ${
+          isLatest ? "border-primary/50 bg-primary/5" : "border-border bg-card"
+        }`;
+
+        const content = (
+          <>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <GitCommit
@@ -92,29 +93,42 @@ export function RevisionsModal({
                 <span className="mono-micro text-muted-foreground">
                   {rev.id.slice(0, 8)}
                 </span>
-                {isLatest && (
-                  <Badge
-                    variant="outline"
-                    className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
-                  >
-                    Latest
-                  </Badge>
-                )}
               </div>
-              <span className="mono-micro text-muted-foreground/80">
-                {formattedDate}
-              </span>
+              {isLatest && (
+                <Badge
+                  variant="outline"
+                  className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
+                >
+                  Latest
+                </Badge>
+              )}
             </div>
 
-            <p className="text-xs font-medium text-foreground">
+            <p className="text-xs font-bold text-foreground">
               {rev.change_summary || "Initial version or update"}
             </p>
 
-            {rev.author && (
-              <p className="mono-micro text-muted-foreground">
-                by @{rev.author}
-              </p>
-            )}
+            <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+              {rev.author && <span>by @{rev.author}</span>}
+              {rev.author && <span>·</span>}
+              <span>Updated {formattedDate}</span>
+            </div>
+          </>
+        );
+
+        return variantSlug ? (
+          <Link
+            key={rev.id}
+            to="/guides/$slug/$variantSlug/revisions/$revisionId"
+            params={{ slug, variantSlug, revisionId: rev.id }}
+            onClick={() => onOpenChange(false)}
+            className={className}
+          >
+            {content}
+          </Link>
+        ) : (
+          <div key={rev.id} className={className}>
+            {content}
           </div>
         );
       })}

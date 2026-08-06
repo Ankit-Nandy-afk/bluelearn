@@ -4,6 +4,7 @@ import { ArrowRight, Target } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideObjectiveListItem } from "@bluelearn/schemas";
 import { getGuideObjectives } from "@/lib/api/guides";
+import { formatDate } from "@/lib/guideUtils";
 
 type ObjectivesModalProps = {
   open: boolean;
@@ -58,7 +59,6 @@ export function ObjectivesModal({
       onOpenChange={onOpenChange}
       title="Included in Objectives"
       description="Curated learning paths and educational objectives that feature this guide."
-      icon={<Target className="h-4 w-4 text-primary" />}
       loading={loading}
       loadingText="Loading objectives..."
       error={error}
@@ -85,7 +85,7 @@ export function ObjectivesModal({
           className="group relative flex w-full flex-col gap-1.5 rounded-lg border border-border bg-card p-3.5 transition-colors hover:bg-muted"
         >
           <div className="flex items-center justify-between gap-2">
-            <h4 className="text-xs font-medium text-foreground">
+            <h4 className="text-xs font-bold text-foreground">
               {objective.title}
             </h4>
             <ArrowRight className="h-3.5 w-3.5 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-foreground" />
@@ -95,6 +95,14 @@ export function ObjectivesModal({
               {objective.summary}
             </p>
           )}
+
+          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+            {objective.author && <span>by @{objective.author}</span>}
+            {objective.author && objective.updated_at && <span>·</span>}
+            {objective.updated_at && (
+              <span>Updated {formatDate(new Date(objective.updated_at))}</span>
+            )}
+          </div>
         </Link>
       ))}
     </BaseGuideModal>

@@ -18,7 +18,6 @@ import {
 import { claimTodos } from "./todo.service";
 import { readingMinutes } from "../lib/reading";
 import { loadUsernames } from "./identity.service";
-import { listVariantRevisions } from "./variant.service";
 
 type DB = SupabaseClient<Database>;
 
@@ -237,13 +236,9 @@ export async function createGuide(
   return { revision_id };
 }
 
-// Resolve a guide by slug to its canonical content + subject tags (or a specified variant).
+// Resolve a guide by slug to its canonical content + subject tags.
 // The prereq/dependent neighborhood is deferred to the graph pass.
-export async function getGuideBySlug(
-  supabase: DB,
-  rawSlug: string,
-  rawVariantSlug?: string | null
-) {
+export async function getGuideBySlug(supabase: DB, rawSlug: string) {
   const slug = rawSlug.toLowerCase();
 
   const { data: guide, error } = await supabase
@@ -260,39 +255,16 @@ export async function getGuideBySlug(
   }
   if (!guide) throw new ServiceError("Guide not found", 404);
 
-  let selectedGuide = guide.canonical;
-  if (rawVariantSlug) {
-    const variantSlug = rawVariantSlug.toLowerCase();
-    if (guide.canonical?.slug?.toLowerCase() !== variantSlug) {
-      const { data: variant, error: variantError } = await supabase
-        .from("guides")
-        .select(
-          `id, slug, author_id,
-           current:guide_revisions!guides_current_revision_id_fkey(
-             id, title, summary, body, word_count, created_at
-           )`
-        )
-        .eq("guide_base_id", guide.id)
-        .eq("slug", variantSlug)
-        .maybeSingle();
-
-      if (variantError) {
-        console.error(variantError);
-        throw new ServiceError("Failed to load guide variant", 500);
-      }
-      if (!variant) throw new ServiceError("Variant not found", 404);
-      selectedGuide = variant;
-    }
-  }
-
-  const current = selectedGuide?.current ?? null;
+  const canonical = guide.canonical;
+  const current = canonical?.current ?? null;
   const subjects = await loadCanonicalTags(supabase, current?.id ?? null);
-  const authorId = selectedGuide?.author_id ?? null;
+  const authorId = canonical?.author_id ?? null;
   const usernames = await loadUsernames(supabase, [authorId]);
 
   const detail: Guide = {
     slug: guide.slug ?? "",
-    variant_slug: selectedGuide?.slug ?? null,
+    variant_id: canonical?.id ?? null,
+    variant_slug: canonical?.slug ?? null,
     title: current?.title ?? "",
     author: authorId ? (usernames.get(authorId) ?? "") : "",
     summary: current?.summary ?? null,
@@ -351,6 +323,61 @@ export async function getWalkthrough(supabase: DB, rawSlug: string) {
   } satisfies Walkthrough;
 }
 
+type VariantMetadata = {
+  author: string | null;
+  updated_at: string | null;
+  votes: { up: number; down: number };
+};
+
+const EMPTY_VARIANT_METADATA: VariantMetadata = {
+  author: null,
+  updated_at: null,
+  votes: { up: 0, down: 0 },
+};
+
+// Author, last updated date, and vote tally for a page of variants.
+async function loadVariantMetadata(supabase: DB, ids: string[]) {
+  const map = new Map<string, VariantMetadata>();
+  if (ids.length === 0) return map;
+
+  const [rows, tallies] = await Promise.all([
+    supabase
+      .from("guides")
+      .select(
+        `id, author_id,
+         current:guide_revisions!guides_current_revision_id_fkey(created_at, approved_at)`
+      )
+      .in("id", ids),
+    supabase
+      .from("guide_vote_tallies")
+      .select("guide_id, upvotes, downvotes")
+      .in("guide_id", ids),
+  ]);
+
+  if (rows.error || tallies.error) {
+    console.error(rows.error ?? tallies.error);
+    throw new ServiceError("Failed to load variants", 500);
+  }
+
+  const usernames = await loadUsernames(
+    supabase,
+    (rows.data ?? []).map((r) => r.author_id)
+  );
+  const tallyByGuide = new Map(
+    (tallies.data ?? []).map((t) => [t.guide_id, t])
+  );
+
+  for (const row of rows.data ?? []) {
+    const tally = row.id ? tallyByGuide.get(row.id) : null;
+    map.set(row.id, {
+      author: row.author_id ? (usernames.get(row.author_id) ?? null) : null,
+      updated_at: row.current?.approved_at ?? row.current?.created_at ?? null,
+      votes: { up: tally?.upvotes ?? 0, down: tally?.downvotes ?? 0 },
+    });
+  }
+  return map;
+}
+
 // List the published variants (methods/alternatives) under a guide, ranked
 // by Wilson score lower bound
 export async function listGuideVariants(
@@ -369,11 +396,33 @@ export async function listGuideVariants(
     throw new ServiceError("Failed to load variants", 500);
   }
 
+  const { data: base, error: baseError } = await supabase
+    .from("guide_bases")
+    .select("canonical_guide_id")
+    .eq("id", baseId)
+    .maybeSingle();
+
+  if (baseError) {
+    console.error(baseError);
+    throw new ServiceError("Failed to load variants", 500);
+  }
+
+  const canonicalId = base?.canonical_guide_id ?? null;
   const all = data ?? [];
   const from = (page - 1) * limit;
   const to = from + limit;
+  const pageRows = all.slice(from, to);
+  const metadata = await loadVariantMetadata(
+    supabase,
+    pageRows.map((v) => v.id)
+  );
+
   return {
-    data: all.slice(from, to),
+    data: pageRows.map((variant) => ({
+      ...variant,
+      is_canonical: variant.id === canonicalId,
+      ...(metadata.get(variant.id) ?? EMPTY_VARIANT_METADATA),
+    })),
     total: all.length,
   };
 }
@@ -422,8 +471,8 @@ export async function getVariantBySlug(
   const { data: variant, error } = await supabase
     .from("guides")
     .select(
-      `id, guide_base_id, slug, status,
-       current:guide_revisions!guides_current_revision_id_fkey(id, title, summary, body, created_at)`
+      `id, guide_base_id, slug, status, author_id,
+       current:guide_revisions!guides_current_revision_id_fkey(id, title, summary, body, word_count, created_at)`
     )
     .eq("guide_base_id", baseId)
     .eq("slug", rawVariantSlug.toLowerCase())
@@ -434,21 +483,43 @@ export async function getVariantBySlug(
     throw new ServiceError("Failed to load variant", 500);
   }
   if (!variant) throw new ServiceError("Variant not found", 404);
+  if (variant.status === "archived") {
+    throw new ServiceError("Variant not found", 404);
+  }
 
-  const { data: tally, error: tallyError } = await supabase
-    .from("guide_vote_tallies")
-    .select("upvotes, downvotes")
-    .eq("guide_id", variant.id)
-    .maybeSingle();
+  const [{ data: tally, error: tallyError }, tags, usernames] =
+    await Promise.all([
+      supabase
+        .from("guide_vote_tallies")
+        .select("upvotes, downvotes")
+        .eq("guide_id", variant.id)
+        .maybeSingle(),
+      loadCanonicalTags(supabase, variant.current?.id ?? null),
+      loadUsernames(supabase, [variant.author_id]),
+    ]);
 
   if (tallyError) {
     console.error(tallyError);
     throw new ServiceError("Failed to load vote tally", 500);
   }
 
+  const { author_id, current, ...rest } = variant;
+
   return {
     variant: {
-      ...variant,
+      ...rest,
+      current: current
+        ? {
+            id: current.id,
+            title: current.title,
+            summary: current.summary,
+            body: current.body,
+            created_at: current.created_at,
+          }
+        : null,
+      author: author_id ? (usernames.get(author_id) ?? "") : "",
+      tags: tags.map((s) => ({ slug: s.slug, name: s.name })),
+      duration_minutes: readingMinutes(current?.word_count ?? 0),
       votes: { up: tally?.upvotes ?? 0, down: tally?.downvotes ?? 0 },
     },
   };
@@ -478,7 +549,7 @@ export async function listObjectivesForGuide(supabase: DB, rawSlug: string) {
         .from("objectives")
         .select(
           `id, slug, status,
-       current:objective_revisions!objectives_current_revision_id_fkey(title, summary)`
+       current:objective_revisions!objectives_current_revision_id_fkey(title, summary, author_id, published_at, created_at)`
         )
         .in("current_revision_id", batch)
         .eq("status", "published")
@@ -489,6 +560,11 @@ export async function listObjectivesForGuide(supabase: DB, rawSlug: string) {
     throw new ServiceError("Failed to load objectives for guide", 500);
   }
 
+  const usernames = await loadUsernames(
+    supabase,
+    (objectives ?? []).map((o) => o.current?.author_id ?? null)
+  );
+
   const list = (objectives ?? [])
     .filter((o) => o.slug !== null)
     .map((o) => ({
@@ -496,92 +572,11 @@ export async function listObjectivesForGuide(supabase: DB, rawSlug: string) {
       slug: o.slug!,
       title: o.current?.title ?? "",
       summary: o.current?.summary ?? null,
+      author: o.current?.author_id
+        ? (usernames.get(o.current.author_id) ?? null)
+        : null,
+      updated_at: o.current?.published_at ?? o.current?.created_at ?? null,
     }));
 
   return { objectives: list, total: list.length };
-}
-
-// List distinct contributors (authors) across all revisions of this guide base.
-export async function listGuideContributors(supabase: DB, rawSlug: string) {
-  const baseId = await resolveBaseId(supabase, rawSlug);
-
-  const { data: guides, error: guideError } = await supabase
-    .from("guides")
-    .select("id")
-    .eq("guide_base_id", baseId);
-
-  if (guideError) {
-    console.error(guideError);
-    throw new ServiceError("Failed to load guide contributors", 500);
-  }
-
-  const guideIds = (guides ?? []).map((g) => g.id);
-  if (guideIds.length === 0) return { contributors: [] };
-
-  const { data: revisions, error: revError } = await selectInBatches(
-    guideIds,
-    (batch) =>
-      supabase.from("guide_revisions").select("author_id").in("guide_id", batch)
-  );
-
-  if (revError) {
-    console.error(revError);
-    throw new ServiceError("Failed to load revisions for contributors", 500);
-  }
-
-  const authorIds = [
-    ...new Set(
-      (revisions ?? [])
-        .map((r) => r.author_id)
-        .filter((id): id is string => !!id)
-    ),
-  ];
-  if (authorIds.length === 0) return { contributors: [] };
-
-  const { data: profiles, error: profError } = await selectInBatches(
-    authorIds,
-    (batch) =>
-      supabase
-        .from("profiles")
-        .select("id, username, display_name")
-        .in("id", batch)
-  );
-
-  if (profError) {
-    console.error(profError);
-    throw new ServiceError("Failed to load contributor profiles", 500);
-  }
-
-  const contributors = (profiles ?? []).map((p) => ({
-    id: p.id,
-    username: p.username,
-    name: p.display_name ?? null,
-    avatar_url: null,
-  }));
-
-  return { contributors };
-}
-
-// List revisions for a guide by slug (uses the canonical variant or specified variant).
-export async function listGuideRevisions(
-  supabase: DB,
-  rawSlug: string,
-  { page, limit }: Pagination = { page: 1, limit: 20 }
-) {
-  const baseId = await resolveBaseId(supabase, rawSlug);
-
-  const { data: base, error: baseError } = await supabase
-    .from("guide_bases")
-    .select("canonical_guide_id")
-    .eq("id", baseId)
-    .maybeSingle();
-
-  if (baseError || !base?.canonical_guide_id) {
-    throw new ServiceError("Failed to load canonical guide", 500);
-  }
-
-  return listVariantRevisions(supabase, base.canonical_guide_id, {
-    page,
-    limit,
-  });
 }

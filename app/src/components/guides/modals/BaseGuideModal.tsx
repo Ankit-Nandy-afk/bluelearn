@@ -13,7 +13,6 @@ export type BaseGuideModalProps = {
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: ReactNode;
-  icon?: ReactNode;
   loading?: boolean;
   loadingText?: string;
   error?: string | null;
@@ -30,7 +29,6 @@ export function BaseGuideModal({
   onOpenChange,
   title,
   description,
-  icon,
   loading = false,
   loadingText = "Loading...",
   error = null,
@@ -43,14 +41,11 @@ export function BaseGuideModal({
 }: BaseGuideModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-6 sm:max-w-lg">
-        <DialogHeader className="gap-1.5 pb-2">
-          <div className="flex items-center gap-2">
-            {icon}
-            <DialogTitle className="mono-micro text-foreground">
-              {title}
-            </DialogTitle>
-          </div>
+      <DialogContent className="gap-0 p-0 sm:max-w-lg">
+        <DialogHeader className="gap-2 p-5 pb-0">
+          <DialogTitle className="editorial-heading text-lg">
+            {title}
+          </DialogTitle>
           {description && (
             <DialogDescription className="text-xs text-muted-foreground">
               {description}
@@ -58,7 +53,7 @@ export function BaseGuideModal({
           )}
         </DialogHeader>
 
-        <div className="max-h-[60vh] space-y-2.5 overflow-y-auto pr-1">
+        <div className="max-h-[60vh] space-y-2.5 overflow-y-auto p-5">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
               <Loader2 className="mb-2 h-5 w-5 animate-spin text-primary" />

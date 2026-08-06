@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, User, Users } from "lucide-react";
+import { ExternalLink, User } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideContributor } from "@bluelearn/schemas";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getGuideContributors } from "@/lib/api/guides";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getVariantContributors } from "@/lib/api/variants";
 
 type ContributorsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  slug: string;
+  variantId: string | null;
 };
 
 function getInitials(name?: string | null, username?: string): string {
@@ -25,20 +25,20 @@ function getInitials(name?: string | null, username?: string): string {
 export function ContributorsModal({
   open,
   onOpenChange,
-  slug,
+  variantId,
 }: ContributorsModalProps) {
   const [contributors, setContributors] = useState<Array<GuideContributor>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !variantId) return;
 
     let ignore = false;
     setLoading(true);
     setError(null);
 
-    getGuideContributors(slug)
+    getVariantContributors(variantId)
       .then((res) => {
         if (!ignore) {
           setContributors(res.contributors);
@@ -59,7 +59,7 @@ export function ContributorsModal({
     return () => {
       ignore = true;
     };
-  }, [open, slug]);
+  }, [open, variantId]);
 
   return (
     <BaseGuideModal
@@ -67,7 +67,6 @@ export function ContributorsModal({
       onOpenChange={onOpenChange}
       title="Guide Contributors"
       description="Authors and editors who created revisions and variants for this guide."
-      icon={<Users className="h-4 w-4 text-primary" />}
       loading={loading}
       loadingText="Loading contributors..."
       error={error}
@@ -86,18 +85,12 @@ export function ContributorsModal({
         >
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8 border border-border">
-              {contributor.avatar_url && (
-                <AvatarImage
-                  src={contributor.avatar_url}
-                  alt={contributor.username}
-                />
-              )}
               <AvatarFallback className="mono-micro text-xs text-muted-foreground">
                 {getInitials(contributor.name, contributor.username)}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-xs font-medium text-foreground">
+              <p className="text-xs font-bold text-foreground">
                 @{contributor.username}
               </p>
               {contributor.name && (

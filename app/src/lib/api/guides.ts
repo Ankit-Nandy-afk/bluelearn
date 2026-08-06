@@ -30,16 +30,9 @@ export async function listGuidesPage(
   return res.json();
 }
 
-export async function getGuide(
-  slug: string,
-  options: { variant?: string } & FetchOptions = {}
-) {
-  const { variant, signal } = options;
+export async function getGuide(slug: string, { signal }: FetchOptions = {}) {
   const res = await guides[":slug"].$get(
-    {
-      param: { slug },
-      query: variant ? { variant } : {},
-    },
+    { param: { slug } },
     { init: { signal } }
   );
   if (!res.ok) return assertOk(res) as Promise<never>;
@@ -103,32 +96,6 @@ export async function getGuideObjectives(
 ) {
   const res = await guides[":slug"].objectives.$get(
     { param: { slug } },
-    { init: { signal } }
-  );
-  if (!res.ok) return assertOk(res) as Promise<never>;
-
-  return res.json();
-}
-
-export async function getGuideContributors(
-  slug: string,
-  { signal }: FetchOptions = {}
-) {
-  const res = await guides[":slug"].contributors.$get(
-    { param: { slug } },
-    { init: { signal } }
-  );
-  if (!res.ok) return assertOk(res) as Promise<never>;
-
-  return res.json();
-}
-
-export async function getGuideRevisions(
-  slug: string,
-  { signal }: FetchOptions = {}
-) {
-  const res = await guides[":slug"].revisions.$get(
-    { param: { slug }, query: { page: "1", limit: "100" } },
     { init: { signal } }
   );
   if (!res.ok) return assertOk(res) as Promise<never>;
