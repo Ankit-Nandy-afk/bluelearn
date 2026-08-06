@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getVariantRevisions } from "@/lib/api/variants";
 import { formatDate } from "@/lib/guideUtils";
 
-type RevisionsModalProps = {
+type PropsTypes = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   slug: string;
@@ -15,13 +15,13 @@ type RevisionsModalProps = {
   variantId: string | null;
 };
 
-export function RevisionsModal({
+export const RevisionsModal = ({
   open,
   onOpenChange,
   slug,
   variantSlug,
   variantId,
-}: RevisionsModalProps) {
+}: PropsTypes) => {
   const [revisions, setRevisions] = useState<Array<GuideRevisionListItem>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,4 +134,4 @@ export function RevisionsModal({
       })}
     </BaseGuideModal>
   );
-}
+};

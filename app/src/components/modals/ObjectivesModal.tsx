@@ -6,17 +6,13 @@ import type { GuideObjectiveListItem } from "@bluelearn/schemas";
 import { getGuideObjectives } from "@/lib/api/guides";
 import { formatDate } from "@/lib/guideUtils";
 
-type ObjectivesModalProps = {
+type PropsTypes = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   slug: string;
 };
 
-export function ObjectivesModal({
-  open,
-  onOpenChange,
-  slug,
-}: ObjectivesModalProps) {
+export const ObjectivesModal = ({ open, onOpenChange, slug }: PropsTypes) => {
   const [objectives, setObjectives] = useState<Array<GuideObjectiveListItem>>(
     []
   );
@@ -107,4 +103,4 @@ export function ObjectivesModal({
       ))}
     </BaseGuideModal>
   );
-}
+};

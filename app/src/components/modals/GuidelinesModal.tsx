@@ -1,5 +1,5 @@
 import ReactMarkdown from "react-markdown";
-import { BaseGuideModal } from "@/components/guides/modals/BaseGuideModal";
+import { BaseGuideModal } from "@/components/modals/BaseGuideModal";
 import guidelines from "@/data/guidelines.md?raw";
 
 type PropsTypes = {

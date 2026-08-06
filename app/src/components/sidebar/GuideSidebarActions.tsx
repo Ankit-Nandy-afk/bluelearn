@@ -7,10 +7,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { VariantsModal } from "@/components/guides/modals/VariantsModal";
-import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
-import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
-import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
+import { VariantsModal } from "@/components/modals/VariantsModal";
+import { ObjectivesModal } from "@/components/modals/ObjectivesModal";
+import { ContributorsModal } from "@/components/modals/ContributorsModal";
+import { RevisionsModal } from "@/components/modals/RevisionsModal";
 
 type ModalType = "variants" | "objectives" | "contributors" | "revisions";
 
@@ -25,17 +25,17 @@ const ACTIONS: Array<{
   { icon: History, label: "View Revisions", type: "revisions" },
 ];
 
-type GuideSidebarActionsProps = {
+type PropsTypes = {
   slug: string;
   currentVariantSlug: string | null;
   variantId: string | null;
 };
 
-export function GuideSidebarActions({
+export const GuideSidebarActions = ({
   slug,
   currentVariantSlug,
   variantId,
-}: GuideSidebarActionsProps) {
+}: PropsTypes) => {
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
   const close = (open: boolean) => !open && setActiveModal(null);
 
@@ -90,4 +90,4 @@ export function GuideSidebarActions({
       />
     </>
   );
-}
+};

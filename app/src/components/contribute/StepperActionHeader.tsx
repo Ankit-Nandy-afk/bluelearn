@@ -2,7 +2,7 @@ import { Save, Scroll } from "lucide-react";
 
 import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
-import { GuidelinesModal } from "@/components/guides/modals/GuidelinesModal";
+import { GuidelinesModal } from "@/components/modals/GuidelinesModal";
 
 type PropTypes = {
   title: string;
@@ -27,7 +27,7 @@ export const StepperActionHeader = ({
   onSaveDraft,
   onPublish,
 }: PropTypes) => {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const toggleModalView = () => setOpen(!open);
 
   return (

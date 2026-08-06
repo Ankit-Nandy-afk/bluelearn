@@ -6,7 +6,7 @@ import type { GuideContributor } from "@bluelearn/schemas";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getVariantContributors } from "@/lib/api/variants";
 
-type ContributorsModalProps = {
+type PropsTypes = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   variantId: string | null;
@@ -22,11 +22,11 @@ function getInitials(name?: string | null, username?: string): string {
   return display.slice(0, 2).toUpperCase();
 }
 
-export function ContributorsModal({
+export const ContributorsModal = ({
   open,
   onOpenChange,
   variantId,
-}: ContributorsModalProps) {
+}: PropsTypes) => {
   const [contributors, setContributors] = useState<Array<GuideContributor>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,4 +106,4 @@ export function ContributorsModal({
       ))}
     </BaseGuideModal>
   );
-}
+};

@@ -3,7 +3,7 @@ All guides must:
 - be grammatically sound
 - be easy to understand
 
-Title of the guide must be Declarative (a short explaination on what this guide is about)
+Title of the guide must be Declarative (a short explanation on what this guide is about)
 The summary is a brief description (3 sentences) explaining:
 1. what the guide will explain
 2. when it will be applied/be useful
