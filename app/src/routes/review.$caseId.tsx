@@ -106,8 +106,8 @@ function RouteComponent() {
   }, [revision]);
 
   return (
-    <div className="mx-auto min-h-[calc(100vh-65px)] max-w-7xl border-x bg-background">
-      <section className="grid grid-cols-[320px_1fr] border-b">
+    <div className="mx-auto flex min-h-[calc(100vh-65px)] max-w-7xl flex-col border-x bg-background">
+      <section className="grid flex-1 grid-cols-[320px_1fr] border-b">
         <ReviewSidebar
           caseId={caseId}
           revision={revision}

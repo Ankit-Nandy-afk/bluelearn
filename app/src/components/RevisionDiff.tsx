@@ -210,7 +210,15 @@ const Field = ({ label, field }: { label: string; field: FieldDiff }) => {
   );
 };
 
-export const RevisionDiff = ({ diff }: { diff: RevisionDiffData }) => {
+export const RevisionDiff = ({
+  diff,
+  fromLabel = "Live version",
+  toLabel = "Proposed",
+}: {
+  diff: RevisionDiffData;
+  fromLabel?: string;
+  toLabel?: string;
+}) => {
   const unchanged =
     !diff.fields.title.changed &&
     !diff.fields.summary.changed &&
@@ -228,10 +236,10 @@ export const RevisionDiff = ({ diff }: { diff: RevisionDiffData }) => {
     <div className="overflow-hidden rounded-md border">
       <div className="grid grid-cols-2 divide-x border-b bg-muted/60">
         <p className="px-3 py-2 font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
-          Live version
+          {fromLabel}
         </p>
         <p className="px-3 py-2 font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
-          Proposed
+          {toLabel}
         </p>
       </div>
 

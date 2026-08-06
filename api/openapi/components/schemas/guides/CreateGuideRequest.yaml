@@ -40,5 +40,13 @@ properties:
     type: array
     description: Free-text notes for prerequisite guides that don't exist yet.
     items:
+      $ref: "./TodoPrereq.yaml"
+  todoClaims:
+    type: array
+    description: >
+      Ids of the todos this draft is being written to fill, taken from the card
+      the author started at. Each must still be open, and all of them resolve
+      when the guide is published.
+    items:
       type: string
-    example: [Introduction to functions]
+      format: uuid

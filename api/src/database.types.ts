@@ -928,6 +928,46 @@ export type Database = {
           },
         ]
       }
+      todo_claims: {
+        Row: {
+          created_at: string
+          guide_base_id: string
+          todo_id: string
+        }
+        Insert: {
+          created_at?: string
+          guide_base_id: string
+          todo_id: string
+        }
+        Update: {
+          created_at?: string
+          guide_base_id?: string
+          todo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "todo_claims_guide_base_id_fkey"
+            columns: ["guide_base_id"]
+            isOneToOne: false
+            referencedRelation: "guide_bases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_claims_guide_base_id_fkey"
+            columns: ["guide_base_id"]
+            isOneToOne: false
+            referencedRelation: "published_guides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_claims_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todo_prerequisites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todo_prerequisites: {
         Row: {
           created_at: string
@@ -935,6 +975,7 @@ export type Database = {
           id: string
           resolved_guide_base_id: string | null
           status: Database["public"]["Enums"]["todo_status"]
+          summary: string
           title: string
         }
         Insert: {
@@ -943,6 +984,7 @@ export type Database = {
           id?: string
           resolved_guide_base_id?: string | null
           status?: Database["public"]["Enums"]["todo_status"]
+          summary: string
           title: string
         }
         Update: {
@@ -951,6 +993,7 @@ export type Database = {
           id?: string
           resolved_guide_base_id?: string | null
           status?: Database["public"]["Enums"]["todo_status"]
+          summary?: string
           title?: string
         }
         Relationships: [

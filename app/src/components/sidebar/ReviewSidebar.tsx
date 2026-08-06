@@ -475,6 +475,55 @@ export const ReviewSidebar = ({
             </ChangeSection>
           </CollapsibleSection>
 
+          {!isEdit && revisionData.claimed_todos.length > 0 && (
+            <CollapsibleSection
+              defaultOpen={true}
+              title={<p className="ml-auto">Claimed Todos</p>}
+            >
+              <div className="space-y-3">
+                <ul className="space-y-3">
+                  {revisionData.claimed_todos.map(
+                    (t: {
+                      id: string;
+                      title: string;
+                      summary: string;
+                      requested_by: {
+                        slug: string;
+                        title: string | null;
+                      } | null;
+                    }) => (
+                      <li key={t.id} className="space-y-1 text-xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate">{t.title}</span>
+                          {t.requested_by && (
+                            <Link
+                              to="/guides/$slug"
+                              params={{ slug: t.requested_by.slug }}
+                              className="flex min-w-0 items-center gap-1 leading-none text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              <span className="max-w-[14ch] truncate">
+                                {t.requested_by.title ?? t.requested_by.slug}
+                              </span>
+                              <ExternalLink
+                                className="size-3 shrink-0 -translate-y-0.5"
+                                strokeWidth={2.75}
+                              />
+                            </Link>
+                          )}
+                        </div>
+                        <p className="text-muted-foreground">{t.summary}</p>
+                      </li>
+                    )
+                  )}
+                </ul>
+
+                <p className="text-xs text-muted-foreground">
+                  Approving this submission marks these as resolved.
+                </p>
+              </div>
+            </CollapsibleSection>
+          )}
+
           {!isEdit && (
             <CollapsibleSection
               defaultOpen={true}
