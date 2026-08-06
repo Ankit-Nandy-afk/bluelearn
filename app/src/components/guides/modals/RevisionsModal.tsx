@@ -91,29 +91,26 @@ export function RevisionsModal({
                 <span className="mono-micro text-muted-foreground">
                   {rev.id.slice(0, 8)}
                 </span>
-                {isLatest && (
-                  <Badge
-                    variant="outline"
-                    className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
-                  >
-                    Latest
-                  </Badge>
-                )}
               </div>
-              <span className="mono-micro text-muted-foreground/80">
-                {formattedDate}
-              </span>
+              {isLatest && (
+                <Badge
+                  variant="outline"
+                  className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
+                >
+                  Latest
+                </Badge>
+              )}
             </div>
 
             <p className="text-xs font-bold text-foreground">
               {rev.change_summary || "Initial version or update"}
             </p>
 
-            {rev.author && (
-              <p className="mono-micro text-muted-foreground">
-                by @{rev.author}
-              </p>
-            )}
+            <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+              {rev.author && <span>by @{rev.author}</span>}
+              {rev.author && <span>·</span>}
+              <span>Updated {formattedDate}</span>
+            </div>
           </div>
         );
       })}

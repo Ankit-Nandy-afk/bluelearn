@@ -62,6 +62,9 @@ export const guideVariantListItemSchema = z.object({
   title: z.string(),
   summary: z.string().nullable(),
   is_canonical: z.boolean(),
+  author: z.string().nullable(),
+  updated_at: z.string().nullable(),
+  votes: z.object({ up: z.number(), down: z.number() }),
 });
 export type GuideVariantListItem = z.infer<typeof guideVariantListItemSchema>;
 
@@ -70,6 +73,8 @@ export const guideObjectiveListItemSchema = z.object({
   slug: z.string(),
   title: z.string(),
   summary: z.string().nullable(),
+  author: z.string().nullable(),
+  updated_at: z.string().nullable(),
 });
 export type GuideObjectiveListItem = z.infer<
   typeof guideObjectiveListItemSchema

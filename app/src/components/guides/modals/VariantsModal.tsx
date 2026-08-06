@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Check, Sparkles } from "lucide-react";
+import { ArrowBigDown, ArrowBigUp, Check, Sparkles } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideVariantListItem } from "@bluelearn/schemas";
 import { Badge } from "@/components/ui/badge";
 import { getGuideVariants } from "@/lib/api/guides";
+import { formatDate } from "@/lib/guideUtils";
 
 type VariantsModalProps = {
   open: boolean;
@@ -111,6 +112,24 @@ export function VariantsModal({
                 {variant.summary}
               </p>
             )}
+
+            <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+              {variant.author && <span>by @{variant.author}</span>}
+              {variant.author && variant.updated_at && <span>·</span>}
+              {variant.updated_at && (
+                <span>Updated {formatDate(new Date(variant.updated_at))}</span>
+              )}
+              <span className="ml-auto flex items-center gap-2">
+                <span className="flex items-center gap-1">
+                  <ArrowBigUp className="h-3.5 w-3.5" />
+                  {variant.votes.up}
+                </span>
+                <span className="flex items-center gap-1">
+                  <ArrowBigDown className="h-3.5 w-3.5" />
+                  {variant.votes.down}
+                </span>
+              </span>
+            </div>
           </Link>
         );
       })}

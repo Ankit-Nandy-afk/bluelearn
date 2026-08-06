@@ -90,7 +90,7 @@ export function ContributorsModal({
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-xs font-medium text-foreground">
+              <p className="text-xs font-bold text-foreground">
                 @{contributor.username}
               </p>
               {contributor.name && (
