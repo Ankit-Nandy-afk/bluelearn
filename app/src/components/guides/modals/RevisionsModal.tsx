@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { GitCommit, Sparkles } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideRevisionListItem } from "@bluelearn/schemas";
@@ -9,12 +10,16 @@ import { formatDate } from "@/lib/guideUtils";
 type RevisionsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  slug: string;
+  variantSlug: string | null;
   variantId: string | null;
 };
 
 export function RevisionsModal({
   open,
   onOpenChange,
+  slug,
+  variantSlug,
   variantId,
 }: RevisionsModalProps) {
   const [revisions, setRevisions] = useState<Array<GuideRevisionListItem>>([]);
@@ -72,15 +77,12 @@ export function RevisionsModal({
           : "Unknown date";
         const isLatest = index === 0;
 
-        return (
-          <div
-            key={rev.id}
-            className={`relative flex w-full flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:bg-muted ${
-              isLatest
-                ? "border-primary/50 bg-primary/5"
-                : "border-border bg-card"
-            }`}
-          >
+        const className = `relative flex w-full flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:bg-muted ${
+          isLatest ? "border-primary/50 bg-primary/5" : "border-border bg-card"
+        }`;
+
+        const content = (
+          <>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <GitCommit
@@ -111,6 +113,22 @@ export function RevisionsModal({
               {rev.author && <span>·</span>}
               <span>Updated {formattedDate}</span>
             </div>
+          </>
+        );
+
+        return variantSlug ? (
+          <Link
+            key={rev.id}
+            to="/guides/$slug/$variantSlug/revisions/$revisionId"
+            params={{ slug, variantSlug, revisionId: rev.id }}
+            onClick={() => onOpenChange(false)}
+            className={className}
+          >
+            {content}
+          </Link>
+        ) : (
+          <div key={rev.id} className={className}>
+            {content}
           </div>
         );
       })}

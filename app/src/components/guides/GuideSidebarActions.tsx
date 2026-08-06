@@ -84,6 +84,8 @@ export function GuideSidebarActions({
       <RevisionsModal
         open={activeModal === "revisions"}
         onOpenChange={close}
+        slug={slug}
+        variantSlug={currentVariantSlug}
         variantId={variantId}
       />
     </>

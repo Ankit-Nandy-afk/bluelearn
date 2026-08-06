@@ -40,6 +40,7 @@ import { Route as GuidesSlugIndexRouteImport } from './routes/guides/$slug/index
 import { Route as GuidesSlugWalkthroughRouteImport } from './routes/guides/$slug/walkthrough'
 import { Route as GuidesSlugVariantSlugIndexRouteImport } from './routes/guides/$slug/$variantSlug/index'
 import { Route as GuidesSlugVariantSlugEditRouteImport } from './routes/guides/$slug/$variantSlug/edit'
+import { Route as GuidesSlugVariantSlugRevisionsRevisionIdRouteImport } from './routes/guides/$slug/$variantSlug/revisions.$revisionId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -198,6 +199,12 @@ const GuidesSlugVariantSlugEditRoute =
     path: '/$variantSlug/edit',
     getParentRoute: () => GuidesSlugRoute,
   } as any)
+const GuidesSlugVariantSlugRevisionsRevisionIdRoute =
+  GuidesSlugVariantSlugRevisionsRevisionIdRouteImport.update({
+    id: '/$variantSlug/revisions/$revisionId',
+    path: '/$variantSlug/revisions/$revisionId',
+    getParentRoute: () => GuidesSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/guides/$slug/': typeof GuidesSlugIndexRoute
   '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
   '/guides/$slug/$variantSlug/': typeof GuidesSlugVariantSlugIndexRoute
+  '/guides/$slug/$variantSlug/revisions/$revisionId': typeof GuidesSlugVariantSlugRevisionsRevisionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -259,6 +267,7 @@ export interface FileRoutesByTo {
   '/guides/$slug': typeof GuidesSlugIndexRoute
   '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
   '/guides/$slug/$variantSlug': typeof GuidesSlugVariantSlugIndexRoute
+  '/guides/$slug/$variantSlug/revisions/$revisionId': typeof GuidesSlugVariantSlugRevisionsRevisionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -293,6 +302,7 @@ export interface FileRoutesById {
   '/guides/$slug/': typeof GuidesSlugIndexRoute
   '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
   '/guides/$slug/$variantSlug/': typeof GuidesSlugVariantSlugIndexRoute
+  '/guides/$slug/$variantSlug/revisions/$revisionId': typeof GuidesSlugVariantSlugRevisionsRevisionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -328,6 +338,7 @@ export interface FileRouteTypes {
     | '/guides/$slug/'
     | '/guides/$slug/$variantSlug/edit'
     | '/guides/$slug/$variantSlug/'
+    | '/guides/$slug/$variantSlug/revisions/$revisionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/guides/$slug'
     | '/guides/$slug/$variantSlug/edit'
     | '/guides/$slug/$variantSlug'
+    | '/guides/$slug/$variantSlug/revisions/$revisionId'
   id:
     | '__root__'
     | '/'
@@ -389,6 +401,7 @@ export interface FileRouteTypes {
     | '/guides/$slug/'
     | '/guides/$slug/$variantSlug/edit'
     | '/guides/$slug/$variantSlug/'
+    | '/guides/$slug/$variantSlug/revisions/$revisionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -629,6 +642,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesSlugVariantSlugEditRouteImport
       parentRoute: typeof GuidesSlugRoute
     }
+    '/guides/$slug/$variantSlug/revisions/$revisionId': {
+      id: '/guides/$slug/$variantSlug/revisions/$revisionId'
+      path: '/$variantSlug/revisions/$revisionId'
+      fullPath: '/guides/$slug/$variantSlug/revisions/$revisionId'
+      preLoaderRoute: typeof GuidesSlugVariantSlugRevisionsRevisionIdRouteImport
+      parentRoute: typeof GuidesSlugRoute
+    }
   }
 }
 
@@ -707,6 +727,7 @@ interface GuidesSlugRouteChildren {
   GuidesSlugIndexRoute: typeof GuidesSlugIndexRoute
   GuidesSlugVariantSlugEditRoute: typeof GuidesSlugVariantSlugEditRoute
   GuidesSlugVariantSlugIndexRoute: typeof GuidesSlugVariantSlugIndexRoute
+  GuidesSlugVariantSlugRevisionsRevisionIdRoute: typeof GuidesSlugVariantSlugRevisionsRevisionIdRoute
 }
 
 const GuidesSlugRouteChildren: GuidesSlugRouteChildren = {
@@ -714,6 +735,8 @@ const GuidesSlugRouteChildren: GuidesSlugRouteChildren = {
   GuidesSlugIndexRoute: GuidesSlugIndexRoute,
   GuidesSlugVariantSlugEditRoute: GuidesSlugVariantSlugEditRoute,
   GuidesSlugVariantSlugIndexRoute: GuidesSlugVariantSlugIndexRoute,
+  GuidesSlugVariantSlugRevisionsRevisionIdRoute:
+    GuidesSlugVariantSlugRevisionsRevisionIdRoute,
 }
 
 const GuidesSlugRouteWithChildren = GuidesSlugRoute._addFileChildren(
