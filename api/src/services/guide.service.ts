@@ -341,7 +341,23 @@ export async function listGuideVariants(
     throw new ServiceError("Failed to load variants", 500);
   }
 
-  const all = data ?? [];
+  const { data: base, error: baseError } = await supabase
+    .from("guide_bases")
+    .select("canonical_guide_id")
+    .eq("id", baseId)
+    .maybeSingle();
+
+  if (baseError) {
+    console.error(baseError);
+    throw new ServiceError("Failed to load variants", 500);
+  }
+
+  const canonicalId = base?.canonical_guide_id ?? null;
+  const all = (data ?? []).map((variant) => ({
+    ...variant,
+    is_canonical: variant.id === canonicalId,
+  }));
+
   const from = (page - 1) * limit;
   const to = from + limit;
   return {

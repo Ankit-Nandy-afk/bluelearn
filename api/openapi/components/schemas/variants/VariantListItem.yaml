@@ -12,4 +12,7 @@ properties:
     example: Physics-based approach
   summary:
     type: [string, "null"]
-required: [id, title]
+  is_canonical:
+    description: Whether this variant is the base's canonical one.
+    type: boolean
+required: [id, title, is_canonical]

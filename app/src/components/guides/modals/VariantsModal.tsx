@@ -93,16 +93,16 @@ export function VariantsModal({
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <h4 className="text-xs font-medium text-foreground">
+              <h4 className="text-xs font-bold text-foreground">
                 {variant.title}
               </h4>
-              {isCurrent && (
+              {variant.is_canonical && (
                 <Badge
                   variant="outline"
                   className="mono-micro gap-1 rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
                 >
                   <Check className="h-3 w-3 text-primary" />
-                  Current
+                  Canonical
                 </Badge>
               )}
             </div>

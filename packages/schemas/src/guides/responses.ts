@@ -61,6 +61,7 @@ export const guideVariantListItemSchema = z.object({
   slug: z.string(),
   title: z.string(),
   summary: z.string().nullable(),
+  is_canonical: z.boolean(),
 });
 export type GuideVariantListItem = z.infer<typeof guideVariantListItemSchema>;
 

@@ -105,7 +105,7 @@ export function RevisionsModal({
               </span>
             </div>
 
-            <p className="text-xs font-medium text-foreground">
+            <p className="text-xs font-bold text-foreground">
               {rev.change_summary || "Initial version or update"}
             </p>
 
