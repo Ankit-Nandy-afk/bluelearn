@@ -131,6 +131,7 @@ function RouteComponent() {
 
     return {
       slug: snapshot.base_slug ?? "",
+      variant_id: variant.id,
       variant_slug: variant.slug,
       title: guideContData.title || "Untitled guide",
       author: username ?? "",

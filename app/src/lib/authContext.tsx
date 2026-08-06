@@ -5,10 +5,18 @@ import { getSession, onAuthStateChange } from "./auth";
 import { getMyIdentity } from "./api/identity";
 import type { Session, User } from "@supabase/supabase-js";
 
+type CurrentProfile = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  bio: string | null;
+};
+
 type AuthState = {
   session: Session | null;
   user: User | null;
   roles: Array<string>;
+  currentProfile: CurrentProfile | null;
   loading: boolean;
   rolesLoading: boolean;
 };
@@ -17,6 +25,7 @@ const AuthContext = createContext<AuthState>({
   session: null,
   user: null,
   roles: [],
+  currentProfile: null,
   loading: true,
   rolesLoading: true,
 });
@@ -24,6 +33,9 @@ const AuthContext = createContext<AuthState>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<Array<string>>([]);
+  const [currentProfile, setCurrentProfile] = useState<CurrentProfile | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [rolesLoading, setRolesLoading] = useState(true);
 
@@ -49,12 +61,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Roles need their own fetch because they aren't included in JWT.
+  // Roles and profile details need their own fetch because they aren't included in JWT.
   const userId = session?.user.id ?? null;
 
   useEffect(() => {
     if (!userId) {
       setRoles([]);
+      setCurrentProfile(null);
       setRolesLoading(loading);
       return;
     }
@@ -63,8 +76,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRolesLoading(true);
 
     getMyIdentity({ signal: controller.signal })
-      .then((data) => setRoles(data.roles))
-      .catch(() => setRoles([]))
+      .then((data) => {
+        setRoles(data.roles);
+        setCurrentProfile(data.profile);
+      })
+      .catch(() => {
+        setRoles([]);
+        setCurrentProfile(null);
+      })
       .finally(() => {
         if (!controller.signal.aborted) setRolesLoading(false);
       });
@@ -78,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         user: session?.user ?? null,
         roles,
+        currentProfile,
         loading,
         rolesLoading,
       }}

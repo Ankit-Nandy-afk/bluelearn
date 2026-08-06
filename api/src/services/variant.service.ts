@@ -3,6 +3,7 @@ import type { CastVoteInput, Pagination } from "@bluelearn/schemas";
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 import { promoteCanonicalIfNeeded } from "./promotion.service";
+import { loadUsernames } from "./identity.service";
 
 type DB = SupabaseClient<Database>;
 
@@ -157,7 +158,9 @@ export async function listVariantRevisions(
 
   const { data, count, error } = await supabase
     .from("guide_revisions")
-    .select("id, created_at, approved_at", { count: "exact" })
+    .select("id, change_summary, created_at, approved_at, author_id", {
+      count: "exact",
+    })
     .eq("guide_id", id)
     .not("approved_at", "is", null)
     .order("approved_at", { ascending: false })
@@ -168,14 +171,61 @@ export async function listVariantRevisions(
     throw new ServiceError("Failed to load variant revisions", 500);
   }
 
+  const authorIds = (data ?? []).map((rev) => rev.author_id);
+  const usernames = await loadUsernames(supabase, authorIds);
+
   return {
     data: (data ?? []).map((rev) => ({
       id: rev.id,
       status: "approved" as const,
+      change_summary: rev.change_summary ?? null,
       created_at: rev.created_at,
       approved_at: rev.approved_at,
+      author: rev.author_id ? (usernames.get(rev.author_id) ?? null) : null,
     })),
     total: count ?? 0,
+  };
+}
+
+// Distinct authors across this variant's revisions. Suspended profiles drop
+// out, so a contributor list never surfaces a hidden account.
+export async function listVariantContributors(supabase: DB, id: string) {
+  await requireVariant(supabase, id);
+
+  const { data: revisions, error: revError } = await supabase
+    .from("guide_revisions")
+    .select("author_id")
+    .eq("guide_id", id);
+
+  if (revError) {
+    console.error(revError);
+    throw new ServiceError("Failed to load variant contributors", 500);
+  }
+
+  const authorIds = [
+    ...new Set(
+      (revisions ?? []).map((r) => r.author_id).filter((v): v is string => !!v)
+    ),
+  ];
+  if (authorIds.length === 0) return { contributors: [] };
+
+  const { data: profiles, error: profError } = await supabase
+    .from("profiles")
+    .select("id, username, display_name")
+    .in("id", authorIds)
+    .eq("is_suspended", false);
+
+  if (profError) {
+    console.error(profError);
+    throw new ServiceError("Failed to load contributor profiles", 500);
+  }
+
+  return {
+    contributors: (profiles ?? []).map((p) => ({
+      id: p.id,
+      username: p.username,
+      name: p.display_name ?? null,
+    })),
   };
 }
 

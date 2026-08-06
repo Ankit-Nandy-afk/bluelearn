@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
 import { buildBreadcrumbs } from "@/lib/breadcrumbs";
-import { getGuide } from "@/lib/api/guides";
+import { getVariantBySlug } from "@/lib/api/variants";
 
 import "katex/dist/katex.min.css";
 import { GuideSidebar } from "@/components/sidebar/GuideSidebar";
@@ -29,7 +29,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
 import { GuideSidebarActions } from "@/components/guides/GuideSidebarActions";
 
 function useVote() {
@@ -46,10 +45,15 @@ function useVote() {
   };
 }
 
-export const Route = createFileRoute("/guides/$slug/")({
+export const Route = createFileRoute("/guides/$slug/$variantSlug/")({
   loader: async ({ params, abortController }) => {
     try {
-      return await getGuide(params.slug, { signal: abortController.signal });
+      const variant = await getVariantBySlug(params.slug, params.variantSlug, {
+        signal: abortController.signal,
+      });
+      if (!variant.current) throw notFound();
+
+      return { variant, current: variant.current };
     } catch {
       throw notFound();
     }
@@ -58,8 +62,8 @@ export const Route = createFileRoute("/guides/$slug/")({
 });
 
 function RouteComponent() {
-  const { slug } = Route.useParams();
-  const guide = Route.useLoaderData();
+  const { slug, variantSlug } = Route.useParams();
+  const { variant, current } = Route.useLoaderData();
 
   const { vote, upvote, downvote } = useVote();
 
@@ -67,10 +71,23 @@ function RouteComponent() {
     select: (location) => location.state.breadcrumbOrigin,
   });
 
+  const guide = {
+    slug,
+    variant_slug: variant.slug,
+    title: current.title ?? "",
+    author: variant.author,
+    summary: current.summary,
+    body: current.body,
+    duration_minutes: variant.duration_minutes,
+    created_at: current.created_at,
+    tags: variant.tags,
+    prerequisites: [],
+  };
+
   const guideMenuItems = [
     {
-      label: "Edit Guide",
-      to: `/guides/${slug}/${guide.variant_slug}/edit`,
+      label: "Edit Variant",
+      to: `/guides/${slug}/${variantSlug}/edit`,
       icon: <Pencil className="h-4 w-4" />,
     },
     {
@@ -78,7 +95,6 @@ function RouteComponent() {
       to: "/contribute",
       icon: <Plus className="h-4 w-4" />,
     },
-    // { label: "Report", to: "/report", <Flag className="h-4 w-4" /> },// TODO: Implement post v1
   ];
 
   const breadcrumbs = buildBreadcrumbs(guide.title, breadcrumbOrigin);
@@ -90,12 +106,13 @@ function RouteComponent() {
           sidebarActions={
             <GuideSidebarActions
               slug={slug}
-              currentVariantSlug={guide.variant_slug}
-              variantId={guide.variant_id}
+              currentVariantSlug={variant.slug}
+              variantId={variant.id}
             />
           }
           guide={guide}
           slug={slug}
+          showPrerequisites={false}
         />
 
         {/* MAIN */}
@@ -134,21 +151,13 @@ function RouteComponent() {
 
             {/* Actions */}
             <div className="flex shrink-0 items-center gap-2">
-              <Link
-                to={GuideWalkthroughRoute.to}
-                params={{ slug: slug }}
-                state={{ breadcrumbOrigin }}
-                className="btn-outline"
-              >
-                View Walkthrough
-              </Link>
-
               <Button variant="outline" size="lg" onClick={() => upvote()}>
                 <ArrowBigUp
                   className="h-4 w-4"
                   color={vote == "up" ? "#3D80DD" : "#000000"}
                   fill={vote == "up" ? "#3D80DD" : "#FFFFFF"}
                 />
+                <span className="mono-micro">{variant.votes.up}</span>
               </Button>
 
               <Button variant="outline" size="lg" onClick={() => downvote()}>
@@ -157,6 +166,7 @@ function RouteComponent() {
                   color={vote == "down" ? "#3D80DD" : "#000000"}
                   fill={vote == "down" ? "#3D80DD" : "#FFFFFF"}
                 />
+                <span className="mono-micro">{variant.votes.down}</span>
               </Button>
 
               <DropdownMenu>
@@ -185,8 +195,6 @@ function RouteComponent() {
           </div>
 
           <Separator className="mb-8" />
-
-          {/* Header */}
 
           <GuideReader guide={guide} />
         </main>
