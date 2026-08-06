@@ -26,7 +26,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SubjectsIndexRouteImport } from './routes/subjects.index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as ReviewIndexRouteImport } from './routes/review.index'
-import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as ObjectivesIndexRouteImport } from './routes/objectives.index'
 import { Route as GuidesIndexRouteImport } from './routes/guides/index'
 import { Route as SubjectsSlugRouteImport } from './routes/subjects.$slug'
@@ -127,11 +126,6 @@ const ReviewIndexRoute = ReviewIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ReviewRoute,
 } as any)
-const ProfileIndexRoute = ProfileIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProfileRoute,
-} as any)
 const ObjectivesIndexRoute = ObjectivesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -230,7 +224,6 @@ export interface FileRoutesByFullPath {
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides/': typeof GuidesIndexRoute
   '/objectives/': typeof ObjectivesIndexRoute
-  '/profile/': typeof ProfileIndexRoute
   '/review/': typeof ReviewIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/subjects/': typeof SubjectsIndexRoute
@@ -245,6 +238,7 @@ export interface FileRoutesByTo {
   '/contribute': typeof ContributeRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/todos': typeof TodosRoute
@@ -258,7 +252,6 @@ export interface FileRoutesByTo {
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides': typeof GuidesIndexRoute
   '/objectives': typeof ObjectivesIndexRoute
-  '/profile': typeof ProfileIndexRoute
   '/review': typeof ReviewIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/subjects': typeof SubjectsIndexRoute
@@ -293,7 +286,6 @@ export interface FileRoutesById {
   '/subjects/$slug': typeof SubjectsSlugRoute
   '/guides/': typeof GuidesIndexRoute
   '/objectives/': typeof ObjectivesIndexRoute
-  '/profile/': typeof ProfileIndexRoute
   '/review/': typeof ReviewIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/subjects/': typeof SubjectsIndexRoute
@@ -329,7 +321,6 @@ export interface FileRouteTypes {
     | '/subjects/$slug'
     | '/guides/'
     | '/objectives/'
-    | '/profile/'
     | '/review/'
     | '/settings/'
     | '/subjects/'
@@ -344,6 +335,7 @@ export interface FileRouteTypes {
     | '/contribute'
     | '/forgot-password'
     | '/login'
+    | '/profile'
     | '/register'
     | '/reset-password'
     | '/todos'
@@ -357,7 +349,6 @@ export interface FileRouteTypes {
     | '/subjects/$slug'
     | '/guides'
     | '/objectives'
-    | '/profile'
     | '/review'
     | '/settings'
     | '/subjects'
@@ -391,7 +382,6 @@ export interface FileRouteTypes {
     | '/subjects/$slug'
     | '/guides/'
     | '/objectives/'
-    | '/profile/'
     | '/review/'
     | '/settings/'
     | '/subjects/'
@@ -541,13 +531,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReviewIndexRouteImport
       parentRoute: typeof ReviewRoute
     }
-    '/profile/': {
-      id: '/profile/'
-      path: '/'
-      fullPath: '/profile/'
-      preLoaderRoute: typeof ProfileIndexRouteImport
-      parentRoute: typeof ProfileRoute
-    }
     '/objectives/': {
       id: '/objectives/'
       path: '/'
@@ -665,12 +648,10 @@ const ObjectivesRouteWithChildren = ObjectivesRoute._addFileChildren(
 
 interface ProfileRouteChildren {
   ProfileUsernameRoute: typeof ProfileUsernameRoute
-  ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 const ProfileRouteChildren: ProfileRouteChildren = {
   ProfileUsernameRoute: ProfileUsernameRoute,
-  ProfileIndexRoute: ProfileIndexRoute,
 }
 
 const ProfileRouteWithChildren =
