@@ -97,7 +97,7 @@ function ObjectiveMenu({
           <Link
             to="/contribute"
             search={{ source: sourceRevisionId, edit: slug }}
-            className="text-xs"
+            className="cursor-pointer text-xs"
           >
             <Pencil className="h-4 w-4" />
             Edit Objective
