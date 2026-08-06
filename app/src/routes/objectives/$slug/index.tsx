@@ -24,7 +24,7 @@ const OBJECTIVE_ACTIONS: Array<Action> = [
   { icon: History, label: "View Revisions" },
 ];
 
-export const Route = createFileRoute("/objectives/$slug")({
+export const Route = createFileRoute("/objectives/$slug/")({
   loader: async ({ params: { slug }, abortController }) => {
     const [objective, guides] = await Promise.all([
       getObjective(slug, { signal: abortController.signal }),
