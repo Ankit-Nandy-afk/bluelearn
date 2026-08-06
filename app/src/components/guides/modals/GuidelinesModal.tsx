@@ -12,10 +12,12 @@ export const GuidelinesModal = ({ open, onOpenChange }: PropsTypes) => {
     <BaseGuideModal
       open={open}
       onOpenChange={onOpenChange}
-      title="All Guides Must..."
-      description="Guidelines for guides."
+      title="Guidelines"
+      description="Guidelines for creating guides."
     >
-      <ReactMarkdown>{guidelines}</ReactMarkdown>
+      <article className="markdown">
+        <ReactMarkdown>{guidelines}</ReactMarkdown>
+      </article>
     </BaseGuideModal>
   );
 };

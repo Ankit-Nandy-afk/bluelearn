@@ -1,14 +1,17 @@
+All guides must:
 - contain no spelling errors
 - be grammatically sound
 - be easy to understand
 
-- Title of the guide must be Declarative (what is this guide about, in short?)
-- Underneath title must be a BRIEF DESCRIPTION (3 sentences) stating #1. what the guide will explain, #2. when it will be applied/useful, and #3 What guides it's connected to.
+Title of the guide must be Declarative (a short explaination on what this guide is about)
+The summary is a brief description (3 sentences) explaining:
+1. what the guide will explain
+2. when it will be applied/be useful
 
 - have continuity with previous guides in the same learning path (i.e. must flow naturally from previous guides, and must be directly connected to those guides in terms of subject matter & explanation)
 - not contradict information in previous (prerequisite) guides
 
-- explain one (and only one) PRIMARY topic.  A Primary Topic is a unique idea or concept which the title, description, and content of a guide centers around.  A Primary Topic must be significant enough to warrant it's own explanation, but not so broad as to have multiple interpretations.  The purpose of a guide is to hone in on & illuminate one, single interpretation of a concept (the Primary Topic), which is explicitly stated in the guide's title/description.  Secondary Topics are smaller ideas (which it is assumed the reader already understands) used to explain a Primary Topic.  If a Secondary Topic is technical in nature, it must be explained in a prerequisite or lower level guide, and a direct connection to the current Primary Topic must be drawn/set.
+- explain one (and only one) PRIMARY topic. A Primary Topic is a unique idea or concept which the title, description, and content of a guide centers around.  A Primary Topic must be significant enough to warrant it's own explanation, but not so broad as to have multiple interpretations.  The purpose of a guide is to hone in on & illuminate one, single interpretation of a concept (the Primary Topic), which is explicitly stated in the guide's title/description.  Secondary Topics are smaller ideas (which it is assumed the reader already understands) used to explain a Primary Topic.  If a Secondary Topic is technical in nature, it must be explained in a prerequisite or lower level guide, and a direct connection to the current Primary Topic must be drawn/set.
 
 - Knowledge Dumps (long, drawn-out guides which explain multiple topics or subjects) must be split up into multiple guides (one for each topic), before publication. Knowledge Dumps which are submitted by authors *without* being split up will be rejected by Verifiers.  The process of splitting a knowledge dump into multiple guides is also called "atomizing."  Currently, BlueLearn's central focus is on "atomic" content.
 
