@@ -75,7 +75,7 @@ function RouteComponent() {
 
   return (
     <div className="max-w-2xl space-y-5">
-      <header className="flex flex-col items-start gap-3 border-b border-border pb-5 sm:flex-row sm:justify-between sm:gap-6">
+      <header className="flex items-center justify-between gap-3 border-b border-border pb-5 sm:gap-6">
         <div className="space-y-1.5">
           <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
             Public Profile
@@ -84,7 +84,7 @@ function RouteComponent() {
 
         <Button
           variant="default"
-          className="btn-pri"
+          className="btn-pri shrink-0"
           size="lg"
           disabled={saving}
           onClick={handleSave}
