@@ -41,6 +41,7 @@ import { OrderTargetGuides } from "@/components/contribute/steps/OrderTargetGuid
 
 import { flows, typeStep } from "@/lib/contributionFlow";
 import { PreviewObjective } from "@/components/contribute/steps/PreviewObjective";
+import { MobileStepProgress } from "@/components/contribute/MobileStepProgress";
 import {
   clearStoredDraft,
   getStoredDraft,
@@ -214,6 +215,7 @@ export default function ContributionFlow({
           type={type}
           setType={setType}
           skipTypeStep={skipTypeStep}
+          activeStep={activeStep}
           step={step}
           onPublished={onPublished}
           draftId={draftId}
@@ -241,6 +243,7 @@ function Inner({
   type,
   setType,
   skipTypeStep,
+  activeStep,
   step,
   onPublished,
   draftId,
@@ -262,6 +265,7 @@ function Inner({
   type: ContributionType | null;
   setType: (value: ContributionType) => void;
   skipTypeStep: boolean;
+  activeStep: string;
   step?: string;
   onPublished?: () => void;
   draftId?: string;
@@ -344,6 +348,11 @@ function Inner({
   const [submitting, setSubmitting] = useState(false);
   const [publishAttempted, setPublishAttempted] = useState(false);
   const [showChangeSummary, setShowChangeSummary] = useState(false);
+  const visibleSteps = !type
+    ? typeStep
+    : skipTypeStep
+      ? flows[type]
+      : [...typeStep, ...flows[type]];
 
   // Start from the todo page with the topic's title and summary already filled in.
   const seededRef = useRef(false);
@@ -755,8 +764,10 @@ function Inner({
         });
       }
       toast.success("Draft saved");
+      return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save draft");
+      return false;
     } finally {
       setSubmitting(false);
     }
@@ -842,9 +853,11 @@ function Inner({
   if (skipTypeStep && !type) return null;
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col gap-6">
+    <div className="flex min-h-0 w-full flex-1 flex-col gap-6 pb-20 sm:pb-0">
+      <MobileStepProgress steps={visibleSteps} activeStep={activeStep} />
+
       {/* horizontal breadcrumb stepper */}
-      <Stepper.List className="-mx-4 flex w-full items-center overflow-x-auto px-4 text-sm md:mx-0 md:justify-center md:overflow-visible md:px-0">
+      <Stepper.List className="hidden w-full items-center justify-center text-sm sm:flex">
         <Stepper.Items>
           {(item: any, index: number) => (
             <Fragment key={item.id}>
