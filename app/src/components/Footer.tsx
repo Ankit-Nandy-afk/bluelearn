@@ -42,8 +42,8 @@ const SOCIALS: Array<{ name: string; href: string; Icon: IconType }> = [
 export function Footer() {
   return (
     <footer className="border-t bg-background">
-      <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-8 py-6 lg:px-16">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-light text-muted-foreground">
+      <div className="mx-auto flex max-w-[1280px] flex-col-reverse items-center gap-4 px-4 py-6 sm:flex-row sm:flex-wrap sm:justify-between sm:px-8 lg:px-16">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[13px] font-light text-muted-foreground sm:justify-start">
           {BLUELEARN_OFFICIAL == "true" ? (
             <span>&copy; {new Date().getFullYear()} Bluelearn</span>
           ) : (
@@ -70,7 +70,7 @@ export function Footer() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 sm:gap-1">
           {SOCIALS.map(({ name, href, Icon }) => (
             <a
               key={name}
@@ -79,9 +79,9 @@ export function Footer() {
               rel="noopener noreferrer"
               title={name}
               aria-label={name}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-8 sm:w-8"
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-5 w-5 sm:h-4 sm:w-4" />
             </a>
           ))}
         </div>
