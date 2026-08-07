@@ -94,9 +94,9 @@ export const GuideDetails = ({
                 process for accomplishing a goal.
               </FieldDescription>
             </div>
-            <Field className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
+            <Field className="grid grid-cols-2 gap-2 lg:grid-cols-4">
               <button
-                className="mono-micro rounded-full border border-badge-border p-4 tracking-[0.08em] text-badge-foreground"
+                className="mono-micro rounded-full border border-badge-border p-3 tracking-[0.08em] text-badge-foreground sm:p-4"
                 style={{
                   backgroundColor:
                     guideContData.type == "theoretical"
@@ -114,7 +114,7 @@ export const GuideDetails = ({
               </button>
 
               <button
-                className="mono-micro rounded-full border border-badge-border p-4 tracking-[0.08em] text-badge-foreground"
+                className="mono-micro rounded-full border border-badge-border p-3 tracking-[0.08em] text-badge-foreground sm:p-4"
                 style={{
                   backgroundColor:
                     guideContData.type == "practical"
@@ -255,7 +255,7 @@ export const GuideDetails = ({
               Create a subject if it doesn't exist yet.
             </FieldDescription>
           </div>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <Input
               id="new-subject-name"
               type="text"
@@ -288,7 +288,7 @@ export const GuideDetails = ({
             <Button
               variant="ghost"
               size="icon"
-              className="btn-sec h-10 w-24 rounded-md"
+              className="btn-sec h-10 w-full rounded-md sm:w-24"
               onClick={() => {
                 if (newSubject.name !== "" && newSubject.summary !== "") {
                   const newSubs = [...guideContData.newSubjects, newSubject];
@@ -374,7 +374,7 @@ export const GuideDetails = ({
                 </FieldDescription>
               </div>
 
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <Input
                   id="todo-prereqs"
                   type="text"
@@ -407,7 +407,7 @@ export const GuideDetails = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="btn-sec h-10 w-24 rounded-md"
+                  className="btn-sec h-10 w-full rounded-md sm:w-24"
                   onClick={() => {
                     if (todoPrereq.title !== "" && todoPrereq.summary !== "") {
                       const todos = [...guideContData.todoPrereqs, todoPrereq];

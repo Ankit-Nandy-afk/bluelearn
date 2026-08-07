@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { GuideSidebarActions } from "@/components/guides/GuideSidebarActions";
+import { GuideMobileMenu } from "@/components/guides/GuideMobileMenu";
 
 function useVote() {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
@@ -100,8 +101,8 @@ function RouteComponent() {
   const breadcrumbs = buildBreadcrumbs(guide.title, breadcrumbOrigin);
 
   return (
-    <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
-      <section className="grid grid-cols-[320px_1fr] border-b">
+    <div className="mx-auto max-w-7xl border-x bg-background md:h-[calc(100vh-70px)]">
+      <section className="flex flex-col border-b md:grid md:grid-cols-[320px_1fr]">
         <GuideSidebar
           sidebarActions={
             <GuideSidebarActions
@@ -116,9 +117,9 @@ function RouteComponent() {
         />
 
         {/* MAIN */}
-        <main className="h-[calc(100vh-70px)] min-w-0 overflow-y-auto px-10 py-4 lg:px-16">
+        <main className="min-w-0 px-4 py-4 md:h-[calc(100vh-70px)] md:overflow-y-auto md:px-10 lg:px-16">
           {/* Breadcrumbs */}
-          <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <ul className="flex min-w-0 flex-nowrap items-center gap-2 text-xs tracking-[0.08em] text-muted-foreground uppercase">
               {breadcrumbs.map((crumb, idx) => (
                 <li
@@ -169,12 +170,20 @@ function RouteComponent() {
                 <span className="mono-micro">{variant.votes.down}</span>
               </Button>
 
+              <GuideMobileMenu
+                slug={slug}
+                currentVariantSlug={variant.slug}
+                variantId={variant.id}
+                guideTitle={guide.title}
+                menuItems={guideMenuItems}
+              />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-md"
+                    className="hidden h-9 w-9 cursor-pointer rounded-md md:inline-flex"
                   >
                     <Ellipsis className="h-4 w-4" />
                   </Button>
@@ -183,7 +192,7 @@ function RouteComponent() {
                 <DropdownMenuContent align="end" className="w-48 font-mono">
                   {guideMenuItems.map((item) => (
                     <DropdownMenuItem key={item.to} asChild>
-                      <Link to={item.to} className="text-xs">
+                      <Link to={item.to} className="cursor-pointer text-xs">
                         {item.icon}
                         {item.label}
                       </Link>
@@ -196,7 +205,7 @@ function RouteComponent() {
 
           <Separator className="mb-8" />
 
-          <GuideReader guide={guide} />
+          <GuideReader guide={guide} showToc />
         </main>
       </section>
     </div>

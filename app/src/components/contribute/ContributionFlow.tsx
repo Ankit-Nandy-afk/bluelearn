@@ -41,6 +41,7 @@ import { OrderTargetGuides } from "@/components/contribute/steps/OrderTargetGuid
 
 import { flows, typeStep } from "@/lib/contributionFlow";
 import { PreviewObjective } from "@/components/contribute/steps/PreviewObjective";
+import { MobileStepProgress } from "@/components/contribute/MobileStepProgress";
 import {
   clearStoredDraft,
   getStoredDraft,
@@ -214,6 +215,7 @@ export default function ContributionFlow({
           type={type}
           setType={setType}
           skipTypeStep={skipTypeStep}
+          activeStep={activeStep}
           step={step}
           onPublished={onPublished}
           draftId={draftId}
@@ -241,6 +243,7 @@ function Inner({
   type,
   setType,
   skipTypeStep,
+  activeStep,
   step,
   onPublished,
   draftId,
@@ -262,6 +265,7 @@ function Inner({
   type: ContributionType | null;
   setType: (value: ContributionType) => void;
   skipTypeStep: boolean;
+  activeStep: string;
   step?: string;
   onPublished?: () => void;
   draftId?: string;
@@ -344,6 +348,11 @@ function Inner({
   const [submitting, setSubmitting] = useState(false);
   const [publishAttempted, setPublishAttempted] = useState(false);
   const [showChangeSummary, setShowChangeSummary] = useState(false);
+  const visibleSteps = !type
+    ? typeStep
+    : skipTypeStep
+      ? flows[type]
+      : [...typeStep, ...flows[type]];
 
   // Start from the todo page with the topic's title and summary already filled in.
   const seededRef = useRef(false);
@@ -755,8 +764,10 @@ function Inner({
         });
       }
       toast.success("Draft saved");
+      return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save draft");
+      return false;
     } finally {
       setSubmitting(false);
     }
@@ -842,19 +853,21 @@ function Inner({
   if (skipTypeStep && !type) return null;
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col gap-6">
+    <div className="flex min-h-0 w-full flex-1 flex-col gap-6 pb-20 sm:pb-0">
+      <MobileStepProgress steps={visibleSteps} activeStep={activeStep} />
+
       {/* horizontal breadcrumb stepper */}
-      <Stepper.List className="flex w-full items-center justify-center text-sm">
+      <Stepper.List className="hidden w-full items-center justify-center text-sm sm:flex">
         <Stepper.Items>
           {(item: any, index: number) => (
             <Fragment key={item.id}>
               {index > 0 && (
-                <ChevronRight className="mx-1 size-4 text-muted-foreground/50" />
+                <ChevronRight className="mx-1 size-4 shrink-0 text-muted-foreground/50" />
               )}
 
               <Stepper.Item step={item.id}>
-                <Stepper.Trigger className="mono-micro flex items-center gap-2 rounded-full border border-border bg-background px-2 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted data-[status=active]:border-primary data-[status=active]:bg-primary/10 data-[status=active]:text-primary data-[status=active]:ring-1 data-[status=active]:ring-primary/20">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                <Stepper.Trigger className="mono-micro flex shrink-0 items-center gap-2 rounded-full border border-border bg-background px-2 py-2 text-sm whitespace-nowrap text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted data-[status=active]:border-primary data-[status=active]:bg-primary/10 data-[status=active]:text-primary data-[status=active]:ring-1 data-[status=active]:ring-primary/20">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
                     {index + 1}
                   </span>
                   <Stepper.Title className="max-w-[20ch] truncate font-bold" />

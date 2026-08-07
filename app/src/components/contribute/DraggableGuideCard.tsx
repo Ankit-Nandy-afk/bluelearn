@@ -87,7 +87,7 @@ export const DraggableGuideCard = ({
           </div>
           {/* Author, Date, & Duration under title, before description */}
           {(guide.author || guide.created_at || guide.duration_minutes) && (
-            <div className="mt-1 ml-7 flex flex-wrap items-center gap-2.5 text-[10px] text-muted-foreground/80">
+            <div className="mt-1 ml-7 flex flex-wrap items-center gap-2.5 text-[10px] text-muted-foreground">
               {guide.author && (
                 <span className="flex items-center gap-1 font-mono uppercase">
                   <User className="h-3 w-3 text-muted-foreground/75" />@

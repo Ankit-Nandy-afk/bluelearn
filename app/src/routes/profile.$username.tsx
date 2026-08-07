@@ -71,21 +71,21 @@ function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-7xl border-x bg-background">
-      <section className="border-b px-8 py-10 lg:px-16">
-        <div className="mx-auto mb-6 flex w-full max-w-5xl flex-col items-center gap-8 px-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-5">
-            <Avatar className="size-28 shrink-0 bg-muted">
+      <section className="border-b px-4 py-8 sm:px-8 sm:py-10 lg:px-16">
+        <div className="mx-auto mb-6 flex w-full max-w-5xl flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-4">
+          <div className="flex w-full min-w-0 items-center gap-4 sm:w-auto sm:gap-5">
+            <Avatar className="size-20 shrink-0 bg-muted sm:size-28">
               <AvatarImage />
               <AvatarFallback className="bg-muted text-2xl font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
 
-            <div className="flex flex-col">
-              <h2 className="text-3xl font-bold">
+            <div className="flex min-w-0 flex-col">
+              <h2 className="text-2xl font-bold break-words sm:text-3xl">
                 {profile.display_name ?? profile.username}
               </h2>
-              <h3 className="mono-micro text-muted-foreground/80">
+              <h3 className="mono-micro text-muted-foreground">
                 @{profile.username}
               </h3>
 
@@ -114,17 +114,19 @@ function ProfilePage() {
 
           <ul
             className={cn(
-              "grid items-start gap-x-6",
+              "grid w-full items-start gap-x-2 gap-y-4 sm:w-auto sm:gap-x-6",
               isVerifier ? "grid-cols-4" : "grid-cols-3"
             )}
           >
             {statsRows.map((stat) => (
               <li
                 key={stat.label}
-                className="flex min-w-24 flex-col items-center gap-1"
+                className="flex min-w-0 flex-col items-center gap-1 sm:min-w-24"
               >
-                <h3 className="data-label leading-none">{stat.label}</h3>
-                <p className="data-value text-2xl! leading-none">
+                <h3 className="data-label text-[10px]! leading-none tracking-tight! whitespace-nowrap sm:text-[11px]! sm:tracking-[0.08em]!">
+                  {stat.label}
+                </h3>
+                <p className="data-value text-xl! leading-none sm:text-2xl!">
                   {stat.value}
                 </p>
               </li>
