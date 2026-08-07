@@ -5,10 +5,10 @@ import {
   getVariantContributors,
   getVariantRevisions,
 } from "@/lib/api/variants";
-import { VariantsModal } from "@/components/guides/modals/VariantsModal";
-import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
-import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
-import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
+import { VariantsModal } from "@/components/modals/VariantsModal";
+import { ObjectivesModal } from "@/components/modals/ObjectivesModal";
+import { ContributorsModal } from "@/components/modals/ContributorsModal";
+import { RevisionsModal } from "@/components/modals/RevisionsModal";
 
 export type GuideModalType =
   | "variants"

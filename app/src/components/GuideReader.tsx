@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components//ui/badge";
 import { CodeBlock } from "@/components/CodeBlock";
 import { Callout } from "@/components/Callout";
-import { GuideToc } from "@/components/guides/GuideToc";
+import { GuideToc } from "@/components/GuideToc";
 
 import { formatDate, formatDuration } from "@/lib/guideUtils";
 

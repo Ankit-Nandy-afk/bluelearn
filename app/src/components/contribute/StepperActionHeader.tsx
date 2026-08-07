@@ -1,11 +1,15 @@
-import { Check, Save } from "lucide-react";
+import { Check, Save, Scroll } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import type { ContributionType } from "@/types/contributions";
 import { Separator } from "@/components/ui/separator";
+import { GuidelinesModal } from "@/components/modals/GuidelinesModal";
+import { GuideSubmitModal } from "@/components/modals/GuideSubmitModal";
 
 type PropTypes = {
   title: string;
   Stepper: any;
+  type?: ContributionType | null;
   nextDisabled?: boolean;
   hideBackBtn?: boolean;
   submitting?: boolean;
@@ -18,6 +22,7 @@ type PropTypes = {
 export const StepperActionHeader = ({
   title,
   Stepper,
+  type,
   nextDisabled,
   submitting,
   saveDisabled,
@@ -26,8 +31,15 @@ export const StepperActionHeader = ({
   onSaveDraft,
   onPublish,
 }: PropTypes) => {
+  const [openGuidelineModal, setOpenGuidelineModal] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [saved, setSaved] = useState(false);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const toggleGuidelineModal = () => setOpenGuidelineModal(!openGuidelineModal);
+  const toggleSubmitModal = () => setShowSubmitModal(!showSubmitModal);
+
+  const handleSubmit = () => setShowSubmitModal(!showSubmitModal);
 
   useEffect(
     () => () => {
@@ -50,9 +62,22 @@ export const StepperActionHeader = ({
   return (
     <>
       <div className="mb-4 hidden items-center justify-between sm:flex">
-        <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
-          {title}
-        </h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
+            {title}
+          </h1>
+
+          {type != "objective" && (
+            <button
+              type="button"
+              className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
+              onClick={toggleGuidelineModal}
+            >
+              <Scroll className="size-4" />
+              View Guidelines
+            </button>
+          )}
+        </div>
 
         <div className="text-mono flex flex-wrap gap-2 sm:gap-4">
           {onSaveDraft && (
@@ -76,7 +101,7 @@ export const StepperActionHeader = ({
               type="button"
               className="btn-pri disabled:pointer-events-none disabled:opacity-50"
               disabled={submitting}
-              onClick={onPublish}
+              onClick={handleSubmit}
             >
               {publishLabel}
             </button>
@@ -127,7 +152,7 @@ export const StepperActionHeader = ({
                 type="button"
                 className="btn-pri disabled:pointer-events-none disabled:opacity-50"
                 disabled={submitting}
-                onClick={onPublish}
+                onClick={handleSubmit}
               >
                 {publishLabel.toLowerCase().startsWith("submit")
                   ? "Submit"
@@ -141,6 +166,18 @@ export const StepperActionHeader = ({
           </div>
         </div>
       )}
+
+      <GuidelinesModal
+        open={openGuidelineModal}
+        onOpenChange={toggleGuidelineModal}
+      />
+
+      <GuideSubmitModal
+        open={showSubmitModal}
+        onOpenChange={toggleSubmitModal}
+        submitting={submitting}
+        onPublish={onPublish}
+      />
     </>
   );
 };

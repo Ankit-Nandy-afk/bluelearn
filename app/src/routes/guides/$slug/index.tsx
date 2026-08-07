@@ -30,8 +30,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
-import { GuideSidebarActions } from "@/components/guides/GuideSidebarActions";
-import { GuideMobileMenu } from "@/components/guides/GuideMobileMenu";
+import { GuideSidebarActions } from "@/components/sidebar/GuideSidebarActions";
+import { GuideMobileMenu } from "@/components/GuideMobileMenu";
 
 function useVote() {
   const [vote, setVote] = useState<"up" | "down" | null>(null);

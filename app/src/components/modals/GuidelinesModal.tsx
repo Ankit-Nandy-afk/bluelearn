@@ -1,0 +1,23 @@
+import ReactMarkdown from "react-markdown";
+import { BaseGuideModal } from "@/components/modals/BaseGuideModal";
+import guidelines from "@/data/guidelines.md?raw";
+
+type PropsTypes = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export const GuidelinesModal = ({ open, onOpenChange }: PropsTypes) => {
+  return (
+    <BaseGuideModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Guidelines"
+      description="Guidelines for creating guides."
+    >
+      <article className="markdown">
+        <ReactMarkdown>{guidelines}</ReactMarkdown>
+      </article>
+    </BaseGuideModal>
+  );
+};

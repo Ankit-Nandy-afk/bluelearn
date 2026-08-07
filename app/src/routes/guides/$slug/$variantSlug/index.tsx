@@ -29,8 +29,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { GuideSidebarActions } from "@/components/guides/GuideSidebarActions";
-import { GuideMobileMenu } from "@/components/guides/GuideMobileMenu";
+import { GuideSidebarActions } from "@/components/sidebar/GuideSidebarActions";
+import { GuideMobileMenu } from "@/components/GuideMobileMenu";
 
 function useVote() {
   const [vote, setVote] = useState<"up" | "down" | null>(null);

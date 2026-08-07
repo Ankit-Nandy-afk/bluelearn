@@ -7,8 +7,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
-import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
+import { ContributorsModal } from "@/components/modals/ContributorsModal";
+import { RevisionsModal } from "@/components/modals/RevisionsModal";
 import {
   getObjectiveContributors,
   listObjectiveRevisions,

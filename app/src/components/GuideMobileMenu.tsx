@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Ellipsis, ListChecks } from "lucide-react";
 import type { GuideReference } from "@bluelearn/schemas";
 
-import type { GuideModalType } from "@/components/guides/GuideActionModals";
+import type { GuideModalType } from "@/components/GuideActionModals";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,8 +15,8 @@ import {
 import {
   GUIDE_ACTIONS,
   GuideActionModals,
-} from "@/components/guides/GuideActionModals";
-import { PrerequisitesModal } from "@/components/guides/modals/PrerequisitesModal";
+} from "@/components/GuideActionModals";
+import { PrerequisitesModal } from "@/components/modals/PrerequisitesModal";
 
 type GuideMobileMenuProps = {
   slug: string;

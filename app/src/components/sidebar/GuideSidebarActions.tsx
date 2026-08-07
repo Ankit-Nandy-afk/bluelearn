@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import type { GuideModalType } from "@/components/guides/GuideActionModals";
+import type { GuideModalType } from "@/components/GuideActionModals";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -10,19 +10,19 @@ import {
 import {
   GUIDE_ACTIONS,
   GuideActionModals,
-} from "@/components/guides/GuideActionModals";
+} from "@/components/GuideActionModals";
 
-type GuideSidebarActionsProps = {
+type PropsTypes = {
   slug: string;
   currentVariantSlug: string | null;
   variantId: string | null;
 };
 
-export function GuideSidebarActions({
+export const GuideSidebarActions = ({
   slug,
   currentVariantSlug,
   variantId,
-}: GuideSidebarActionsProps) {
+}: PropsTypes) => {
   const [activeModal, setActiveModal] = useState<GuideModalType | null>(null);
   const close = (open: boolean) => !open && setActiveModal(null);
 
@@ -58,4 +58,4 @@ export function GuideSidebarActions({
       />
     </>
   );
-}
+};

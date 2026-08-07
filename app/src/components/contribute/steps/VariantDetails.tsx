@@ -1,7 +1,10 @@
 import { X } from "lucide-react";
 import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { VariantContribution } from "@/types/contributions";
+import type {
+  ContributionType,
+  VariantContribution,
+} from "@/types/contributions";
 import type { listGuides } from "@/lib/api/guides";
 import type { listSubjects } from "@/lib/api/subjects";
 
@@ -19,6 +22,7 @@ import { StepperActionHeader } from "@/components/contribute/StepperActionHeader
 
 type PropTypes = {
   Stepper: any;
+  type: ContributionType | null;
   variantContData: VariantContribution;
   setVariantContData: Dispatch<SetStateAction<VariantContribution>>;
   guides: Awaited<ReturnType<typeof listGuides>>;
@@ -30,6 +34,7 @@ type PropTypes = {
 
 export const VariantDetails = ({
   Stepper,
+  type,
   variantContData,
   setVariantContData,
   guides,
@@ -51,6 +56,7 @@ export const VariantDetails = ({
       <StepperActionHeader
         title={"Variant Details"}
         Stepper={Stepper}
+        type={type}
         hideBackBtn={hideBackBtn}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
