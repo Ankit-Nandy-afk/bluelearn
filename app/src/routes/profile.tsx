@@ -13,6 +13,7 @@ import {
   activityStatusLabel,
   activityTypeLabel,
   filterActivity,
+  getAvatarUrl,
   getInitials,
   loadProfilePage,
 } from "@/lib/profile";
@@ -227,7 +228,10 @@ function ProfilePage({ profile, roles, stats, activity }: ProfilePageData) {
         <div className="mx-auto mb-6 flex w-full max-w-5xl flex-col items-center gap-8 px-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-5">
             <Avatar className="size-28 shrink-0 bg-muted">
-              <AvatarImage />
+              <AvatarImage
+                src={getAvatarUrl(profile.id)}
+                alt={profile.display_name ?? profile.username}
+              />
               <AvatarFallback className="bg-muted text-2xl font-bold">
                 {initials}
               </AvatarFallback>
