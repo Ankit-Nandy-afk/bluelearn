@@ -7,19 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import { getGuideVariants } from "@/lib/api/guides";
 import { formatDate } from "@/lib/guideUtils";
 
-type VariantsModalProps = {
+type PropsTypes = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   slug: string;
   currentVariantSlug?: string | null;
 };
 
-export function VariantsModal({
+export const VariantsModal = ({
   open,
   onOpenChange,
   slug,
   currentVariantSlug,
-}: VariantsModalProps) {
+}: PropsTypes) => {
   const [variants, setVariants] = useState<Array<GuideVariantListItem>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,4 +135,4 @@ export function VariantsModal({
       })}
     </BaseGuideModal>
   );
-}
+};

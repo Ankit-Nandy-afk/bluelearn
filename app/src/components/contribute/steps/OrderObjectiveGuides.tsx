@@ -296,6 +296,7 @@ export const OrderObjectiveGuides = ({
       <StepperActionHeader
         title={"Order Guides"}
         Stepper={Stepper}
+        type="objective"
         onSaveDraft={onSaveDraft}
         submitting={submitting}
       />
@@ -303,7 +304,7 @@ export const OrderObjectiveGuides = ({
       <FieldGroup className="mt-0 flex min-h-0 flex-1 flex-col">
         {/* Target Guide Sequence */}
         <Field className="mb-0 min-w-0 shrink-0 space-y-2">
-          <div className="flex items-baseline gap-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-4">
             <FieldLabel className="mono-micro">
               Target Guide Sequence
             </FieldLabel>
@@ -417,7 +418,7 @@ export const OrderObjectiveGuides = ({
                       <p className="text-sm font-medium">
                         No prerequisite guides selected.
                       </p>
-                      <p className="mt-1 max-w-62.5 text-xs text-muted-foreground/80">
+                      <p className="mt-1 max-w-62.5 text-xs text-muted-foreground">
                         Select prerequisite guides from the prerequisites on the
                         right to add them to your curated sequence.
                       </p>
@@ -504,7 +505,7 @@ export const OrderObjectiveGuides = ({
                         {(targetGuide.author ||
                           targetGuide.created_at ||
                           targetGuide.duration_minutes) && (
-                          <div className="mt-1 ml-7 flex flex-wrap items-center gap-2.5 text-[10px] text-muted-foreground/80">
+                          <div className="mt-1 ml-7 flex flex-wrap items-center gap-2.5 text-[10px] text-muted-foreground">
                             {targetGuide.author && (
                               <span className="flex items-center gap-1 font-mono uppercase">
                                 <User className="h-3 w-3 text-primary/70" />@

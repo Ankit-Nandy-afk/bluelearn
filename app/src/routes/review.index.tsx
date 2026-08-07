@@ -25,7 +25,7 @@ export const Route = createFileRoute("/review/")({
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto max-w-[1280px] border-x bg-background">
+    <div className="mx-auto max-w-[1280px] bg-background">
       <section className="border-b px-8 py-8 lg:px-16">
         <div className="mb-6">
           <h1 className="data-label text-[14px] tracking-[0.08em] text-muted-foreground uppercase">

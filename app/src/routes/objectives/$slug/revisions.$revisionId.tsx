@@ -129,8 +129,8 @@ function RouteComponent() {
   const changes = previousId ? diff : creationDiff;
 
   return (
-    <div className="mx-auto min-h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
-      <main className="min-w-0 px-10 py-8 lg:px-16">
+    <div className="mx-auto min-h-[calc(100vh-70px)] max-w-7xl bg-background">
+      <main className="min-w-0 px-4 py-8 md:px-10 lg:px-16">
         <Link
           to="/objectives/$slug"
           params={{ slug }}

@@ -70,6 +70,7 @@ export const OrderTargetGuides = ({
       <StepperActionHeader
         title={"Order Target Guides"}
         Stepper={Stepper}
+        type="objective"
         onSaveDraft={onSaveDraft}
         submitting={submitting}
       />

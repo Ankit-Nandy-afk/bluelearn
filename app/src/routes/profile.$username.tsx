@@ -30,7 +30,7 @@ function ProfileMessage({
   tone?: "muted" | "error";
 }) {
   return (
-    <div className="mx-auto max-w-7xl border-x bg-background px-8 py-10 lg:px-16">
+    <div className="mx-auto max-w-7xl bg-background px-8 py-10 lg:px-16">
       <p
         className={
           tone === "error"
@@ -84,11 +84,11 @@ function ProfilePage() {
               </AvatarFallback>
             </Avatar>
 
-            <div className="flex flex-col">
-              <h2 className="text-3xl font-bold">
+            <div className="flex min-w-0 flex-col">
+              <h2 className="text-2xl font-bold break-words sm:text-3xl">
                 {profile.display_name ?? profile.username}
               </h2>
-              <h3 className="mono-micro text-muted-foreground/80">
+              <h3 className="mono-micro text-muted-foreground">
                 @{profile.username}
               </h3>
 
@@ -117,17 +117,19 @@ function ProfilePage() {
 
           <ul
             className={cn(
-              "grid items-start gap-x-6",
+              "grid w-full items-start gap-x-2 gap-y-4 sm:w-auto sm:gap-x-6",
               isVerifier ? "grid-cols-4" : "grid-cols-3"
             )}
           >
             {statsRows.map((stat) => (
               <li
                 key={stat.label}
-                className="flex min-w-24 flex-col items-center gap-1"
+                className="flex min-w-0 flex-col items-center gap-1 sm:min-w-24"
               >
-                <h3 className="data-label leading-none">{stat.label}</h3>
-                <p className="data-value text-2xl! leading-none">
+                <h3 className="data-label text-[10px]! leading-none tracking-tight! whitespace-nowrap sm:text-[11px]! sm:tracking-[0.08em]!">
+                  {stat.label}
+                </h3>
+                <p className="data-value text-xl! leading-none sm:text-2xl!">
                   {stat.value}
                 </p>
               </li>

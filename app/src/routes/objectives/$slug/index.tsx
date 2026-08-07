@@ -43,7 +43,7 @@ function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-[1280px] border-x bg-background">
+    <div className="mx-auto max-w-[1280px] bg-background">
       <section className="border-b px-8 py-8 lg:px-16">
         {header}
 
@@ -155,16 +155,13 @@ function PathPage() {
     breadcrumbOrigin
   );
 
-  const { targets, totalGuides, totalDuration } = buildObjectiveFlow(
-    snapshot,
-    guides
-  );
+  const { targets } = buildObjectiveFlow(snapshot, guides);
 
   return (
     <Shell
       header={
         <>
-          <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <Breadcrumbs crumbs={breadcrumbs} />
 
             <div className="flex shrink-0 items-center gap-2">
@@ -182,8 +179,8 @@ function PathPage() {
           <ObjectiveHeader
             objective={objective}
             stats={{
-              guides: totalGuides,
-              durationMinutes: totalDuration,
+              guides: objective.guides_total,
+              durationMinutes: objective.duration_minutes,
             }}
           />
         </>
