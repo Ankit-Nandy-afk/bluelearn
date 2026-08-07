@@ -1,33 +1,16 @@
-import { useCallback, useState } from "react";
-import { History, Replace, Target, Users } from "lucide-react";
+import { useState } from "react";
 
-import {
-  getVariantContributors,
-  getVariantRevisions,
-} from "@/lib/api/variants";
+import type { GuideModalType } from "@/components/guides/GuideActionModals";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { VariantsModal } from "@/components/guides/modals/VariantsModal";
-import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
-import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
-import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
-
-type ModalType = "variants" | "objectives" | "contributors" | "revisions";
-
-const ACTIONS: Array<{
-  icon: typeof Replace;
-  label: string;
-  type: ModalType;
-}> = [
-  { icon: Replace, label: "View Variants", type: "variants" },
-  { icon: Target, label: "View Objectives", type: "objectives" },
-  { icon: Users, label: "View Contributors", type: "contributors" },
-  { icon: History, label: "View Revisions", type: "revisions" },
-];
+import {
+  GUIDE_ACTIONS,
+  GuideActionModals,
+} from "@/components/guides/GuideActionModals";
 
 type GuideSidebarActionsProps = {
   slug: string;
@@ -40,28 +23,13 @@ export function GuideSidebarActions({
   currentVariantSlug,
   variantId,
 }: GuideSidebarActionsProps) {
-  const [activeModal, setActiveModal] = useState<ModalType | null>(null);
+  const [activeModal, setActiveModal] = useState<GuideModalType | null>(null);
   const close = (open: boolean) => !open && setActiveModal(null);
-
-  const fetchContributors = useCallback(
-    () => getVariantContributors(variantId ?? ""),
-    [variantId]
-  );
-
-  const fetchRevisions = useCallback(async () => {
-    const { revisions } = await getVariantRevisions(variantId ?? "");
-    return revisions.map((rev) => ({
-      id: rev.id,
-      change_summary: rev.change_summary,
-      author: rev.author,
-      date: rev.approved_at,
-    }));
-  }, [variantId]);
 
   return (
     <>
       <div className="flex items-center justify-start gap-4">
-        {ACTIONS.map((action) => (
+        {GUIDE_ACTIONS.map((action) => (
           <Tooltip key={action.label}>
             <TooltipTrigger asChild>
               <Button
@@ -81,43 +49,12 @@ export function GuideSidebarActions({
         ))}
       </div>
 
-      <VariantsModal
-        open={activeModal === "variants"}
+      <GuideActionModals
+        active={activeModal}
         onOpenChange={close}
         slug={slug}
         currentVariantSlug={currentVariantSlug}
-      />
-
-      <ObjectivesModal
-        open={activeModal === "objectives"}
-        onOpenChange={close}
-        slug={slug}
-      />
-
-      <ContributorsModal
-        open={activeModal === "contributors"}
-        onOpenChange={close}
-        fetchContributors={fetchContributors}
-        enabled={Boolean(variantId)}
-      />
-
-      <RevisionsModal
-        open={activeModal === "revisions"}
-        onOpenChange={close}
-        fetchRevisions={fetchRevisions}
-        enabled={Boolean(variantId)}
-        linkTo={(rev) =>
-          currentVariantSlug
-            ? {
-                to: "/guides/$slug/$variantSlug/revisions/$revisionId",
-                params: {
-                  slug,
-                  variantSlug: currentVariantSlug,
-                  revisionId: rev.id,
-                },
-              }
-            : null
-        }
+        variantId={variantId}
       />
     </>
   );

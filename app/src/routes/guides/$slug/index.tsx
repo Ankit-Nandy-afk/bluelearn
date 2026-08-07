@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
 import { GuideSidebarActions } from "@/components/guides/GuideSidebarActions";
+import { GuideMobileMenu } from "@/components/guides/GuideMobileMenu";
 
 function useVote() {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
@@ -159,12 +160,21 @@ function RouteComponent() {
                 />
               </Button>
 
+              <GuideMobileMenu
+                slug={slug}
+                currentVariantSlug={guide.variant_slug}
+                variantId={guide.variant_id}
+                guideTitle={guide.title}
+                menuItems={guideMenuItems}
+                prerequisites={guide.prerequisites}
+              />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-md"
+                    className="hidden h-9 w-9 cursor-pointer rounded-md md:inline-flex"
                   >
                     <Ellipsis className="h-4 w-4" />
                   </Button>
@@ -173,7 +183,7 @@ function RouteComponent() {
                 <DropdownMenuContent align="end" className="w-48 font-mono">
                   {guideMenuItems.map((item) => (
                     <DropdownMenuItem key={item.to} asChild>
-                      <Link to={item.to} className="text-xs">
+                      <Link to={item.to} className="cursor-pointer text-xs">
                         {item.icon}
                         {item.label}
                       </Link>

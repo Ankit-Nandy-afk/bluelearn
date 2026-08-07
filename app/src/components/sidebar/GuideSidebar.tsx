@@ -25,14 +25,11 @@ export const GuideSidebar = ({
   );
 
   return (
-    <aside className="border-b px-6 py-6 md:h-[calc(100vh-70px)] md:overflow-y-auto md:border-r md:border-b-0">
+    <aside className="hidden px-6 py-6 md:block md:h-[calc(100vh-70px)] md:overflow-y-auto md:border-r">
       {sidebarActions}
 
       {/* TOC */}
-      <CollapsibleSection
-        title={<p className="ml-auto">Table of Contents</p>}
-        defaultOpen={true}
-      >
+      <CollapsibleSection title="Table of Contents" defaultOpen={true}>
         <ul className="space-y-2">
           {headings.map((h, idx) => (
             <li
@@ -57,10 +54,7 @@ export const GuideSidebar = ({
 
       {/* Prerequisites */}
       {showPrerequisites && (
-        <CollapsibleSection
-          defaultOpen={true}
-          title={<p className="ml-auto">Prerequisites</p>}
-        >
+        <CollapsibleSection defaultOpen={true} title="Prerequisites">
           {guide.prerequisites.length === 0 ? (
             <p
               className="text-xs text-muted-foreground"
