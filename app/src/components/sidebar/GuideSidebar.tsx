@@ -28,37 +28,6 @@ export const GuideSidebar = ({
     <aside className="h-[calc(100vh-70px)] overflow-y-auto border-r px-6 py-6">
       {sidebarActions}
 
-      {/* Prerequisites */}
-      {showPrerequisites && (
-        <CollapsibleSection title={<p className="ml-auto">Prerequisites</p>}>
-          <ul className="space-y-2">
-            {guide.prerequisites.map((prereq: GuideReference) => (
-              <li
-                key={prereq.slug}
-                className="text-sm text-muted-foreground hover:text-foreground"
-                style={{
-                  paddingLeft: 6,
-                }}
-              >
-                <Link
-                  to="/guides/$slug"
-                  params={{ slug: prereq.slug }}
-                  state={{
-                    breadcrumbOrigin: {
-                      type: "guide",
-                      title: guide.title,
-                      path: `/guides/${slug}`,
-                    },
-                  }}
-                >
-                  {prereq.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </CollapsibleSection>
-      )}
-
       {/* TOC */}
       <CollapsibleSection
         title={<p className="ml-auto">Table of Contents</p>}
@@ -68,7 +37,7 @@ export const GuideSidebar = ({
           {headings.map((h, idx) => (
             <li
               key={idx}
-              className="cursor-pointer text-sm text-muted-foreground hover:text-foreground"
+              className="cursor-pointer text-xs text-muted-foreground hover:text-foreground"
               style={{
                 paddingLeft:
                   h.level === 1
@@ -85,6 +54,47 @@ export const GuideSidebar = ({
           ))}
         </ul>
       </CollapsibleSection>
+
+      {/* Prerequisites */}
+      {showPrerequisites && (
+        <CollapsibleSection
+          defaultOpen={true}
+          title={<p className="ml-auto">Prerequisites</p>}
+        >
+          {guide.prerequisites.length === 0 ? (
+            <p
+              className="text-xs text-muted-foreground"
+              style={{ paddingLeft: 12 }}
+            >
+              None declared
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {guide.prerequisites.map((prereq: GuideReference) => (
+                <li
+                  key={prereq.slug}
+                  className="cursor-pointer text-xs text-muted-foreground hover:text-foreground"
+                  style={{ paddingLeft: 12 }}
+                >
+                  <Link
+                    to="/guides/$slug"
+                    params={{ slug: prereq.slug }}
+                    state={{
+                      breadcrumbOrigin: {
+                        type: "guide",
+                        title: guide.title,
+                        path: `/guides/${slug}`,
+                      },
+                    }}
+                  >
+                    {prereq.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CollapsibleSection>
+      )}
 
       {reviewSection}
     </aside>
