@@ -17,8 +17,8 @@ export const SelectType = ({ pickType, type, Stepper }: PropTypes) => {
       <StepperActionHeader
         title={"Select Contribution Type"}
         Stepper={Stepper}
-        type={type as ContributionType | null}
         hideBackBtn={true}
+        hideGuidelines={true}
       />
       <div
         className={`grid grid-cols-1 gap-2 md:grid-cols-2 ${isCurator ? "lg:grid-cols-3" : ""}`}

@@ -13,6 +13,7 @@ type PropTypes = {
   type?: ContributionType | null;
   nextDisabled?: boolean;
   hideBackBtn?: boolean;
+  hideGuidelines?: boolean;
   submitting?: boolean;
   saveDisabled?: boolean;
   publishLabel?: string;
@@ -29,6 +30,7 @@ export const StepperActionHeader = ({
   saveDisabled,
   publishLabel = "Submit for Review",
   hideBackBtn,
+  hideGuidelines,
   onSaveDraft,
   onPublish,
 }: PropTypes) => {
@@ -68,7 +70,7 @@ export const StepperActionHeader = ({
             {title}
           </h1>
 
-          {type != "objective" && (
+          {type != "objective" && !hideGuidelines && (
             <button
               type="button"
               className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
