@@ -19,4 +19,10 @@ properties:
     enum: [approved, rejected, null]
     description: The caller's own vote on this case, or null if not yet cast.
     example: approved
-required: [id, case_type, status, title, created_at, decision]
+  expires_at:
+    description: >
+      When the caller's seat on this case stops accepting a first vote.
+    oneOf:
+      - $ref: "../common/Timestamp.yaml"
+      - type: "null"
+required: [id, case_type, status, title, created_at, decision, expires_at]

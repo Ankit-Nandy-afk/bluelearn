@@ -84,6 +84,7 @@ export const OrderObjectiveGuides = ({
   const [walkthroughData, setWalkthroughData] = useState<Walkthrough | null>(
     null
   );
+  const [walkthroughSlug, setWalkthroughSlug] = useState<string>("");
 
   useEffect(() => {
     setWalkthroughData(null);
@@ -91,7 +92,10 @@ export const OrderObjectiveGuides = ({
 
     const controller = new AbortController();
     getGuideWalkthrough(targetSlug, { signal: controller.signal })
-      .then(setWalkthroughData)
+      .then((data) => {
+        setWalkthroughData(data);
+        setWalkthroughSlug(targetSlug);
+      })
       .catch((err) => {
         if (!controller.signal.aborted) console.error(err);
       });
@@ -185,7 +189,10 @@ export const OrderObjectiveGuides = ({
       return;
     }
 
-    if (!walkthroughData?.nodes.some((n) => n.slug === targetSlug)) return;
+    if (!walkthroughData || walkthroughSlug !== targetSlug) {
+      setCuratedSequence([]);
+      return;
+    }
 
     // Seed with all prerequisites (excluding the target guide itself) sorted by levels
     const initialPrereqs = walkthroughData.nodes
@@ -211,7 +218,7 @@ export const OrderObjectiveGuides = ({
         ],
       };
     });
-  }, [targetSlug, walkthroughData]);
+  }, [targetSlug, walkthroughData, walkthroughSlug]);
 
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const draggedIndexRef = useRef<number | null>(null);

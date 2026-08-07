@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import type { RegisteredRouter, ToPathOption } from "@tanstack/react-router";
 
+import type { BreadcrumbOrigin } from "@/lib/breadcrumbs";
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Footer } from "@/components/cards/Footer";
@@ -28,6 +30,7 @@ type ObjectiveProp = {
 type PropTypes = {
   objective: ObjectiveProp;
   to: ToPathOption<RegisteredRouter>;
+  origin?: BreadcrumbOrigin;
 };
 
 // Only the last three guides are drawn. The rest collapse into a leading
@@ -128,9 +131,13 @@ function LevelsGraph({
   );
 }
 
-export const ObjectiveCard = ({ objective, to }: PropTypes) => {
+export const ObjectiveCard = ({ objective, to, origin }: PropTypes) => {
   return (
-    <Link to={to} params={{ slug: objective.slug }}>
+    <Link
+      to={to}
+      params={{ slug: objective.slug }}
+      state={{ breadcrumbOrigin: origin }}
+    >
       <Card className="group flex h-full flex-col justify-between rounded-md bg-background shadow-none transition-colors hover:bg-muted">
         {/* Header */}
         <CardHeader className="relative p-4">

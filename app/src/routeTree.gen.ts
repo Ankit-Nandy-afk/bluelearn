@@ -33,11 +33,16 @@ import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings.appearance'
 import { Route as SettingsAccountRouteImport } from './routes/settings.account'
 import { Route as ReviewCaseIdRouteImport } from './routes/review.$caseId'
-import { Route as ObjectivesSlugRouteImport } from './routes/objectives.$slug'
+import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
+import { Route as ObjectivesSlugRouteImport } from './routes/objectives/$slug'
 import { Route as GuidesSlugRouteImport } from './routes/guides/$slug'
+import { Route as ObjectivesSlugIndexRouteImport } from './routes/objectives/$slug/index'
 import { Route as GuidesSlugIndexRouteImport } from './routes/guides/$slug/index'
 import { Route as GuidesSlugWalkthroughRouteImport } from './routes/guides/$slug/walkthrough'
+import { Route as GuidesSlugVariantSlugIndexRouteImport } from './routes/guides/$slug/$variantSlug/index'
+import { Route as ObjectivesSlugRevisionsRevisionIdRouteImport } from './routes/objectives/$slug/revisions.$revisionId'
 import { Route as GuidesSlugVariantSlugEditRouteImport } from './routes/guides/$slug/$variantSlug/edit'
+import { Route as GuidesSlugVariantSlugRevisionsRevisionIdRouteImport } from './routes/guides/$slug/$variantSlug/revisions.$revisionId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -159,6 +164,11 @@ const ReviewCaseIdRoute = ReviewCaseIdRouteImport.update({
   path: '/$caseId',
   getParentRoute: () => ReviewRoute,
 } as any)
+const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
+  id: '/$username',
+  path: '/$username',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const ObjectivesSlugRoute = ObjectivesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -168,6 +178,11 @@ const GuidesSlugRoute = GuidesSlugRouteImport.update({
   id: '/guides/$slug',
   path: '/guides/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ObjectivesSlugIndexRoute = ObjectivesSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ObjectivesSlugRoute,
 } as any)
 const GuidesSlugIndexRoute = GuidesSlugIndexRouteImport.update({
   id: '/',
@@ -179,10 +194,28 @@ const GuidesSlugWalkthroughRoute = GuidesSlugWalkthroughRouteImport.update({
   path: '/walkthrough',
   getParentRoute: () => GuidesSlugRoute,
 } as any)
+const GuidesSlugVariantSlugIndexRoute =
+  GuidesSlugVariantSlugIndexRouteImport.update({
+    id: '/$variantSlug/',
+    path: '/$variantSlug/',
+    getParentRoute: () => GuidesSlugRoute,
+  } as any)
+const ObjectivesSlugRevisionsRevisionIdRoute =
+  ObjectivesSlugRevisionsRevisionIdRouteImport.update({
+    id: '/revisions/$revisionId',
+    path: '/revisions/$revisionId',
+    getParentRoute: () => ObjectivesSlugRoute,
+  } as any)
 const GuidesSlugVariantSlugEditRoute =
   GuidesSlugVariantSlugEditRouteImport.update({
     id: '/$variantSlug/edit',
     path: '/$variantSlug/edit',
+    getParentRoute: () => GuidesSlugRoute,
+  } as any)
+const GuidesSlugVariantSlugRevisionsRevisionIdRoute =
+  GuidesSlugVariantSlugRevisionsRevisionIdRouteImport.update({
+    id: '/$variantSlug/revisions/$revisionId',
+    path: '/$variantSlug/revisions/$revisionId',
     getParentRoute: () => GuidesSlugRoute,
   } as any)
 
@@ -193,7 +226,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/objectives': typeof ObjectivesRouteWithChildren
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRouteWithChildren
@@ -202,7 +235,8 @@ export interface FileRoutesByFullPath {
   '/todos': typeof TodosRoute
   '/verify-email': typeof VerifyEmailRoute
   '/guides/$slug': typeof GuidesSlugRouteWithChildren
-  '/objectives/$slug': typeof ObjectivesSlugRoute
+  '/objectives/$slug': typeof ObjectivesSlugRouteWithChildren
+  '/profile/$username': typeof ProfileUsernameRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -215,7 +249,11 @@ export interface FileRoutesByFullPath {
   '/subjects/': typeof SubjectsIndexRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug/': typeof GuidesSlugIndexRoute
+  '/objectives/$slug/': typeof ObjectivesSlugIndexRoute
   '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
+  '/objectives/$slug/revisions/$revisionId': typeof ObjectivesSlugRevisionsRevisionIdRoute
+  '/guides/$slug/$variantSlug/': typeof GuidesSlugVariantSlugIndexRoute
+  '/guides/$slug/$variantSlug/revisions/$revisionId': typeof GuidesSlugVariantSlugRevisionsRevisionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -223,12 +261,12 @@ export interface FileRoutesByTo {
   '/contribute': typeof ContributeRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/todos': typeof TodosRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/objectives/$slug': typeof ObjectivesSlugRoute
+  '/profile/$username': typeof ProfileUsernameRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -241,7 +279,11 @@ export interface FileRoutesByTo {
   '/subjects': typeof SubjectsIndexRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug': typeof GuidesSlugIndexRoute
+  '/objectives/$slug': typeof ObjectivesSlugIndexRoute
   '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
+  '/objectives/$slug/revisions/$revisionId': typeof ObjectivesSlugRevisionsRevisionIdRoute
+  '/guides/$slug/$variantSlug': typeof GuidesSlugVariantSlugIndexRoute
+  '/guides/$slug/$variantSlug/revisions/$revisionId': typeof GuidesSlugVariantSlugRevisionsRevisionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -251,7 +293,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/objectives': typeof ObjectivesRouteWithChildren
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRouteWithChildren
@@ -260,7 +302,8 @@ export interface FileRoutesById {
   '/todos': typeof TodosRoute
   '/verify-email': typeof VerifyEmailRoute
   '/guides/$slug': typeof GuidesSlugRouteWithChildren
-  '/objectives/$slug': typeof ObjectivesSlugRoute
+  '/objectives/$slug': typeof ObjectivesSlugRouteWithChildren
+  '/profile/$username': typeof ProfileUsernameRoute
   '/review/$caseId': typeof ReviewCaseIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -273,7 +316,11 @@ export interface FileRoutesById {
   '/subjects/': typeof SubjectsIndexRoute
   '/guides/$slug/walkthrough': typeof GuidesSlugWalkthroughRoute
   '/guides/$slug/': typeof GuidesSlugIndexRoute
+  '/objectives/$slug/': typeof ObjectivesSlugIndexRoute
   '/guides/$slug/$variantSlug/edit': typeof GuidesSlugVariantSlugEditRoute
+  '/objectives/$slug/revisions/$revisionId': typeof ObjectivesSlugRevisionsRevisionIdRoute
+  '/guides/$slug/$variantSlug/': typeof GuidesSlugVariantSlugIndexRoute
+  '/guides/$slug/$variantSlug/revisions/$revisionId': typeof GuidesSlugVariantSlugRevisionsRevisionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -294,6 +341,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/guides/$slug'
     | '/objectives/$slug'
+    | '/profile/$username'
     | '/review/$caseId'
     | '/settings/account'
     | '/settings/appearance'
@@ -306,7 +354,11 @@ export interface FileRouteTypes {
     | '/subjects/'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug/'
+    | '/objectives/$slug/'
     | '/guides/$slug/$variantSlug/edit'
+    | '/objectives/$slug/revisions/$revisionId'
+    | '/guides/$slug/$variantSlug/'
+    | '/guides/$slug/$variantSlug/revisions/$revisionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -319,7 +371,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/todos'
     | '/verify-email'
-    | '/objectives/$slug'
+    | '/profile/$username'
     | '/review/$caseId'
     | '/settings/account'
     | '/settings/appearance'
@@ -332,7 +384,11 @@ export interface FileRouteTypes {
     | '/subjects'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug'
+    | '/objectives/$slug'
     | '/guides/$slug/$variantSlug/edit'
+    | '/objectives/$slug/revisions/$revisionId'
+    | '/guides/$slug/$variantSlug'
+    | '/guides/$slug/$variantSlug/revisions/$revisionId'
   id:
     | '__root__'
     | '/'
@@ -351,6 +407,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/guides/$slug'
     | '/objectives/$slug'
+    | '/profile/$username'
     | '/review/$caseId'
     | '/settings/account'
     | '/settings/appearance'
@@ -363,7 +420,11 @@ export interface FileRouteTypes {
     | '/subjects/'
     | '/guides/$slug/walkthrough'
     | '/guides/$slug/'
+    | '/objectives/$slug/'
     | '/guides/$slug/$variantSlug/edit'
+    | '/objectives/$slug/revisions/$revisionId'
+    | '/guides/$slug/$variantSlug/'
+    | '/guides/$slug/$variantSlug/revisions/$revisionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -373,7 +434,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   ObjectivesRoute: typeof ObjectivesRouteWithChildren
-  ProfileRoute: typeof ProfileRoute
+  ProfileRoute: typeof ProfileRouteWithChildren
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ReviewRoute: typeof ReviewRouteWithChildren
@@ -555,6 +616,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReviewCaseIdRouteImport
       parentRoute: typeof ReviewRoute
     }
+    '/profile/$username': {
+      id: '/profile/$username'
+      path: '/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof ProfileUsernameRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/objectives/$slug': {
       id: '/objectives/$slug'
       path: '/$slug'
@@ -568,6 +636,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/guides/$slug'
       preLoaderRoute: typeof GuidesSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/objectives/$slug/': {
+      id: '/objectives/$slug/'
+      path: '/'
+      fullPath: '/objectives/$slug/'
+      preLoaderRoute: typeof ObjectivesSlugIndexRouteImport
+      parentRoute: typeof ObjectivesSlugRoute
     }
     '/guides/$slug/': {
       id: '/guides/$slug/'
@@ -583,6 +658,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesSlugWalkthroughRouteImport
       parentRoute: typeof GuidesSlugRoute
     }
+    '/guides/$slug/$variantSlug/': {
+      id: '/guides/$slug/$variantSlug/'
+      path: '/$variantSlug'
+      fullPath: '/guides/$slug/$variantSlug/'
+      preLoaderRoute: typeof GuidesSlugVariantSlugIndexRouteImport
+      parentRoute: typeof GuidesSlugRoute
+    }
+    '/objectives/$slug/revisions/$revisionId': {
+      id: '/objectives/$slug/revisions/$revisionId'
+      path: '/revisions/$revisionId'
+      fullPath: '/objectives/$slug/revisions/$revisionId'
+      preLoaderRoute: typeof ObjectivesSlugRevisionsRevisionIdRouteImport
+      parentRoute: typeof ObjectivesSlugRoute
+    }
     '/guides/$slug/$variantSlug/edit': {
       id: '/guides/$slug/$variantSlug/edit'
       path: '/$variantSlug/edit'
@@ -590,22 +679,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesSlugVariantSlugEditRouteImport
       parentRoute: typeof GuidesSlugRoute
     }
+    '/guides/$slug/$variantSlug/revisions/$revisionId': {
+      id: '/guides/$slug/$variantSlug/revisions/$revisionId'
+      path: '/$variantSlug/revisions/$revisionId'
+      fullPath: '/guides/$slug/$variantSlug/revisions/$revisionId'
+      preLoaderRoute: typeof GuidesSlugVariantSlugRevisionsRevisionIdRouteImport
+      parentRoute: typeof GuidesSlugRoute
+    }
   }
 }
 
+interface ObjectivesSlugRouteChildren {
+  ObjectivesSlugIndexRoute: typeof ObjectivesSlugIndexRoute
+  ObjectivesSlugRevisionsRevisionIdRoute: typeof ObjectivesSlugRevisionsRevisionIdRoute
+}
+
+const ObjectivesSlugRouteChildren: ObjectivesSlugRouteChildren = {
+  ObjectivesSlugIndexRoute: ObjectivesSlugIndexRoute,
+  ObjectivesSlugRevisionsRevisionIdRoute:
+    ObjectivesSlugRevisionsRevisionIdRoute,
+}
+
+const ObjectivesSlugRouteWithChildren = ObjectivesSlugRoute._addFileChildren(
+  ObjectivesSlugRouteChildren,
+)
+
 interface ObjectivesRouteChildren {
-  ObjectivesSlugRoute: typeof ObjectivesSlugRoute
+  ObjectivesSlugRoute: typeof ObjectivesSlugRouteWithChildren
   ObjectivesIndexRoute: typeof ObjectivesIndexRoute
 }
 
 const ObjectivesRouteChildren: ObjectivesRouteChildren = {
-  ObjectivesSlugRoute: ObjectivesSlugRoute,
+  ObjectivesSlugRoute: ObjectivesSlugRouteWithChildren,
   ObjectivesIndexRoute: ObjectivesIndexRoute,
 }
 
 const ObjectivesRouteWithChildren = ObjectivesRoute._addFileChildren(
   ObjectivesRouteChildren,
 )
+
+interface ProfileRouteChildren {
+  ProfileUsernameRoute: typeof ProfileUsernameRoute
+}
+
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileUsernameRoute: ProfileUsernameRoute,
+}
+
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren)
 
 interface ReviewRouteChildren {
   ReviewCaseIdRoute: typeof ReviewCaseIdRoute
@@ -656,12 +778,17 @@ interface GuidesSlugRouteChildren {
   GuidesSlugWalkthroughRoute: typeof GuidesSlugWalkthroughRoute
   GuidesSlugIndexRoute: typeof GuidesSlugIndexRoute
   GuidesSlugVariantSlugEditRoute: typeof GuidesSlugVariantSlugEditRoute
+  GuidesSlugVariantSlugIndexRoute: typeof GuidesSlugVariantSlugIndexRoute
+  GuidesSlugVariantSlugRevisionsRevisionIdRoute: typeof GuidesSlugVariantSlugRevisionsRevisionIdRoute
 }
 
 const GuidesSlugRouteChildren: GuidesSlugRouteChildren = {
   GuidesSlugWalkthroughRoute: GuidesSlugWalkthroughRoute,
   GuidesSlugIndexRoute: GuidesSlugIndexRoute,
   GuidesSlugVariantSlugEditRoute: GuidesSlugVariantSlugEditRoute,
+  GuidesSlugVariantSlugIndexRoute: GuidesSlugVariantSlugIndexRoute,
+  GuidesSlugVariantSlugRevisionsRevisionIdRoute:
+    GuidesSlugVariantSlugRevisionsRevisionIdRoute,
 }
 
 const GuidesSlugRouteWithChildren = GuidesSlugRoute._addFileChildren(
@@ -675,7 +802,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   ObjectivesRoute: ObjectivesRouteWithChildren,
-  ProfileRoute: ProfileRoute,
+  ProfileRoute: ProfileRouteWithChildren,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ReviewRoute: ReviewRouteWithChildren,

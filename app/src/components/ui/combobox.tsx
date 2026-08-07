@@ -29,6 +29,7 @@ type ComboboxBaseProps = {
   items: Array<ComboboxItem>;
   placeholder?: string;
   disabled?: boolean;
+  invalid?: boolean;
 };
 
 type SingleProps = ComboboxBaseProps & {
@@ -51,6 +52,7 @@ export function Combobox({
   value,
   onValueChange,
   disabled,
+  invalid,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -80,8 +82,12 @@ export function Combobox({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="w-full justify-between"
+            className={cn(
+              "w-full justify-between",
+              invalid && "border-2 border-destructive aria-invalid:ring-0"
+            )}
             disabled={disabled}
+            aria-invalid={invalid || undefined}
           >
             {isMulti || selected.length === 0 ? (
               <span className="text-muted-foreground">Select...</span>

@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import { Check, ExternalLink, X } from "lucide-react";
-import { useRef, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 
 import { cn } from "@/lib/utils";
+import { deadlineTickMs, formatTimeRemaining } from "@/lib/reviewDeadline";
 import { castDecision } from "@/lib/api/reviews";
 import { getRevision, reviseRevision } from "@/lib/api/guideRevisions";
 
@@ -50,6 +51,7 @@ export const ReviewSidebar = ({
   const [revising, setRevising] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const navigate = useNavigate();
+  const router = useRouter();
 
   const subjects = revision?.tags ?? [];
 
@@ -57,6 +59,35 @@ export const ReviewSidebar = ({
 
   // Reviewers can revote while the case is open, so start from their last vote.
   const priorDecision = revisionData.viewer_decision;
+  const hasVoted = priorDecision !== null;
+
+  const seatStatus = revisionData.viewer_seat_status ?? null;
+  const seatLive = seatStatus === "assigned";
+  const expiresMs = revisionData.viewer_expires_at
+    ? new Date(revisionData.viewer_expires_at).getTime()
+    : null;
+
+  const [now, setNow] = useState(() => Date.now());
+  const invalidated = useRef(false);
+
+  useEffect(() => {
+    if (!seatLive || expiresMs === null) return;
+
+    const diffMs = expiresMs - Date.now();
+    if (diffMs <= 0) {
+      if (invalidated.current) return;
+      invalidated.current = true;
+      router.invalidate();
+      return;
+    }
+
+    const timer = setTimeout(() => setNow(Date.now()), deadlineTickMs(diffMs));
+    return () => clearTimeout(timer);
+  }, [seatLive, expiresMs, now, router]);
+
+  const diffMs = seatLive && expiresMs !== null ? expiresMs - now : null;
+  const timedOut =
+    seatStatus === "replaced" || (diffMs !== null && diffMs <= 0);
 
   const caseOpen =
     revisionData.case.status !== "approved" &&
@@ -92,10 +123,17 @@ export const ReviewSidebar = ({
 
     try {
       await castDecision(caseId, review, { signal: controller.signal });
-      toast.success("Decision submitted", { id: toastId });
+      toast.success(hasVoted ? "Decision updated" : "Decision submitted", {
+        id: toastId,
+      });
+      router.invalidate();
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
-        toast.error("There was an unexpected error with your submission", {
+        const message =
+          e instanceof Error && e.message
+            ? e.message
+            : "There was an unexpected error with your submission";
+        toast.error(message, {
           id: toastId,
         });
       } else {
@@ -221,6 +259,28 @@ export const ReviewSidebar = ({
             title={<p className="ml-auto">Review Decision</p>}
           >
             <section className="space-y-4">
+              {timedOut && (
+                <DetailRow
+                  label="Time Remaining"
+                  value={
+                    <span className="font-mono text-xs text-destructive">
+                      Expired
+                    </span>
+                  }
+                />
+              )}
+
+              {!timedOut && diffMs !== null && (
+                <DetailRow
+                  label="Time Remaining"
+                  value={
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {formatTimeRemaining(diffMs)}
+                    </span>
+                  }
+                />
+              )}
+
               <FieldGroup>
                 <Field className="space-y-4">
                   <FieldLabel className="font-mono tracking-[0.08em] uppercase">
@@ -323,12 +383,12 @@ export const ReviewSidebar = ({
               <Button
                 className="btn-pri w-full py-2.5"
                 size="lg"
-                disabled={submitting}
+                disabled={submitting || timedOut}
                 onClick={() => {
                   submitDecision();
                 }}
               >
-                Submit Decision
+                {hasVoted ? "Update Decision" : "Submit Decision"}
               </Button>
             </section>
           </CollapsibleSection>
@@ -469,7 +529,7 @@ export const ReviewSidebar = ({
                 count={
                   revisionData.prerequisites.length + revisionData.todos.length
                 }
-                empty="None declared."
+                empty="None declared"
               >
                 {revisionData.prerequisites.map(
                   (p: { slug: string; title?: string }) => (

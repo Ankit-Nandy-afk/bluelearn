@@ -4,6 +4,7 @@ import {
   reviewCaseStatusSchema,
   reviewCaseTypeSchema,
   reviewOutcomeSchema,
+  reviewSeatStatusSchema,
 } from "./enums";
 
 export const reviewCaseListItemSchema = z.object({
@@ -16,6 +17,7 @@ export const reviewCaseListItemSchema = z.object({
 
 export const reviewQueueItemSchema = reviewCaseListItemSchema.extend({
   decision: reviewOutcomeSchema.nullable(),
+  expires_at: z.string().nullable(),
 });
 
 export const reviewCaseDetailSchema = z.object({
@@ -34,8 +36,9 @@ export const reviewCaseDetailResponseSchema = z.object({
     z.object({
       id: z.string(),
       member_id: z.string().nullable(),
-      status: z.string(),
+      status: reviewSeatStatusSchema,
       assigned_at: z.string(),
+      expires_at: z.string().nullable(),
     })
   ),
   decisions: z.array(
@@ -47,6 +50,19 @@ export const reviewCaseDetailResponseSchema = z.object({
       created_at: z.string(),
     })
   ),
+  viewer_role: z.enum(["author", "panelist", "public"]),
+  viewer_decision: z
+    .object({
+      id: z.string(),
+      decision: reviewOutcomeSchema,
+      notes: z.string().nullable(),
+      reasons: z.array(z.string()),
+      created_at: z.string(),
+    })
+    .nullable(),
+  viewer_seat_status: reviewSeatStatusSchema.nullable(),
+  viewer_expires_at: z.string().nullable(),
+  revise_draft_id: z.string().nullable(),
   revision: z
     .object({
       id: z.string(),
@@ -57,6 +73,28 @@ export const reviewCaseDetailResponseSchema = z.object({
       created_at: z.string(),
     })
     .nullable(),
+  prerequisites: z.array(
+    z.object({
+      slug: z.string(),
+      title: z.string().nullable().optional(),
+    })
+  ),
+  todos: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+    })
+  ),
+  claimed_todos: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      summary: z.string(),
+      requested_by: z
+        .object({ slug: z.string(), title: z.string().nullable() })
+        .nullable(),
+    })
+  ),
 });
 
 export type ReviewCaseListItem = z.infer<typeof reviewCaseListItemSchema>;

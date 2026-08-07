@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { ObjectiveContribution } from "@/types/contributions";
 
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
+import { cn } from "@/lib/utils";
 import {
   Field,
   FieldDescription,
@@ -26,6 +27,9 @@ type PropTypes = {
   setObjectiveContData: Dispatch<SetStateAction<ObjectiveContribution>>;
   subjects: Array<SubjectOption>;
   guides: Array<GuideOption>;
+  showChangeSummary?: boolean;
+  invalidFields?: ReadonlySet<string>;
+  hideBackBtn?: boolean;
   onSaveDraft?: () => void;
   submitting?: boolean;
 };
@@ -36,9 +40,15 @@ export const ObjectiveDetails = ({
   setObjectiveContData,
   subjects,
   guides,
+  showChangeSummary = false,
+  invalidFields,
+  hideBackBtn,
   onSaveDraft,
   submitting,
 }: PropTypes) => {
+  const invalid = (field: string) => invalidFields?.has(field) || undefined;
+  const invalidClass = "border-2 border-destructive aria-invalid:ring-0";
+
   const guideItems = guides
     .filter((g): g is GuideOption & { slug: string } => !!g.slug)
     .map((g) => {
@@ -62,11 +72,43 @@ export const ObjectiveDetails = ({
       <StepperActionHeader
         title={"Objective Details"}
         Stepper={Stepper}
+        hideBackBtn={hideBackBtn}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
       />
 
       <FieldGroup>
+        {showChangeSummary && (
+          <Field className="space-y-2">
+            <div className="space-y-1">
+              <FieldLabel required className="mono-micro">
+                Change Summary
+              </FieldLabel>
+              <FieldDescription className="text-xs">
+                Briefly describe what this revision changes.
+              </FieldDescription>
+            </div>
+
+            <Textarea
+              className={cn(
+                "h-24 w-full min-w-0 resize-none",
+                invalid("changeSummary") && invalidClass
+              )}
+              rows={3}
+              maxLength={500}
+              placeholder="Describe what changed."
+              aria-invalid={invalid("changeSummary")}
+              value={objectiveContData.changeSummary}
+              onChange={(e) =>
+                setObjectiveContData((prev) => ({
+                  ...prev,
+                  changeSummary: e.target.value,
+                }))
+              }
+            />
+          </Field>
+        )}
+
         <Field className="space-y-2">
           <div className="space-y-1">
             <FieldLabel required className="mono-micro">
@@ -83,8 +125,9 @@ export const ObjectiveDetails = ({
             autoComplete="Title"
             maxLength={50}
             placeholder="Choose a title. (Maximum 50 characters)."
-            className="h-10 rounded-md"
+            className={cn("h-10 rounded-md", invalid("title") && invalidClass)}
             required
+            aria-invalid={invalid("title")}
             value={objectiveContData.title}
             onChange={(e) =>
               setObjectiveContData((prev) => ({
@@ -107,11 +150,15 @@ export const ObjectiveDetails = ({
           </div>
 
           <Textarea
-            className="h-32 w-full min-w-0 resize-none"
+            className={cn(
+              "h-32 w-full min-w-0 resize-none",
+              invalid("summary") && invalidClass
+            )}
             rows={4}
             maxLength={250}
             placeholder="Write a summary for the objective."
             required
+            aria-invalid={invalid("summary")}
             value={objectiveContData.summary}
             onChange={(e) =>
               setObjectiveContData((prev) => ({
@@ -134,6 +181,7 @@ export const ObjectiveDetails = ({
 
           <Combobox
             multiple
+            invalid={invalid("subjects")}
             items={subjects.map((s) => {
               return {
                 value: s.id,
@@ -163,6 +211,7 @@ export const ObjectiveDetails = ({
 
           <Combobox
             multiple
+            invalid={invalid("targets")}
             items={guideItems}
             value={objectiveContData.targets}
             onValueChange={(targets) => {
@@ -200,6 +249,7 @@ export const ObjectiveDetails = ({
 
           <Combobox
             disabled={targs.length === 0}
+            invalid={invalid("featuredSubObjective")}
             items={targs}
             value={objectiveContData.featuredSubObjective}
             onValueChange={(featuredSubObjective) =>

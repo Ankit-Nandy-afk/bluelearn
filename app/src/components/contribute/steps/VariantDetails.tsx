@@ -25,6 +25,7 @@ type PropTypes = {
   subjects: Awaited<ReturnType<typeof listSubjects>>;
   onSaveDraft: () => void;
   submitting?: boolean;
+  hideBackBtn?: boolean;
 };
 
 export const VariantDetails = ({
@@ -35,6 +36,7 @@ export const VariantDetails = ({
   subjects,
   onSaveDraft,
   submitting,
+  hideBackBtn,
 }: PropTypes) => {
   const [newSubject, setNewSubject] = useState<{
     name: string;
@@ -49,6 +51,7 @@ export const VariantDetails = ({
       <StepperActionHeader
         title={"Variant Details"}
         Stepper={Stepper}
+        hideBackBtn={hideBackBtn}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
       />

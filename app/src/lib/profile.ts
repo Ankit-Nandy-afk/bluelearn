@@ -1,31 +1,15 @@
-import { getMyActivity, getMyIdentity, getMyStats } from "@/lib/api/identity";
-
-export async function loadProfilePage(signal?: AbortSignal) {
-  const [identity, stats, activity] = await Promise.all([
-    getMyIdentity({ signal }),
-    getMyStats({ signal }),
-    getMyActivity({ signal }),
-  ]);
-  return {
-    profile: identity.profile,
-    roles: identity.roles,
-    stats,
-    activity,
-  };
-}
+import { activitySortSchema } from "@bluelearn/schemas";
+import type {
+  ActivityFilters,
+  ActivitySort,
+  ActivityStatusFilter,
+  ActivityTypeFilter,
+} from "@bluelearn/schemas";
+import type { getProfilePage } from "@/lib/api/identity";
 
 // Everything the page renders, inferred from the loader so it tracks the API.
-export type ProfilePageData = Awaited<ReturnType<typeof loadProfilePage>>;
+export type ProfilePageData = Awaited<ReturnType<typeof getProfilePage>>;
 type ActivityRow = ProfilePageData["activity"][number];
-
-export type ActivityTypeFilter =
-  | "guide_creation"
-  | "guide_revision"
-  | "variant_creation"
-  | "variant_revision"
-  | "objective_creation"
-  | "objective_revision"
-  | "review";
 
 const TYPE_LABELS: Record<ActivityTypeFilter, string> = {
   guide_creation: "Guide creation",
@@ -75,9 +59,10 @@ const STATUS_BUCKETS = {
   in_review: ["submitted", "pending", "in_review"],
   published: ["approved", "published"],
   rejected: ["rejected"],
-} as const satisfies Record<string, ReadonlyArray<ActivityRow["status"]>>;
-
-export type ActivityStatusFilter = keyof typeof STATUS_BUCKETS;
+} as const satisfies Record<
+  ActivityStatusFilter,
+  ReadonlyArray<ActivityRow["status"]>
+>;
 
 export const ACTIVITY_STATUS_FILTERS: Array<{
   value: ActivityStatusFilter;
@@ -89,30 +74,7 @@ export const ACTIVITY_STATUS_FILTERS: Array<{
   { value: "rejected", label: "Rejected" },
 ];
 
-export type ActivitySort =
-  | "title_asc"
-  | "title_desc"
-  | "summary_asc"
-  | "summary_desc"
-  | "date_asc";
-
-export const ACTIVITY_SORTS: ReadonlyArray<ActivitySort> = [
-  "title_asc",
-  "title_desc",
-  "summary_asc",
-  "summary_desc",
-  "date_asc",
-];
-
-export type ActivityFilters = {
-  type?: Array<ActivityTypeFilter>;
-  status?: Array<ActivityStatusFilter>;
-  title?: string;
-  summary?: string;
-  from?: string;
-  to?: string;
-  sort?: ActivitySort;
-};
+export const ACTIVITY_SORTS = activitySortSchema.options;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

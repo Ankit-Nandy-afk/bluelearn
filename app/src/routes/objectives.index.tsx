@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { ObjectiveCard } from "@/components/cards/ObjectiveCard";
 import { Pagination } from "@/components/Pagination";
 
-import { Route as ObjectiveRoute } from "@/routes/objectives.$slug";
+import { Route as ObjectiveRoute } from "@/routes/objectives/$slug/index";
 
 import { listObjectives } from "@/lib/api/objectives";
 import { formatDate, formatDuration } from "@/lib/guideUtils";

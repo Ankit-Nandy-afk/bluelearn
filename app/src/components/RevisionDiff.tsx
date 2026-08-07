@@ -1,22 +1,14 @@
 import { ChevronsUpDown } from "lucide-react";
 import { Fragment, useState } from "react";
 
+import type { DiffLine, FieldDiff, RevisionRef } from "@bluelearn/schemas";
 import { cn } from "@/lib/utils";
 
-export type DiffLine = {
-  type: "unchanged" | "added" | "removed";
-  text: string;
-};
-
-export type FieldDiff = {
-  changed: boolean;
-  diff?: string | null;
-  lines?: Array<DiffLine> | null;
-};
+export type { DiffLine, FieldDiff };
 
 export type RevisionDiffData = {
-  from: { id: string; created_at: string };
-  to: { id: string; created_at: string };
+  from: RevisionRef;
+  to: RevisionRef;
   fields: {
     title: FieldDiff;
     summary: FieldDiff;
@@ -127,18 +119,16 @@ const LineCell = ({
     <div
       className={cn(
         "flex gap-3 font-mono text-xs leading-relaxed",
-        shade === "removed" &&
-          "bg-red-500/10 text-red-900 dark:bg-red-500/15 dark:text-red-200",
-        shade === "added" &&
-          "bg-green-600/10 text-green-900 dark:bg-green-600/15 dark:text-green-200",
+        shade === "removed" && "diff-removed",
+        shade === "added" && "diff-added",
         text === null && "bg-muted/40"
       )}
     >
       <span
         className={cn(
           "w-10 shrink-0 py-0.5 text-center tabular-nums opacity-70 select-none",
-          shade === "removed" && "bg-red-500/20 dark:bg-red-500/25",
-          shade === "added" && "bg-green-600/20 dark:bg-green-600/25",
+          shade === "removed" && "diff-gutter-removed",
+          shade === "added" && "diff-gutter-added",
           !shade && "opacity-50"
         )}
       >
@@ -151,7 +141,13 @@ const LineCell = ({
   );
 };
 
-const Field = ({ label, field }: { label: string; field: FieldDiff }) => {
+export const DiffField = ({
+  label,
+  field,
+}: {
+  label: string;
+  field: FieldDiff;
+}) => {
   const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
 
   if (!field.changed || !field.lines) {
@@ -210,7 +206,15 @@ const Field = ({ label, field }: { label: string; field: FieldDiff }) => {
   );
 };
 
-export const RevisionDiff = ({ diff }: { diff: RevisionDiffData }) => {
+export const RevisionDiff = ({
+  diff,
+  fromLabel = "Live version",
+  toLabel = "Proposed",
+}: {
+  diff: RevisionDiffData;
+  fromLabel?: string;
+  toLabel?: string;
+}) => {
   const unchanged =
     !diff.fields.title.changed &&
     !diff.fields.summary.changed &&
@@ -228,16 +232,16 @@ export const RevisionDiff = ({ diff }: { diff: RevisionDiffData }) => {
     <div className="overflow-hidden rounded-md border">
       <div className="grid grid-cols-2 divide-x border-b bg-muted/60">
         <p className="px-3 py-2 font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
-          Live version
+          {fromLabel}
         </p>
         <p className="px-3 py-2 font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
-          Proposed
+          {toLabel}
         </p>
       </div>
 
-      <Field label="Title" field={diff.fields.title} />
-      <Field label="Summary" field={diff.fields.summary} />
-      <Field label="Body" field={diff.fields.body} />
+      <DiffField label="Title" field={diff.fields.title} />
+      <DiffField label="Summary" field={diff.fields.summary} />
+      <DiffField label="Body" field={diff.fields.body} />
     </div>
   );
 };
