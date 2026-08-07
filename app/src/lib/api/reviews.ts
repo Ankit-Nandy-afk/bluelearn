@@ -14,9 +14,7 @@ export type QueueCase = {
   title: string | null;
   created_at: string;
   decision: "approved" | "rejected" | null;
-  assigned_at: string;
-  time_limit: string;
-  expires_at: string;
+  expires_at: string | null;
 };
 
 export async function getReviewQueue({ signal }: FetchOptions = {}) {

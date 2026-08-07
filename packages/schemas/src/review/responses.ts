@@ -4,6 +4,7 @@ import {
   reviewCaseStatusSchema,
   reviewCaseTypeSchema,
   reviewOutcomeSchema,
+  reviewSeatStatusSchema,
 } from "./enums";
 
 export const reviewCaseListItemSchema = z.object({
@@ -16,9 +17,7 @@ export const reviewCaseListItemSchema = z.object({
 
 export const reviewQueueItemSchema = reviewCaseListItemSchema.extend({
   decision: reviewOutcomeSchema.nullable(),
-  assigned_at: z.string(),
-  time_limit: z.string(),
-  expires_at: z.string(),
+  expires_at: z.string().nullable(),
 });
 
 export const reviewCaseDetailSchema = z.object({
@@ -29,7 +28,6 @@ export const reviewCaseDetailSchema = z.object({
   created_by: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
-  time_limit: z.string().nullable(),
 });
 
 export const reviewCaseDetailResponseSchema = z.object({
@@ -38,8 +36,8 @@ export const reviewCaseDetailResponseSchema = z.object({
     z.object({
       id: z.string(),
       member_id: z.string().nullable(),
-      status: z.string(),
-      assigned_at: z.string().nullable(),
+      status: reviewSeatStatusSchema,
+      assigned_at: z.string(),
       expires_at: z.string().nullable(),
     })
   ),
@@ -56,12 +54,13 @@ export const reviewCaseDetailResponseSchema = z.object({
   viewer_decision: z
     .object({
       id: z.string(),
-      decision: z.string(),
+      decision: reviewOutcomeSchema,
       notes: z.string().nullable(),
       reasons: z.array(z.string()),
       created_at: z.string(),
     })
     .nullable(),
+  viewer_seat_status: reviewSeatStatusSchema.nullable(),
   viewer_expires_at: z.string().nullable(),
   revise_draft_id: z.string().nullable(),
   revision: z
@@ -84,6 +83,16 @@ export const reviewCaseDetailResponseSchema = z.object({
     z.object({
       id: z.string(),
       title: z.string(),
+    })
+  ),
+  claimed_todos: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      summary: z.string(),
+      requested_by: z
+        .object({ slug: z.string(), title: z.string().nullable() })
+        .nullable(),
     })
   ),
 });

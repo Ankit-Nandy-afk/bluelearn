@@ -5,7 +5,6 @@ import { ServiceError } from "../lib/service-error";
 import { PANEL_POLICY_DEFAULTS } from "../lib/review-policy";
 import { readingMinutes } from "../lib/reading";
 import { loadUsernames } from "./identity.service";
-import { parsePostgresInterval } from "../lib/interval";
 
 type DB = SupabaseClient<Database>;
 type ReviewOutcome = Database["public"]["Enums"]["review_outcome"];
@@ -15,6 +14,7 @@ type QueueRow = {
   member_id: string | null;
   status: string;
   assigned_at: string;
+  expires_at: string | null;
   review_decisions: { decision: ReviewOutcome } | null;
   review_panels: {
     id: string;
@@ -81,6 +81,7 @@ type CaseDetailRow = {
       member_id: string | null;
       status: string;
       assigned_at: string;
+      expires_at: string | null;
       review_decisions: {
         id: string;
         decision: ReviewOutcome;
@@ -126,16 +127,13 @@ type TagsAndEdges = {
 
 export async function getReviewQueue(
   supabase: DB,
-  service: DB,
   userId: string,
   { page, limit }: Pagination = { page: 1, limit: 20 }
 ) {
-  await sweepExpiredReviewSeats(service);
-
   const { data: raw, error } = await supabase
     .from("panel_members")
     .select(
-      `id, panel_id, member_id, status, assigned_at,
+      `id, panel_id, member_id, status, assigned_at, expires_at,
        review_decisions(decision),
        review_panels!inner(
          id, target_seat_count, outcome, opened_at, closed_at, case_id,
@@ -183,13 +181,6 @@ export async function getReviewQueue(
       const rc = m.review_panels.review_cases;
       const link = guideLinks.find((l) => l.case_id === rc.id);
 
-      const assigned_at = m.assigned_at;
-      const time_limit = rc.time_limit || "2 days";
-      const timeLimitMs = parsePostgresInterval(time_limit);
-      const expires_at = new Date(
-        new Date(assigned_at).getTime() + timeLimitMs
-      ).toISOString();
-
       return {
         id: rc.id,
         case_type: rc.case_type,
@@ -197,9 +188,7 @@ export async function getReviewQueue(
         title: link?.guide_revisions?.title ?? null,
         created_at: rc.created_at,
         decision: m.review_decisions?.decision ?? null,
-        assigned_at,
-        time_limit,
-        expires_at,
+        expires_at: m.expires_at,
       };
     })
     .sort(
@@ -372,8 +361,6 @@ export async function getReviewCase(
   caseId: string,
   viewerId: string | null
 ) {
-  await sweepExpiredReviewSeats(service);
-
   const { data: raw, error } = await supabase
     .from("review_cases")
     .select(
@@ -381,7 +368,7 @@ export async function getReviewCase(
        review_panels(
          id, target_seat_count, outcome, opened_at, closed_at,
          panel_members(
-           id, member_id, status, assigned_at,
+           id, member_id, status, assigned_at, expires_at,
            review_decisions(
              id, decision, notes, created_at,
              review_decision_reasons(reason)
@@ -478,24 +465,10 @@ export async function getReviewCase(
     throw new ServiceError("Failed to load review case", 500);
   }
 
-  const time_limit = data.time_limit || "2 days";
-  const timeLimitMs = parsePostgresInterval(time_limit);
-
   const viewerSeat =
-    viewerId !== null
-      ? (members.find(
-          (pm) => pm.member_id === viewerId && pm.status === "assigned"
-        ) ??
-        members.find((pm) => pm.member_id === viewerId) ??
-        null)
-      : null;
-
-  const viewerExpiresAt =
-    viewerSeat?.assigned_at && viewerSeat.status === "assigned"
-      ? new Date(
-          new Date(viewerSeat.assigned_at).getTime() + timeLimitMs
-        ).toISOString()
-      : null;
+    viewerId === null
+      ? null
+      : (members.find((pm) => pm.member_id === viewerId) ?? null);
 
   return {
     case: {
@@ -506,26 +479,21 @@ export async function getReviewCase(
       created_by: data.created_by,
       created_at: data.created_at,
       updated_at: data.updated_at,
-      time_limit,
     },
     panel: members.map((pm) => ({
       id: pm.id,
       member_id: pm.member_id,
       status: pm.status,
       assigned_at: pm.assigned_at,
-      expires_at:
-        pm.assigned_at && pm.status === "assigned"
-          ? new Date(
-              new Date(pm.assigned_at).getTime() + timeLimitMs
-            ).toISOString()
-          : null,
+      expires_at: pm.expires_at,
     })),
     decisions: members
       .filter((pm) => pm.review_decisions)
       .map((pm) => mapDecision(pm.review_decisions!, pm.member_id)),
     viewer_decision: viewerVote ? mapDecision(viewerVote, viewerId) : null,
     viewer_role: viewerRole,
-    viewer_expires_at: viewerExpiresAt,
+    viewer_seat_status: viewerSeat?.status ?? null,
+    viewer_expires_at: viewerSeat?.expires_at ?? null,
     revise_draft_id: reviseDraft?.data?.id ?? null,
     revision: revision
       ? {
@@ -580,6 +548,11 @@ export async function castDecision(
     if (error.code === "42501")
       throw new ServiceError(
         "You are not an active panelist on this case",
+        403
+      );
+    if (error.code === "23514")
+      throw new ServiceError(
+        "Your review window for this case has closed",
         403
       );
     console.error(error);

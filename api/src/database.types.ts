@@ -659,6 +659,7 @@ export type Database = {
       panel_members: {
         Row: {
           assigned_at: string
+          expires_at: string | null
           id: string
           member_id: string | null
           panel_id: string
@@ -666,6 +667,7 @@ export type Database = {
         }
         Insert: {
           assigned_at?: string
+          expires_at?: string | null
           id?: string
           member_id?: string | null
           panel_id: string
@@ -673,6 +675,7 @@ export type Database = {
         }
         Update: {
           assigned_at?: string
+          expires_at?: string | null
           id?: string
           member_id?: string | null
           panel_id?: string
@@ -1195,6 +1198,12 @@ export type Database = {
         }
         Returns: string
       }
+      eligible_panel_verifiers: {
+        Args: { p_created_by: string; p_panel_id?: string }
+        Returns: {
+          id: string
+        }[]
+      }
       has_role: {
         Args: { check_role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
@@ -1278,7 +1287,7 @@ export type Database = {
       objective_revision_status: "draft" | "published"
       review_outcome: "approved" | "rejected"
       revision_status: "draft" | "submitted"
-      seat_status: "assigned" | "recused" | "replaced" | "completed" | "pending"
+      seat_status: "assigned" | "recused" | "replaced" | "completed"
       subject_status: "draft" | "published"
       todo_status: "open" | "resolved"
       vote_direction: "up" | "down"
@@ -1439,7 +1448,7 @@ export const Constants = {
       objective_revision_status: ["draft", "published"],
       review_outcome: ["approved", "rejected"],
       revision_status: ["draft", "submitted"],
-      seat_status: ["assigned", "recused", "replaced", "completed", "pending"],
+      seat_status: ["assigned", "recused", "replaced", "completed"],
       subject_status: ["draft", "published"],
       todo_status: ["open", "resolved"],
       vote_direction: ["up", "down"],

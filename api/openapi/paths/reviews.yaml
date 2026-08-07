@@ -96,13 +96,20 @@
                   oneOf:
                     - $ref: "../components/schemas/reviews/ReviewDecision.yaml"
                     - type: "null"
+                viewer_seat_status:
+                  type: [string, "null"]
+                  enum: [assigned, recused, replaced, completed, null]
+                  description: >
+                    The state of the caller's own seat on this panel. replaced
+                    means their deadline passed and the seat was recycled. Null
+                    when the caller holds no seat.
+                  example: assigned
                 viewer_expires_at:
                   description: >
-                    The expiration timestamp for the authenticated caller's active seat on this panel.
-                    Null if the caller is not an assigned panelist or the seat has no expiration.
+                    When the caller's own seat stops accepting a first vote. Null
+                    when the caller holds no seat.
                   oneOf:
-                    - type: string
-                      format: date-time
+                    - $ref: "../components/schemas/common/Timestamp.yaml"
                     - type: "null"
                 revision:
                   oneOf:
@@ -145,6 +152,7 @@
                   decisions,
                   viewer_role,
                   viewer_decision,
+                  viewer_seat_status,
                   viewer_expires_at,
                   revision,
                   prerequisites,

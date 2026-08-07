@@ -1,79 +1,133 @@
--- Set default time limit of 2 days (48 hours) on review cases.
 alter table public.review_cases
   alter column time_limit set default interval '2 days';
 
-update public.review_cases
-  set time_limit = interval '2 days'
-  where time_limit is null;
+alter table public.panel_members
+  add column expires_at timestamptz;
 
--- Update submit_guide_revision to set 48h time limit on created review cases.
-create or replace function public.submit_guide_revision(p_revision_id uuid)
-returns uuid
+create or replace function public.set_panel_member_expires_at()
+returns trigger
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
-declare
-  v_guide_id uuid;
-  v_current_revision_id uuid;
-  v_case_type public.case_type;
-  v_case_id uuid;
-  v_title text;
-  v_summary text;
-  v_body text;
-  v_tag_count integer;
 begin
-  -- RLS confines this to the caller's own draft, so zero rows means the revision
-  -- is missing, not theirs, or already submitted.
-  select title, summary, body into v_title, v_summary, v_body
-    from public.guide_revisions
-    where id = p_revision_id and status = 'draft';
-
-  if not found then
-    raise exception 'Revision not found or not an editable draft'
-      using errcode = 'no_data_found';
+  if new.expires_at is null then
+    select coalesce(new.assigned_at, now()) + coalesce(rc.time_limit, interval '2 days')
+      into new.expires_at
+      from public.review_panels rp
+      join public.review_cases rc on rc.id = rp.case_id
+      where rp.id = new.panel_id;
   end if;
-
-  select count(*) into v_tag_count
-    from public.guide_revision_subjects
-    where guide_revision_id = p_revision_id;
-
-  if coalesce(btrim(v_title), '') = ''
-     or coalesce(btrim(v_summary), '') = ''
-     or coalesce(btrim(v_body), '') = ''
-     or v_tag_count = 0 then
-    raise exception 'Revision is missing a title, summary, body, or tag'
-      using errcode = 'check_violation';
-  end if;
-
-  update public.guide_revisions
-    set status = 'submitted'
-    where id = p_revision_id
-    returning guide_id into v_guide_id;
-
-  select current_revision_id into v_current_revision_id
-    from public.guides where id = v_guide_id;
-
-  -- No live revision yet means this is the first publish (otherwise it's a revision).
-  v_case_type := case
-    when v_current_revision_id is null then 'guide_publish'
-    else 'guide_edit'
-  end;
-
-  insert into public.review_cases (case_type, created_by, time_limit)
-    values (v_case_type, auth.uid(), interval '2 days')
-    returning id into v_case_id;
-
-  insert into public.guide_review_cases (case_id, guide_revision_id)
-    values (v_case_id, p_revision_id);
-
-  return v_case_id;
+  return new;
 end;
 $$;
 
-grant execute on function public.submit_guide_revision(uuid) to authenticated;
+revoke execute on function public.set_panel_member_expires_at() from public;
 
--- Sweep expired review panel seats (>48 hours without decision) and backfill under-seated panels.
+create trigger panel_members_set_expires_at
+  before insert on public.panel_members
+  for each row
+  execute function public.set_panel_member_expires_at();
+
+create or replace function public.eligible_panel_verifiers(
+  p_created_by uuid,
+  p_panel_id uuid default null
+)
+returns table (id uuid)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p.id
+    from public.user_roles ur
+    join public.profiles p on p.id = ur.user_id
+    where ur.role = 'verifier'
+      and p.is_suspended = false
+      and p.id is distinct from p_created_by
+      and (
+        p_panel_id is null
+        or not exists (
+          select 1
+            from public.panel_members pm
+            where pm.panel_id = p_panel_id
+              and pm.member_id = p.id
+        )
+      );
+$$;
+
+revoke execute on function public.eligible_panel_verifiers(uuid, uuid) from public;
+grant execute on function public.eligible_panel_verifiers(uuid, uuid) to service_role;
+
+create or replace function public.assemble_review_panel(
+  p_case_id uuid,
+  p_policy_default integer
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_status public.case_status;
+  v_created_by uuid;
+  v_pool_size integer;
+  v_target integer;
+  v_panel_id uuid;
+begin
+  select status, created_by
+    into v_status, v_created_by
+    from public.review_cases
+    where id = p_case_id
+    for update;
+
+  if not found then
+    raise exception 'Review case not found' using errcode = 'no_data_found';
+  end if;
+
+  if v_status <> 'pending' then
+    return null;
+  end if;
+  if exists (
+    select 1 from public.review_panels
+    where case_id = p_case_id and closed_at is null
+  ) then
+    return null;
+  end if;
+
+  select count(*)
+    into v_pool_size
+    from public.eligible_panel_verifiers(v_created_by);
+
+  v_target := least(p_policy_default, v_pool_size);
+  if v_target % 2 = 0 then
+    v_target := v_target - 1;
+  end if;
+  if v_target < 3 then
+    return null;
+  end if;
+
+  insert into public.review_panels (case_id, target_seat_count)
+    values (p_case_id, v_target)
+    returning id into v_panel_id;
+
+  insert into public.panel_members (panel_id, member_id)
+  select v_panel_id, id
+    from public.eligible_panel_verifiers(v_created_by)
+    order by random()
+    limit v_target;
+
+  update public.review_cases
+    set status = 'in_review'
+    where id = p_case_id;
+
+  return v_panel_id;
+end;
+$$;
+
+revoke execute on function public.assemble_review_panel(uuid, integer) from public;
+grant execute on function public.assemble_review_panel(uuid, integer) to service_role;
+
 create or replace function public.sweep_expired_review_seats()
 returns jsonb
 language plpgsql
@@ -85,12 +139,9 @@ declare
   v_seat record;
   v_panel record;
   v_new_member record;
-  v_active_seats integer;
-  v_needed integer;
   v_replaced_count integer := 0;
   v_assigned_count integer := 0;
 begin
-  -- Use transaction-level advisory lock to prevent concurrent sweeps
   v_lock_acquired := pg_try_advisory_xact_lock(hashtext('sweep_expired_review_seats'));
   if not v_lock_acquired then
     return jsonb_build_object(
@@ -100,21 +151,18 @@ begin
     );
   end if;
 
-  -- Phase 1: Expire uncompleted seats exceeding the time limit
   for v_seat in (
-    select
-      pm.id as seat_id,
-      pm.panel_id
-    from public.panel_members pm
-    join public.review_panels rp on rp.id = pm.panel_id
-    join public.review_cases rc on rc.id = rp.case_id
-    where rp.closed_at is null
-      and rc.status in ('pending', 'in_review')
-      and pm.status = 'assigned'
-      and now() > pm.assigned_at + coalesce(rc.time_limit, interval '2 days')
-    order by pm.assigned_at asc
-    limit 100
-    for update of pm skip locked
+    select pm.id as seat_id
+      from public.panel_members pm
+      join public.review_panels rp on rp.id = pm.panel_id
+      join public.review_cases rc on rc.id = rp.case_id
+      where rp.closed_at is null
+        and rc.status = 'in_review'
+        and pm.status = 'assigned'
+        and now() > pm.expires_at
+      order by pm.expires_at asc
+      limit 100
+      for update of pm skip locked
   ) loop
     update public.panel_members
       set status = 'replaced'
@@ -122,47 +170,34 @@ begin
     v_replaced_count := v_replaced_count + 1;
   end loop;
 
-  -- Phase 2: Backfill any active panel that has fewer active/completed seats than target_seat_count
   for v_panel in (
     select
       rp.id as panel_id,
-      rp.target_seat_count,
-      rc.created_by
-    from public.review_panels rp
-    join public.review_cases rc on rc.id = rp.case_id
-    where rp.closed_at is null
-      and rc.status in ('pending', 'in_review')
-    for update of rp
+      rc.created_by,
+      rp.target_seat_count - count(pm.id) filter (
+        where pm.status in ('assigned', 'completed')
+      ) as needed
+      from public.review_panels rp
+      join public.review_cases rc on rc.id = rp.case_id
+      left join public.panel_members pm on pm.panel_id = rp.id
+      where rp.closed_at is null
+        and rc.status = 'in_review'
+      group by rp.id, rp.target_seat_count, rc.created_by
+      having rp.target_seat_count - count(pm.id) filter (
+        where pm.status in ('assigned', 'completed')
+      ) > 0
+      limit 100
   ) loop
-    select count(*)
-      into v_active_seats
-      from public.panel_members
-      where panel_id = v_panel.panel_id
-        and status in ('assigned', 'completed');
-
-    v_needed := v_panel.target_seat_count - v_active_seats;
-
-    if v_needed > 0 then
-      for v_new_member in (
-        select p.id
-        from public.user_roles ur
-        join public.profiles p on p.id = ur.user_id
-        where ur.role = 'verifier'
-          and p.is_suspended = false
-          and p.id is distinct from v_panel.created_by
-          and p.id not in (
-            select member_id
-            from public.panel_members
-            where panel_id = v_panel.panel_id and member_id is not null
-          )
+    for v_new_member in (
+      select id
+        from public.eligible_panel_verifiers(v_panel.created_by, v_panel.panel_id)
         order by random()
-        limit v_needed
-      ) loop
-        insert into public.panel_members (panel_id, member_id, status, assigned_at)
-          values (v_panel.panel_id, v_new_member.id, 'assigned', now());
-        v_assigned_count := v_assigned_count + 1;
-      end loop;
-    end if;
+        limit v_panel.needed
+    ) loop
+      insert into public.panel_members (panel_id, member_id, status, assigned_at)
+        values (v_panel.panel_id, v_new_member.id, 'assigned', now());
+      v_assigned_count := v_assigned_count + 1;
+    end loop;
   end loop;
 
   return jsonb_build_object(
@@ -173,5 +208,84 @@ begin
 end;
 $$;
 
-grant execute on function public.sweep_expired_review_seats() to service_role, authenticated;
+revoke execute on function public.sweep_expired_review_seats() from public;
+grant execute on function public.sweep_expired_review_seats() to service_role;
 
+create or replace function public.cast_review_decision(
+  p_case_id uuid,
+  p_decision public.review_outcome,
+  p_notes text default null,
+  p_reasons public.decision_reason[] default '{}'
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  v_panel_id uuid;
+  v_member_id uuid;
+  v_seat_status public.seat_status;
+  v_expires_at timestamptz;
+  v_decision_id uuid;
+  v_created_at timestamptz;
+  v_reasons public.decision_reason[];
+begin
+  select id into v_panel_id
+    from public.review_panels
+    where case_id = p_case_id and closed_at is null;
+  if not found then
+    raise exception 'No active review panel for this case'
+      using errcode = 'invalid_parameter_value';
+  end if;
+
+  select id, status, expires_at
+    into v_member_id, v_seat_status, v_expires_at
+    from public.panel_members
+    where panel_id = v_panel_id
+      and member_id = (select auth.uid())
+      and status in ('assigned', 'completed');
+  if not found then
+    raise exception 'You are not an active panelist on this case'
+      using errcode = 'insufficient_privilege';
+  end if;
+
+  if v_seat_status = 'assigned'
+     and v_expires_at is not null
+     and now() > v_expires_at then
+    raise exception 'Your review window for this case has closed'
+      using errcode = 'check_violation';
+  end if;
+
+  insert into public.review_decisions (panel_member_id, decision, notes)
+    values (v_member_id, p_decision, p_notes)
+    on conflict (panel_member_id) do update
+      set decision = excluded.decision, notes = excluded.notes
+    returning id, created_at into v_decision_id, v_created_at;
+
+  delete from public.review_decision_reasons where decision_id = v_decision_id;
+  if p_decision = 'rejected' and p_reasons is not null then
+    insert into public.review_decision_reasons (decision_id, reason)
+    select v_decision_id, r from unnest(p_reasons) r;
+  end if;
+
+  update public.panel_members set status = 'completed' where id = v_member_id;
+
+  v_reasons := case
+    when p_decision = 'rejected' then coalesce(p_reasons, '{}')
+    else '{}'
+  end;
+
+  return jsonb_build_object(
+    'id', v_decision_id,
+    'decision', p_decision,
+    'notes', p_notes,
+    'reasons', to_jsonb(v_reasons),
+    'created_at', v_created_at
+  );
+end;
+$$;
+
+grant execute on function public.cast_review_decision(
+  uuid, public.review_outcome, text, public.decision_reason[]
+) to authenticated;

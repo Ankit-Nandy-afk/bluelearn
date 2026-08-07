@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 
 import { cn } from "@/lib/utils";
+import { deadlineTickMs, formatTimeRemaining } from "@/lib/reviewDeadline";
 import { castDecision } from "@/lib/api/reviews";
 import { getRevision, reviseRevision } from "@/lib/api/guideRevisions";
 
@@ -41,24 +42,6 @@ const DetailRow = ({
   </div>
 );
 
-function formatRemainingTime(diffMs: number): string {
-  if (diffMs <= 0) return "Expired";
-
-  const totalSec = Math.floor(diffMs / 1000);
-  const days = Math.floor(totalSec / 86400);
-  const hours = Math.floor((totalSec % 86400) / 3600);
-  const mins = Math.floor((totalSec % 3600) / 60);
-  const secs = totalSec % 60;
-
-  if (days >= 1) {
-    return `${days}d ${hours}h ${mins}m remaining`;
-  }
-  if (hours >= 1) {
-    return `${hours}h ${mins}m ${secs.toString().padStart(2, "0")}s remaining`;
-  }
-  return `${mins}m ${secs.toString().padStart(2, "0")}s remaining`;
-}
-
 export const ReviewSidebar = ({
   caseId,
   revision,
@@ -78,25 +61,33 @@ export const ReviewSidebar = ({
   const priorDecision = revisionData.viewer_decision;
   const hasVoted = priorDecision !== null;
 
-  // Expiration time for the authenticated panelist's seat
-  const expiresAt = revisionData.viewer_expires_at ?? null;
+  const seatStatus = revisionData.viewer_seat_status ?? null;
+  const seatLive = seatStatus === "assigned";
+  const expiresMs = revisionData.viewer_expires_at
+    ? new Date(revisionData.viewer_expires_at).getTime()
+    : null;
 
   const [now, setNow] = useState(() => Date.now());
+  const invalidated = useRef(false);
 
   useEffect(() => {
-    if (!expiresAt || hasVoted) return;
-    const interval = setInterval(() => {
-      const currentNow = Date.now();
-      setNow(currentNow);
-      if (new Date(expiresAt).getTime() - currentNow <= 0) {
-        router.invalidate();
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [expiresAt, hasVoted, router]);
+    if (!seatLive || expiresMs === null) return;
 
-  const diffMs = expiresAt ? new Date(expiresAt).getTime() - now : null;
-  const isExpired = !hasVoted && diffMs !== null && diffMs <= 0;
+    const diffMs = expiresMs - Date.now();
+    if (diffMs <= 0) {
+      if (invalidated.current) return;
+      invalidated.current = true;
+      router.invalidate();
+      return;
+    }
+
+    const timer = setTimeout(() => setNow(Date.now()), deadlineTickMs(diffMs));
+    return () => clearTimeout(timer);
+  }, [seatLive, expiresMs, now, router]);
+
+  const diffMs = seatLive && expiresMs !== null ? expiresMs - now : null;
+  const timedOut =
+    seatStatus === "replaced" || (diffMs !== null && diffMs <= 0);
 
   const caseOpen =
     revisionData.case.status !== "approved" &&
@@ -268,19 +259,24 @@ export const ReviewSidebar = ({
             title={<p className="ml-auto">Review Decision</p>}
           >
             <section className="space-y-4">
-              {expiresAt && diffMs !== null && !hasVoted && (
+              {timedOut && (
                 <DetailRow
                   label="Time Remaining"
                   value={
-                    isExpired ? (
-                      <span className="font-mono text-xs text-destructive">
-                        Expired
-                      </span>
-                    ) : (
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {formatRemainingTime(diffMs)}
-                      </span>
-                    )
+                    <span className="font-mono text-xs text-destructive">
+                      Expired
+                    </span>
+                  }
+                />
+              )}
+
+              {!timedOut && diffMs !== null && (
+                <DetailRow
+                  label="Time Remaining"
+                  value={
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {formatTimeRemaining(diffMs)}
+                    </span>
                   }
                 />
               )}
@@ -387,7 +383,7 @@ export const ReviewSidebar = ({
               <Button
                 className="btn-pri w-full py-2.5"
                 size="lg"
-                disabled={submitting || isExpired}
+                disabled={submitting || timedOut}
                 onClick={() => {
                   submitDecision();
                 }}
