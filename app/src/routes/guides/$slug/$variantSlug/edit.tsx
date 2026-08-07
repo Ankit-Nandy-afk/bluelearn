@@ -295,6 +295,7 @@ function RouteComponent() {
               <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 <GuideDetails
                   Stepper={Stepper}
+                  type="variant"
                   guideContData={guideContData}
                   setGuideContData={setGuideContData}
                   subjects={subjectOptions}
@@ -310,6 +311,7 @@ function RouteComponent() {
 
                 <Content
                   Stepper={Stepper}
+                  type="variant"
                   body={guideContData.body}
                   onBodyChange={(body) =>
                     setGuideContData((prev) => ({ ...prev, body }))
