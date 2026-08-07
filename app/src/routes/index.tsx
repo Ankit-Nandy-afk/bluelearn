@@ -27,8 +27,8 @@ const BLUE_CONCEPTS = [
     blurb: "Guides linked by prerequisite edges.",
   },
   {
-    slug: "what-is-a-learning-objective",
-    label: "What is a Learning Objective?",
+    slug: "what-is-an-objective",
+    label: "What is an Objective?",
     blurb: "A curated path toward a goal.",
   },
 ];
