@@ -1,5 +1,4 @@
 import ReactMarkdown from "react-markdown";
-import { Scroll } from "lucide-react";
 
 import {
   Dialog,
