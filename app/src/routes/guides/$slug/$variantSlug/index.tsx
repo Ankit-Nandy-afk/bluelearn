@@ -101,7 +101,7 @@ function RouteComponent() {
   const breadcrumbs = buildBreadcrumbs(guide.title, breadcrumbOrigin);
 
   return (
-    <div className="mx-auto max-w-7xl border-x bg-background md:h-[calc(100vh-70px)]">
+    <div className="mx-auto max-w-7xl bg-background md:h-[calc(100vh-70px)]">
       <section className="flex flex-col border-b md:grid md:grid-cols-[320px_1fr]">
         <GuideSidebar
           sidebarActions={

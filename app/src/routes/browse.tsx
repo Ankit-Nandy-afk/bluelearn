@@ -174,11 +174,7 @@ function guideCards(items: Array<GuideListItem>) {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mx-auto max-w-[1280px] border-x bg-background">
-      {children}
-    </div>
-  );
+  return <div className="mx-auto max-w-[1280px] bg-background">{children}</div>;
 }
 
 function SectionPager({

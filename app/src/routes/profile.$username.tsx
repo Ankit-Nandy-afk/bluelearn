@@ -30,7 +30,7 @@ function ProfileMessage({
   tone?: "muted" | "error";
 }) {
   return (
-    <div className="mx-auto max-w-7xl border-x bg-background px-8 py-10 lg:px-16">
+    <div className="mx-auto max-w-7xl bg-background px-8 py-10 lg:px-16">
       <p
         className={
           tone === "error"
@@ -70,7 +70,7 @@ function ProfilePage() {
   const initials = getInitials(profile.display_name || profile.username);
 
   return (
-    <div className="mx-auto max-w-7xl border-x bg-background">
+    <div className="mx-auto max-w-7xl bg-background">
       <section className="border-b px-4 py-8 sm:px-8 sm:py-10 lg:px-16">
         <div className="mx-auto mb-6 flex w-full max-w-5xl flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-4">
           <div className="flex w-full min-w-0 items-center gap-4 sm:w-auto sm:gap-5">
