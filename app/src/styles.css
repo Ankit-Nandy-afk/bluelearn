@@ -12,6 +12,7 @@
   --brand-grey: #59636d;
   --brand-border: #d9dfe4;
   --brand-bright-blue: #1a6ad8;
+  --brand-blue-fill: #1a6ad8;
   --brand-pale-blue: #7fb4ff80;
   --brand-dark-navy: #042f6a;
   --brand-orange: #ff9822;
@@ -26,6 +27,7 @@
 
 .dark {
   --brand-cta: var(--brand-surface);
+  --brand-bright-blue: #4d94ff;
 }
 
 /* == SHADCN UI LAYER == */
@@ -82,7 +84,7 @@
   --popover-foreground: var(--foreground);
 
   --primary: var(--brand-bright-blue);
-  --primary-foreground: #e5e5e5;
+  --primary-foreground: var(--background);
 
   --secondary: #202429;
   --secondary-foreground: var(--foreground);
@@ -98,7 +100,7 @@
 
   --ring: var(--primary);
 
-  --badge-text: var(--muted-foreground);
+  --badge-text: var(--foreground);
 }
 
 /* == BASE STYLES == */
@@ -272,7 +274,7 @@
   }
 
   .btn-pri {
-    @apply btn bg-brand-bright-blue font-bold text-white;
+    @apply btn bg-brand-blue-fill font-bold text-white;
   }
 
   .btn-sec {
@@ -410,6 +412,7 @@
   --color-brand-border: var(--brand-border);
   --color-brand-dark-navy: var(--brand-dark-navy);
   --color-brand-bright-blue: var(--brand-bright-blue);
+  --color-brand-blue-fill: var(--brand-blue-fill);
   --color-brand-pale-blue: var(--brand-pale-blue);
   --color-brand-orange: var(--brand-orange);
   --color-brand-burnt-orange: var(--brand-burnt-orange);

@@ -199,7 +199,7 @@ export const ReviewSidebar = ({
   ];
 
   return (
-    <aside className="border-r">
+    <aside className="border-b md:border-r md:border-b-0">
       <div className="sticky top-[65px] max-h-[calc(100vh-65px)] space-y-4 overflow-y-auto px-6 py-6">
         <CollapsibleSection
           defaultOpen={true}

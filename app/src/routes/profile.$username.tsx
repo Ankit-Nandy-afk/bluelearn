@@ -85,7 +85,7 @@ function ProfilePage() {
               <h2 className="text-3xl font-bold">
                 {profile.display_name ?? profile.username}
               </h2>
-              <h3 className="mono-micro text-muted-foreground/80">
+              <h3 className="mono-micro text-muted-foreground">
                 @{profile.username}
               </h3>
 
@@ -114,8 +114,8 @@ function ProfilePage() {
 
           <ul
             className={cn(
-              "grid items-start gap-x-6",
-              isVerifier ? "grid-cols-4" : "grid-cols-3"
+              "grid items-start gap-x-6 gap-y-4",
+              isVerifier ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"
             )}
           >
             {statsRows.map((stat) => (

@@ -63,7 +63,7 @@ export const GuideReader = ({ guide, guideType }: PropTypes) => {
           )}
         </div>
 
-        <div className="mono-micro my-2 flex flex-wrap items-center gap-2.5 text-muted-foreground/80">
+        <div className="mono-micro my-2 flex flex-wrap items-center gap-2.5 text-muted-foreground">
           {guide.author && (
             <span className="flex items-center gap-1">
               <User className="h-3 w-3 text-muted-foreground/75" />@

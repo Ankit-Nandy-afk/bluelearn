@@ -173,7 +173,7 @@ export function Navbar() {
 
         {/* Mobile Dropdown */}
         {mobileOpen && (
-          <div className="absolute top-[65px] right-0 left-0 z-50 animate-in rounded-b-md border bg-white p-5 shadow-md fade-in slide-in-from-top-2 md:hidden">
+          <div className="absolute top-[65px] right-0 left-0 z-50 animate-in rounded-b-md border bg-popover p-5 text-popover-foreground shadow-md fade-in slide-in-from-top-2 md:hidden">
             <div className="flex flex-col gap-y-4">
               {/* Search */}
               <form onSubmit={handleSearch} className="relative">

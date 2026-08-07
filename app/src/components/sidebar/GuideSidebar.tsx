@@ -25,7 +25,7 @@ export const GuideSidebar = ({
   );
 
   return (
-    <aside className="h-[calc(100vh-70px)] overflow-y-auto border-r px-6 py-6">
+    <aside className="border-b px-6 py-6 md:h-[calc(100vh-70px)] md:overflow-y-auto md:border-r md:border-b-0">
       {sidebarActions}
 
       {/* TOC */}

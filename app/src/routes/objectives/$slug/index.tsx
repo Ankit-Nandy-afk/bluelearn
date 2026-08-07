@@ -164,7 +164,7 @@ function PathPage() {
     <Shell
       header={
         <>
-          <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <Breadcrumbs crumbs={breadcrumbs} />
 
             <div className="flex shrink-0 items-center gap-2">

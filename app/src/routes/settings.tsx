@@ -1,5 +1,8 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { SettingsSidebar } from "@/components/sidebar/SettingsSidebar";
+import {
+  SettingsSidebar,
+  SettingsTabs,
+} from "@/components/sidebar/SettingsSidebar";
 import { requireSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/settings")({
@@ -14,10 +17,11 @@ function RouteComponent() {
       <div className="flex min-h-[calc(100svh_-_64px)]">
         {/* Left Sidebar Navigation */}
         <SettingsSidebar />
-        <div className="w-64" />
+        <div className="hidden w-64 shrink-0 md:block" />
 
         {/* Right Content Area */}
-        <div className="flex-1 border-l px-8 py-8 lg:px-16">
+        <div className="min-w-0 flex-1 px-4 py-8 sm:px-8 md:border-l lg:px-16">
+          <SettingsTabs />
           <Outlet />
         </div>
       </div>

@@ -27,12 +27,12 @@ export const StepperActionHeader = ({
 }: PropTypes) => {
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
           {title}
         </h1>
 
-        <div className="text-mono flex justify-between gap-4">
+        <div className="text-mono flex flex-wrap gap-2 sm:gap-4">
           {onSaveDraft && (
             <button
               type="button"
