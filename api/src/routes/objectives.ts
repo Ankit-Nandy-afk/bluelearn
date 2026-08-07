@@ -16,6 +16,7 @@ import {
   createObjective,
   createObjectiveRevision,
   getObjectiveBySlug,
+  listObjectiveContributors,
   listObjectiveRevisions,
   listPublishedObjectives,
 } from "../services/objective.service";
@@ -114,7 +115,16 @@ export const objectivesRouter = new Hono<HonoEnv>()
       );
       return c.json({ revision_id }, 201);
     }
-  );
+  )
+
+  // Returns the distinct revision authors as { contributors }.
+  .get("/:slug/contributors", async (c) => {
+    const { contributors } = await listObjectiveContributors(
+      c.get("supabase"),
+      c.req.param("slug")
+    );
+    return c.json({ contributors });
+  });
 
 export const objectiveRevisionsRouter = new Hono<HonoEnv>()
   // Returns the revision's metadata, parent objective, snapshot, and subject tags
@@ -198,12 +208,12 @@ export const objectiveRevisionsRouter = new Hono<HonoEnv>()
     }
   )
 
-  // Returns the diff between two revision snapshots as { from, to, fields, nodes, edges }.
+  // Returns the diff between two revision snapshots as { from, to, fields, targets }.
   .get("/:id/diff/:otherId", async (c) => {
-    const { from, to, fields, nodes, edges } = await diffObjectiveRevisions(
+    const { from, to, fields, targets } = await diffObjectiveRevisions(
       c.get("supabase"),
       c.req.param("id"),
       c.req.param("otherId")
     );
-    return c.json({ from, to, fields, nodes, edges });
+    return c.json({ from, to, fields, targets });
   });
