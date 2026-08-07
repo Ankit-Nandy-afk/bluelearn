@@ -303,7 +303,7 @@ export const OrderObjectiveGuides = ({
       <FieldGroup className="mt-0 flex min-h-0 flex-1 flex-col">
         {/* Target Guide Sequence */}
         <Field className="mb-0 min-w-0 shrink-0 space-y-2">
-          <div className="flex items-baseline gap-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-4">
             <FieldLabel className="mono-micro">
               Target Guide Sequence
             </FieldLabel>
