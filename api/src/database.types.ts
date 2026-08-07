@@ -659,6 +659,7 @@ export type Database = {
       panel_members: {
         Row: {
           assigned_at: string
+          expires_at: string | null
           id: string
           member_id: string | null
           panel_id: string
@@ -666,6 +667,7 @@ export type Database = {
         }
         Insert: {
           assigned_at?: string
+          expires_at?: string | null
           id?: string
           member_id?: string | null
           panel_id: string
@@ -673,6 +675,7 @@ export type Database = {
         }
         Update: {
           assigned_at?: string
+          expires_at?: string | null
           id?: string
           member_id?: string | null
           panel_id?: string
@@ -1195,6 +1198,12 @@ export type Database = {
         }
         Returns: string
       }
+      eligible_panel_verifiers: {
+        Args: { p_created_by: string; p_panel_id?: string }
+        Returns: {
+          id: string
+        }[]
+      }
       has_role: {
         Args: { check_role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
@@ -1246,6 +1255,7 @@ export type Database = {
         Args: { p_revision_id: string }
         Returns: string
       }
+      sweep_expired_review_seats: { Args: never; Returns: Json }
       wilson_lower_bound: {
         Args: { downvotes: number; upvotes: number; z?: number }
         Returns: number

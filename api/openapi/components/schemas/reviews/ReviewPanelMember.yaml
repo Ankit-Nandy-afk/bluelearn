@@ -5,11 +5,20 @@ properties:
   id:
     $ref: "../common/Uuid.yaml"
   member_id:
-    $ref: "../common/Uuid.yaml"
+    oneOf:
+      - $ref: "../common/Uuid.yaml"
+      - type: "null"
   status:
     type: string
     enum: [assigned, recused, replaced, completed]
     example: assigned
   assigned_at:
     $ref: "../common/Timestamp.yaml"
-required: [id, member_id, status]
+  expires_at:
+    description: >
+      When this seat stops accepting a first vote. Frozen at assignment from the
+      case's time_limit.
+    oneOf:
+      - $ref: "../common/Timestamp.yaml"
+      - type: "null"
+required: [id, member_id, status, assigned_at, expires_at]

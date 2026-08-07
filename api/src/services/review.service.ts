@@ -14,6 +14,7 @@ type QueueRow = {
   member_id: string | null;
   status: string;
   assigned_at: string;
+  expires_at: string | null;
   review_decisions: { decision: ReviewOutcome } | null;
   review_panels: {
     id: string;
@@ -80,6 +81,7 @@ type CaseDetailRow = {
       member_id: string | null;
       status: string;
       assigned_at: string;
+      expires_at: string | null;
       review_decisions: {
         id: string;
         decision: ReviewOutcome;
@@ -131,7 +133,7 @@ export async function getReviewQueue(
   const { data: raw, error } = await supabase
     .from("panel_members")
     .select(
-      `id, panel_id, member_id, status, assigned_at,
+      `id, panel_id, member_id, status, assigned_at, expires_at,
        review_decisions(decision),
        review_panels!inner(
          id, target_seat_count, outcome, opened_at, closed_at, case_id,
@@ -178,6 +180,7 @@ export async function getReviewQueue(
     .map((m) => {
       const rc = m.review_panels.review_cases;
       const link = guideLinks.find((l) => l.case_id === rc.id);
+
       return {
         id: rc.id,
         case_type: rc.case_type,
@@ -185,6 +188,7 @@ export async function getReviewQueue(
         title: link?.guide_revisions?.title ?? null,
         created_at: rc.created_at,
         decision: m.review_decisions?.decision ?? null,
+        expires_at: m.expires_at,
       };
     })
     .sort(
@@ -364,7 +368,7 @@ export async function getReviewCase(
        review_panels(
          id, target_seat_count, outcome, opened_at, closed_at,
          panel_members(
-           id, member_id, status, assigned_at,
+           id, member_id, status, assigned_at, expires_at,
            review_decisions(
              id, decision, notes, created_at,
              review_decision_reasons(reason)
@@ -461,6 +465,11 @@ export async function getReviewCase(
     throw new ServiceError("Failed to load review case", 500);
   }
 
+  const viewerSeat =
+    viewerId === null
+      ? null
+      : (members.find((pm) => pm.member_id === viewerId) ?? null);
+
   return {
     case: {
       id: data.id,
@@ -476,12 +485,15 @@ export async function getReviewCase(
       member_id: pm.member_id,
       status: pm.status,
       assigned_at: pm.assigned_at,
+      expires_at: pm.expires_at,
     })),
     decisions: members
       .filter((pm) => pm.review_decisions)
       .map((pm) => mapDecision(pm.review_decisions!, pm.member_id)),
     viewer_decision: viewerVote ? mapDecision(viewerVote, viewerId) : null,
     viewer_role: viewerRole,
+    viewer_seat_status: viewerSeat?.status ?? null,
+    viewer_expires_at: viewerSeat?.expires_at ?? null,
     revise_draft_id: reviseDraft?.data?.id ?? null,
     revision: revision
       ? {
@@ -538,6 +550,11 @@ export async function castDecision(
         "You are not an active panelist on this case",
         403
       );
+    if (error.code === "23514")
+      throw new ServiceError(
+        "Your review window for this case has closed",
+        403
+      );
     console.error(error);
     throw new ServiceError("Failed to record decision", 500);
   }
@@ -581,5 +598,12 @@ export async function assemblePendingPanels(supabase: DB) {
     });
     // One case failing to seat must not stall the rest of the batch.
     if (rpcError) console.error(rpcError);
+  }
+}
+
+export async function sweepExpiredReviewSeats(supabase: DB) {
+  const { error } = await supabase.rpc("sweep_expired_review_seats");
+  if (error) {
+    console.error(error);
   }
 }
