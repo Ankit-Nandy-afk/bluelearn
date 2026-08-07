@@ -14,6 +14,7 @@ type PropTypes = {
   onSaveDraft?: () => void;
   submitting?: boolean;
   guides: Array<any>;
+  saveDisabled?: boolean;
 };
 
 export const OrderTargetGuides = ({
@@ -23,6 +24,7 @@ export const OrderTargetGuides = ({
   onSaveDraft,
   submitting,
   guides,
+  saveDisabled,
 }: PropTypes) => {
   const guidesMap = useMemo(
     () => new Map(guides.map((g) => [g.slug, g])),
@@ -30,7 +32,6 @@ export const OrderTargetGuides = ({
   );
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const draggedIndexRef = useRef<number | null>(null);
-
   const targets = objectiveContData.targets;
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -44,15 +45,12 @@ export const OrderTargetGuides = ({
     e.preventDefault();
     const currentDragged = draggedIndexRef.current;
     if (currentDragged === null || currentDragged === index) return;
-
     const newTargets = [...targets];
     const draggedItem = newTargets[currentDragged];
     if (!draggedItem) return;
     newTargets.splice(currentDragged, 1);
     newTargets.splice(index, 0, draggedItem);
-
     setObjectiveContData((prev) => ({ ...prev, targets: newTargets }));
-
     draggedIndexRef.current = index;
     setDraggedIndex(index);
   };
@@ -73,21 +71,18 @@ export const OrderTargetGuides = ({
         type="objective"
         onSaveDraft={onSaveDraft}
         submitting={submitting}
+        saveDisabled={saveDisabled}
       />
-
       <FieldGroup className="mt-4 flex min-h-0 flex-1 flex-col">
         <p className="mb-4 shrink-0 text-sm text-muted-foreground">
           Drag and drop to specify the order in which these target guides should
           be completed.
         </p>
-
         <div className="min-h-0 flex-1 scrollbar-thin [scrollbar-color:var(--border)_transparent] space-y-3 overflow-y-auto pt-2 pr-4 pb-4 pl-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent">
           {targets.map((slug, index) => {
             const guide = guidesMap.get(slug);
             if (!guide) return null;
-
             const isDragging = index === draggedIndex;
-
             return (
               <div key={slug} className="mr-auto">
                 <DraggableGuideCard

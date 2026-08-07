@@ -2,41 +2,42 @@ import "katex/dist/katex.min.css";
 
 import type { Guide } from "@bluelearn/schemas";
 import type { GuideType } from "@/types/guides";
-import type { ContributionType } from "@/types/contributions";
 import { GuideReader } from "@/components/GuideReader";
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
 
 type PropTypes = {
   Stepper: any;
-  type: ContributionType | null;
   guide: Guide;
   guideType?: GuideType;
   onSaveDraft: () => void;
   onPublish: () => void;
   submitting: boolean;
+  saveDisabled?: boolean;
 };
 
 export const PreviewGuide = ({
   Stepper,
-  type,
   guide,
   guideType,
   onSaveDraft,
   onPublish,
   submitting,
+  saveDisabled,
 }: PropTypes) => {
   return (
     <Stepper.Content step="preview-guide">
       <StepperActionHeader
         title={"Preview"}
         Stepper={Stepper}
-        type={type}
         onSaveDraft={onSaveDraft}
         onPublish={onPublish}
         submitting={submitting}
+        saveDisabled={saveDisabled}
       />
 
       <GuideReader guide={guide} guideType={guideType} />
     </Stepper.Content>
   );
 };
+
+

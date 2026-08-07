@@ -13,6 +13,7 @@ type PropTypes = {
   onSaveDraft: () => void;
   submitting?: boolean;
   title?: string;
+  saveDisabled?: boolean;
 };
 
 export const Content = ({
@@ -24,13 +25,12 @@ export const Content = ({
   onSaveDraft,
   submitting,
   title = "Content",
+  saveDisabled,
 }: PropTypes) => {
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
     setMounted(true);
   }, []);
-
   return (
     <Stepper.Content step="content">
       <StepperActionHeader
@@ -39,8 +39,8 @@ export const Content = ({
         onSaveDraft={onSaveDraft}
         submitting={submitting}
         type={type}
+        saveDisabled={saveDisabled}
       />
-
       {mounted && (
         <Suspense
           fallback={

@@ -15,6 +15,7 @@ type PropTypes = {
   submitting: boolean;
   title?: string;
   publishLabel?: string;
+  saveDisabled?: boolean;
 };
 
 export const Submit = ({
@@ -26,6 +27,7 @@ export const Submit = ({
   submitting,
   title = "Preview",
   publishLabel = "Submit for Review",
+  saveDisabled,
 }: PropTypes) => {
   return (
     <Stepper.Content step="submit">
@@ -36,6 +38,7 @@ export const Submit = ({
         onPublish={onPublish}
         submitting={submitting}
         publishLabel={publishLabel}
+        saveDisabled={saveDisabled}
       />
 
       <GuideReader guide={guide} guideType={guideType} />

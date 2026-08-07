@@ -16,6 +16,7 @@ type PropTypes = {
   submitting: boolean;
   guideOptions: Array<any>;
   subjectOptions: Array<any>;
+  saveDisabled?: boolean;
 };
 
 type FeaturedNode = {
@@ -133,6 +134,7 @@ export const PreviewObjective = ({
   submitting,
   guideOptions,
   subjectOptions,
+  saveDisabled,
 }: PropTypes) => {
   // Helpers to resolve slugs
   const getGuideTitle = (slug: string) => {
@@ -246,6 +248,7 @@ export const PreviewObjective = ({
         onPublish={onPublish}
         publishLabel="Publish"
         submitting={submitting}
+        saveDisabled={saveDisabled}
       />
 
       <Separator className="mb-8 bg-border" />

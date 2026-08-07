@@ -42,6 +42,7 @@ type PropTypes = {
   onSaveDraft?: () => void;
   submitting?: boolean;
   guides: Array<any>;
+  saveDisabled?: boolean;
 };
 
 export const OrderObjectiveGuides = ({
@@ -51,6 +52,7 @@ export const OrderObjectiveGuides = ({
   onSaveDraft,
   submitting,
   guides,
+  saveDisabled,
 }: PropTypes) => {
   const guidesMap = useMemo(
     () => new Map(guides.map((g) => [g.slug, g])),
@@ -299,6 +301,7 @@ export const OrderObjectiveGuides = ({
         type="objective"
         onSaveDraft={onSaveDraft}
         submitting={submitting}
+        saveDisabled={saveDisabled}
       />
 
       <FieldGroup className="mt-0 flex min-h-0 flex-1 flex-col">

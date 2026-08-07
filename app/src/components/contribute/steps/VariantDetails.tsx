@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type {
@@ -30,6 +30,7 @@ type PropTypes = {
   onSaveDraft: () => void;
   submitting?: boolean;
   hideBackBtn?: boolean;
+  saveDisabled?: boolean;
 };
 
 export const VariantDetails = ({
@@ -42,6 +43,7 @@ export const VariantDetails = ({
   onSaveDraft,
   submitting,
   hideBackBtn,
+  saveDisabled,
 }: PropTypes) => {
   const [newSubject, setNewSubject] = useState<{
     name: string;
@@ -50,6 +52,14 @@ export const VariantDetails = ({
     name: "",
     summary: "",
   });
+
+  // --- NEW: Check for duplicate title in real-time ---
+  const isDuplicateTitle = guides.some(
+    (g) =>
+      g.title &&
+      variantContData.title &&
+      g.title.trim().toLowerCase() === variantContData.title.trim().toLowerCase()
+  );
 
   return (
     <Stepper.Content step="variant-details">
@@ -60,6 +70,8 @@ export const VariantDetails = ({
         hideBackBtn={hideBackBtn}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
+        // --- NEW: Disable the save/submit action if duplicate ---
+        saveDisabled={saveDisabled || isDuplicateTitle}
       />
 
       <FieldGroup>
@@ -84,6 +96,7 @@ export const VariantDetails = ({
             placeholder="Choose a title. (Maximum 50 characters)."
             className="h-10 rounded-md"
             required
+            aria-invalid={isDuplicateTitle}
             value={variantContData.title}
             onChange={(e) =>
               setVariantContData((prev: any) => ({
@@ -92,6 +105,13 @@ export const VariantDetails = ({
               }))
             }
           />
+          {/* --- NEW: Display error message directly under the input --- */}
+          {isDuplicateTitle && (
+            <p className="text-destructive flex items-center gap-1.5 text-xs font-medium">
+              <AlertCircle className="size-3.5" />
+              A guide or variant with this title already exists.
+            </p>
+          )}
         </Field>
 
         <Field className="space-y-2">

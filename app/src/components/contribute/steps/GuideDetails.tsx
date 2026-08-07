@@ -1,10 +1,7 @@
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type {
-  ContributionType,
-  GuideContribution,
-} from "@/types/contributions";
+import type { GuideContribution } from "@/types/contributions";
 
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
 import {
@@ -28,7 +25,6 @@ type GuideOption = {
 
 type PropTypes = {
   Stepper: any;
-  type: ContributionType | null;
   guideContData: GuideContribution;
   setGuideContData: Dispatch<SetStateAction<GuideContribution>>;
   subjects: Array<SubjectOption>;
@@ -36,15 +32,14 @@ type PropTypes = {
   onSaveDraft: () => void;
   submitting?: boolean;
   showBaseFields?: boolean;
-  hideBackBtn?: boolean;
   title?: string;
   changeSummary?: string;
   onChangeSummaryChange?: (value: string) => void;
+  saveDisabled?: boolean;
 };
 
 export const GuideDetails = ({
   Stepper,
-  type,
   guideContData,
   setGuideContData,
   subjects,
@@ -54,10 +49,10 @@ export const GuideDetails = ({
   // Prerequisites and todos live on the guide base, so they're only
   // authorable while the base is still a draft.
   showBaseFields = true,
-  hideBackBtn,
   title = "Guide Details",
   changeSummary,
   onChangeSummaryChange,
+  saveDisabled,
 }: PropTypes) => {
   const [todoPrereq, setTodoPrereq] = useState<{
     title: string;
@@ -74,15 +69,23 @@ export const GuideDetails = ({
     summary: "",
   });
 
+  // --- NEW: Check for duplicate title in real-time ---
+  const isDuplicateTitle = guides.some(
+    (g) =>
+      g.title &&
+      guideContData.title &&
+      g.title.trim().toLowerCase() === guideContData.title.trim().toLowerCase()
+  );
+
   return (
     <Stepper.Content step="guide-details">
       <StepperActionHeader
         title={title}
         Stepper={Stepper}
-        type={type}
-        hideBackBtn={hideBackBtn}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
+        // --- NEW: Disable the save/submit action if duplicate ---
+        saveDisabled={saveDisabled || isDuplicateTitle}
       />
 
       <FieldGroup>
@@ -100,9 +103,9 @@ export const GuideDetails = ({
                 process for accomplishing a goal.
               </FieldDescription>
             </div>
-            <Field className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+            <Field className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
               <button
-                className="mono-micro rounded-full border border-badge-border p-3 tracking-[0.08em] text-badge-foreground sm:p-4"
+                className="mono-micro rounded-full border border-badge-border p-4 tracking-[0.08em] text-badge-foreground"
                 style={{
                   backgroundColor:
                     guideContData.type == "theoretical"
@@ -120,7 +123,7 @@ export const GuideDetails = ({
               </button>
 
               <button
-                className="mono-micro rounded-full border border-badge-border p-3 tracking-[0.08em] text-badge-foreground sm:p-4"
+                className="mono-micro rounded-full border border-badge-border p-4 tracking-[0.08em] text-badge-foreground"
                 style={{
                   backgroundColor:
                     guideContData.type == "practical"
@@ -160,6 +163,7 @@ export const GuideDetails = ({
             placeholder="Choose a title. (Maximum 50 characters)."
             className="h-10 rounded-md"
             required
+            aria-invalid={isDuplicateTitle}
             value={guideContData.title}
             onChange={(e) =>
               setGuideContData((prev) => ({
@@ -168,6 +172,13 @@ export const GuideDetails = ({
               }))
             }
           />
+          {/* --- NEW: Display error message directly under the input --- */}
+          {isDuplicateTitle && (
+            <p className="text-destructive flex items-center gap-1.5 text-xs font-medium">
+              <AlertCircle className="size-3.5" />
+              A guide with this title already exists. Please choose a unique title.
+            </p>
+          )}
         </Field>
 
         <Field className="space-y-2">
@@ -261,7 +272,7 @@ export const GuideDetails = ({
               Create a subject if it doesn't exist yet.
             </FieldDescription>
           </div>
-          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="flex items-center justify-between gap-4">
             <Input
               id="new-subject-name"
               type="text"
@@ -294,7 +305,7 @@ export const GuideDetails = ({
             <Button
               variant="ghost"
               size="icon"
-              className="btn-sec h-10 w-full rounded-md sm:w-24"
+              className="btn-sec h-10 w-24 rounded-md"
               onClick={() => {
                 if (newSubject.name !== "" && newSubject.summary !== "") {
                   const newSubs = [...guideContData.newSubjects, newSubject];
@@ -380,7 +391,7 @@ export const GuideDetails = ({
                 </FieldDescription>
               </div>
 
-              <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="flex items-center justify-between gap-4">
                 <Input
                   id="todo-prereqs"
                   type="text"
@@ -413,7 +424,7 @@ export const GuideDetails = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="btn-sec h-10 w-full rounded-md sm:w-24"
+                  className="btn-sec h-10 w-24 rounded-md"
                   onClick={() => {
                     if (todoPrereq.title !== "" && todoPrereq.summary !== "") {
                       const todos = [...guideContData.todoPrereqs, todoPrereq];

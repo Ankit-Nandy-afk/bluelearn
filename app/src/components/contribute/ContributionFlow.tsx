@@ -284,6 +284,15 @@ function Inner({
   objectiveContData: ObjectiveContribution;
   setObjectiveContData: Dispatch<SetStateAction<ObjectiveContribution>>;
 }) {
+  // Snapshot refs used to derive whether the current form state has actually
+  // changed since it was last loaded/saved, so we can disable Save/Submit
+  // when nothing has changed.
+  const lastSavedGuideRef = useRef<string>(JSON.stringify(guideContData));
+  const lastSavedVariantRef = useRef<string>(JSON.stringify(variantContData));
+  const lastSavedObjectiveRef = useRef<string>(
+    JSON.stringify(objectiveContData)
+  );
+
   const pickType = (value: ContributionType) => {
     if (type !== value) {
       setType(value);
@@ -360,11 +369,15 @@ function Inner({
     if (!todoTitle || seededRef.current) return;
     seededRef.current = true;
 
-    setGuideContData((prev) => ({
-      ...prev,
-      title: todoTitle,
-      summary: todoSummary ?? prev.summary,
-    }));
+    setGuideContData((prev) => {
+      const newData = {
+        ...prev,
+        title: todoTitle,
+        summary: todoSummary ?? prev.summary,
+      };
+      lastSavedGuideRef.current = JSON.stringify(newData);
+      return newData;
+    });
     setType("guide");
     requestAnimationFrame(() => stepper.goTo("guide-details"));
   }, [todoTitle, todoSummary]);
@@ -381,6 +394,8 @@ function Inner({
           const objData = objectiveDataFromRevision(data);
 
           setObjectiveContData(objData);
+          lastSavedObjectiveRef.current = JSON.stringify(objData);
+
           setShowChangeSummary(!!data.objective.current_revision_id);
           setStoredDraft("objective", {
             data: objData,
@@ -426,6 +441,8 @@ function Inner({
             newSubjects: pending,
           };
           setVariantContData(vData);
+          lastSavedVariantRef.current = JSON.stringify(vData);
+
           setStoredDraft("variant", {
             data: vData,
             revisionId: draftId,
@@ -444,6 +461,8 @@ function Inner({
             todoPrereqs: data.todos,
           };
           setGuideContData(gData);
+          lastSavedGuideRef.current = JSON.stringify(gData);
+
           setStoredDraft("guide", {
             data: gData,
             revisionId: draftId,
@@ -473,10 +492,13 @@ function Inner({
 
     getObjectiveRevision(sourceRevisionId)
       .then((data) => {
-        setObjectiveContData({
+        const objData = {
           ...objectiveDataFromRevision(data),
           changeSummary: "",
-        });
+        };
+        setObjectiveContData(objData);
+        lastSavedObjectiveRef.current = JSON.stringify(objData);
+
         setShowChangeSummary(!!data.objective.current_revision_id);
         setType("objective");
         requestAnimationFrame(() => stepper.goTo("objective-details"));
@@ -763,6 +785,16 @@ function Inner({
           updatedAt: Date.now(),
         });
       }
+
+      // A successful save is the new baseline for "unchanged".
+      if (type === "guide") {
+        lastSavedGuideRef.current = JSON.stringify(guideContData);
+      } else if (type === "variant") {
+        lastSavedVariantRef.current = JSON.stringify(variantContData);
+      } else if (type === "objective") {
+        lastSavedObjectiveRef.current = JSON.stringify(objectiveContData);
+      }
+
       toast.success("Draft saved");
       return true;
     } catch (e) {
@@ -818,7 +850,9 @@ function Inner({
         await submitObjectiveRevision(id);
         objectiveSave.cancel();
         if (!editSlug) clearStoredDraft("objective");
-        setObjectiveContData(createObjectiveContData());
+        const newData = createObjectiveContData();
+        setObjectiveContData(newData);
+        lastSavedObjectiveRef.current = JSON.stringify(newData);
         setRevisionId(null);
         onPublished?.();
         toast.success("Objective published");
@@ -827,11 +861,15 @@ function Inner({
         if (type === "guide") {
           guideSave.cancel();
           clearStoredDraft("guide");
-          setGuideContData(createGuideContData());
+          const newData = createGuideContData();
+          setGuideContData(newData);
+          lastSavedGuideRef.current = JSON.stringify(newData);
         } else {
           variantSave.cancel();
           clearStoredDraft("variant");
-          setVariantContData(createVariantContData());
+          const newData = createVariantContData();
+          setVariantContData(newData);
+          lastSavedVariantRef.current = JSON.stringify(newData);
         }
         setRevisionId(null);
         onPublished?.();
@@ -849,6 +887,23 @@ function Inner({
       setSubmitting(false);
     }
   };
+
+  // Disable Save/Submit when the current form state matches the last loaded
+  // or saved snapshot for the active contribution type.
+  const isDirty = useMemo(() => {
+    if (type === "guide") {
+      return JSON.stringify(guideContData) !== lastSavedGuideRef.current;
+    }
+    if (type === "variant") {
+      return JSON.stringify(variantContData) !== lastSavedVariantRef.current;
+    }
+    if (type === "objective") {
+      return (
+        JSON.stringify(objectiveContData) !== lastSavedObjectiveRef.current
+      );
+    }
+    return false;
+  }, [type, guideContData, variantContData, objectiveContData]);
 
   if (skipTypeStep && !type) return null;
 
@@ -894,6 +949,7 @@ function Inner({
           hideBackBtn={skipTypeStep}
           onSaveDraft={saveDraft}
           submitting={submitting}
+          saveDisabled={!isDirty}
         />
 
         <VariantDetails
@@ -906,6 +962,7 @@ function Inner({
           hideBackBtn={skipTypeStep}
           onSaveDraft={saveDraft}
           submitting={submitting}
+          saveDisabled={!isDirty}
         />
 
         <ObjectiveDetails
@@ -919,6 +976,7 @@ function Inner({
           hideBackBtn={skipTypeStep}
           onSaveDraft={saveDraft}
           submitting={submitting}
+          saveDisabled={!isDirty}
         />
 
         <OrderTargetGuides
@@ -928,6 +986,7 @@ function Inner({
           onSaveDraft={saveDraft}
           submitting={submitting}
           guides={guideOptions}
+          saveDisabled={!isDirty}
         />
 
         <Content
@@ -944,6 +1003,7 @@ function Inner({
           onUploadImage={uploadGuideImage}
           onSaveDraft={saveDraft}
           submitting={submitting}
+          saveDisabled={!isDirty}
         />
         <OrderObjectiveGuides
           Stepper={Stepper}
@@ -952,6 +1012,7 @@ function Inner({
           onSaveDraft={saveDraft}
           submitting={submitting}
           guides={guideOptions}
+          saveDisabled={!isDirty}
         />
 
         <PreviewGuide
@@ -962,6 +1023,7 @@ function Inner({
           onSaveDraft={saveDraft}
           onPublish={publish}
           submitting={submitting}
+          saveDisabled={!isDirty}
         />
 
         <PreviewObjective
@@ -972,6 +1034,7 @@ function Inner({
           submitting={submitting}
           guideOptions={guideOptions}
           subjectOptions={subjectOptions}
+          saveDisabled={!isDirty}
         />
       </div>
     </div>
