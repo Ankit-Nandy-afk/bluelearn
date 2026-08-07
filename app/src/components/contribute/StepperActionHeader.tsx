@@ -1,12 +1,14 @@
 import { Save, Scroll } from "lucide-react";
 
 import { useState } from "react";
+import type { ContributionType } from "@/types/contributions";
 import { Separator } from "@/components/ui/separator";
 import { GuidelinesModal } from "@/components/modals/GuidelinesModal";
 
 type PropTypes = {
   title: string;
   Stepper: any;
+  type?: ContributionType | null;
   nextDisabled?: boolean;
   hideBackBtn?: boolean;
   submitting?: boolean;
@@ -19,6 +21,7 @@ type PropTypes = {
 export const StepperActionHeader = ({
   title,
   Stepper,
+  type,
   nextDisabled,
   submitting,
   saveDisabled,
@@ -30,6 +33,8 @@ export const StepperActionHeader = ({
   const [open, setOpen] = useState(false);
   const toggleModalView = () => setOpen(!open);
 
+  console.log(type);
+
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
@@ -38,14 +43,16 @@ export const StepperActionHeader = ({
             {title}
           </h1>
 
-          <button
-            type="button"
-            className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
-            onClick={toggleModalView}
-          >
-            <Scroll className="size-4" />
-            View Guidelines
-          </button>
+          {type != "objective" && (
+            <button
+              type="button"
+              className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
+              onClick={toggleModalView}
+            >
+              <Scroll className="size-4" />
+              View Guidelines
+            </button>
+          )}
         </div>
 
         <div className="text-mono flex items-center justify-between gap-4">

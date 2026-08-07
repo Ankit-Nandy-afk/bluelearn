@@ -873,6 +873,7 @@ function Inner({
 
         <GuideDetails
           Stepper={Stepper}
+          type={type}
           guideContData={guideContData}
           setGuideContData={setGuideContData}
           subjects={subjectOptions}
@@ -884,6 +885,7 @@ function Inner({
 
         <VariantDetails
           Stepper={Stepper}
+          type={type}
           variantContData={variantContData}
           setVariantContData={setVariantContData}
           guides={guideOptions}
@@ -917,6 +919,7 @@ function Inner({
 
         <Content
           Stepper={Stepper}
+          type={type}
           body={type == "guide" ? guideContData.body : variantContData.body}
           onBodyChange={(body) => {
             if (type == "guide") {
@@ -940,6 +943,7 @@ function Inner({
 
         <PreviewGuide
           Stepper={Stepper}
+          type={type}
           guide={type === "guide" ? previewGuide : previewVariant}
           guideType={type === "guide" ? guideType : undefined}
           onSaveDraft={saveDraft}

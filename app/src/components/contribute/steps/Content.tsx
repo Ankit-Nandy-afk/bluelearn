@@ -1,10 +1,12 @@
 import { Suspense, lazy, useEffect, useState } from "react";
+import type { ContributionType } from "@/types/contributions";
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
 
 const Editor = lazy(() => import("../editor/Editor"));
 
 type PropTypes = {
   Stepper: any;
+  type: ContributionType | null;
   body: string;
   onBodyChange: (body: string) => void;
   onUploadImage?: (file: File) => Promise<string>;
@@ -15,6 +17,7 @@ type PropTypes = {
 
 export const Content = ({
   Stepper,
+  type,
   body,
   onBodyChange,
   onUploadImage,
@@ -35,6 +38,7 @@ export const Content = ({
         Stepper={Stepper}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
+        type={type}
       />
 
       {mounted && (

@@ -1,7 +1,10 @@
 import { X } from "lucide-react";
 import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { GuideContribution } from "@/types/contributions";
+import type {
+  ContributionType,
+  GuideContribution,
+} from "@/types/contributions";
 
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
 import {
@@ -25,6 +28,7 @@ type GuideOption = {
 
 type PropTypes = {
   Stepper: any;
+  type: ContributionType | null;
   guideContData: GuideContribution;
   setGuideContData: Dispatch<SetStateAction<GuideContribution>>;
   subjects: Array<SubjectOption>;
@@ -40,6 +44,7 @@ type PropTypes = {
 
 export const GuideDetails = ({
   Stepper,
+  type,
   guideContData,
   setGuideContData,
   subjects,
@@ -74,6 +79,7 @@ export const GuideDetails = ({
       <StepperActionHeader
         title={title}
         Stepper={Stepper}
+        type={type}
         hideBackBtn={hideBackBtn}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
