@@ -7,7 +7,7 @@ import type {
 import type { Database } from "../database.types";
 import { ServiceError } from "../lib/service-error";
 import { selectInBatches } from "../lib/batch";
-import { diffField } from "../lib/diff";
+import { diffField, diffSequences } from "../lib/diff";
 
 type DB = SupabaseClient<Database>;
 
@@ -138,7 +138,7 @@ export async function getRevisionSnapshot(
   return { nodes, orders: orderRows ?? [], projected_edges, raw_edges };
 }
 
-async function loadRevisionTags(supabase: DB, revisionId: string) {
+export async function loadRevisionTags(supabase: DB, revisionId: string) {
   const { data, error } = await supabase
     .from("objective_revision_subjects")
     .select("subject:subjects(id, slug, name, summary, status)")
@@ -640,8 +640,8 @@ export async function rollbackObjectiveRevision(
   return { revision_id };
 }
 
-// One node from getRevisionSnapshot. Used both as a standalone entry (added /
-// removed) and as the `from`/`to` halves of a NodeChange.
+// One node from getRevisionSnapshot, as it appears in a sub-objective's
+// sequence.
 type SnapshotNode = {
   id: string;
   guide_base_id: string;
@@ -655,24 +655,6 @@ type SnapshotNode = {
   note: string | null;
 };
 
-// A node that exists on both revisions but differs in at least one field.
-// Carries both versions so a split-view renderer can show the old state on
-// the left and the new state on the right without a second round-trip to
-// fetch the `from` revision's snapshot. `from` and `to` share the same
-// guide_base_id (that's how we knew to pair them); every other field is
-// independently rendered.
-type NodeChange = {
-  from: SnapshotNode;
-  to: SnapshotNode;
-};
-
-// Rendered diff between two objective revision snapshots. RLS still
-// applies; a hidden revision 404s. Compares title/summary fields, node
-// membership (added/removed/changed, keyed by guide_base_id) and projected
-// prerequisite edges (added/removed). Each side's edges are loaded with the
-// correct projection (frozen for published, live for draft) via
-// getRevisionSnapshot. Output arrays are sorted by a stable key so the diff
-// is deterministic regardless of row order from Postgres.
 export async function diffObjectiveRevisions(
   supabase: DB,
   id: string,
@@ -718,71 +700,6 @@ export async function diffObjectiveRevisions(
     ),
   ]);
 
-  const fromNodes = new Map(
-    fromSnapshot.nodes.map((n) => [n.guide_base_id, n])
-  );
-  const toNodes = new Map(toSnapshot.nodes.map((n) => [n.guide_base_id, n]));
-
-  const added: SnapshotNode[] = [];
-  const removed: SnapshotNode[] = [];
-  // Changed nodes carry both versions so a split-view renderer doesn't need
-  // a second round-trip to fetch the `from` revision's snapshot. See
-  // NodeChange for the full rationale.
-  const changed: NodeChange[] = [];
-
-  for (const node of toNodes.values()) {
-    const fromNode = fromNodes.get(node.guide_base_id);
-    if (!fromNode) {
-      added.push(node);
-    } else if (!sameNode(fromNode, node)) {
-      changed.push({ from: fromNode, to: node });
-    }
-  }
-  for (const node of fromNodes.values()) {
-    if (!toNodes.has(node.guide_base_id)) {
-      removed.push(node);
-    }
-  }
-
-  const edgeKey = (e: { from_id: string; to_id: string }) =>
-    `${e.from_id}|${e.to_id}`;
-  const fromEdgeKeys = new Set(fromSnapshot.projected_edges.map(edgeKey));
-  const toEdgeKeys = new Set(toSnapshot.projected_edges.map(edgeKey));
-
-  const addedEdges = toSnapshot.projected_edges.filter(
-    (e) => !fromEdgeKeys.has(edgeKey(e))
-  );
-  const removedEdges = fromSnapshot.projected_edges.filter(
-    (e) => !toEdgeKeys.has(edgeKey(e))
-  );
-
-  // Sort outputs by a stable key so the diff is deterministic regardless of
-  // the order rows come back from Postgres. Changed nodes are keyed by their
-  // shared guide_base_id (from and to always agree on it).
-  const byBaseId = (
-    a: { guide_base_id: string },
-    b: { guide_base_id: string }
-  ) =>
-    a.guide_base_id < b.guide_base_id
-      ? -1
-      : a.guide_base_id > b.guide_base_id
-        ? 1
-        : 0;
-  const byChangedBaseId = (a: NodeChange, b: NodeChange) =>
-    byBaseId(a.to, b.to);
-  const byEdge = (
-    a: { from_id: string; to_id: string },
-    b: { from_id: string; to_id: string }
-  ) => {
-    if (a.from_id !== b.from_id) return a.from_id < b.from_id ? -1 : 1;
-    return a.to_id < b.to_id ? -1 : 1;
-  };
-  added.sort(byBaseId);
-  removed.sort(byBaseId);
-  changed.sort(byChangedBaseId);
-  addedEdges.sort(byEdge);
-  removedEdges.sort(byEdge);
-
   return {
     from: toRevisionRef(from),
     to: toRevisionRef(to),
@@ -790,8 +707,7 @@ export async function diffObjectiveRevisions(
       title: diffField(from.title, to.title),
       summary: diffField(from.summary, to.summary),
     },
-    nodes: { added, removed, changed },
-    edges: { added: addedEdges, removed: removedEdges },
+    targets: diffTargets(fromSnapshot, toSnapshot),
   };
 }
 
@@ -826,6 +742,112 @@ function sameNode(
     a.target_position === b.target_position &&
     a.note === b.note
   );
+}
+
+type SnapshotOrder = {
+  target_node_id: string;
+  node_id: string;
+  position: number;
+};
+
+type SubObjective = { target: SnapshotNode; steps: SnapshotNode[] };
+
+function buildSubObjectives(snapshot: {
+  nodes: SnapshotNode[];
+  orders: SnapshotOrder[];
+}): SubObjective[] {
+  const nodeById = new Map(snapshot.nodes.map((n) => [n.id, n]));
+
+  return snapshot.nodes
+    .filter((n) => n.is_target)
+    .sort((a, b) => (a.target_position ?? 0) - (b.target_position ?? 0))
+    .map((target) => ({
+      target,
+      steps: [
+        ...snapshot.orders
+          .filter((o) => o.target_node_id === target.id)
+          .sort((a, b) => a.position - b.position)
+          .map((o) => nodeById.get(o.node_id))
+          .filter((n): n is SnapshotNode => n !== undefined),
+        target,
+      ],
+    }));
+}
+
+function stepLabel(node: SnapshotNode) {
+  const label = node.title ?? node.slug ?? node.guide_base_id.slice(0, 8);
+  return node.is_included ? label : `${label} (skipped)`;
+}
+
+// Per sub-objective view of the diff.
+function diffTargets(
+  fromSnapshot: { nodes: SnapshotNode[]; orders: SnapshotOrder[] },
+  toSnapshot: { nodes: SnapshotNode[]; orders: SnapshotOrder[] }
+) {
+  const fromSequences = new Map(
+    buildSubObjectives(fromSnapshot).map((s) => [s.target.guide_base_id, s])
+  );
+  const toSequences = buildSubObjectives(toSnapshot);
+  const seen = new Set<string>();
+
+  const build = (
+    guideBaseId: string,
+    target: SnapshotNode,
+    fromSteps: SnapshotNode[],
+    toSteps: SnapshotNode[],
+    status: "added" | "removed" | "changed" | "unchanged"
+  ) => {
+    const lines = diffSequences(
+      fromSteps,
+      toSteps,
+      (node) => node.guide_base_id,
+      stepLabel
+    );
+    const fromByBase = new Map(fromSteps.map((s) => [s.guide_base_id, s]));
+
+    const changed = toSteps
+      .map((step) => {
+        const before = fromByBase.get(step.guide_base_id);
+        if (!before || sameNode(before, step)) return null;
+        return { from: before, to: step };
+      })
+      .filter((c) => c !== null);
+
+    const sequenceChanged = lines.some((l) => l.type !== "unchanged");
+
+    return {
+      guide_base_id: guideBaseId,
+      slug: target.slug,
+      title: target.title,
+      status:
+        status === "changed" && !sequenceChanged && changed.length === 0
+          ? ("unchanged" as const)
+          : status,
+      lines,
+      changed,
+    };
+  };
+
+  const targets = toSequences.map((sequence) => {
+    const baseId = sequence.target.guide_base_id;
+    seen.add(baseId);
+    const before = fromSequences.get(baseId);
+
+    return build(
+      baseId,
+      sequence.target,
+      before?.steps ?? [],
+      sequence.steps,
+      before ? "changed" : "added"
+    );
+  });
+
+  for (const [baseId, sequence] of fromSequences) {
+    if (seen.has(baseId)) continue;
+    targets.push(build(baseId, sequence.target, sequence.steps, [], "removed"));
+  }
+
+  return targets;
 }
 
 // Project a revision row down to the RevisionRef shape used in diff headers.

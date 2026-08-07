@@ -19,6 +19,20 @@ export async function getObjectiveRevision(
   return res.json();
 }
 
+export async function getObjectiveRevisionDiff(
+  id: string,
+  otherId: string,
+  { signal }: FetchOptions = {}
+) {
+  const res = await revisions[":id"].diff[":otherId"].$get(
+    { param: { id, otherId } },
+    { init: { signal } }
+  );
+  await assertOk(res);
+
+  return res.json();
+}
+
 export async function updateObjectiveRevision(
   id: string,
   body: InferRequestType<(typeof revisions)[":id"]["$patch"]>["json"]

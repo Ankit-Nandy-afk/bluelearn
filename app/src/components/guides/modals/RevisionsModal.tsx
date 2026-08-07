@@ -1,42 +1,58 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { GitCommit, Sparkles } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
-import type { GuideRevisionListItem } from "@bluelearn/schemas";
+import type { LinkProps } from "@tanstack/react-router";
 import { Badge } from "@/components/ui/badge";
-import { getVariantRevisions } from "@/lib/api/variants";
 import { formatDate } from "@/lib/guideUtils";
+
+export type RevisionEntry = {
+  id: string;
+  change_summary: string | null;
+  author: string | null;
+  date: string | null;
+};
 
 type RevisionsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  slug: string;
-  variantSlug: string | null;
-  variantId: string | null;
+  fetchRevisions: () => Promise<Array<RevisionEntry>>;
+  linkTo?: (revision: RevisionEntry) => LinkProps | null;
+  enabled?: boolean;
+  title?: string;
+  description?: string;
+  emptyDescription?: string;
 };
 
 export function RevisionsModal({
   open,
   onOpenChange,
-  slug,
-  variantSlug,
-  variantId,
+  fetchRevisions,
+  linkTo,
+  enabled = true,
+  title = "Revision History",
+  description = "Chronological log of changes and published revisions for this guide.",
+  emptyDescription = "This guide does not have any recorded revision history yet.",
 }: RevisionsModalProps) {
-  const [revisions, setRevisions] = useState<Array<GuideRevisionListItem>>([]);
+  const [revisions, setRevisions] = useState<Array<RevisionEntry>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchRef = useRef(fetchRevisions);
+  fetchRef.current = fetchRevisions;
+
   useEffect(() => {
-    if (!open || !variantId) return;
+    if (!open || !enabled) return;
 
     let ignore = false;
     setLoading(true);
     setError(null);
 
-    getVariantRevisions(variantId)
+    fetchRef
+      .current()
       .then((res) => {
         if (!ignore) {
-          setRevisions(res.revisions);
+          setRevisions(res);
         }
       })
       .catch((err) => {
@@ -54,26 +70,25 @@ export function RevisionsModal({
     return () => {
       ignore = true;
     };
-  }, [open, variantId]);
+  }, [open, enabled]);
 
   return (
     <BaseGuideModal
       open={open}
       onOpenChange={onOpenChange}
-      title="Revision History"
-      description="Chronological log of changes and published revisions for this guide."
+      title={title}
+      description={description}
       loading={loading}
       loadingText="Loading revisions..."
       error={error}
       isEmpty={revisions.length === 0}
       emptyIcon={<Sparkles className="h-6 w-6" />}
       emptyTitle="No revisions found"
-      emptyDescription="This guide does not have any recorded revision history yet."
+      emptyDescription={emptyDescription}
     >
       {revisions.map((rev, index) => {
-        const displayDate = rev.approved_at || rev.created_at;
-        const formattedDate = displayDate
-          ? formatDate(new Date(displayDate))
+        const formattedDate = rev.date
+          ? formatDate(new Date(rev.date))
           : "Unknown date";
         const isLatest = index === 0;
 
@@ -116,11 +131,12 @@ export function RevisionsModal({
           </>
         );
 
-        return variantSlug ? (
+        const link = linkTo?.(rev) ?? null;
+
+        return link ? (
           <Link
             key={rev.id}
-            to="/guides/$slug/$variantSlug/revisions/$revisionId"
-            params={{ slug, variantSlug, revisionId: rev.id }}
+            {...link}
             onClick={() => onOpenChange(false)}
             className={className}
           >
