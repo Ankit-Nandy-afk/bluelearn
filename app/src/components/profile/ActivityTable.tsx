@@ -9,6 +9,7 @@ import {
   filterActivity,
 } from "@/lib/profile";
 import { formatDate } from "@/lib/guideUtils";
+import { cn } from "@/lib/utils";
 import { usePagination } from "@/lib/usePagination";
 import { Pagination } from "@/components/Pagination";
 import {
@@ -115,9 +116,106 @@ export function ActivityTable({
     onPageChange,
   });
 
+  const emptyMessage = hasFilters
+    ? "No activity matches these filters."
+    : "No activity available yet.";
+
   return (
     <>
-      <div className="overflow-x-auto">
+      <div className="md:hidden">
+        <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-3 font-mono text-[13px] font-bold tracking-[0.08em] uppercase">
+          <ChoiceColumnFilter
+            label="Type"
+            field="type"
+            options={ACTIVITY_TYPE_FILTERS}
+            search={search}
+            setFilters={setFilters}
+          />
+          <TextColumnFilter
+            label="Title"
+            field="title"
+            search={search}
+            setFilters={setFilters}
+          />
+          <TextColumnFilter
+            label="Summary"
+            field="summary"
+            search={search}
+            setFilters={setFilters}
+          />
+          <DateColumnFilter search={search} setFilters={setFilters} />
+          <ChoiceColumnFilter
+            label="Status"
+            field="status"
+            options={ACTIVITY_STATUS_FILTERS}
+            search={search}
+            setFilters={setFilters}
+          />
+        </div>
+
+        {pageRows.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            {emptyMessage}
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {pageRows.map((row, index) => {
+              const target = rowTarget(row);
+              return (
+                <li
+                  key={`${row.content_kind}-${start + index}`}
+                  className={cn(
+                    "flex flex-col gap-2 rounded-md border p-4",
+                    target && "cursor-pointer"
+                  )}
+                  onClick={target ? () => navigate(target) : undefined}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="data-label">{activityTypeLabel(row)}</span>
+                    <Badge
+                      variant="outline"
+                      className="mono-micro shrink-0 rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
+                    >
+                      {activityStatusLabel(row.status)}
+                    </Badge>
+                  </div>
+
+                  <p className="text-sm font-bold">{row.title}</p>
+
+                  {row.change_summary && (
+                    <p className="text-sm text-muted-foreground">
+                      {row.change_summary}
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="mono-micro text-muted-foreground">
+                      {formatDate(new Date(row.created_at))}
+                    </span>
+
+                    {row.review_case_id && (
+                      <Button
+                        className="btn-pri h-8 shrink-0 px-3 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate({
+                            to: "/review/$caseId",
+                            params: { caseId: row.review_case_id! },
+                          });
+                        }}
+                      >
+                        View case
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <Table className="mx-auto w-full max-w-5xl">
           <TableHeader>
             <TableRow>
@@ -170,9 +268,7 @@ export function ActivityTable({
                   colSpan={6}
                   className="px-4 py-6 text-center text-sm text-muted-foreground"
                 >
-                  {hasFilters
-                    ? "No activity matches these filters."
-                    : "No activity available yet."}
+                  {emptyMessage}
                 </TableCell>
               </TableRow>
             ) : (
