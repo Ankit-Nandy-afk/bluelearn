@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ContributionType } from "@/types/contributions";
 import { Separator } from "@/components/ui/separator";
 import { GuidelinesModal } from "@/components/modals/GuidelinesModal";
+import { GuideSubmitModal } from "@/components/modals/GuideSubmitModal";
 
 type PropTypes = {
   title: string;
@@ -30,8 +31,13 @@ export const StepperActionHeader = ({
   onSaveDraft,
   onPublish,
 }: PropTypes) => {
-  const [open, setOpen] = useState(false);
-  const toggleModalView = () => setOpen(!open);
+  const [openGuidelineModal, setOpenGuidelineModal] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+
+  const toggleGuidelineModal = () => setOpenGuidelineModal(!openGuidelineModal);
+  const toggleSubmitModal = () => setShowSubmitModal(!showSubmitModal);
+
+  const handleSubmit = () => setShowSubmitModal(!showSubmitModal);
 
   console.log(type);
 
@@ -47,7 +53,7 @@ export const StepperActionHeader = ({
             <button
               type="button"
               className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
-              onClick={toggleModalView}
+              onClick={toggleGuidelineModal}
             >
               <Scroll className="size-4" />
               View Guidelines
@@ -77,7 +83,7 @@ export const StepperActionHeader = ({
               type="button"
               className="btn-pri disabled:pointer-events-none disabled:opacity-50"
               disabled={submitting}
-              onClick={onPublish}
+              onClick={handleSubmit}
             >
               {publishLabel}
             </button>
@@ -91,7 +97,17 @@ export const StepperActionHeader = ({
 
       <Separator className="mb-8 bg-border" />
 
-      <GuidelinesModal open={open} onOpenChange={toggleModalView} />
+      <GuidelinesModal
+        open={openGuidelineModal}
+        onOpenChange={toggleGuidelineModal}
+      />
+
+      <GuideSubmitModal
+        open={showSubmitModal}
+        onOpenChange={toggleSubmitModal}
+        submitting={submitting}
+        onPublish={onPublish}
+      />
     </>
   );
 };

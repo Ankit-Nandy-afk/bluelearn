@@ -344,6 +344,7 @@ function Inner({
   const [submitting, setSubmitting] = useState(false);
   const [publishAttempted, setPublishAttempted] = useState(false);
   const [showChangeSummary, setShowChangeSummary] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   // Start from the todo page with the topic's title and summary already filled in.
   const seededRef = useRef(false);
