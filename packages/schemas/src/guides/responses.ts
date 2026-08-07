@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { subjectReferenceSchema } from "../subjects";
+import { contributorSchema } from "../identity/responses";
 import { guideStatusSchema, knowledgeTypeSchema } from "./enums";
 import { guideReferenceSchema } from "./references";
 
@@ -80,11 +81,7 @@ export type GuideObjectiveListItem = z.infer<
   typeof guideObjectiveListItemSchema
 >;
 
-export const guideContributorSchema = z.object({
-  id: z.string(),
-  username: z.string(),
-  name: z.string().nullable(),
-});
+export const guideContributorSchema = contributorSchema;
 export type GuideContributor = z.infer<typeof guideContributorSchema>;
 
 export const guideRevisionListItemSchema = z.object({

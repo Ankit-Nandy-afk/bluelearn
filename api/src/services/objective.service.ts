@@ -10,6 +10,7 @@ import { ServiceError } from "../lib/service-error";
 import { readingMinutes } from "../lib/reading";
 import {
   getRevisionSnapshot,
+  loadRevisionTags,
   replaceRevisionTags,
   requireCurator,
 } from "./objective-revision.service";
@@ -365,7 +366,9 @@ export async function getObjectiveBySlug(supabase: DB, rawSlug: string) {
 
   const { data: row, error } = await supabase
     .from("objectives")
-    .select(`id, slug, status, current_revision_id, ${CURRENT_META}`)
+    .select(
+      `id, slug, status, created_by, created_at, current_revision_id, ${CURRENT_META}`
+    )
     .eq("slug", slug)
     .maybeSingle();
 
@@ -376,14 +379,23 @@ export async function getObjectiveBySlug(supabase: DB, rawSlug: string) {
   if (!row || !row.current_revision_id)
     throw new ServiceError("Objective not found", 404);
 
-  const { current, ...base } = row;
+  const [snapshot, usernames, subjects] = await Promise.all([
+    getRevisionSnapshot(supabase, row.current_revision_id),
+    loadUsernames(supabase, [row.created_by]),
+    loadRevisionTags(supabase, row.current_revision_id),
+  ]);
+
+  const { current, created_by, ...base } = row;
   const objective = {
     ...base,
     title: current?.title ?? null,
     summary: current?.summary ?? null,
+    curator: created_by ? (usernames.get(created_by) ?? null) : null,
+    tags: subjects
+      .filter((s): s is typeof s & { slug: string } => s.slug !== null)
+      .map((s) => ({ slug: s.slug, name: s.name })),
   };
 
-  const snapshot = await getRevisionSnapshot(supabase, row.current_revision_id);
   return { objective, snapshot };
 }
 
@@ -419,9 +431,10 @@ export async function listObjectiveRevisions(
 
   const { data, count, error } = await supabase
     .from("objective_revisions")
-    .select("id, title, change_summary, status, created_at, published_at", {
-      count: "exact",
-    })
+    .select(
+      "id, title, change_summary, status, created_at, published_at, author_id",
+      { count: "exact" }
+    )
     .eq("objective_id", id)
     .order("created_at", { ascending: false })
     .range(from, to);
@@ -430,5 +443,57 @@ export async function listObjectiveRevisions(
     console.error(error);
     throw new ServiceError("Failed to load revisions", 500);
   }
-  return { data: data ?? [], total: count ?? 0 };
+
+  const usernames = await loadUsernames(
+    supabase,
+    (data ?? []).map((rev) => rev.author_id)
+  );
+
+  return {
+    data: (data ?? []).map(({ author_id, ...rev }) => ({
+      ...rev,
+      author: author_id ? (usernames.get(author_id) ?? null) : null,
+    })),
+    total: count ?? 0,
+  };
+}
+
+export async function listObjectiveContributors(supabase: DB, rawSlug: string) {
+  const { id } = await resolveObjective(supabase, rawSlug);
+
+  const { data: revisions, error: revError } = await supabase
+    .from("objective_revisions")
+    .select("author_id")
+    .eq("objective_id", id);
+
+  if (revError) {
+    console.error(revError);
+    throw new ServiceError("Failed to load objective contributors", 500);
+  }
+
+  const authorIds = [
+    ...new Set(
+      (revisions ?? []).map((r) => r.author_id).filter((v): v is string => !!v)
+    ),
+  ];
+  if (authorIds.length === 0) return { contributors: [] };
+
+  const { data: profiles, error: profError } = await supabase
+    .from("profiles")
+    .select("id, username, display_name")
+    .in("id", authorIds)
+    .eq("is_suspended", false);
+
+  if (profError) {
+    console.error(profError);
+    throw new ServiceError("Failed to load contributor profiles", 500);
+  }
+
+  return {
+    contributors: (profiles ?? []).map((p) => ({
+      id: p.id,
+      username: p.username,
+      name: p.display_name ?? null,
+    })),
+  };
 }

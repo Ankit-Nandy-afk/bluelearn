@@ -1,66 +1,56 @@
 import { useCallback, useState } from "react";
-import { History, Replace, Target, Users } from "lucide-react";
+import { History, Users } from "lucide-react";
 
-import {
-  getVariantContributors,
-  getVariantRevisions,
-} from "@/lib/api/variants";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { VariantsModal } from "@/components/guides/modals/VariantsModal";
-import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
 import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
 import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
+import {
+  getObjectiveContributors,
+  listObjectiveRevisions,
+} from "@/lib/api/objectives";
 
-type ModalType = "variants" | "objectives" | "contributors" | "revisions";
+type ModalType = "contributors" | "revisions";
 
 const ACTIONS: Array<{
-  icon: typeof Replace;
+  icon: typeof Users;
   label: string;
   type: ModalType;
 }> = [
-  { icon: Replace, label: "View Variants", type: "variants" },
-  { icon: Target, label: "View Objectives", type: "objectives" },
   { icon: Users, label: "View Contributors", type: "contributors" },
   { icon: History, label: "View Revisions", type: "revisions" },
 ];
 
-type GuideSidebarActionsProps = {
+type ObjectiveActionsProps = {
   slug: string;
-  currentVariantSlug: string | null;
-  variantId: string | null;
 };
 
-export function GuideSidebarActions({
-  slug,
-  currentVariantSlug,
-  variantId,
-}: GuideSidebarActionsProps) {
+export function ObjectiveActions({ slug }: ObjectiveActionsProps) {
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
   const close = (open: boolean) => !open && setActiveModal(null);
 
   const fetchContributors = useCallback(
-    () => getVariantContributors(variantId ?? ""),
-    [variantId]
+    () => getObjectiveContributors(slug),
+    [slug]
   );
 
   const fetchRevisions = useCallback(async () => {
-    const { revisions } = await getVariantRevisions(variantId ?? "");
+    const { revisions } = await listObjectiveRevisions(slug, { limit: 100 });
     return revisions.map((rev) => ({
       id: rev.id,
       change_summary: rev.change_summary,
       author: rev.author,
-      date: rev.approved_at,
+      date: rev.published_at ?? rev.created_at,
     }));
-  }, [variantId]);
+  }, [slug]);
 
   return (
     <>
-      <div className="flex items-center justify-start gap-4">
+      <div className="flex shrink-0 items-center gap-2">
         {ACTIONS.map((action) => (
           <Tooltip key={action.label}>
             <TooltipTrigger asChild>
@@ -81,43 +71,26 @@ export function GuideSidebarActions({
         ))}
       </div>
 
-      <VariantsModal
-        open={activeModal === "variants"}
-        onOpenChange={close}
-        slug={slug}
-        currentVariantSlug={currentVariantSlug}
-      />
-
-      <ObjectivesModal
-        open={activeModal === "objectives"}
-        onOpenChange={close}
-        slug={slug}
-      />
-
       <ContributorsModal
         open={activeModal === "contributors"}
         onOpenChange={close}
         fetchContributors={fetchContributors}
-        enabled={Boolean(variantId)}
+        title="Objective Contributors"
+        description="Curators who created revisions for this objective."
+        emptyDescription="No curators have been credited for this objective yet."
       />
 
       <RevisionsModal
         open={activeModal === "revisions"}
         onOpenChange={close}
         fetchRevisions={fetchRevisions}
-        enabled={Boolean(variantId)}
-        linkTo={(rev) =>
-          currentVariantSlug
-            ? {
-                to: "/guides/$slug/$variantSlug/revisions/$revisionId",
-                params: {
-                  slug,
-                  variantSlug: currentVariantSlug,
-                  revisionId: rev.id,
-                },
-              }
-            : null
-        }
+        title="Revision History"
+        description="Chronological log of changes and published revisions for this objective."
+        emptyDescription="This objective does not have any recorded revision history yet."
+        linkTo={(rev) => ({
+          to: "/objectives/$slug/revisions/$revisionId",
+          params: { slug, revisionId: rev.id },
+        })}
       />
     </>
   );

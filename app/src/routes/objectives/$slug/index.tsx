@@ -1,6 +1,8 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { Ellipsis, Pencil } from "lucide-react";
+import { Link, createFileRoute, useLocation } from "@tanstack/react-router";
+import { Ellipsis, House, Pencil } from "lucide-react";
 
+import type { Breadcrumb } from "@/lib/breadcrumbs";
+import { buildBreadcrumbs } from "@/lib/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,14 +12,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 
-import { formatDate, formatDuration } from "@/lib/guideUtils";
+import { buildObjectiveFlow } from "@/lib/objectiveSnapshot";
 import { getObjective } from "@/lib/api/objectives";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listGuides } from "@/lib/api/guides";
 
 import ObjectiveFlow from "@/components/objective/ObjectiveFlow";
+import { ObjectiveActions } from "@/components/objective/ObjectiveActions";
+import { ObjectiveHeader } from "@/components/objective/ObjectiveHeader";
 
-export const Route = createFileRoute("/objectives/$slug")({
+export const Route = createFileRoute("/objectives/$slug/")({
   loader: async ({ params: { slug }, abortController }) => {
     const [objective, guides, identity] = await Promise.all([
       getObjective(slug, { signal: abortController.signal }),
@@ -32,24 +36,16 @@ export const Route = createFileRoute("/objectives/$slug")({
 });
 
 function Shell({
-  heading,
-  actions,
+  header,
   children,
 }: {
-  heading: string;
-  actions?: React.ReactNode;
+  header: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="mx-auto max-w-[1280px] border-x bg-background">
       <section className="border-b px-8 py-8 lg:px-16">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
-            {heading}
-          </h1>
-
-          {actions}
-        </div>
+        {header}
 
         <Separator className="mb-4 bg-border" />
 
@@ -59,9 +55,47 @@ function Shell({
   );
 }
 
+function Breadcrumbs({ crumbs }: { crumbs: Array<Breadcrumb> }) {
+  return (
+    <ul className="mono-micro flex min-w-0 flex-nowrap items-center gap-2 text-xs tracking-[0.08em] text-muted-foreground uppercase">
+      {crumbs.map((crumb, idx) => (
+        <li
+          key={`${crumb.label}-${idx}`}
+          className="flex min-w-0 items-center gap-2"
+        >
+          {crumb.path ? (
+            <Link
+              to={crumb.path}
+              className="flex min-w-0 items-center hover:text-foreground"
+              aria-label={crumb.label}
+            >
+              {idx === 0 ? (
+                <House className="h-3.5 w-3.5 shrink-0" />
+              ) : (
+                <span className="max-w-[30ch] truncate">{crumb.label}</span>
+              )}
+            </Link>
+          ) : (
+            <span className="max-w-[30ch] truncate">{crumb.label}</span>
+          )}
+          {idx < crumbs.length - 1 && <span className="shrink-0">/</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function FallbackHeading() {
+  return (
+    <h1 className="mb-4 font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
+      Objective
+    </h1>
+  );
+}
+
 function ObjectivePending() {
   return (
-    <Shell heading="Objective">
+    <Shell header={<FallbackHeading />}>
       <div className="h-64 animate-pulse rounded-lg border border-border bg-card" />
     </Shell>
   );
@@ -69,7 +103,7 @@ function ObjectivePending() {
 
 function ObjectiveError({ error }: { error: Error }) {
   return (
-    <Shell heading="Objective">
+    <Shell header={<FallbackHeading />}>
       <p className="text-sm text-muted-foreground">
         {error.message || "Objective could not be loaded. Try again shortly."}
       </p>
@@ -113,64 +147,46 @@ function PathPage() {
   const { objective, snapshot, guides, identity } = Route.useLoaderData();
   const isCurator = identity?.roles.includes("curator") ?? false;
 
-  const guideBySlug = new Map(guides.map((g) => [g.slug, g]));
-  const nodeById = new Map(snapshot.nodes.map((n) => [n.id, n]));
+  const breadcrumbOrigin = useLocation({
+    select: (location) => location.state.breadcrumbOrigin,
+  });
+  const breadcrumbs = buildBreadcrumbs(
+    objective.title ?? "Untitled objective",
+    breadcrumbOrigin
+  );
 
-  const targets = snapshot.nodes
-    .filter((n) => n.is_target)
-    .sort((a, b) => (a.target_position ?? 0) - (b.target_position ?? 0))
-    .map((target) => {
-      const sequence = [
-        ...snapshot.orders
-          .filter((o) => o.target_node_id === target.id)
-          .sort((a, b) => a.position - b.position)
-          .map((o) => nodeById.get(o.node_id))
-          .filter((node) => node !== undefined),
-        target,
-      ];
-
-      return {
-        slug: target.slug ?? target.id,
-        title: target.title ?? "Untitled guide",
-        summary: null,
-        guides: sequence.map((node) => {
-          const guide = node.slug ? guideBySlug.get(node.slug) : undefined;
-          return {
-            guide: {
-              slug: node.slug ?? "",
-              title: node.title ?? "Untitled guide",
-              author: guide?.author,
-              summary: guide?.summary,
-              created_at: guide
-                ? formatDate(new Date(guide.created_at))
-                : undefined,
-              tags: guide?.tags,
-              duration: formatDuration(guide?.duration_minutes ?? 0),
-            },
-          };
-        }),
-      };
-    });
-
-  const totalGuides = targets.reduce((acc, t) => acc + t.guides.length, 0);
-  const totalDuration = snapshot.nodes
-    .filter((n) => n.is_included)
-    .reduce(
-      (acc, n) =>
-        acc + (n.slug ? (guideBySlug.get(n.slug)?.duration_minutes ?? 0) : 0),
-      0
-    );
+  const { targets, totalGuides, totalDuration } = buildObjectiveFlow(
+    snapshot,
+    guides
+  );
 
   return (
     <Shell
-      heading={`Objective: ${objective.title ?? "Untitled"} (${targets.length} sub-objectives | ${totalGuides} guides | ${formatDuration(totalDuration)} total)`}
-      actions={
-        isCurator && objective.current_revision_id ? (
-          <ObjectiveMenu
-            slug={slug}
-            sourceRevisionId={objective.current_revision_id}
+      header={
+        <>
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <Breadcrumbs crumbs={breadcrumbs} />
+
+            <div className="flex shrink-0 items-center gap-2">
+              <ObjectiveActions slug={slug} />
+
+              {isCurator && objective.current_revision_id ? (
+                <ObjectiveMenu
+                  slug={slug}
+                  sourceRevisionId={objective.current_revision_id}
+                />
+              ) : null}
+            </div>
+          </div>
+
+          <ObjectiveHeader
+            objective={objective}
+            stats={{
+              guides: totalGuides,
+              durationMinutes: totalDuration,
+            }}
           />
-        ) : null
+        </>
       }
     >
       {targets.length === 0 ? (
