@@ -198,7 +198,7 @@ function RouteComponent() {
 
           {/* Header */}
 
-          <GuideReader guide={guide} />
+          <GuideReader guide={guide} showToc />
         </main>
       </section>
     </div>

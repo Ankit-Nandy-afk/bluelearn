@@ -205,7 +205,7 @@ function RouteComponent() {
 
           <Separator className="mb-8" />
 
-          <GuideReader guide={guide} />
+          <GuideReader guide={guide} showToc />
         </main>
       </section>
     </div>

@@ -144,6 +144,7 @@ function RouteComponent() {
       <GuideReader
         guide={guide}
         guideType={detail.knowledge_type ?? undefined}
+        showToc
       />
     );
   }, [slug, variantSlug, detail, entry, variant, publishedAt]);

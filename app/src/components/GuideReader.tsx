@@ -40,9 +40,14 @@ export type ReaderGuide = Omit<Guide, "tags" | "variant_id"> & {
 type PropTypes = {
   guide: ReaderGuide;
   guideType?: GuideType;
+  showToc?: boolean;
 };
 
-export const GuideReader = ({ guide, guideType }: PropTypes) => {
+export const GuideReader = ({
+  guide,
+  guideType,
+  showToc = false,
+}: PropTypes) => {
   const created = new Date(guide.created_at);
   const createdLabel = Number.isNaN(created.getTime())
     ? guide.created_at
@@ -53,7 +58,7 @@ export const GuideReader = ({ guide, guideType }: PropTypes) => {
       <header className="mb-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-2">
-            <GuideToc body={guide.body ?? ""} />
+            {showToc && <GuideToc body={guide.body ?? ""} />}
             <h1 className="text-3xl font-bold">{guide.title}</h1>
           </div>
           {guideType && (
