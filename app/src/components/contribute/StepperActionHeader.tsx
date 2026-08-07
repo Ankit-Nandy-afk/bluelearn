@@ -5,6 +5,7 @@ import type { ContributionType } from "@/types/contributions";
 import { Separator } from "@/components/ui/separator";
 import { GuidelinesModal } from "@/components/modals/GuidelinesModal";
 import { GuideSubmitModal } from "@/components/modals/GuideSubmitModal";
+import { ObjectivePublishModal } from "@/components/modals/ObjectivePublishModal";
 
 type PropTypes = {
   title: string;
@@ -172,12 +173,22 @@ export const StepperActionHeader = ({
         onOpenChange={toggleGuidelineModal}
       />
 
-      <GuideSubmitModal
-        open={showSubmitModal}
-        onOpenChange={toggleSubmitModal}
-        submitting={submitting}
-        onPublish={onPublish}
-      />
+      {type == "objective" ? (
+        <ObjectivePublishModal
+          open={showSubmitModal}
+          onOpenChange={toggleSubmitModal}
+          submitting={submitting}
+          publishLabel={publishLabel}
+          onPublish={onPublish}
+        />
+      ) : (
+        <GuideSubmitModal
+          open={showSubmitModal}
+          onOpenChange={toggleSubmitModal}
+          submitting={submitting}
+          onPublish={onPublish}
+        />
+      )}
     </>
   );
 };

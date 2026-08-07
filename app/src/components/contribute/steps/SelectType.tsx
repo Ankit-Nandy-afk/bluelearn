@@ -17,6 +17,7 @@ export const SelectType = ({ pickType, type, Stepper }: PropTypes) => {
       <StepperActionHeader
         title={"Select Contribution Type"}
         Stepper={Stepper}
+        type={type as ContributionType | null}
         hideBackBtn={true}
       />
       <div

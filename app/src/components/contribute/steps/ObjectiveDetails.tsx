@@ -72,6 +72,7 @@ export const ObjectiveDetails = ({
       <StepperActionHeader
         title={"Objective Details"}
         Stepper={Stepper}
+        type="objective"
         hideBackBtn={hideBackBtn}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
