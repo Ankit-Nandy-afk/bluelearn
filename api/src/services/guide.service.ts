@@ -4,7 +4,6 @@ import type {
   CreateVariantInput,
   Guide,
   GuideListItem,
-  GuideReference,
   Pagination,
   SubjectReference,
   Walkthrough,
@@ -237,40 +236,8 @@ export async function createGuide(
   return { revision_id };
 }
 
-// A base's direct prerequisites.
-async function loadPrerequisites(
-  supabase: DB,
-  baseId: string
-): Promise<GuideReference[]> {
-  const { data, error } = await supabase
-    .from("guide_edges")
-    .select(
-      `from:guide_bases!from_guide_base_id(
-         slug,
-         canonical:guides!guide_bases_canonical_guide_id_fkey(
-           current:guide_revisions!guides_current_revision_id_fkey(title)
-         )
-       )`
-    )
-    .eq("to_guide_base_id", baseId)
-    .eq("edge_type", "prerequisite")
-    .eq("is_suspended", false);
-
-  if (error) {
-    console.error(error);
-    throw new ServiceError("Failed to load prerequisites", 500);
-  }
-
-  return (data ?? [])
-    .map((edge) => edge.from)
-    .filter((base) => base != null)
-    .map((base) => ({
-      slug: base.slug ?? "",
-      title: base.canonical?.current?.title ?? base.slug ?? "",
-    }))
-    .sort((a, b) => a.title.localeCompare(b.title));
-}
-
+// Resolve a guide by slug to its canonical content + subject tags.
+// The prereq/dependent neighborhood is deferred to the graph pass.
 export async function getGuideBySlug(supabase: DB, rawSlug: string) {
   const slug = rawSlug.toLowerCase();
 
@@ -290,10 +257,7 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
 
   const canonical = guide.canonical;
   const current = canonical?.current ?? null;
-  const [subjects, prerequisites] = await Promise.all([
-    loadCanonicalTags(supabase, current?.id ?? null),
-    loadPrerequisites(supabase, guide.id),
-  ]);
+  const subjects = await loadCanonicalTags(supabase, current?.id ?? null);
   const authorId = canonical?.author_id ?? null;
   const usernames = await loadUsernames(supabase, [authorId]);
 
@@ -308,7 +272,7 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
     duration_minutes: readingMinutes(current?.word_count ?? 0),
     created_at: guide.created_at,
     tags: subjects.map((s) => ({ slug: s.slug, name: s.name })),
-    prerequisites,
+    prerequisites: [],
   };
 
   return detail;
