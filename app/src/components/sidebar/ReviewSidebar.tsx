@@ -469,7 +469,7 @@ export const ReviewSidebar = ({
                 count={
                   revisionData.prerequisites.length + revisionData.todos.length
                 }
-                empty="None declared."
+                empty="None declared"
               >
                 {revisionData.prerequisites.map(
                   (p: { slug: string; title?: string }) => (
