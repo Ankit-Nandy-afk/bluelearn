@@ -64,14 +64,5 @@ export function buildObjectiveFlow(
     }),
   }));
 
-  const totalGuides = targets.reduce((acc, t) => acc + t.guides.length, 0);
-  const totalDuration = snapshot.nodes
-    .filter((n) => n.is_included)
-    .reduce(
-      (acc, n) =>
-        acc + (n.slug ? (guideBySlug.get(n.slug)?.duration_minutes ?? 0) : 0),
-      0
-    );
-
-  return { targets, totalGuides, totalDuration };
+  return { targets };
 }

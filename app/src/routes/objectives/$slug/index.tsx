@@ -155,10 +155,7 @@ function PathPage() {
     breadcrumbOrigin
   );
 
-  const { targets, totalGuides, totalDuration } = buildObjectiveFlow(
-    snapshot,
-    guides
-  );
+  const { targets } = buildObjectiveFlow(snapshot, guides);
 
   return (
     <Shell
@@ -182,8 +179,8 @@ function PathPage() {
           <ObjectiveHeader
             objective={objective}
             stats={{
-              guides: totalGuides,
-              durationMinutes: totalDuration,
+              guides: objective.guides_total,
+              durationMinutes: objective.duration_minutes,
             }}
           />
         </>
