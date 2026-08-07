@@ -1,29 +1,16 @@
 import { useState } from "react";
-import { History, Replace, Target, Users } from "lucide-react";
 
+import type { GuideModalType } from "@/components/GuideActionModals";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { VariantsModal } from "@/components/modals/VariantsModal";
-import { ObjectivesModal } from "@/components/modals/ObjectivesModal";
-import { ContributorsModal } from "@/components/modals/ContributorsModal";
-import { RevisionsModal } from "@/components/modals/RevisionsModal";
-
-type ModalType = "variants" | "objectives" | "contributors" | "revisions";
-
-const ACTIONS: Array<{
-  icon: typeof Replace;
-  label: string;
-  type: ModalType;
-}> = [
-  { icon: Replace, label: "View Variants", type: "variants" },
-  { icon: Target, label: "View Objectives", type: "objectives" },
-  { icon: Users, label: "View Contributors", type: "contributors" },
-  { icon: History, label: "View Revisions", type: "revisions" },
-];
+import {
+  GUIDE_ACTIONS,
+  GuideActionModals,
+} from "@/components/GuideActionModals";
 
 type PropsTypes = {
   slug: string;
@@ -36,13 +23,13 @@ export const GuideSidebarActions = ({
   currentVariantSlug,
   variantId,
 }: PropsTypes) => {
-  const [activeModal, setActiveModal] = useState<ModalType | null>(null);
+  const [activeModal, setActiveModal] = useState<GuideModalType | null>(null);
   const close = (open: boolean) => !open && setActiveModal(null);
 
   return (
     <>
       <div className="flex items-center justify-start gap-4">
-        {ACTIONS.map((action) => (
+        {GUIDE_ACTIONS.map((action) => (
           <Tooltip key={action.label}>
             <TooltipTrigger asChild>
               <Button
@@ -62,30 +49,11 @@ export const GuideSidebarActions = ({
         ))}
       </div>
 
-      <VariantsModal
-        open={activeModal === "variants"}
+      <GuideActionModals
+        active={activeModal}
         onOpenChange={close}
         slug={slug}
         currentVariantSlug={currentVariantSlug}
-      />
-
-      <ObjectivesModal
-        open={activeModal === "objectives"}
-        onOpenChange={close}
-        slug={slug}
-      />
-
-      <ContributorsModal
-        open={activeModal === "contributors"}
-        onOpenChange={close}
-        variantId={variantId}
-      />
-
-      <RevisionsModal
-        open={activeModal === "revisions"}
-        onOpenChange={close}
-        slug={slug}
-        variantSlug={currentVariantSlug}
         variantId={variantId}
       />
     </>

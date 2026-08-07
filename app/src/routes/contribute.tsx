@@ -117,7 +117,7 @@ function RouteComponent() {
 
   return (
     <div className="mx-auto flex min-h-[max(calc(100vh-65px),750px)] w-full max-w-[1280px] flex-col border-x bg-background">
-      <section className="relative flex min-h-0 flex-1 gap-8 border-b px-8 py-8 lg:px-16">
+      <section className="relative flex min-h-0 flex-1 gap-8 border-b px-4 py-8 sm:px-8 lg:px-16">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <ContributionFlow
             type={type}

@@ -1,5 +1,6 @@
 import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
+import { useSyncExternalStore } from "react";
 import {
   CircleCheckIcon,
   InfoIcon,
@@ -9,12 +10,29 @@ import {
 } from "lucide-react";
 import type { ToasterProps } from "sonner";
 
-const Toaster = ({ ...props }: ToasterProps) => {
+const mobileQuery = "(max-width: 639px)";
+
+const subscribeToMobile = (onChange: () => void) => {
+  const query = window.matchMedia(mobileQuery);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+
+const getMobileSnapshot = () => window.matchMedia(mobileQuery).matches;
+const getServerMobileSnapshot = () => false;
+
+const Toaster = ({ position, ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
+  const isMobile = useSyncExternalStore(
+    subscribeToMobile,
+    getMobileSnapshot,
+    getServerMobileSnapshot
+  );
 
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
+      position={position ?? (isMobile ? "top-center" : "bottom-right")}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

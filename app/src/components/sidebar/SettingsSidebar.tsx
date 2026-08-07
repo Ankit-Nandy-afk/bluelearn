@@ -27,7 +27,7 @@ export const SettingsSidebar = () => {
   });
 
   return (
-    <aside className="fixed top-[70px] h-[calc(100vh-70px)] w-64 shrink-0 overflow-y-auto px-6 py-6">
+    <aside className="fixed top-[70px] hidden h-[calc(100vh-70px)] w-64 shrink-0 overflow-y-auto px-6 py-6 md:block">
       <div className="mb-6">
         <h2 className="font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
           Settings
@@ -59,5 +59,36 @@ export const SettingsSidebar = () => {
         })}
       </ul>
     </aside>
+  );
+};
+
+export const SettingsTabs = () => {
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+
+  return (
+    <nav className="-mx-4 mb-6 overflow-x-auto border-b px-4 sm:-mx-8 sm:px-8 md:hidden">
+      <ul className="flex w-max items-center gap-6">
+        {items.map((item) => {
+          const active = pathname === item.to;
+
+          return (
+            <li key={item.to}>
+              <Link
+                to={item.to}
+                className={cn(
+                  "data-label flex shrink-0 items-center gap-2 border-b-2 border-transparent py-3 whitespace-nowrap",
+                  active && "border-primary font-bold text-primary"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 };

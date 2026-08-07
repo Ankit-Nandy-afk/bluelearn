@@ -144,13 +144,14 @@ function RouteComponent() {
       <GuideReader
         guide={guide}
         guideType={detail.knowledge_type ?? undefined}
+        showToc
       />
     );
   }, [slug, variantSlug, detail, entry, variant, publishedAt]);
 
   return (
     <div className="mx-auto min-h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
-      <main className="min-w-0 px-10 py-8 lg:px-16">
+      <main className="min-w-0 px-4 py-8 md:px-10 lg:px-16">
         <Link
           to="/guides/$slug/$variantSlug"
           params={{ slug, variantSlug }}

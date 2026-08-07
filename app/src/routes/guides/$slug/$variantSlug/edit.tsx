@@ -24,6 +24,7 @@ import { GuideDetails } from "@/components/contribute/steps/GuideDetails";
 import { Content } from "@/components/contribute/steps/Content";
 import { Submit } from "@/components/contribute/steps/Submit";
 import { RejectionFeedback } from "@/components/review/RejectionFeedback";
+import { MobileStepProgress } from "@/components/contribute/MobileStepProgress";
 
 export const Route = createFileRoute("/guides/$slug/$variantSlug/edit")({
   ssr: false,
@@ -49,11 +50,13 @@ export const Route = createFileRoute("/guides/$slug/$variantSlug/edit")({
   component: RouteComponent,
 });
 
-const StepperInstance = defineStepper([
+const editSteps = [
   { id: "guide-details", title: "Edit Details" },
   { id: "content", title: "Edit Content" },
   { id: "submit", title: "Preview" },
-]);
+] as const;
+
+const StepperInstance = defineStepper(editSteps);
 
 function RouteComponent() {
   const { variant, current, snapshot, draftId } = Route.useLoaderData();
@@ -86,6 +89,7 @@ function RouteComponent() {
 
   const [revisionId, setRevisionId] = useState<string | null>(draftId);
   const [submitting, setSubmitting] = useState(false);
+  const [activeStep, setActiveStep] = useState("guide-details");
 
   const [subjectOptions, setSubjectOptions] = useState<
     Array<{ id: string; name: string }>
@@ -231,8 +235,10 @@ function RouteComponent() {
       // Refresh the cached snapshot so coming back here reseeds from the save.
       await router.invalidate();
       toast.success("Draft saved");
+      return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save draft");
+      return false;
     } finally {
       setSubmitting(false);
     }
@@ -257,11 +263,15 @@ function RouteComponent() {
       <section className="relative flex min-h-0 flex-1 gap-8 border-b px-8 py-8 lg:px-16">
         <Stepper.Root
           linear
-          className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-8"
+          step={activeStep}
+          onStepChange={setActiveStep}
+          className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-8 pb-20 sm:pb-0"
         >
           {() => (
             <>
-              <Stepper.List className="flex w-full items-center justify-center text-sm">
+              <MobileStepProgress steps={editSteps} activeStep={activeStep} />
+
+              <Stepper.List className="hidden w-full items-center justify-center text-sm sm:flex">
                 <Stepper.Items>
                   {(step: any, index: number) => (
                     <Fragment key={step.id}>

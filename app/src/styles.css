@@ -12,6 +12,7 @@
   --brand-grey: #59636d;
   --brand-border: #d9dfe4;
   --brand-bright-blue: #1a6ad8;
+  --brand-blue-fill: #1a6ad8;
   --brand-pale-blue: #7fb4ff80;
   --brand-dark-navy: #042f6a;
   --brand-orange: #ff9822;
@@ -26,6 +27,7 @@
 
 .dark {
   --brand-cta: var(--brand-surface);
+  --brand-bright-blue: #4d94ff;
 }
 
 /* == SHADCN UI LAYER == */
@@ -82,7 +84,7 @@
   --popover-foreground: var(--foreground);
 
   --primary: var(--brand-bright-blue);
-  --primary-foreground: #e5e5e5;
+  --primary-foreground: var(--background);
 
   --secondary: #202429;
   --secondary-foreground: var(--foreground);
@@ -98,7 +100,7 @@
 
   --ring: var(--primary);
 
-  --badge-text: var(--muted-foreground);
+  --badge-text: var(--foreground);
 }
 
 /* == BASE STYLES == */
@@ -190,6 +192,51 @@
   @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-mono text-xs uppercase transition-all duration-200;
 }
 
+/* == REVISION DIFF TONES == */
+@utility diff-added {
+  @apply bg-green-600/10 text-green-900 dark:bg-green-600/15 dark:text-green-200;
+}
+
+@utility diff-removed {
+  @apply bg-red-500/10 text-red-900 dark:bg-red-500/15 dark:text-red-200;
+}
+
+@utility diff-gutter-added {
+  @apply bg-green-600/20 dark:bg-green-600/25;
+}
+
+@utility diff-gutter-removed {
+  @apply bg-red-500/20 dark:bg-red-500/25;
+}
+
+@utility diff-num-added {
+  @apply border-green-600/40 diff-gutter-added text-green-900 dark:text-green-200;
+}
+
+@utility diff-num-removed {
+  @apply border-red-500/40 diff-gutter-removed text-red-900 dark:text-red-200;
+}
+
+@utility diff-num-unchanged {
+  @apply border-badge-border bg-badge text-badge-foreground;
+}
+
+@utility diff-status-added {
+  @apply border-green-600/40 bg-green-600/10 text-green-900 dark:text-green-200;
+}
+
+@utility diff-status-removed {
+  @apply border-red-500/40 bg-red-500/10 text-red-900 dark:text-red-200;
+}
+
+@utility diff-status-changed {
+  @apply border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200;
+}
+
+@utility diff-status-unchanged {
+  @apply border-border bg-muted text-muted-foreground;
+}
+
 .btn-cta:hover,
 .btn-pri:hover,
 .btn-sec:hover,
@@ -227,7 +274,7 @@
   }
 
   .btn-pri {
-    @apply btn bg-brand-bright-blue font-bold text-white;
+    @apply btn bg-brand-blue-fill font-bold text-white;
   }
 
   .btn-sec {
@@ -365,6 +412,7 @@
   --color-brand-border: var(--brand-border);
   --color-brand-dark-navy: var(--brand-dark-navy);
   --color-brand-bright-blue: var(--brand-bright-blue);
+  --color-brand-blue-fill: var(--brand-blue-fill);
   --color-brand-pale-blue: var(--brand-pale-blue);
   --color-brand-orange: var(--brand-orange);
   --color-brand-burnt-orange: var(--brand-burnt-orange);

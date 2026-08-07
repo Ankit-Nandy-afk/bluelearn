@@ -6,7 +6,10 @@ import { supabaseMiddleware } from "./middleware/auth.middleware";
 import { rateLimitMiddleware } from "./middleware/rate-limit.middleware";
 import { READ } from "./middleware/rateLimits";
 import { ServiceError } from "./lib/service-error";
-import { assemblePendingPanels } from "./services/review.service";
+import {
+  assemblePendingPanels,
+  sweepExpiredReviewSeats,
+} from "./services/review.service";
 import { promoteAllCanonicals } from "./services/promotion.service";
 import type { Database } from "./database.types";
 import type { Bindings, HonoEnv } from "./types";
@@ -63,7 +66,12 @@ async function scheduled(event: ScheduledController, env: Bindings) {
     { auth: { persistSession: false, autoRefreshToken: false } }
   );
 
-  if (event.cron === "*/5 * * * *") await assemblePendingPanels(supabase);
+  if (event.cron === "*/5 * * * *") {
+    await Promise.allSettled([
+      assemblePendingPanels(supabase),
+      sweepExpiredReviewSeats(supabase),
+    ]);
+  }
   if (event.cron === "0 */12 * * *") await promoteAllCanonicals(supabase);
 }
 
