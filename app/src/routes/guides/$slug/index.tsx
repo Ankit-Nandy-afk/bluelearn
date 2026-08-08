@@ -169,11 +169,23 @@ function DownvoteDialog({ isOpen, setIsOpen, setVote, vote }) {
     setIsOpen(false);
   };
 
-  // Handle dismiss (when user closes out of dialog without clicking cancel)
-  const handleOpenChange = async (open: boolean) => {
-    if (!open && isOpen) {
-      if (vote == "down") return;
-      else await handleCancel();
+  const handleOpenChange = async (willOpen: boolean) => {
+    // Handle case where user closes out of dialog without clicking cancel
+    const beingDismiss = !willOpen && isOpen;
+    if (beingDismiss) {
+      if (vote === "down") {
+        setIsOpen(false);
+        setVote("down");
+        return;
+      } else await handleCancel();
+    }
+
+    const beingOpened = willOpen && !isOpen;
+    if (beingOpened && vote === "down") {
+      // Keep open if downvote to save user's current downvote settings
+      setIsOpen(true);
+      setVote("down");
+      return;
     }
     setIsOpen(open);
   };
@@ -351,7 +363,8 @@ function RouteComponent() {
                 variant="outline"
                 size="lg"
                 onClick={() => {
-                  downvote();
+                  if (vote !== "down") downvote();
+
                   setIsOpen(true);
                 }}
               >
