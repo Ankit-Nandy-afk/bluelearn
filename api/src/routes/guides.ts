@@ -31,6 +31,7 @@ import {
   castVote,
   createVariantRevision,
   getVariant,
+  getVote,
   listVariantRevisions,
   retractVote,
   rollbackVariant,
@@ -216,6 +217,22 @@ export const variantsRouter = new Hono<HonoEnv>()
         c.req.param("id")
       );
       return c.json({ variant });
+    }
+  )
+
+  // Gets the caller's vote
+  .get(
+    "/:id/vote",
+    requireUser,
+    rateLimitMiddleware({ ...MODERATION, bucket: "vote-cast" }),
+    async (c) => {
+      const vote = await getVote(
+        c.get("supabase"),
+        c.get("user").id,
+        c.req.param("id")
+      );
+      console.log("vote:", vote);
+      return c.json({ vote });
     }
   )
 
