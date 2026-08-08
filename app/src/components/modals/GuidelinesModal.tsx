@@ -2,13 +2,11 @@ import ReactMarkdown from "react-markdown";
 
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import guidelines from "@/data/guidelines.md?raw";
 
 type PropsTypes = {
@@ -34,17 +32,9 @@ export const GuidelinesModal = ({ open, onOpenChange }: PropsTypes) => {
           </DialogDescription>
         </DialogHeader>
 
-        <article className="markdown min-h-0 flex-1 scrollbar-thin [scrollbar-color:var(--border)_transparent] overflow-y-auto px-6 py-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent">
+        <article className="markdown min-h-0 flex-1 scrollbar-thin [scrollbar-color:var(--border)_transparent] overflow-y-auto px-6 pt-2 pb-8 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent">
           <ReactMarkdown>{guidelines}</ReactMarkdown>
         </article>
-
-        <div className="flex justify-end border-t border-border px-6 py-4">
-          <DialogClose asChild>
-            <Button variant="outline" size="lg" className="btn-sec">
-              Close
-            </Button>
-          </DialogClose>
-        </div>
       </DialogContent>
     </Dialog>
   );
