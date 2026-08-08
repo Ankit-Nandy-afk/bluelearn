@@ -59,7 +59,7 @@ import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
 import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
 import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
 
-import { downvoteReasons } from "@/lib/downvoteReasons";
+import { downvoteReasons } from "@/lib/api/votes";
 
 type ModalType =
   | "variants"
