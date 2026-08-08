@@ -48,6 +48,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -142,41 +143,43 @@ function useVote(slug: string) {
     submitDownvote: async (reason: string, note: string) => {
       await submitVote("down", reason, note);
     },
-    nullVote: async () => {
-      setVote(null);
-      await submitVote(null);
-    },
+    submitVote,
     setVote,
   };
 }
 
-function DownvoteDialog({ isOpen, setIsOpen, setVote }) {
+function DownvoteDialog({ isOpen, setIsOpen, setVote, vote }) {
   const [selectedReason, setSelectedReason] = useState<string>("");
   const [note, setNote] = useState<string>("");
 
   const { slug } = Route.useParams();
-  const { vote, submitDownvote } = useVote(slug);
+  const { submitVote } = useVote(slug);
 
-  const handleVoteSubmit = async (reason: string, note: string) => {
-    await submitDownvote(reason, note);
+  const handleCancel = async () => {
+    setVote(null);
+    await submitVote(null);
+
+    setIsOpen(false);
+    setNote("");
+    setSelectedReason("");
   };
 
-  const handleDialogClose = () => {
+  const handleSubmit = async () => {
+    await submitVote("down", selectedReason, note);
     setIsOpen(false);
+  };
 
-    // Do not erase downvote if user has already downvoted
-    setVote(null);
+  // Handle dismiss (when user closes out of dialog without clicking cancel)
+  const handleOpenChange = async (open: boolean) => {
+    if (!open && isOpen) {
+      if (vote == "down") return;
+      else await handleCancel();
+    }
+    setIsOpen(open);
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) {
-          handleDialogClose();
-        } else setIsOpen(open);
-      }}
-    >
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogTitle>Downvote</DialogTitle>
         <DialogDescription className="sr-only">
@@ -197,16 +200,14 @@ function DownvoteDialog({ isOpen, setIsOpen, setVote }) {
           placeholder="State your reason here."
         />
 
-        <Button
-          variant="default"
-          size="lg"
-          onClick={async () => {
-            await handleVoteSubmit(selectedReason, note);
-            setIsOpen(false);
-          }}
-        >
-          Submit
-        </Button>
+        <DialogFooter>
+          <Button variant="destructive" size="lg" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button variant="default" size="lg" onClick={handleSubmit}>
+            Submit
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -364,6 +365,7 @@ function RouteComponent() {
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
                 setVote={setVote}
+                vote={vote}
               />
 
               <DropdownMenu>
