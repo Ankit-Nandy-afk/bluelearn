@@ -18,8 +18,6 @@ import {
   Users,
 } from "lucide-react";
 
-import type { ComboboxItem } from "@/components/ui/combobox";
-
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
@@ -85,7 +83,6 @@ const SIDEBAR_ACTIONS: Array<SidebarActionItem> = [
 
 function useVote(slug: string) {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
-  const thisSlug = slug;
 
   const toggleVote = (type: "up" | "down") => {
     const next = vote === type ? null : type;
@@ -107,7 +104,7 @@ function useVote(slug: string) {
       return;
     }
 
-    const variantId = await getVariantId(thisSlug);
+    const variantId = await getVariantId(slug);
     const api = import.meta.env.VITE_API_BASE;
     const votingApi = `${api}/variants/${variantId}/vote`;
 
