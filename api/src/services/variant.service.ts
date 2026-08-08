@@ -85,6 +85,24 @@ export async function archiveVariant(supabase: DB, id: string) {
   return data[0];
 }
 
+// Gets user's vote for variant
+export async function getVote(supabase: DB, voterId: string, id: string) {
+  const { data, error } = await supabase
+    .from("votes")
+    .select("voter_id, guide_id, direction, reason, note")
+    .eq("voter_id", voterId)
+    .eq("guide_id", id)
+    .single();
+
+  if (error) {
+    console.log(error);
+    throw new ServiceError(`User vote or variant not found or permitted`, 404);
+  }
+  if (!data) throw new ServiceError("User vote not found", 404);
+
+  return data;
+}
+
 // Cast or update the caller's vote: one row per (voter, variant), re-voting
 // overwrites it. RLS restricts voting to published variants.
 export async function castVote(
