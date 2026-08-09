@@ -1,4 +1,3 @@
-import Image from "next/image";
 import {
   Empty,
   EmptyDescription,
@@ -13,12 +12,11 @@ export const NotFound = () => {
       <Empty>
         <EmptyHeader>
           <EmptyMedia>
-            <Image
+            <img
               src="/assets/adam/adam-cube-error.png"
               alt="Adam mascot showing an error"
               width={220}
               height={220}
-              priority
             />
           </EmptyMedia>
           <EmptyTitle className="data-label">404 - Not Found</EmptyTitle>
