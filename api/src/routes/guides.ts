@@ -231,6 +231,7 @@ export const variantsRouter = new Hono<HonoEnv>()
         c.get("user").id,
         c.req.param("id")
       );
+      console.log("vote:", vote);
       return c.json({ vote });
     }
   )
