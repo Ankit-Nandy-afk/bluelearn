@@ -15,8 +15,7 @@ export const NotFound = () => {
             <img
               src="/assets/adam/adam-cube-error.png"
               alt="Adam mascot showing an error"
-              width={220}
-              height={220}
+              className="h-40 w-40 sm:h-56 sm:w-56"
             />
           </EmptyMedia>
           <EmptyTitle className="data-label">404 - Not Found</EmptyTitle>
