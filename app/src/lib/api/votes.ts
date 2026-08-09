@@ -1,4 +1,47 @@
 import type { ComboboxItem } from "@/components/ui/combobox";
+import { getAuthToken } from "@/lib/auth";
+
+// Submits a vote for variantId. Returns the vote submitted
+// If submission fails, return the vote passed in
+export const submitVote = async (
+  variantId: string,
+  nextVote: string | null,
+  reason: string | null = null,
+  note: string | null = null,
+  previousVote: string | null = null
+) => {
+  const token = await getAuthToken();
+  if (!token) {
+    console.error("Unauthorized");
+    return previousVote;
+  }
+
+  const api = import.meta.env.VITE_API_BASE;
+  const votingApi = `${api}/variants/${variantId}/vote`;
+
+  const method = nextVote === null ? "DELETE" : "PUT";
+  const direction = nextVote === null ? undefined : nextVote;
+
+  const response = await fetch(votingApi, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      direction,
+      reason,
+      note,
+    }),
+  });
+
+  if (!response.ok) {
+    console.error("Vote request failed:", response.status);
+    return previousVote;
+  }
+
+  return nextVote;
+};
 
 export const downvoteReasons: Array<ComboboxItem> = [
   {

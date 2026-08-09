@@ -40,7 +40,6 @@ import {
 } from "@/components/ui/tooltip";
 
 import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
-import { getAuthToken } from "@/lib/auth";
 
 import {
   Dialog,
@@ -59,7 +58,7 @@ import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
 import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
 import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
 
-import { downvoteReasons } from "@/lib/api/votes";
+import { downvoteReasons, submitVote } from "@/lib/api/votes";
 
 type ModalType =
   | "variants"
@@ -84,64 +83,19 @@ const SIDEBAR_ACTIONS: Array<SidebarActionItem> = [
 function useVote(slug: string) {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
 
-  const toggleVote = (type: "up" | "down") => {
-    const next = vote === type ? null : type;
-    setVote(next);
-    return next;
-  };
-
-  const submitVote = async (
-    type: "up" | "down" | null,
-    reason: string | null = null,
-    note: string | null = null
-  ) => {
-    const prev = vote;
-
-    const token = await getAuthToken();
-    if (!token) {
-      console.error("Unauthorized");
-      setVote(prev); // revert on auth failure
-      return;
-    }
-
-    const variantId = await getVariantId(slug);
-    const api = import.meta.env.VITE_API_BASE;
-    const votingApi = `${api}/variants/${variantId}/vote`;
-
-    const method = type === null ? "DELETE" : "PUT";
-    const direction = type === null ? undefined : type;
-
-    const response = await fetch(votingApi, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        direction,
-        reason,
-        note,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("Vote request failed:", response.status);
-      setVote(prev); // revert on submission failure
-    }
-  };
-
   return {
     vote,
-    upvote: async () => {
-      const next = toggleVote("up");
-      await submitVote(next);
-    },
-    downvote: () => toggleVote("down"),
-    submitDownvote: async (reason: string, note: string) => {
-      await submitVote("down", reason, note);
-    },
-    submitVote,
     setVote,
+    upvote: async () => {
+      const variantId = await getVariantId(slug);
+      const next = await submitVote(variantId, "up");
+
+      if (next !== "up") {
+        // TODO: Alert user that vote could not be uploaded
+      }
+      setVote("up");
+    },
+    downvote: () => setVote("down"),
   };
 }
 
@@ -150,11 +104,11 @@ function DownvoteDialog({ isOpen, setIsOpen, setVote, vote }) {
   const [note, setNote] = useState<string>("");
 
   const { slug } = Route.useParams();
-  const { submitVote } = useVote(slug);
 
   const handleCancel = async () => {
-    setVote(null);
-    await submitVote(null);
+    const variantId = await getVariantId(slug);
+    const newVote = await submitVote(variantId, null);
+    setVote(newVote);
 
     setIsOpen(false);
     setNote("");
@@ -162,7 +116,14 @@ function DownvoteDialog({ isOpen, setIsOpen, setVote, vote }) {
   };
 
   const handleSubmit = async () => {
-    await submitVote("down", selectedReason, note);
+    const variantId = await getVariantId(slug);
+    const newVote = await submitVote(variantId, "down", selectedReason, note);
+
+    if (newVote !== "down") {
+      // TODO: handle case where downvote fails to submit
+      console.log("Failed to submit downvote");
+    }
+
     setIsOpen(false);
   };
 
