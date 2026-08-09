@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { Check, ExternalLink, X } from "lucide-react";
+import { Check, ExternalLink, Scroll, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { deadlineTickMs, formatTimeRemaining } from "@/lib/reviewDeadline";
 import { castDecision } from "@/lib/api/reviews";
 import { getRevision, reviseRevision } from "@/lib/api/guideRevisions";
+import { GuidelinesModal } from "@/components/modals/GuidelinesModal";
 
 export type Review = {
   decision: string;
@@ -47,11 +48,14 @@ export const ReviewSidebar = ({
   revision,
   revisionData,
 }: PropTypes) => {
+  const [openGuidelineModal, setOpenGuidelineModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [revising, setRevising] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const navigate = useNavigate();
   const router = useRouter();
+
+  const toggleGuidelineModal = () => setOpenGuidelineModal(!openGuidelineModal);
 
   const subjects = revision?.tags ?? [];
 
@@ -282,6 +286,17 @@ export const ReviewSidebar = ({
               )}
 
               <FieldGroup>
+                <Field className="space-y-4">
+                  <button
+                    type="button"
+                    className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
+                    onClick={toggleGuidelineModal}
+                  >
+                    <Scroll className="size-4" />
+                    View Guidelines
+                  </button>
+                </Field>
+
                 <Field className="space-y-4">
                   <FieldLabel className="font-mono tracking-[0.08em] uppercase">
                     Vote
@@ -565,6 +580,11 @@ export const ReviewSidebar = ({
               </ChangeSection>
             </CollapsibleSection>
           )}
+
+          <GuidelinesModal
+            open={openGuidelineModal}
+            onOpenChange={toggleGuidelineModal}
+          />
         </section>
       </div>
     </aside>
