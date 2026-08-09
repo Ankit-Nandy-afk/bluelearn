@@ -99,8 +99,8 @@ function useVote(slug: string) {
   };
 }
 
-function DownvoteDialog({ isOpen, setIsOpen, setVote, vote }) {
-  const [selectedReason, setSelectedReason] = useState<string>("");
+function DownvoteDialog({ isOpen, setIsOpen, vote, setVote }) {
+  const [reason, setReason] = useState<string>("");
   const [note, setNote] = useState<string>("");
 
   const { slug } = Route.useParams();
@@ -112,12 +112,12 @@ function DownvoteDialog({ isOpen, setIsOpen, setVote, vote }) {
 
     setIsOpen(false);
     setNote("");
-    setSelectedReason("");
+    setReason("");
   };
 
   const handleSubmit = async () => {
     const variantId = await getVariantId(slug);
-    const newVote = await submitVote(variantId, "down", selectedReason, note);
+    const newVote = await submitVote(variantId, "down", reason, note);
 
     if (newVote !== "down") {
       // TODO: handle case where downvote fails to submit
@@ -129,13 +129,14 @@ function DownvoteDialog({ isOpen, setIsOpen, setVote, vote }) {
 
   const handleOpenChange = async (willOpen: boolean) => {
     // Handle case where user closes out of dialog without clicking cancel
-    const beingDismiss = !willOpen && isOpen;
-    if (beingDismiss) {
+    const beingDismissed = !willOpen && isOpen;
+    if (beingDismissed) {
       if (vote === "down") {
         setIsOpen(false);
         setVote("down");
-        return;
       } else await handleCancel();
+
+      return;
     }
 
     const beingOpened = willOpen && !isOpen;
@@ -159,8 +160,8 @@ function DownvoteDialog({ isOpen, setIsOpen, setVote, vote }) {
         <DialogHeader>Reason</DialogHeader>
         <Combobox
           items={downvoteReasons}
-          value={selectedReason}
-          onValueChange={(selectedReason) => setSelectedReason(selectedReason)}
+          value={reason}
+          onValueChange={(reason) => setReason(reason)}
         />
 
         <DialogHeader>Note</DialogHeader>
