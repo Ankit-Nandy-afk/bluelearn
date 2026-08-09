@@ -44,6 +44,29 @@ export const submitVote = async (
   return nextVote;
 };
 
+export async function getVote(variantId: string) {
+  const votingApi = `${API_BASE}/variants/${variantId}/vote`;
+
+  const token = await getAuthToken();
+  if (!token) {
+    console.error("Unauthorized");
+    return;
+  }
+  const response = await fetch(votingApi, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    console.error("Vote fetch failed:", response.status);
+    return;
+  }
+
+  const data = await response.json();
+  return data.vote;
+}
+
 export const downvoteReasons: Array<ComboboxItem> = [
   {
     value: "unclear",
