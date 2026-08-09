@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
@@ -659,6 +639,7 @@ export type Database = {
       panel_members: {
         Row: {
           assigned_at: string
+          expires_at: string | null
           id: string
           member_id: string | null
           panel_id: string
@@ -666,6 +647,7 @@ export type Database = {
         }
         Insert: {
           assigned_at?: string
+          expires_at?: string | null
           id?: string
           member_id?: string | null
           panel_id: string
@@ -673,6 +655,7 @@ export type Database = {
         }
         Update: {
           assigned_at?: string
+          expires_at?: string | null
           id?: string
           member_id?: string | null
           panel_id?: string
@@ -1195,6 +1178,12 @@ export type Database = {
         }
         Returns: string
       }
+      eligible_panel_verifiers: {
+        Args: { p_created_by: string; p_panel_id?: string }
+        Returns: {
+          id: string
+        }[]
+      }
       has_role: {
         Args: { check_role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
@@ -1246,6 +1235,7 @@ export type Database = {
         Args: { p_revision_id: string }
         Returns: string
       }
+      sweep_expired_review_seats: { Args: never; Returns: Json }
       wilson_lower_bound: {
         Args: { downvotes: number; upvotes: number; z?: number }
         Returns: number
@@ -1406,9 +1396,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       app_role: ["verifier", "moderator", "curator", "admin"],
@@ -1445,4 +1432,3 @@ export const Constants = {
     },
   },
 } as const
-

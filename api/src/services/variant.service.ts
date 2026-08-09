@@ -205,6 +205,48 @@ export async function listVariantRevisions(
   };
 }
 
+// Distinct authors across this variant's revisions. Suspended profiles drop
+// out, so a contributor list never surfaces a hidden account.
+export async function listVariantContributors(supabase: DB, id: string) {
+  await requireVariant(supabase, id);
+
+  const { data: revisions, error: revError } = await supabase
+    .from("guide_revisions")
+    .select("author_id")
+    .eq("guide_id", id);
+
+  if (revError) {
+    console.error(revError);
+    throw new ServiceError("Failed to load variant contributors", 500);
+  }
+
+  const authorIds = [
+    ...new Set(
+      (revisions ?? []).map((r) => r.author_id).filter((v): v is string => !!v)
+    ),
+  ];
+  if (authorIds.length === 0) return { contributors: [] };
+
+  const { data: profiles, error: profError } = await supabase
+    .from("profiles")
+    .select("id, username, display_name")
+    .in("id", authorIds)
+    .eq("is_suspended", false);
+
+  if (profError) {
+    console.error(profError);
+    throw new ServiceError("Failed to load contributor profiles", 500);
+  }
+
+  return {
+    contributors: (profiles ?? []).map((p) => ({
+      id: p.id,
+      username: p.username,
+      name: p.display_name ?? null,
+    })),
+  };
+}
+
 // Start a new draft revision on an already-published variant, seeded from its
 // live content. Pre-publish work (the draft create_variant made) and a returned-for-edit
 // attempt (a rejected revision the review routes reopened to 'draft') are both edited

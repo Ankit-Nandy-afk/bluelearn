@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ObjectiveCard } from "@/components/cards/ObjectiveCard";
 
-import { Route as ObjectiveRoute } from "@/routes/objectives.$slug";
+import { Route as ObjectiveRoute } from "@/routes/objectives/$slug/index";
 import { Route as GuideRoute } from "@/routes/guides/$slug/index";
 
 import { CollapsibleSection } from "@/components/CollapsibleSection";
@@ -174,11 +174,7 @@ function guideCards(items: Array<GuideListItem>) {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mx-auto max-w-[1280px] border-x bg-background">
-      {children}
-    </div>
-  );
+  return <div className="mx-auto max-w-[1280px] bg-background">{children}</div>;
 }
 
 function SectionPager({

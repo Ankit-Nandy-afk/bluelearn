@@ -65,7 +65,7 @@ function RouteComponent() {
     walkthroughData?.nodes.find((node) => node.slug === slug)?.title ?? "";
 
   return (
-    <div className="mx-auto max-w-7xl border-x bg-background md:h-[calc(100vh-70px)]">
+    <div className="mx-auto max-w-7xl bg-background md:h-[calc(100vh-70px)]">
       {/* Panel sits under the graph on small screens, beside it from md up. */}
       <section className="flex h-full flex-col-reverse md:grid md:grid-cols-[320px_1fr]">
         {selectedNode ? (

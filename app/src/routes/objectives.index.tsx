@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { ObjectiveCard } from "@/components/cards/ObjectiveCard";
 import { Pagination } from "@/components/Pagination";
 
-import { Route as ObjectiveRoute } from "@/routes/objectives.$slug";
+import { Route as ObjectiveRoute } from "@/routes/objectives/$slug/index";
 
 import { listObjectives } from "@/lib/api/objectives";
 import { formatDate, formatDuration } from "@/lib/guideUtils";
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/objectives/")({
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto max-w-[1280px] border-x bg-background">
+    <div className="mx-auto max-w-[1280px] bg-background">
       <section className="border-b px-8 py-8 lg:px-16">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">

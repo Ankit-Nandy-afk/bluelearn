@@ -181,12 +181,17 @@ export async function deleteMyAccount(service: DB, userId: string) {
   }
 }
 
-// A public profile by username. Reads roles with the service client because
-// user_roles RLS hides them; suspended members are treated as not found.
-export async function getPublicProfile(
+const PUBLIC_ACTIVITY_STATUSES = new Set<ProfileActivityRow["status"]>([
+  "published",
+  "approved",
+  "rejected",
+]);
+
+export async function getProfilePage(
   supabase: DB,
   service: DB,
-  username: string
+  username: string,
+  callerId: string | null
 ) {
   const { data: profile, error } = await supabase
     .from("profiles")
@@ -201,11 +206,26 @@ export async function getPublicProfile(
   }
   if (!profile) throw new ServiceError("Profile not found", 404);
 
-  const roles = await fetchPublicBadges(service, profile.id);
+  const isOwner = callerId === profile.id;
+  const [roles, stats, activity] = await Promise.all([
+    isOwner
+      ? fetchRoles(supabase, profile.id)
+      : fetchPublicBadges(service, profile.id),
+    getProfileStats(supabase, profile.id),
+    getProfileActivity(supabase, profile.id),
+  ]);
 
   // Drop the internal id from the public payload.
   const { id: _id, ...publicProfile } = profile;
-  return { profile: publicProfile, roles };
+  return {
+    profile: publicProfile,
+    roles,
+    stats,
+    activity: isOwner
+      ? activity
+      : activity.filter((row) => PUBLIC_ACTIVITY_STATUSES.has(row.status)),
+    is_owner: isOwner,
+  };
 }
 
 export type ProfileStats = {
@@ -215,7 +235,7 @@ export type ProfileStats = {
   reviews: number;
 };
 
-export async function getMyProfileStats(
+export async function getProfileStats(
   supabase: DB,
   userId: string
 ): Promise<ProfileStats> {
@@ -326,9 +346,9 @@ function findEarliestRevisionByParent<
 // open their case at any point, since the review page admits them while it runs.
 const RESOLVED_CASE_STATUSES = new Set<string>(["approved", "rejected"]);
 
-// The caller's activites, which include guide and objective revisions they
+// A member's activity, which includes guide and objective revisions they
 // authored and review cases they voted on.
-export async function getMyActivity(
+export async function getProfileActivity(
   supabase: DB,
   userId: string
 ): Promise<ProfileActivityRow[]> {

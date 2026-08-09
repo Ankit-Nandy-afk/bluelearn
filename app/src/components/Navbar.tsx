@@ -25,15 +25,13 @@ const navItems: Array<{ label: string; to: string; role?: string }> = [
   { label: "Review", to: "/review", role: "verifier" },
 ];
 
-const profileItems = [
-  { label: "Profile", to: "/profile" },
-  { label: "Settings", to: "/settings" },
-];
+// Profile isn't here because its link needs the signed-in username.
+const profileItems = [{ label: "Settings", to: "/settings" }];
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const { session, roles } = useAuth();
+  const { session, roles, currentProfile } = useAuth();
   const navigate = useNavigate();
 
   const visibleNavItems = navItems.filter(
@@ -115,6 +113,18 @@ export function Navbar() {
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent align="end" className="w-48 font-mono">
+                    {currentProfile && (
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/profile/$username"
+                          params={{ username: currentProfile.username }}
+                          className="text-xs"
+                        >
+                          Profile
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+
                     {profileItems.map((item) => (
                       <DropdownMenuItem key={item.to} asChild>
                         <Link to={item.to} className="text-xs">
@@ -163,7 +173,7 @@ export function Navbar() {
 
         {/* Mobile Dropdown */}
         {mobileOpen && (
-          <div className="absolute top-[65px] right-0 left-0 z-50 animate-in rounded-b-md border bg-white p-5 shadow-md fade-in slide-in-from-top-2 md:hidden">
+          <div className="absolute top-[65px] right-0 left-0 z-50 animate-in rounded-b-md border bg-popover p-5 text-popover-foreground shadow-md fade-in slide-in-from-top-2 md:hidden">
             <div className="flex flex-col gap-y-4">
               {/* Search */}
               <form onSubmit={handleSearch} className="relative">
@@ -205,6 +215,17 @@ export function Navbar() {
 
                 {session ? (
                   <>
+                    {currentProfile && (
+                      <Link
+                        to="/profile/$username"
+                        params={{ username: currentProfile.username }}
+                        onClick={() => setMobileOpen(false)}
+                        className="py-2 font-mono text-sm text-muted-foreground uppercase hover:text-foreground"
+                      >
+                        Profile
+                      </Link>
+                    )}
+
                     {profileItems.map((item) => (
                       <Link
                         key={item.to}

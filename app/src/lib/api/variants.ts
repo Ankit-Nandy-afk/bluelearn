@@ -23,6 +23,32 @@ export async function getVariantBySlug(
   return variant;
 }
 
+export async function getVariantContributors(
+  id: string,
+  { signal }: FetchOptions = {}
+) {
+  const res = await variants[":id"].contributors.$get(
+    { param: { id } },
+    { init: { signal } }
+  );
+  await assertOk(res);
+
+  return res.json();
+}
+
+export async function getVariantRevisions(
+  id: string,
+  { signal }: FetchOptions = {}
+) {
+  const res = await variants[":id"].revisions.$get(
+    { param: { id }, query: { page: "1", limit: "100" } },
+    { init: { signal } }
+  );
+  if (!res.ok) return assertOk(res) as Promise<never>;
+
+  return res.json();
+}
+
 // Opens a draft revision seeded from the variant's live content. 409 if the
 // variant has never published.
 export async function createVariantRevision(id: string) {

@@ -14,7 +14,9 @@ import {
 import {
   archiveObjective,
   createObjective,
+  createObjectiveRevision,
   getObjectiveBySlug,
+  listObjectiveContributors,
   listObjectiveRevisions,
   listPublishedObjectives,
 } from "../services/objective.service";
@@ -97,19 +99,40 @@ export const objectivesRouter = new Hono<HonoEnv>()
     return c.json({ revisions: data, total });
   })
 
-  // 201 with { revision_id } for the new draft.
-  .post("/:slug/revisions", requireUser, (c) =>
-    c.json({ error: "Not implemented" }, 501)
-  );
+  // 201 with { revision_id } for the new draft. 409 if nothing is published yet.
+  .post(
+    "/:slug/revisions",
+    requireUser,
+    rateLimitMiddleware({
+      ...CONTRIBUTION,
+      bucket: "objective-revision-create",
+    }),
+    async (c) => {
+      const { revision_id } = await createObjectiveRevision(
+        c.get("supabase"),
+        c.get("user").id,
+        c.req.param("slug")
+      );
+      return c.json({ revision_id }, 201);
+    }
+  )
+
+  // Returns the distinct revision authors as { contributors }.
+  .get("/:slug/contributors", async (c) => {
+    const { contributors } = await listObjectiveContributors(
+      c.get("supabase"),
+      c.req.param("slug")
+    );
+    return c.json({ contributors });
+  });
 
 export const objectiveRevisionsRouter = new Hono<HonoEnv>()
-  // Returns the revision's metadata, snapshot, and subject tags as { revision, snapshot, subjects }.
+  // Returns the revision's metadata, parent objective, snapshot, and subject tags
+  // as { revision, objective, snapshot, subjects }.
   .get("/:id", async (c) => {
-    const { revision, snapshot, subjects } = await getObjectiveRevision(
-      c.get("supabase"),
-      c.req.param("id")
-    );
-    return c.json({ revision, snapshot, subjects });
+    const { revision, objective, snapshot, subjects } =
+      await getObjectiveRevision(c.get("supabase"), c.req.param("id"));
+    return c.json({ revision, objective, snapshot, subjects });
   })
 
   // Overwrites a draft's metadata, tags, and/or target curation. Returns
@@ -185,12 +208,12 @@ export const objectiveRevisionsRouter = new Hono<HonoEnv>()
     }
   )
 
-  // Returns the diff between two revision snapshots as { from, to, fields, nodes, edges }.
+  // Returns the diff between two revision snapshots as { from, to, fields, targets }.
   .get("/:id/diff/:otherId", async (c) => {
-    const { from, to, fields, nodes, edges } = await diffObjectiveRevisions(
+    const { from, to, fields, targets } = await diffObjectiveRevisions(
       c.get("supabase"),
       c.req.param("id"),
       c.req.param("otherId")
     );
-    return c.json({ from, to, fields, nodes, edges });
+    return c.json({ from, to, fields, targets });
   });

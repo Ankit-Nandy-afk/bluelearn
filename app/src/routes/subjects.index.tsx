@@ -26,7 +26,7 @@ type SubjectsPageProps = {
 
 export const SubjectsPage = ({ children }: SubjectsPageProps) => {
   return (
-    <div className="mx-auto max-w-[1280px] border-x bg-background">
+    <div className="mx-auto max-w-[1280px] bg-background">
       <div className="border-b px-8 py-8 lg:px-16">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">

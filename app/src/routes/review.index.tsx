@@ -1,9 +1,12 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 
+import type { QueueCase } from "@/lib/api/reviews";
+import { NotFound } from "@/components/NotFound";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { NotFound } from "@/components/NotFound";
 import { useRequireRole } from "@/lib/authContext";
+import { deadlineTickMs, formatTimeRemaining } from "@/lib/reviewDeadline";
 
 import { Route as ReviewCaseIdRoute } from "@/routes/review.$caseId";
 import { getReviewQueue } from "@/lib/api/reviews";
@@ -22,7 +25,7 @@ export const Route = createFileRoute("/review/")({
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto max-w-[1280px] border-x bg-background">
+    <div className="mx-auto max-w-[1280px] bg-background">
       <section className="border-b px-8 py-8 lg:px-16">
         <div className="mb-6">
           <h1 className="data-label text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
@@ -60,13 +63,47 @@ function RouteComponent() {
   );
 }
 
-type QueueCase = {
-  id: string;
-  case_type: string;
-  title: string | null;
-  created_at: string;
-  decision: "approved" | "rejected" | null;
-};
+interface CaseTimerProps {
+  expiresAt: string | null;
+  decision: QueueCase["decision"];
+}
+
+function CaseTimer({ expiresAt, decision }: CaseTimerProps) {
+  const router = useRouter();
+  const [now, setNow] = useState(() => Date.now());
+  const invalidated = useRef(false);
+
+  const expiresMs = expiresAt ? new Date(expiresAt).getTime() : null;
+
+  useEffect(() => {
+    if (decision || expiresMs === null) return;
+
+    const diffMs = expiresMs - Date.now();
+    if (diffMs <= 0) {
+      if (invalidated.current) return;
+      invalidated.current = true;
+      router.invalidate();
+      return;
+    }
+
+    const timer = setTimeout(() => setNow(Date.now()), deadlineTickMs(diffMs));
+    return () => clearTimeout(timer);
+  }, [decision, expiresMs, now, router]);
+
+  if (decision || expiresMs === null) return null;
+
+  const diffMs = expiresMs - now;
+
+  if (diffMs <= 0) {
+    return <span className="font-mono text-xs text-destructive">Expired</span>;
+  }
+
+  return (
+    <span className="font-mono text-xs text-muted-foreground">
+      {formatTimeRemaining(diffMs)}
+    </span>
+  );
+}
 
 // Not voted yet = still needs the reviewer's attention. Once voted, echo the
 // standing vote and flag that it can still be changed until the panel closes.
@@ -103,13 +140,17 @@ function CaseGrid({ cases }: { cases: Array<QueueCase> }) {
               {c.title ?? "Untitled Guide"}
             </h3>
 
-            <p className="mt-2 font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
-              {new Date(c.created_at).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </p>
+            <div>
+              <p className="mt-2 font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
+                {new Date(c.created_at).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
+
+              <CaseTimer expiresAt={c.expires_at} decision={c.decision} />
+            </div>
           </div>
         </Link>
       ))}

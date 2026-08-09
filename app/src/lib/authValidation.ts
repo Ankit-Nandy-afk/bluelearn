@@ -23,6 +23,13 @@ export function validateRegister(input: RegisterInput): RegisterErrors | null {
 
   if (!input.username.trim()) {
     errors.username = "Username is required";
+  } else if (input.username.length < MIN_USERNAME_LENGTH) {
+    errors.username = `Username must be at least ${MIN_USERNAME_LENGTH} characters`;
+  } else if (input.username.length > MAX_USERNAME_LENGTH) {
+    errors.username = `Username must be at most ${MAX_USERNAME_LENGTH} characters`;
+  } else if (!USERNAME_PATTERN.test(input.username)) {
+    errors.username =
+      "Username may only contain letters, numbers, hyphens, and underscores";
   }
   if (input.password.length < MIN_PASSWORD_LENGTH) {
     errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;

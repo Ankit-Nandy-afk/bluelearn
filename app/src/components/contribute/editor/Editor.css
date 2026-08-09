@@ -579,6 +579,43 @@ math-field {
   left: 0 !important;
 }
 
+@media (max-width: 639px) {
+  .editor-only-container,
+  .editor-only-paper,
+  .mdxeditor,
+  [class*="_editorRoot"] {
+    min-width: 0 !important;
+  }
+
+  [class*="_toolbarRoot"] {
+    width: calc(100% - 1rem) !important;
+    max-width: none !important;
+    margin: 0.5rem !important;
+    border-radius: var(--radius) !important;
+  }
+
+  .mdxeditor-toolbar-custom {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .mdx-toolbar-divider {
+    display: none;
+  }
+
+  .mdxeditor-content,
+  [class*="_placeholder"] {
+    padding: 1rem !important;
+  }
+
+  [class*="_placeholder"] {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+}
+
 /* Code Block Enhancements */
 button[title="Delete code block"],
 [class*="_iconButton_"] {

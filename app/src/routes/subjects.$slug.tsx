@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ObjectiveCard } from "@/components/cards/ObjectiveCard";
 import { GuideCard } from "@/components/cards/GuideCard";
 
-import { Route as ObjectiveRoute } from "@/routes/objectives.$slug";
+import { Route as ObjectiveRoute } from "@/routes/objectives/$slug/index";
 import { Route as GuideRoute } from "@/routes/guides/$slug/index";
 
 import {
@@ -41,7 +41,7 @@ function formatDate(iso: string | undefined) {
 
 function SubjectError() {
   return (
-    <div className="mx-auto max-w-[1280px] border-x bg-background">
+    <div className="mx-auto max-w-[1280px] bg-background">
       <section className="border-b px-8 py-8 lg:px-16">
         <p className="text-sm text-muted-foreground">
           This subject could not be loaded. Try again shortly.
@@ -57,7 +57,7 @@ function SubjectPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="mx-auto max-w-[1280px] border-x bg-background">
+    <div className="mx-auto max-w-[1280px] bg-background">
       <section className="border-b px-8 py-8 lg:px-16">
         <div className="mb-6">
           <h1 className="data-label text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
@@ -94,6 +94,11 @@ function SubjectPage() {
                   key={objective.id}
                   objective={o}
                   to={ObjectiveRoute.to}
+                  origin={{
+                    type: "subject",
+                    title: subject.name,
+                    path: `/subjects/${slug}`,
+                  }}
                 />
               );
             })}

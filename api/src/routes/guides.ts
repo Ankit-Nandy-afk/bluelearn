@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { z } from "zod";
 import { requireUser } from "../middleware/auth.middleware";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
 import { CONTRIBUTION, CREATE, MODERATION } from "../middleware/rateLimits";
@@ -20,8 +19,6 @@ import {
   getGuideBySlug,
   getVariantBySlug,
   getWalkthrough,
-  listGuideContributors,
-  listGuideRevisions,
   listGuideVariants,
   listObjectivesForGuide,
   listPublishedGuides,
@@ -32,6 +29,7 @@ import {
   createVariantRevision,
   getVariant,
   getVote,
+  listVariantContributors,
   listVariantRevisions,
   retractVote,
   rollbackVariant,
@@ -87,25 +85,11 @@ export const guidesRouter = new Hono<HonoEnv>()
     }
   )
 
-  // Returns the guide's content (canonical or specified variant), author, and subject tags.
-  .get(
-    "/:slug",
-    zValidator(
-      "query",
-      z.object({
-        variant: z.string().optional(),
-      })
-    ),
-    async (c) => {
-      const { variant } = c.req.valid("query");
-      const guide = await getGuideBySlug(
-        c.get("supabase"),
-        c.req.param("slug"),
-        variant
-      );
-      return c.json(guide);
-    }
-  )
+  // Returns the canonical variant's content, author, and subject tags.
+  .get("/:slug", async (c) => {
+    const guide = await getGuideBySlug(c.get("supabase"), c.req.param("slug"));
+    return c.json(guide);
+  })
 
   // Archives the guide. 404 if missing or not permitted.
   .delete(
@@ -167,26 +151,6 @@ export const guidesRouter = new Hono<HonoEnv>()
       c.req.param("slug")
     );
     return c.json({ objectives, total });
-  })
-
-  // Returns distinct contributors for this guide base.
-  .get("/:slug/contributors", async (c) => {
-    const { contributors } = await listGuideContributors(
-      c.get("supabase"),
-      c.req.param("slug")
-    );
-    return c.json({ contributors });
-  })
-
-  // Returns revision history for this guide.
-  .get("/:slug/revisions", zValidator("query", paginationSchema), async (c) => {
-    const { page, limit } = c.req.valid("query");
-    const { data, total } = await listGuideRevisions(
-      c.get("supabase"),
-      c.req.param("slug"),
-      { page, limit }
-    );
-    return c.json({ revisions: data, total });
   })
 
   // Returns one published variant with its vote tally.
@@ -263,6 +227,15 @@ export const variantsRouter = new Hono<HonoEnv>()
       return c.body(null, 204);
     }
   )
+
+  // Returns the distinct authors of this variant's revisions as { contributors }.
+  .get("/:id/contributors", async (c) => {
+    const { contributors } = await listVariantContributors(
+      c.get("supabase"),
+      c.req.param("id")
+    );
+    return c.json({ contributors });
+  })
 
   // Returns the published versions as { revisions }, newest live first.
   .get("/:id/revisions", zValidator("query", paginationSchema), async (c) => {

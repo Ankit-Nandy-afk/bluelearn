@@ -1,7 +1,10 @@
 import { X } from "lucide-react";
 import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { VariantContribution } from "@/types/contributions";
+import type {
+  ContributionType,
+  VariantContribution,
+} from "@/types/contributions";
 import type { listGuides } from "@/lib/api/guides";
 import type { listSubjects } from "@/lib/api/subjects";
 
@@ -19,22 +22,26 @@ import { StepperActionHeader } from "@/components/contribute/StepperActionHeader
 
 type PropTypes = {
   Stepper: any;
+  type: ContributionType | null;
   variantContData: VariantContribution;
   setVariantContData: Dispatch<SetStateAction<VariantContribution>>;
   guides: Awaited<ReturnType<typeof listGuides>>;
   subjects: Awaited<ReturnType<typeof listSubjects>>;
   onSaveDraft: () => void;
   submitting?: boolean;
+  hideBackBtn?: boolean;
 };
 
 export const VariantDetails = ({
   Stepper,
+  type,
   variantContData,
   setVariantContData,
   guides,
   subjects,
   onSaveDraft,
   submitting,
+  hideBackBtn,
 }: PropTypes) => {
   const [newSubject, setNewSubject] = useState<{
     name: string;
@@ -49,6 +56,8 @@ export const VariantDetails = ({
       <StepperActionHeader
         title={"Variant Details"}
         Stepper={Stepper}
+        type={type}
+        hideBackBtn={hideBackBtn}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
       />
@@ -187,7 +196,7 @@ export const VariantDetails = ({
               Create a subject if it doesn't exist yet.
             </FieldDescription>
           </div>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <Input
               id="new-subject-name"
               type="text"
@@ -220,7 +229,7 @@ export const VariantDetails = ({
             <Button
               variant="ghost"
               size="icon"
-              className="btn-sec h-10 w-24 rounded-md"
+              className="btn-sec h-10 w-full rounded-md sm:w-24"
               onClick={() => {
                 if (newSubject.name !== "" && newSubject.summary !== "") {
                   const newSubs = [...variantContData.newSubjects, newSubject];

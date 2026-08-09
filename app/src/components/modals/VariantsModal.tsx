@@ -1,28 +1,28 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Check, GitFork, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowBigDown, ArrowBigUp, Check, Sparkles } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideVariantListItem } from "@bluelearn/schemas";
 import { Badge } from "@/components/ui/badge";
 import { getGuideVariants } from "@/lib/api/guides";
+import { formatDate } from "@/lib/guideUtils";
 
-type VariantsModalProps = {
+type PropsTypes = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   slug: string;
   currentVariantSlug?: string | null;
 };
 
-export function VariantsModal({
+export const VariantsModal = ({
   open,
   onOpenChange,
   slug,
   currentVariantSlug,
-}: VariantsModalProps) {
+}: PropsTypes) => {
   const [variants, setVariants] = useState<Array<GuideVariantListItem>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!open) return;
@@ -54,25 +54,12 @@ export function VariantsModal({
     };
   }, [open, slug]);
 
-  const handleSelectVariant = (variantSlug: string) => {
-    onOpenChange(false);
-    navigate({
-      to: "/guides/$slug",
-      params: { slug },
-      search: (prev: Record<string, unknown>) => ({
-        ...prev,
-        variant: variantSlug,
-      }),
-    });
-  };
-
   return (
     <BaseGuideModal
       open={open}
       onOpenChange={onOpenChange}
       title="Guide Variants"
       description="Alternative approaches, methods, and explanations for this guide."
-      icon={<GitFork className="h-4 w-4 text-primary" />}
       loading={loading}
       loadingText="Loading variants..."
       error={error}
@@ -95,26 +82,28 @@ export function VariantsModal({
           Boolean(currentVariantSlug) && variant.slug === currentVariantSlug;
 
         return (
-          <div
+          <Link
             key={variant.id || variant.slug}
-            onClick={() => handleSelectVariant(variant.slug)}
-            className={`group relative flex w-full cursor-pointer flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:bg-muted ${
+            to="/guides/$slug/$variantSlug"
+            params={{ slug, variantSlug: variant.slug }}
+            onClick={() => onOpenChange(false)}
+            className={`group relative flex w-full flex-col gap-1.5 rounded-lg border p-3.5 transition-colors hover:bg-muted ${
               isCurrent
                 ? "border-primary/50 bg-primary/5"
                 : "border-border bg-card"
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <h4 className="text-xs font-medium text-foreground">
+              <h4 className="text-xs font-bold text-foreground">
                 {variant.title}
               </h4>
-              {isCurrent && (
+              {variant.is_canonical && (
                 <Badge
                   variant="outline"
                   className="mono-micro gap-1 rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
                 >
                   <Check className="h-3 w-3 text-primary" />
-                  Current
+                  Canonical
                 </Badge>
               )}
             </div>
@@ -123,9 +112,27 @@ export function VariantsModal({
                 {variant.summary}
               </p>
             )}
-          </div>
+
+            <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+              {variant.author && <span>by @{variant.author}</span>}
+              {variant.author && variant.updated_at && <span>·</span>}
+              {variant.updated_at && (
+                <span>Updated {formatDate(new Date(variant.updated_at))}</span>
+              )}
+              <span className="ml-auto flex items-center gap-2">
+                <span className="flex items-center gap-1">
+                  <ArrowBigUp className="h-3.5 w-3.5" />
+                  {variant.votes.up}
+                </span>
+                <span className="flex items-center gap-1">
+                  <ArrowBigDown className="h-3.5 w-3.5" />
+                  {variant.votes.down}
+                </span>
+              </span>
+            </div>
+          </Link>
         );
       })}
     </BaseGuideModal>
   );
-}
+};

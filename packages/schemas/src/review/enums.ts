@@ -11,6 +11,13 @@ export const reviewCaseTypeSchema = z.enum(["guide_publish", "guide_edit"]);
 
 export const reviewOutcomeSchema = z.enum(["approved", "rejected"]);
 
+export const reviewSeatStatusSchema = z.enum([
+  "assigned",
+  "recused",
+  "replaced",
+  "completed",
+]);
+
 export const decisionReasonSchema = z.enum([
   "hierarchy_issue",
   "factual_error",
@@ -23,4 +30,5 @@ export const decisionReasonSchema = z.enum([
 export type ReviewCaseStatus = z.infer<typeof reviewCaseStatusSchema>;
 export type ReviewCaseType = z.infer<typeof reviewCaseTypeSchema>;
 export type ReviewOutcome = z.infer<typeof reviewOutcomeSchema>;
+export type ReviewSeatStatus = z.infer<typeof reviewSeatStatusSchema>;
 export type DecisionReason = z.infer<typeof decisionReasonSchema>;

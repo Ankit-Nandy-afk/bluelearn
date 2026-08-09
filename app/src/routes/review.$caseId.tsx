@@ -106,8 +106,8 @@ function RouteComponent() {
   }, [revision]);
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-65px)] max-w-7xl flex-col border-x bg-background">
-      <section className="grid flex-1 grid-cols-[320px_1fr] border-b">
+    <div className="mx-auto flex min-h-[calc(100vh-65px)] max-w-7xl flex-col bg-background">
+      <section className="flex flex-1 flex-col border-b md:grid md:grid-cols-[320px_1fr]">
         <ReviewSidebar
           caseId={caseId}
           revision={revision}
@@ -115,7 +115,7 @@ function RouteComponent() {
         />
 
         {/* MAIN */}
-        <main className="min-w-0 px-10 pt-8 pb-6 lg:px-16">
+        <main className="min-w-0 px-4 pt-8 pb-6 md:px-10 lg:px-16">
           {isEdit && revision && (
             <div className="mb-6 inline-flex gap-1 border-b">
               {(["guide", "changes"] as const).map((tab) => (

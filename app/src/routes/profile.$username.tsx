@@ -1,21 +1,25 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { Calendar, Settings } from "lucide-react";
-import { getPublicProfile } from "@/lib/api/identity";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { profileActivitySearchSchema } from "@bluelearn/schemas";
+import type { ProfileActivitySearch } from "@bluelearn/schemas";
 import { getInitials } from "@/lib/profile";
-import { useAuth } from "@/lib/authContext";
+import { getProfilePage } from "@/lib/api/identity";
+import { cn } from "@/lib/utils";
+import { ActivityTable } from "@/components/profile/ActivityTable";
+import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/guideUtils";
 
 export const Route = createFileRoute("/profile/$username")({
+  ssr: false,
+  validateSearch: profileActivitySearchSchema,
   loader: ({ params, abortController }) =>
-    getPublicProfile(params.username, { signal: abortController.signal }),
+    getProfilePage(params.username, { signal: abortController.signal }),
+  component: ProfilePage,
   pendingComponent: () => <ProfileMessage>Loading profile...</ProfileMessage>,
   errorComponent: ({ error }) => (
+    // TODO: improve error component - add greyscale mascot with "X" eyes
     <ProfileMessage tone="error">{error.message}</ProfileMessage>
   ),
-  component: PublicProfilePage,
 });
 
 function ProfileMessage({
@@ -26,7 +30,7 @@ function ProfileMessage({
   tone?: "muted" | "error";
 }) {
   return (
-    <div className="mx-auto max-w-7xl border-x bg-background px-8 py-10 lg:px-16">
+    <div className="mx-auto max-w-7xl bg-background px-8 py-10 lg:px-16">
       <p
         className={
           tone === "error"
@@ -40,95 +44,114 @@ function ProfileMessage({
   );
 }
 
-function PublicProfilePage() {
-  const { profile, roles } = Route.useLoaderData();
-  const { currentProfile, user } = useAuth();
-  const isOwner = Boolean(
-    (currentProfile &&
-      currentProfile.username.toLowerCase() ===
-        profile.username.toLowerCase()) ||
-    (typeof user?.user_metadata.username === "string" &&
-      user.user_metadata.username.toLowerCase() ===
-        profile.username.toLowerCase())
-  );
+function ProfilePage() {
+  const { profile, roles, stats, activity } = Route.useLoaderData();
+  const { username } = Route.useParams();
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+
+  const setFilters = (next: Partial<ProfileActivitySearch>) =>
+    navigate({
+      to: "/profile/$username",
+      params: { username },
+      search: (prev) => ({ ...prev, ...next, page: undefined }),
+      replace: true,
+    });
+
+  // Hide review stat for non-verifiers.
+  const isVerifier = roles.includes("verifier");
+  const statsRows = [
+    { label: "Upvotes", value: stats.upvotes },
+    { label: "Downvotes", value: stats.downvotes },
+    { label: "Contributions", value: stats.contributions },
+    ...(isVerifier ? [{ label: "Reviews", value: stats.reviews }] : []),
+  ];
+
   const initials = getInitials(profile.display_name || profile.username);
 
-  const formattedJoinedDate = profile.created_at
-    ? formatDate(new Date(profile.created_at))
-    : null;
-
   return (
-    <div className="mx-auto max-w-7xl border-x bg-background">
-      <section className="border-b px-8 py-10 lg:px-16">
-        <div className="mx-auto max-w-5xl">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
-            <Avatar className="size-28 shrink-0 bg-muted">
+    <div className="mx-auto max-w-7xl bg-background">
+      <section className="border-b px-4 py-8 sm:px-8 sm:py-10 lg:px-16">
+        <div className="mx-auto mb-6 flex w-full max-w-5xl flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-4">
+          <div className="flex w-full min-w-0 items-center gap-4 sm:w-auto sm:gap-5">
+            <Avatar className="size-20 shrink-0 bg-muted sm:size-28">
               <AvatarImage />
               <AvatarFallback className="bg-muted text-2xl font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
 
-            <div className="flex flex-1 flex-col">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col">
-                  <h1 className="text-3xl font-bold">
-                    {profile.display_name ?? profile.username}
-                  </h1>
-                  <h2 className="mono-micro text-muted-foreground/80">
-                    @{profile.username}
-                  </h2>
-                </div>
+            <div className="flex min-w-0 flex-col">
+              <h2 className="text-2xl font-bold break-words sm:text-3xl">
+                {profile.display_name ?? profile.username}
+              </h2>
+              <h3 className="mono-micro text-muted-foreground">
+                @{profile.username}
+              </h3>
 
-                {isOwner && (
-                  <div>
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="btn-sec"
-                    >
-                      <Link to="/settings/profile">
-                        <Settings className="mr-2 size-3.5" />
-                        Edit profile
-                      </Link>
-                    </Button>
-                  </div>
-                )}
-              </div>
+              {roles.length > 0 && (
+                <ul className="mt-2.5 flex flex-wrap items-center gap-2">
+                  {roles.map((role) => (
+                    <li key={role}>
+                      <Badge
+                        variant="outline"
+                        className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
+                      >
+                        {role}
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {profile.bio && (
-                <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                   {profile.bio}
                 </p>
               )}
-
-              <div className="mt-4 flex flex-wrap items-center gap-4">
-                {formattedJoinedDate && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Calendar className="size-3.5" />
-                    <span>Joined {formattedJoinedDate}</span>
-                  </div>
-                )}
-
-                {roles.length > 0 && (
-                  <ul className="flex flex-wrap items-center gap-2">
-                    {roles.map((role) => (
-                      <li key={role}>
-                        <Badge
-                          variant="outline"
-                          className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
-                        >
-                          {role}
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
             </div>
           </div>
+
+          <ul
+            className={cn(
+              "grid w-full items-start gap-x-2 gap-y-4 sm:w-auto sm:gap-x-6",
+              isVerifier ? "grid-cols-4" : "grid-cols-3"
+            )}
+          >
+            {statsRows.map((stat) => (
+              <li
+                key={stat.label}
+                className="flex min-w-0 flex-col items-center gap-1 sm:min-w-24"
+              >
+                <h3 className="data-label text-[10px]! leading-none tracking-tight! whitespace-nowrap sm:text-[11px]! sm:tracking-[0.08em]!">
+                  {stat.label}
+                </h3>
+                <p className="data-value text-xl! leading-none sm:text-2xl!">
+                  {stat.value}
+                </p>
+              </li>
+            ))}
+          </ul>
         </div>
+
+        <Separator className="mb-8 bg-border" />
+
+        <ActivityTable
+          activity={activity}
+          search={search}
+          setFilters={setFilters}
+          onPageChange={(next) =>
+            navigate({
+              to: "/profile/$username",
+              params: { username },
+              search: (prev) => ({
+                ...prev,
+                page: next === 1 ? undefined : next,
+              }),
+              replace: true,
+            })
+          }
+        />
       </section>
     </div>
   );

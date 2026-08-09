@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import type { RegisteredRouter, ToPathOption } from "@tanstack/react-router";
 
+import type { BreadcrumbOrigin } from "@/lib/breadcrumbs";
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Footer } from "@/components/cards/Footer";
@@ -28,6 +30,7 @@ type ObjectiveProp = {
 type PropTypes = {
   objective: ObjectiveProp;
   to: ToPathOption<RegisteredRouter>;
+  origin?: BreadcrumbOrigin;
 };
 
 // Only the last three guides are drawn. The rest collapse into a leading
@@ -38,26 +41,28 @@ function FeaturedSubObjective({ nodes }: { nodes: Array<FeaturedNode> }) {
 
   return (
     <CardContent className="border-t p-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         {hidden > 0 && (
-          <div className="flex items-center justify-between">
-            <div className="flex w-full flex-col items-center justify-center text-center sm:w-18 md:w-22">
-              <span className="flex h-8 shrink-0 items-center justify-center text-sm font-medium">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex w-full items-center gap-3 sm:w-18 sm:flex-col sm:justify-center sm:gap-0 sm:text-center md:w-22">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center text-sm font-medium">
                 {hidden}
               </span>
               <span className="line-clamp-3 text-sm leading-snug text-muted-foreground">
                 guides
               </span>
             </div>
-            <ArrowRight className="mt-1.5 h-4 w-4 shrink-0 rotate-90 text-muted-foreground sm:rotate-0" />
+            <div className="flex w-8 shrink-0 justify-center py-1 sm:w-auto sm:py-0">
+              <ArrowRight className="h-4 w-4 shrink-0 rotate-90 text-muted-foreground sm:mt-1.5 sm:rotate-0" />
+            </div>
           </div>
         )}
         {shown.map((step, index) => (
           <div
             key={step.position}
-            className="flex items-center justify-between"
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
           >
-            <div className="flex w-full flex-col items-center justify-center text-center sm:w-24 md:w-28">
+            <div className="flex w-full items-center gap-3 sm:w-24 sm:flex-col sm:justify-center sm:gap-0 sm:text-center md:w-28">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-badge text-sm font-medium">
                 {step.position}
               </span>
@@ -66,7 +71,7 @@ function FeaturedSubObjective({ nodes }: { nodes: Array<FeaturedNode> }) {
               </span>
             </div>
             {index < shown.length - 1 && (
-              <div className="flex items-center justify-center">
+              <div className="flex w-8 shrink-0 justify-center py-1 sm:w-auto sm:py-0">
                 <ArrowRight className="h-5 w-5 shrink-0 rotate-90 text-muted-foreground sm:rotate-0" />
               </div>
             )}
@@ -88,26 +93,29 @@ function LevelsGraph({
 
   return (
     <CardContent className="border-t p-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         {remaining > 0 && (
-          <div className="flex items-center justify-between">
-            <div className="flex w-full flex-col items-center justify-center text-center sm:w-18 md:w-22">
-              <span className="flex h-8 shrink-0 items-center justify-center text-sm font-medium">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex w-full items-center gap-3 sm:w-18 sm:flex-col sm:justify-center sm:gap-0 sm:text-center md:w-22">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center text-sm font-medium">
                 {remaining}
               </span>
               <span className="line-clamp-3 text-sm leading-snug text-muted-foreground">
                 guides
               </span>
             </div>
-            <div className="flex items-center justify-center">
+            <div className="flex w-8 shrink-0 justify-center py-1 sm:w-auto sm:py-0">
               <ArrowRight className="h-5 w-5 shrink-0 rotate-90 text-muted-foreground sm:rotate-0" />
             </div>
           </div>
         )}
 
         {previewLevels.map((level, index) => (
-          <div key={index} className="flex items-center justify-between">
-            <div className="flex w-full flex-col items-center justify-center text-center sm:w-24 md:w-28">
+          <div
+            key={index}
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="flex w-full items-center gap-3 sm:w-24 sm:flex-col sm:justify-center sm:gap-0 sm:text-center md:w-28">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-badge text-sm font-medium">
                 {level.level}
               </span>
@@ -117,7 +125,7 @@ function LevelsGraph({
             </div>
 
             {index < previewLevels.length - 1 && (
-              <div className="flex items-center justify-center">
+              <div className="flex w-8 shrink-0 justify-center py-1 sm:w-auto sm:py-0">
                 <ArrowRight className="h-5 w-5 shrink-0 rotate-90 text-muted-foreground sm:rotate-0" />
               </div>
             )}
@@ -128,9 +136,13 @@ function LevelsGraph({
   );
 }
 
-export const ObjectiveCard = ({ objective, to }: PropTypes) => {
+export const ObjectiveCard = ({ objective, to, origin }: PropTypes) => {
   return (
-    <Link to={to} params={{ slug: objective.slug }}>
+    <Link
+      to={to}
+      params={{ slug: objective.slug }}
+      state={{ breadcrumbOrigin: origin }}
+    >
       <Card className="group flex h-full flex-col justify-between rounded-md bg-background shadow-none transition-colors hover:bg-muted">
         {/* Header */}
         <CardHeader className="relative p-4">

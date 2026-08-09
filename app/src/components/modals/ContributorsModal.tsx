@@ -1,15 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, User, Users } from "lucide-react";
+import { ExternalLink, User } from "lucide-react";
 import { BaseGuideModal } from "./BaseGuideModal";
 import type { GuideContributor } from "@bluelearn/schemas";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getGuideContributors } from "@/lib/api/guides";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 type ContributorsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  slug: string;
+  fetchContributors: (
+    signal?: AbortSignal
+  ) => Promise<{ contributors: Array<GuideContributor> }>;
+  enabled?: boolean;
+  title?: string;
+  description?: string;
+  emptyDescription?: string;
 };
 
 function getInitials(name?: string | null, username?: string): string {
@@ -25,20 +30,28 @@ function getInitials(name?: string | null, username?: string): string {
 export function ContributorsModal({
   open,
   onOpenChange,
-  slug,
+  fetchContributors,
+  enabled = true,
+  title = "Guide Contributors",
+  description = "Authors and editors who created revisions and variants for this guide.",
+  emptyDescription = "No authors have been credited for this guide yet.",
 }: ContributorsModalProps) {
   const [contributors, setContributors] = useState<Array<GuideContributor>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchRef = useRef(fetchContributors);
+  fetchRef.current = fetchContributors;
+
   useEffect(() => {
-    if (!open) return;
+    if (!open || !enabled) return;
 
     let ignore = false;
     setLoading(true);
     setError(null);
 
-    getGuideContributors(slug)
+    fetchRef
+      .current()
       .then((res) => {
         if (!ignore) {
           setContributors(res.contributors);
@@ -59,22 +72,21 @@ export function ContributorsModal({
     return () => {
       ignore = true;
     };
-  }, [open, slug]);
+  }, [open, enabled]);
 
   return (
     <BaseGuideModal
       open={open}
       onOpenChange={onOpenChange}
-      title="Guide Contributors"
-      description="Authors and editors who created revisions and variants for this guide."
-      icon={<Users className="h-4 w-4 text-primary" />}
+      title={title}
+      description={description}
       loading={loading}
       loadingText="Loading contributors..."
       error={error}
       isEmpty={contributors.length === 0}
       emptyIcon={<User className="h-6 w-6" />}
       emptyTitle="No contributors found"
-      emptyDescription="No authors have been credited for this guide yet."
+      emptyDescription={emptyDescription}
     >
       {contributors.map((contributor) => (
         <Link
@@ -86,18 +98,12 @@ export function ContributorsModal({
         >
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8 border border-border">
-              {contributor.avatar_url && (
-                <AvatarImage
-                  src={contributor.avatar_url}
-                  alt={contributor.username}
-                />
-              )}
               <AvatarFallback className="mono-micro text-xs text-muted-foreground">
                 {getInitials(contributor.name, contributor.username)}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-xs font-medium text-foreground">
+              <p className="text-xs font-bold text-foreground">
                 @{contributor.username}
               </p>
               {contributor.name && (

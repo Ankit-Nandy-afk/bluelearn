@@ -1,7 +1,10 @@
 import { X } from "lucide-react";
 import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { GuideContribution } from "@/types/contributions";
+import type {
+  ContributionType,
+  GuideContribution,
+} from "@/types/contributions";
 
 import { StepperActionHeader } from "@/components/contribute/StepperActionHeader";
 import {
@@ -25,6 +28,7 @@ type GuideOption = {
 
 type PropTypes = {
   Stepper: any;
+  type: ContributionType | null;
   guideContData: GuideContribution;
   setGuideContData: Dispatch<SetStateAction<GuideContribution>>;
   subjects: Array<SubjectOption>;
@@ -32,6 +36,7 @@ type PropTypes = {
   onSaveDraft: () => void;
   submitting?: boolean;
   showBaseFields?: boolean;
+  hideBackBtn?: boolean;
   title?: string;
   changeSummary?: string;
   onChangeSummaryChange?: (value: string) => void;
@@ -39,6 +44,7 @@ type PropTypes = {
 
 export const GuideDetails = ({
   Stepper,
+  type,
   guideContData,
   setGuideContData,
   subjects,
@@ -48,6 +54,7 @@ export const GuideDetails = ({
   // Prerequisites and todos live on the guide base, so they're only
   // authorable while the base is still a draft.
   showBaseFields = true,
+  hideBackBtn,
   title = "Guide Details",
   changeSummary,
   onChangeSummaryChange,
@@ -72,6 +79,8 @@ export const GuideDetails = ({
       <StepperActionHeader
         title={title}
         Stepper={Stepper}
+        type={type}
+        hideBackBtn={hideBackBtn}
         onSaveDraft={onSaveDraft}
         submitting={submitting}
       />
@@ -91,9 +100,9 @@ export const GuideDetails = ({
                 process for accomplishing a goal.
               </FieldDescription>
             </div>
-            <Field className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
+            <Field className="grid grid-cols-2 gap-2 lg:grid-cols-4">
               <button
-                className="mono-micro rounded-full border border-badge-border p-4 tracking-[0.08em] text-badge-foreground"
+                className="mono-micro rounded-full border border-badge-border p-3 tracking-[0.08em] text-badge-foreground sm:p-4"
                 style={{
                   backgroundColor:
                     guideContData.type == "theoretical"
@@ -111,7 +120,7 @@ export const GuideDetails = ({
               </button>
 
               <button
-                className="mono-micro rounded-full border border-badge-border p-4 tracking-[0.08em] text-badge-foreground"
+                className="mono-micro rounded-full border border-badge-border p-3 tracking-[0.08em] text-badge-foreground sm:p-4"
                 style={{
                   backgroundColor:
                     guideContData.type == "practical"
@@ -252,7 +261,7 @@ export const GuideDetails = ({
               Create a subject if it doesn't exist yet.
             </FieldDescription>
           </div>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <Input
               id="new-subject-name"
               type="text"
@@ -285,7 +294,7 @@ export const GuideDetails = ({
             <Button
               variant="ghost"
               size="icon"
-              className="btn-sec h-10 w-24 rounded-md"
+              className="btn-sec h-10 w-full rounded-md sm:w-24"
               onClick={() => {
                 if (newSubject.name !== "" && newSubject.summary !== "") {
                   const newSubs = [...guideContData.newSubjects, newSubject];
@@ -371,7 +380,7 @@ export const GuideDetails = ({
                 </FieldDescription>
               </div>
 
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <Input
                   id="todo-prereqs"
                   type="text"
@@ -404,7 +413,7 @@ export const GuideDetails = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="btn-sec h-10 w-24 rounded-md"
+                  className="btn-sec h-10 w-full rounded-md sm:w-24"
                   onClick={() => {
                     if (todoPrereq.title !== "" && todoPrereq.summary !== "") {
                       const todos = [...guideContData.todoPrereqs, todoPrereq];

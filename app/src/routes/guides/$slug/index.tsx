@@ -9,13 +9,9 @@ import {
   ArrowBigDown,
   ArrowBigUp,
   Ellipsis,
-  History,
   House,
   Pencil,
   Plus,
-  Replace,
-  Target,
-  Users,
 } from "lucide-react";
 
 import { Separator } from "@/components/ui/separator";
@@ -33,12 +29,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
 import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
 
 import {
@@ -79,6 +69,8 @@ const SIDEBAR_ACTIONS: Array<SidebarActionItem> = [
   { icon: Users, label: "View Contributors", type: "contributors" },
   { icon: History, label: "View Revisions", type: "revisions" },
 ];
+import { GuideSidebarActions } from "@/components/sidebar/GuideSidebarActions";
+import { GuideMobileMenu } from "@/components/GuideMobileMenu";
 
 function useVote(slug: string) {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
@@ -185,19 +177,9 @@ function DownvoteDialog({ isOpen, setIsOpen, vote, setVote }) {
 }
 
 export const Route = createFileRoute("/guides/$slug/")({
-  validateSearch: (search: Record<string, unknown>): { variant?: string } => ({
-    variant:
-      typeof search.variant === "string" && search.variant.length > 0
-        ? search.variant
-        : undefined,
-  }),
-  loaderDeps: ({ search }) => ({ variant: search.variant }),
-  loader: async ({ params, deps, abortController }) => {
+  loader: async ({ params, abortController }) => {
     try {
-      return await getGuide(params.slug, {
-        variant: deps.variant,
-        signal: abortController.signal,
-      });
+      return await getGuide(params.slug, { signal: abortController.signal });
     } catch {
       throw notFound();
     }
@@ -236,39 +218,24 @@ function RouteComponent() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   return (
-    <div className="mx-auto h-[calc(100vh-70px)] max-w-7xl border-x bg-background">
-      <section className="grid grid-cols-[320px_1fr] border-b">
+    <div className="mx-auto max-w-7xl bg-background md:h-[calc(100vh-70px)]">
+      <section className="flex flex-col border-b md:grid md:grid-cols-[320px_1fr]">
         <GuideSidebar
           sidebarActions={
-            <div className="flex items-center justify-start gap-4">
-              {SIDEBAR_ACTIONS.map((action: SidebarActionItem) => (
-                <Tooltip key={action.label}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => setActiveModal(action.type)}
-                      aria-label={action.label}
-                    >
-                      <action.icon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-
-                  <TooltipContent>
-                    <p>{action.label}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
+            <GuideSidebarActions
+              slug={slug}
+              currentVariantSlug={guide.variant_slug}
+              variantId={guide.variant_id}
+            />
           }
           guide={guide}
           slug={slug}
         />
 
         {/* MAIN */}
-        <main className="h-[calc(100vh-70px)] min-w-0 overflow-y-auto px-10 py-4 lg:px-16">
+        <main className="min-w-0 px-4 py-4 md:h-[calc(100vh-70px)] md:overflow-y-auto md:px-10 lg:px-16">
           {/* Breadcrumbs */}
-          <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <ul className="flex min-w-0 flex-nowrap items-center gap-2 text-xs tracking-[0.08em] text-muted-foreground uppercase">
               {breadcrumbs.map((crumb, idx) => (
                 <li
@@ -340,12 +307,21 @@ function RouteComponent() {
                 vote={vote}
               />
 
+              <GuideMobileMenu
+                slug={slug}
+                currentVariantSlug={guide.variant_slug}
+                variantId={guide.variant_id}
+                guideTitle={guide.title}
+                menuItems={guideMenuItems}
+                prerequisites={guide.prerequisites}
+              />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-md"
+                    className="hidden h-9 w-9 cursor-pointer rounded-md md:inline-flex"
                   >
                     <Ellipsis className="h-4 w-4" />
                   </Button>
@@ -354,7 +330,7 @@ function RouteComponent() {
                 <DropdownMenuContent align="end" className="w-48 font-mono">
                   {guideMenuItems.map((item) => (
                     <DropdownMenuItem key={item.to} asChild>
-                      <Link to={item.to} className="text-xs">
+                      <Link to={item.to} className="cursor-pointer text-xs">
                         {item.icon}
                         {item.label}
                       </Link>
@@ -369,35 +345,9 @@ function RouteComponent() {
 
           {/* Header */}
 
-          <GuideReader guide={guide} />
+          <GuideReader guide={guide} showToc />
         </main>
       </section>
-
-      {/* Action Modals */}
-      <VariantsModal
-        open={activeModal === "variants"}
-        onOpenChange={(open) => !open && setActiveModal(null)}
-        slug={slug}
-        currentVariantSlug={guide.variant_slug}
-      />
-
-      <ObjectivesModal
-        open={activeModal === "objectives"}
-        onOpenChange={(open) => !open && setActiveModal(null)}
-        slug={slug}
-      />
-
-      <ContributorsModal
-        open={activeModal === "contributors"}
-        onOpenChange={(open) => !open && setActiveModal(null)}
-        slug={slug}
-      />
-
-      <RevisionsModal
-        open={activeModal === "revisions"}
-        onOpenChange={(open) => !open && setActiveModal(null)}
-        slug={slug}
-      />
     </div>
   );
 }

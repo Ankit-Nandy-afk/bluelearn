@@ -96,6 +96,21 @@
                   oneOf:
                     - $ref: "../components/schemas/reviews/ReviewDecision.yaml"
                     - type: "null"
+                viewer_seat_status:
+                  type: [string, "null"]
+                  enum: [assigned, recused, replaced, completed, null]
+                  description: >
+                    The state of the caller's own seat on this panel. replaced
+                    means their deadline passed and the seat was recycled. Null
+                    when the caller holds no seat.
+                  example: assigned
+                viewer_expires_at:
+                  description: >
+                    When the caller's own seat stops accepting a first vote. Null
+                    when the caller holds no seat.
+                  oneOf:
+                    - $ref: "../components/schemas/common/Timestamp.yaml"
+                    - type: "null"
                 revision:
                   oneOf:
                     - $ref: "../components/schemas/reviews/GuideRevisionSummary.yaml"
@@ -137,6 +152,8 @@
                   decisions,
                   viewer_role,
                   viewer_decision,
+                  viewer_seat_status,
+                  viewer_expires_at,
                   revision,
                   prerequisites,
                   todos,

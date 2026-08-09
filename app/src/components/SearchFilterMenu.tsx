@@ -47,9 +47,11 @@ export function SearchFilterMenu({ value, onChange }: Props) {
           type="button"
           variant="outline"
           size="icon"
-          className="h-14 w-14 rounded-md border"
+          className="h-9 w-9 shrink-0 rounded-md border sm:h-14 sm:w-14"
         >
-          <SlidersHorizontal className={`h-4 w-4 ${active}`} />
+          <SlidersHorizontal
+            className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${active}`}
+          />
         </Button>
       </DropdownMenuTrigger>
 
