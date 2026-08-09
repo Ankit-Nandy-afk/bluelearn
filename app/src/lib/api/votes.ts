@@ -1,6 +1,8 @@
 import type { ComboboxItem } from "@/components/ui/combobox";
 import { getAuthToken } from "@/lib/auth";
 
+const API_BASE = import.meta.env.VITE_API_BASE;
+
 // Submits a vote for variantId. Returns the vote submitted
 // If submission fails, return the vote passed in
 export const submitVote = async (
@@ -16,8 +18,7 @@ export const submitVote = async (
     return previousVote;
   }
 
-  const api = import.meta.env.VITE_API_BASE;
-  const votingApi = `${api}/variants/${variantId}/vote`;
+  const votingApi = `${API_BASE}/variants/${variantId}/vote`;
 
   const method = nextVote === null ? "DELETE" : "PUT";
   const direction = nextVote === null ? undefined : nextVote;
