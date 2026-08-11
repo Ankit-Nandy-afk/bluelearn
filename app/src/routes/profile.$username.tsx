@@ -70,20 +70,19 @@ function ProfilePage() {
   const initials = getInitials(profile.display_name || profile.username);
 
   return (
-    <div className="mx-auto max-w-7xl border-x bg-background">
-      <section className="border-b px-8 py-10 lg:px-16">
-        <div className="mx-auto mb-6 flex w-full max-w-5xl flex-col items-center gap-8 px-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-5">
-            <Avatar className="size-28 shrink-0 bg-muted">
+    <div className="mx-auto max-w-7xl bg-background">
+      <section className="border-b px-4 py-8 sm:px-8 sm:py-10 lg:px-16">
+        <div className="mx-auto mb-6 flex w-full max-w-5xl flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-4">
+          <div className="flex w-full min-w-0 items-center gap-4 sm:w-auto sm:gap-5">
+            <Avatar className="size-20 shrink-0 bg-muted sm:size-28">
               <AvatarImage
-                src={getAvatarUrl(profile.username)}
+                src={getAvatarUrl(profile.id)}
                 alt={profile.display_name ?? profile.username}
               />
               <AvatarFallback className="bg-muted text-2xl font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
-
             <div className="flex flex-col">
               <h2 className="text-3xl font-bold">
                 {profile.display_name ?? profile.username}

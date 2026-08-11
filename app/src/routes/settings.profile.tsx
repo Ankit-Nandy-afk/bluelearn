@@ -101,8 +101,8 @@ function RouteComponent() {
             </FieldLabel>
           </div>
 
-          <div className="flex items-center gap-5">
-            <Avatar className="size-24 bg-secondary">
+          <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+            <Avatar className="size-24 shrink-0 bg-secondary">
               <AvatarImage
                 src={getAvatarUrl(initialProfile.id)}
                 alt={profile.displayName || profile.username}
