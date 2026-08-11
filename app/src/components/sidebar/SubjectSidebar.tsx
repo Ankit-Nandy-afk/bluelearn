@@ -12,7 +12,7 @@ type SubjectsProps = {
 
 export const SubjectSidebar = ({ groups }: SubjectsProps) => {
   return (
-    <aside className="hidden overflow-y-auto border-r px-6 md:block">
+    <aside className="hidden border-r px-6 md:sticky md:top-[65px] md:block md:h-[calc(100vh-65px)] md:self-start md:overflow-y-auto">
       {groups.map(({ char, subjects }) => (
         <CollapsibleSection key={char} title={char} defaultOpen>
           <ul className="space-y-2">
