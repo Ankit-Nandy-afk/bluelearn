@@ -184,7 +184,6 @@ export async function deleteMyAccount(service: DB, userId: string) {
 const PUBLIC_ACTIVITY_STATUSES = new Set<ProfileActivityRow["status"]>([
   "published",
   "approved",
-  "rejected",
 ]);
 
 export async function getProfilePage(
@@ -215,10 +214,8 @@ export async function getProfilePage(
     getProfileActivity(supabase, profile.id),
   ]);
 
-  // Drop the internal id from the public payload.
-  const { id: _id, ...publicProfile } = profile;
   return {
-    profile: publicProfile,
+    profile,
     roles,
     stats,
     activity: isOwner
