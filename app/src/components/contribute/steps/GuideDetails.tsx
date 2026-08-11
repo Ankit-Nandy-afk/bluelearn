@@ -280,7 +280,7 @@ export const GuideDetails = ({
             <Input
               id="new-subject-summary"
               type="text"
-              maxLength={50}
+              maxLength={500}
               placeholder="Enter summary of new subject."
               className="h-10 rounded-md"
               value={newSubject.summary}
