@@ -27,7 +27,7 @@ export const SettingsSidebar = () => {
   });
 
   return (
-    <aside className="fixed top-[70px] hidden h-[calc(100vh-70px)] w-64 shrink-0 overflow-y-auto px-6 py-6 md:block">
+    <aside className="sticky top-[65px] hidden max-h-[calc(100vh-65px)] w-64 shrink-0 self-start overflow-y-auto px-6 py-6 md:block">
       <div className="mb-6">
         <h2 className="font-mono text-[12px] tracking-[0.08em] text-muted-foreground uppercase">
           Settings
