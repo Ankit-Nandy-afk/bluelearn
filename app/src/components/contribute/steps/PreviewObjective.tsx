@@ -241,6 +241,7 @@ export const PreviewObjective = ({
       <StepperActionHeader
         title={"Preview"}
         Stepper={Stepper}
+        type="objective"
         onSaveDraft={onSaveDraft}
         onPublish={onPublish}
         publishLabel="Publish"

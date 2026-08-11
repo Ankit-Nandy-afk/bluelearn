@@ -28,6 +28,8 @@ export const objectiveSchema = z.object({
   created_at: z.iso.datetime(),
   tags: z.array(subjectReferenceSchema),
   current_revision_id: z.uuid().nullable(),
+  guides_total: z.number().int(),
+  duration_minutes: z.number().int(),
 });
 
 // Represents a guide the curator placed under the featured target.

@@ -240,6 +240,7 @@ export function RegisterForm({
                     >
                       Privacy Policy
                     </a>
+                    .
                   </FieldLabel>
                 </Field>
 

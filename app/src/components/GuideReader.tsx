@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components//ui/badge";
 import { CodeBlock } from "@/components/CodeBlock";
 import { Callout } from "@/components/Callout";
+import { GuideToc } from "@/components/GuideToc";
 
 import { formatDate, formatDuration } from "@/lib/guideUtils";
 
@@ -39,9 +40,14 @@ export type ReaderGuide = Omit<Guide, "tags" | "variant_id"> & {
 type PropTypes = {
   guide: ReaderGuide;
   guideType?: GuideType;
+  showToc?: boolean;
 };
 
-export const GuideReader = ({ guide, guideType }: PropTypes) => {
+export const GuideReader = ({
+  guide,
+  guideType,
+  showToc = false,
+}: PropTypes) => {
   const created = new Date(guide.created_at);
   const createdLabel = Number.isNaN(created.getTime())
     ? guide.created_at
@@ -50,20 +56,23 @@ export const GuideReader = ({ guide, guideType }: PropTypes) => {
   return (
     <>
       <header className="mb-5">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">{guide.title}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-2">
+            {showToc && <GuideToc body={guide.body ?? ""} />}
+            <h1 className="text-3xl font-bold">{guide.title}</h1>
+          </div>
           {guideType && (
             <Badge
               key={guideType}
               variant="outline"
-              className="mono-micro rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
+              className="mono-micro shrink-0 rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
             >
               {guideType}
             </Badge>
           )}
         </div>
 
-        <div className="mono-micro my-2 flex flex-wrap items-center gap-2.5 text-muted-foreground/80">
+        <div className="mono-micro my-2 flex flex-wrap items-center gap-2.5 text-muted-foreground">
           {guide.author && (
             <span className="flex items-center gap-1">
               <User className="h-3 w-3 text-muted-foreground/75" />@

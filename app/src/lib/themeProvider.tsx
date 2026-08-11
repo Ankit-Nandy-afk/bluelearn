@@ -12,7 +12,13 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof document === "undefined") return "light";
+
+    return document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light";
+  });
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") as Theme | null;

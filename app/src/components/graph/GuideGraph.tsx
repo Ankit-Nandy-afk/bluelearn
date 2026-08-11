@@ -11,6 +11,7 @@ import { useGraphLayout } from "./useGraphLayout";
 import type { Node, NodeTypes } from "@xyflow/react";
 import type { Walkthrough } from "@bluelearn/schemas";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/lib/themeProvider";
 import "@xyflow/react/dist/style.css";
 
 const NODE_WIDTH = 320;
@@ -88,6 +89,7 @@ function Graph({
   }, [onHoverGuide]);
 
   const { fitView } = useReactFlow();
+  const { theme } = useTheme();
   const layoutSignature = isLayoutSettled
     ? nodes.map((n) => `${n.id}:${n.position.x}:${n.measured?.width}`).join("|")
     : null;
@@ -127,6 +129,7 @@ function Graph({
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}
+        colorMode={theme}
         className="bg-transparent"
         minZoom={0.2}
         maxZoom={1.5}

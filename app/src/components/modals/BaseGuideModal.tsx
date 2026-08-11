@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-export type BaseGuideModalProps = {
+export type PropsTypes = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -24,7 +24,7 @@ export type BaseGuideModalProps = {
   children?: ReactNode;
 };
 
-export function BaseGuideModal({
+export const BaseGuideModal = ({
   open,
   onOpenChange,
   title,
@@ -38,7 +38,7 @@ export function BaseGuideModal({
   emptyDescription,
   emptyAction,
   children,
-}: BaseGuideModalProps) {
+}: PropsTypes) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 p-0 sm:max-w-lg">
@@ -87,4 +87,4 @@ export function BaseGuideModal({
       </DialogContent>
     </Dialog>
   );
-}
+};

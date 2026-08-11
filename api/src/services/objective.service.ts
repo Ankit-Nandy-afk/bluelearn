@@ -379,11 +379,13 @@ export async function getObjectiveBySlug(supabase: DB, rawSlug: string) {
   if (!row || !row.current_revision_id)
     throw new ServiceError("Objective not found", 404);
 
-  const [snapshot, usernames, subjects] = await Promise.all([
+  const [snapshot, usernames, subjects, cards] = await Promise.all([
     getRevisionSnapshot(supabase, row.current_revision_id),
     loadUsernames(supabase, [row.created_by]),
     loadRevisionTags(supabase, row.current_revision_id),
+    loadObjectiveCards(supabase, [row.current_revision_id]),
   ]);
+  const card = cards.get(row.current_revision_id);
 
   const { current, created_by, ...base } = row;
   const objective = {
@@ -391,6 +393,8 @@ export async function getObjectiveBySlug(supabase: DB, rawSlug: string) {
     title: current?.title ?? null,
     summary: current?.summary ?? null,
     curator: created_by ? (usernames.get(created_by) ?? null) : null,
+    guides_total: card?.guides_total ?? 0,
+    duration_minutes: card?.duration_minutes ?? 0,
     tags: subjects
       .filter((s): s is typeof s & { slug: string } => s.slug !== null)
       .map((s) => ({ slug: s.slug, name: s.name })),
