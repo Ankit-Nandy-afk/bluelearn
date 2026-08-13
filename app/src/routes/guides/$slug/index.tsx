@@ -31,17 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-import { Combobox } from "@/components/ui/combobox";
-import { Textarea } from "@/components/ui/textarea";
+import { DownvoteModal } from "@/components/modals/DownvoteModal";
 
 import { VariantsModal } from "@/components/guides/modals/VariantsModal";
 import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
@@ -103,91 +93,6 @@ function useVote(slug: string) {
     downvote: () => toggleVote("down"),
     fetchVote: () => fetchVote(),
   };
-}
-
-function DownvoteDialog({ isOpen, setIsOpen, vote, setVote }) {
-  const [reason, setReason] = useState<string>("");
-  const [note, setNote] = useState<string>("");
-
-  const { slug } = Route.useParams();
-
-  const handleCancel = async () => {
-    const variantId = await getVariantId(slug);
-    const newVote = await submitVote(variantId, null);
-    setVote(newVote);
-
-    setIsOpen(false);
-    setNote("");
-    setReason("");
-  };
-
-  const handleSubmit = async () => {
-    const variantId = await getVariantId(slug);
-    const newVote = await submitVote(variantId, "down", reason, note);
-
-    if (newVote !== "down") {
-      // TODO: handle case where downvote fails to submit
-      console.log("Failed to submit downvote");
-    }
-
-    setIsOpen(false);
-  };
-
-  const handleOpenChange = async (willOpen: boolean) => {
-    // Handle case where user closes out of dialog without clicking cancel
-    const beingDismissed = !willOpen && isOpen;
-    if (beingDismissed) {
-      if (vote === "down") {
-        setIsOpen(false);
-        setVote("down");
-      } else await handleCancel();
-
-      return;
-    }
-
-    const beingOpened = willOpen && !isOpen;
-    if (beingOpened && vote === "down") {
-      // Keep open if downvote to save user's current downvote settings
-      setIsOpen(true);
-      setVote("down");
-      return;
-    }
-    setIsOpen(open);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogTitle>Downvote</DialogTitle>
-        <DialogDescription className="sr-only">
-          Dialog to submit reasoning for downvote
-        </DialogDescription>
-
-        <DialogHeader>Reason</DialogHeader>
-        <Combobox
-          items={downvoteReasons}
-          value={reason}
-          onValueChange={(reason) => setReason(reason)}
-        />
-
-        <DialogHeader>Note</DialogHeader>
-        <Textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="State your reason here."
-        />
-
-        <DialogFooter>
-          <Button variant="destructive" size="lg" onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button variant="default" size="lg" onClick={handleSubmit}>
-            Submit
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 export const Route = createFileRoute("/guides/$slug/")({
@@ -314,7 +219,7 @@ function RouteComponent() {
                   fill={vote == "down" ? "#3D80DD" : "#FFFFFF"}
                 />
               </Button>
-              <DownvoteDialog
+              <DownvoteModal
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
                 setVote={setVote}
