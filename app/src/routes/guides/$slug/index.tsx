@@ -48,7 +48,9 @@ import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
 import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
 import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
 
-import { downvoteReasons, submitVote } from "@/lib/api/votes";
+import { getVote, submitVote } from "@/lib/api/votes";
+import { GuideSidebarActions } from "@/components/sidebar/GuideSidebarActions";
+import { GuideMobileMenu } from "@/components/GuideMobileMenu";
 
 type ModalType =
   | "variants"
@@ -69,11 +71,16 @@ const SIDEBAR_ACTIONS: Array<SidebarActionItem> = [
   { icon: Users, label: "View Contributors", type: "contributors" },
   { icon: History, label: "View Revisions", type: "revisions" },
 ];
-import { GuideSidebarActions } from "@/components/sidebar/GuideSidebarActions";
-import { GuideMobileMenu } from "@/components/GuideMobileMenu";
 
 function useVote(slug: string) {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
+
+  // Fetches user vote from database
+  async function fetchVote() {
+    const variantId = await getVariantId(slug);
+    const vote = await getVote(variantId);
+    return vote;
+  }
 
   return {
     vote,
@@ -88,6 +95,7 @@ function useVote(slug: string) {
       setVote("up");
     },
     downvote: () => setVote("down"),
+    fetchVote: () => fetchVote(),
   };
 }
 
