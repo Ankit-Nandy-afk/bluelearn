@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Link,
   createFileRoute,
@@ -110,8 +110,30 @@ function RouteComponent() {
   const { slug } = Route.useParams();
   const guide = Route.useLoaderData();
 
-  const { vote, setVote, upvote, downvote } = useVote(slug);
+  const { vote, setVote, upvote, downvote, fetchVote } = useVote(slug);
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+
+  const [downvoteDefaults, setDownvoteDefaults] = useState({
+    vote: "",
+    reason: "",
+    note: "",
+  });
+
+  // Fetch vote on first page load
+  useEffect(() => {
+    // Get voting information if user has previously voted on guide
+    async function fetchData() {
+      const vote = await fetchVote();
+
+      setVote(vote.direction);
+      setDownvoteDefaults({
+        vote: vote.direction,
+        reason: vote.reason,
+        note: vote.note,
+      });
+    }
+    fetchData();
+  }, []);
 
   const breadcrumbOrigin = useLocation({
     select: (location) => location.state.breadcrumbOrigin,
@@ -222,8 +244,9 @@ function RouteComponent() {
               <DownvoteModal
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
-                setVote={setVote}
                 vote={vote}
+                setVote={setVote}
+                defaults={downvoteDefaults}
               />
 
               <GuideMobileMenu
