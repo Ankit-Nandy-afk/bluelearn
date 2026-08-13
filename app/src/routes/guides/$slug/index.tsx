@@ -9,9 +9,13 @@ import {
   ArrowBigDown,
   ArrowBigUp,
   Ellipsis,
+  History,
   House,
   Pencil,
   Plus,
+  Replace,
+  Target,
+  Users,
 } from "lucide-react";
 
 import { Separator } from "@/components/ui/separator";
