@@ -3,14 +3,16 @@ import { getAuthToken } from "@/lib/auth";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
+export type VotingType = "up" | "down" | null;
+
 // Submits a vote for variantId. Returns the vote submitted
 // If submission fails, return the vote passed in
 export const submitVote = async (
   variantId: string,
-  nextVote: string | null,
+  nextVote: VotingType,
   reason: string | null = null,
   note: string | null = null,
-  previousVote: string | null = null
+  previousVote: VotingType = null
 ) => {
   const token = await getAuthToken();
   if (!token) {
