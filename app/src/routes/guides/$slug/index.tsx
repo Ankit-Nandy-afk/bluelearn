@@ -82,19 +82,25 @@ function useVote(slug: string) {
     return vote;
   }
 
+  const toggleVote = (type: "up" | "down" | null) => {
+    const next = vote === type ? null : type;
+    setVote(next);
+    return next;
+  };
+
   return {
     vote,
     setVote,
     upvote: async () => {
       const variantId = await getVariantId(slug);
-      const next = await submitVote(variantId, "up");
+      const toggledVote = toggleVote("up");
+      const next = await submitVote(variantId, toggledVote);
 
       if (next !== "up") {
         // TODO: Alert user that vote could not be uploaded
       }
-      setVote("up");
     },
-    downvote: () => setVote("down"),
+    downvote: () => toggleVote("down"),
     fetchVote: () => fetchVote(),
   };
 }
