@@ -126,11 +126,21 @@ export const StepperActionHeader = ({
             )}
           </div>
 
-          <div className="justify-self-center">
+          <div className="flex items-center justify-between gap-4 justify-self-center">
+            {type != "objective" && !hideGuidelines && (
+              <button
+                type="button"
+                className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
+                onClick={toggleGuidelineModal}
+              >
+                <Scroll className="size-4" />
+                View Guidelines
+              </button>
+            )}
             {onSaveDraft && (
               <button
                 type="button"
-                className="inline-flex min-w-24 items-center justify-center gap-1.5 px-2 py-2 text-xs font-semibold text-muted-foreground disabled:pointer-events-none disabled:opacity-50"
+                className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
                 disabled={submitting || saveDisabled}
                 onClick={saveDraft}
               >
