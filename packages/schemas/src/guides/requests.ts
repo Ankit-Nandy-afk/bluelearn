@@ -7,7 +7,7 @@ import {
   guideTitleSchema,
   guideTodoTitleSchema,
 } from "./fields";
-import { subjectNameSchema } from "../subjects";
+import { subjectNameSchema, subjectSummarySchema } from "../subjects";
 import {
   downvoteReasonSchema,
   knowledgeTypeSchema,
@@ -23,7 +23,7 @@ const revisionContentSchema = z.object({
 
 export const newSubjectSchema = z.object({
   name: subjectNameSchema,
-  summary: guideSummarySchema.nullish(),
+  summary: subjectSummarySchema.nullish(),
 });
 
 export const todoPrereqSchema = z.object({

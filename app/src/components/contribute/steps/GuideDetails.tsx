@@ -280,7 +280,7 @@ export const GuideDetails = ({
             <Input
               id="new-subject-summary"
               type="text"
-              maxLength={50}
+              maxLength={500}
               placeholder="Enter summary of new subject."
               className="h-10 rounded-md"
               value={newSubject.summary}
@@ -399,7 +399,7 @@ export const GuideDetails = ({
                 <Input
                   id="todo-prereq-summary"
                   type="text"
-                  maxLength={50}
+                  maxLength={500}
                   placeholder="Enter summary of missing prerequsite guide."
                   className="h-10 rounded-md"
                   value={todoPrereq.summary}
@@ -433,7 +433,11 @@ export const GuideDetails = ({
             {guideContData.todoPrereqs.length > 0 && (
               <div className="flex flex-wrap gap-2 px-1">
                 {guideContData.todoPrereqs.map((todo, index) => (
-                  <Badge key={index} variant="outline" className="gap-1.5">
+                  <Badge
+                    key={index}
+                    variant="outline"
+                    className="h-auto w-full items-start justify-between gap-1.5 rounded-md py-1.5 text-left break-words whitespace-normal"
+                  >
                     {todo.summary
                       ? `${todo.title} - ${todo.summary}`
                       : todo.title}
