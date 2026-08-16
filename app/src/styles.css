@@ -124,6 +124,16 @@
        doesn't shift when a scrollbar appears/disappears, such as when a
        Radix DropdownMenu opens. */
     scrollbar-gutter: stable;
+    scroll-behavior: smooth;
+  }
+
+  .markdown h1,
+  .markdown h2,
+  .markdown h3,
+  .markdown h4,
+  .markdown h5,
+  .markdown h6 {
+    scroll-margin-top: 5rem;
   }
 
   .markdown h1 {
