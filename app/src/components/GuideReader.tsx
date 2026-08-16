@@ -11,6 +11,7 @@ import type { Guide } from "@bluelearn/schemas";
 import type { GuideType } from "@/types/guides";
 import type { ReactElement } from "react";
 import { remarkCallout } from "@/lib/remarkCallout";
+import { remarkIndentedCodeAsParagraph } from "@/lib/remarkIndentedCodeAsParagraph";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components//ui/badge";
 import { CodeBlock } from "@/components/CodeBlock";
@@ -119,6 +120,7 @@ export const GuideReader = ({
             remarkMath,
             remarkDirective,
             remarkCallout,
+            remarkIndentedCodeAsParagraph,
           ]}
           rehypePlugins={[
             rehypeRaw,
