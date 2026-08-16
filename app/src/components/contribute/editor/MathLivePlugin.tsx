@@ -351,6 +351,10 @@ export function SingletonMathEditor() {
           onKeyDown={(e: any) => {
             if (e.key === "Enter" || e.key === "Escape") {
               e.preventDefault();
+              const mf = mfRef.current;
+              if (mf && payload) {
+                commitLatex(mf.value, payload.onChange);
+              }
               closeEditor();
               editor.focus();
             }
