@@ -75,7 +75,8 @@ export default function MarkdownLinkImageShortcutListener() {
               $setSelection(rangeSelection);
 
               const imageNode = $createImageNode({ src, altText });
-              $insertNodes([imageNode]);
+              const spaceNode = $createTextNode(" ");
+              $insertNodes([imageNode, spaceNode]);
             });
             return;
           }
