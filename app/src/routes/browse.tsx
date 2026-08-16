@@ -53,16 +53,23 @@ async function fetchGuides(
     return { found: total, items: guides };
   }
 
-  const { guides } = await search(
-    {
-      q,
-      page,
-      per_page: PAGE_SIZE,
-      ...filtersToParams({ scope: "guides", knowledgeType: kind }),
-    },
-    { signal }
-  );
-  return guides;
+  try {
+    const { guides } = await search(
+      {
+        q,
+        page,
+        per_page: PAGE_SIZE,
+        ...filtersToParams({ scope: "guides", knowledgeType: kind }),
+      },
+      { signal }
+    );
+    return guides;
+  } catch (e) {
+    if (e instanceof Error && e.message.includes("404")) {
+      return { found: 0, items: [] };
+    }
+    throw e;
+  }
 }
 
 async function fetchObjectives(
@@ -77,16 +84,23 @@ async function fetchObjectives(
     return { found: total, items: objectives };
   }
 
-  const { objectives } = await search(
-    {
-      q,
-      page,
-      per_page: PAGE_SIZE,
-      ...filtersToParams({ scope: "objectives" }),
-    },
-    { signal }
-  );
-  return objectives;
+  try {
+    const { objectives } = await search(
+      {
+        q,
+        page,
+        per_page: PAGE_SIZE,
+        ...filtersToParams({ scope: "objectives" }),
+      },
+      { signal }
+    );
+    return objectives;
+  } catch (e) {
+    if (e instanceof Error && e.message.includes("404")) {
+      return { found: 0, items: [] };
+    }
+    throw e;
+  }
 }
 
 export const Route = createFileRoute("/browse")({
