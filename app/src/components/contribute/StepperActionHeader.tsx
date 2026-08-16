@@ -41,19 +41,16 @@ export const StepperActionHeader = ({
 
   const toggleGuidelineModal = () => setOpenGuidelineModal(!openGuidelineModal);
   const toggleSubmitModal = () => setShowSubmitModal(!showSubmitModal);
-
   const handleSubmit = () => setShowSubmitModal(!showSubmitModal);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    return () => {
       if (resetTimer.current) clearTimeout(resetTimer.current);
-    },
-    []
-  );
+    };
+  }, []);
 
   const saveDraft = async () => {
     if (!onSaveDraft) return;
-
     const didSave = await onSaveDraft();
     if (didSave === false) return;
 
@@ -69,7 +66,6 @@ export const StepperActionHeader = ({
           <h1 className="font-mono text-[14px] tracking-[0.08em] text-muted-foreground uppercase">
             {title}
           </h1>
-
           {type != "objective" && !hideGuidelines && (
             <button
               type="button"
@@ -119,39 +115,45 @@ export const StepperActionHeader = ({
       <Separator className="mb-8 hidden bg-border sm:block" />
 
       {(onSaveDraft || !hideBackBtn || onPublish) && (
-        <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-t bg-background/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden">
-          <div className="justify-self-start">
+        <div className="fixed inset-x-0 bottom-0 z-40 flex w-full items-center gap-1.5 overflow-hidden border-t bg-background/95 px-2 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden">
+          <div className="shrink-0">
             {!hideBackBtn && (
-              <Stepper.Prev className="btn-sec min-w-20">Back</Stepper.Prev>
+              <Stepper.Prev className="btn-sec inline-flex items-center px-3 whitespace-nowrap">
+                Back
+              </Stepper.Prev>
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-4 justify-self-center">
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 overflow-x-auto">
             {type != "objective" && !hideGuidelines && (
               <button
                 type="button"
-                className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
+                aria-label="View guidelines"
+                className="btn-sec inline-flex shrink-0 items-center gap-1.5 px-2.5 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50"
                 onClick={toggleGuidelineModal}
               >
-                <Scroll className="size-4" />
-                View Guidelines
+                <Scroll className="size-4 shrink-0" />
+                <span className="hidden min-[400px]:inline">
+                  View Guidelines
+                </span>
               </button>
             )}
+
             {onSaveDraft && (
               <button
                 type="button"
-                className="btn-sec inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-50"
+                className="btn-sec inline-flex shrink-0 items-center gap-1.5 px-2.5 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50"
                 disabled={submitting || saveDisabled}
                 onClick={saveDraft}
               >
                 {saved ? (
                   <>
-                    <Check className="size-3.5" />
-                    Draft saved
+                    <Check className="size-3.5 shrink-0" />
+                    Saved
                   </>
                 ) : (
                   <>
-                    <Save className="size-3.5" />
+                    <Save className="size-3.5 shrink-0" />
                     Save draft
                   </>
                 )}
@@ -159,11 +161,11 @@ export const StepperActionHeader = ({
             )}
           </div>
 
-          <div className="justify-self-end">
+          <div className="shrink-0">
             {onPublish ? (
               <button
                 type="button"
-                className="btn-pri disabled:pointer-events-none disabled:opacity-50"
+                className="btn-pri inline-flex items-center px-3 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50"
                 disabled={submitting}
                 onClick={handleSubmit}
               >
@@ -172,7 +174,10 @@ export const StepperActionHeader = ({
                   : publishLabel}
               </button>
             ) : (
-              <Stepper.Next className="btn-pri" disabled={nextDisabled}>
+              <Stepper.Next
+                className="btn-pri inline-flex items-center px-3 whitespace-nowrap"
+                disabled={nextDisabled}
+              >
                 Next
               </Stepper.Next>
             )}
