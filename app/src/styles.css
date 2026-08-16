@@ -120,6 +120,10 @@
 
   html {
     @apply font-sans;
+    /* Reserve space for the scrollbar so centered content (e.g. the navbar)
+       doesn't shift when a scrollbar appears/disappears, such as when a
+       Radix DropdownMenu opens. */
+    scrollbar-gutter: stable;
   }
 
   .markdown h1 {
