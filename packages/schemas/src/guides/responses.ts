@@ -10,6 +10,7 @@ export const guideSchema = z.object({
   variant_slug: z.string().nullable(),
   title: z.string(),
   author: z.string(),
+  knowledge_type: knowledgeTypeSchema,
   summary: z.string().nullable(),
   body: z.string().nullable(),
   duration_minutes: z.number().int(),

@@ -69,6 +69,7 @@ function RouteComponent() {
     variant_slug: variant.slug,
     title: current.title ?? "",
     author: variant.author,
+    knowledge_type: variant.knowledge_type,
     summary: current.summary,
     body: current.body,
     duration_minutes: variant.duration_minutes,
@@ -234,7 +235,12 @@ function RouteComponent() {
 
           <Separator className="mb-8" />
 
-          <GuideReader guide={guide} showToc isOfficial={variant.is_official} />
+          <GuideReader
+            guide={guide}
+            guideType={guide.knowledge_type}
+            showToc
+            isOfficial={variant.is_official}
+          />
         </main>
       </section>
     </div>

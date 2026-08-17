@@ -305,6 +305,7 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
     variant_slug: canonical?.slug ?? null,
     title: current?.title ?? "",
     author: authorId ? (usernames.get(authorId) ?? "") : "",
+    knowledge_type: guide.knowledge_type,
     summary: current?.summary ?? null,
     body: current?.body ?? null,
     duration_minutes: readingMinutes(current?.word_count ?? 0),
@@ -517,7 +518,7 @@ export async function getVariantBySlug(
     .from("guides")
     .select(
       `id, guide_base_id, slug, status, author_id,
-       base:guide_bases!guides_guide_base_id_fkey(is_official),
+       base:guide_bases!guides_guide_base_id_fkey(is_official, knowledge_type),
        current:guide_revisions!guides_current_revision_id_fkey(id, title, summary, body, word_count, created_at)`
     )
     .eq("guide_base_id", baseId)
@@ -568,6 +569,7 @@ export async function getVariantBySlug(
       duration_minutes: readingMinutes(current?.word_count ?? 0),
       votes: { up: tally?.upvotes ?? 0, down: tally?.downvotes ?? 0 },
       is_official: base?.is_official ?? false,
+      knowledge_type: base?.knowledge_type ?? "theoretical",
     },
   };
 }

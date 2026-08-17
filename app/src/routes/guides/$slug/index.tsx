@@ -230,7 +230,12 @@ function RouteComponent() {
 
           {/* Header */}
 
-          <GuideReader guide={guide} showToc isOfficial={guide.is_official} />
+          <GuideReader
+            guide={guide}
+            guideType={guide.knowledge_type}
+            showToc
+            isOfficial={guide.is_official}
+          />
         </main>
       </section>
     </div>

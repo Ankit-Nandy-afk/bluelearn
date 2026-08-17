@@ -35,7 +35,10 @@ const sanitizeSchema = {
 // subjects whose slug is not minted yet, so either identifier will do.
 type ReaderTag = { id?: string; slug?: string; name: string };
 
-export type ReaderGuide = Omit<Guide, "tags" | "variant_id" | "is_official"> & {
+export type ReaderGuide = Omit<
+  Guide,
+  "tags" | "variant_id" | "is_official" | "knowledge_type"
+> & {
   tags: Array<ReaderTag>;
 };
 
@@ -90,7 +93,7 @@ export const GuideReader = ({
             {isOfficial && (
               <Badge
                 variant="outline"
-                className="mono-micro h-6 shrink-0 gap-0.5 rounded-full border bg-transparent tracking-[0.08em] text-primary [&>svg]:size-[18px]!"
+                className="mono-micro h-6 shrink-0 gap-0.5 rounded-full border border-badge-border bg-transparent tracking-[0.08em] text-primary [&>svg]:size-[18px]!"
               >
                 <ShieldCheck
                   className="fill-primary text-background"
