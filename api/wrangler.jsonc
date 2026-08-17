@@ -1,10 +1,10 @@
 {
-  "name": "blue-api",
+  "name": "bluelearn-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-10",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
-  "vars": { "APP_URL": "https://beta.bluelearn.org" },
+  "vars": { "APP_URL": "https://app.bluelearn.org" },
   "triggers": { "crons": ["*/5 * * * *", "0 */12 * * *"] },
   "durable_objects": {
     "bindings": [

@@ -23,6 +23,17 @@ export async function getVariantBySlug(
   return variant;
 }
 
+export async function getVariant(id: string, { signal }: FetchOptions = {}) {
+  const res = await variants[":id"].$get(
+    { param: { id } },
+    { init: { signal } }
+  );
+  await assertOk(res);
+
+  const { variant } = await res.json();
+  return variant;
+}
+
 export async function getVariantContributors(
   id: string,
   { signal }: FetchOptions = {}

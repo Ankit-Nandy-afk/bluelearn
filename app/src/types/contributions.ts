@@ -1,49 +1,54 @@
-export type ContributionType = "guide" | "variant" | "objective";
+import { z } from "zod";
 
-export type GuideContribution = {
-  type: string;
-  title: string;
-  summary: string;
-  body: string;
-  subjects: Array<string>;
-  newSubjects: Array<{
-    id?: string;
-    name: string;
-    summary: string;
-  }>;
-  prereqs: Array<string>;
-  todoPrereqs: Array<{
-    title: string;
-    summary: string;
-  }>;
-};
+// Schemas are only used to check drafts restored from localStorage. Doesn't use shared
+// schemas because an empty field here is "" not null.
+export const contributionTypeSchema = z.enum(["guide", "variant", "objective"]);
 
-export type VariantContribution = {
-  type: string;
-  title: string;
-  summary: string;
-  baseGuide: string;
-  subjects: Array<string>;
-  newSubjects: Array<{
-    id?: string;
-    name: string;
-    summary: string;
-  }>;
-  body: string;
-};
+const newSubjectSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  summary: z.string(),
+});
 
-export type SubObjective = {
-  targetSlug: string;
-  selectedSlugs: Array<string>;
-  curatedSequence: Array<string>;
-};
+export const guideContributionSchema = z.object({
+  type: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  body: z.string(),
+  subjects: z.array(z.string()),
+  newSubjects: z.array(newSubjectSchema),
+  prereqs: z.array(z.string()),
+  todoPrereqs: z.array(z.object({ title: z.string(), summary: z.string() })),
+});
 
-export type ObjectiveContribution = {
-  title: string;
-  summary: string;
-  changeSummary: string;
-  targets: Array<string>;
-  featuredSubObjective: string;
-  subObjectives: Array<SubObjective>;
-  subjects: Array<string>;
-};
+export const variantContributionSchema = z.object({
+  type: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  baseGuide: z.string(),
+  subjects: z.array(z.string()),
+  newSubjects: z.array(newSubjectSchema),
+  body: z.string(),
+});
+
+export const subObjectiveSchema = z.object({
+  targetSlug: z.string(),
+  selectedSlugs: z.array(z.string()),
+  curatedSequence: z.array(z.string()),
+});
+
+export const objectiveContributionSchema = z.object({
+  title: z.string(),
+  summary: z.string(),
+  changeSummary: z.string(),
+  targets: z.array(z.string()),
+  featuredSubObjective: z.string(),
+  subObjectives: z.array(subObjectiveSchema),
+  subjects: z.array(z.string()),
+});
+
+export type ContributionType = z.infer<typeof contributionTypeSchema>;
+export type GuideContribution = z.infer<typeof guideContributionSchema>;
+export type VariantContribution = z.infer<typeof variantContributionSchema>;
+export type SubObjective = z.infer<typeof subObjectiveSchema>;
+export type ObjectiveContribution = z.infer<typeof objectiveContributionSchema>;
