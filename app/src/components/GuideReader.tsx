@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import remarkDirective from "remark-directive";
 
-import { Calendar, Clock, User } from "lucide-react";
+import { BadgeCheck, Calendar, Clock, User } from "lucide-react";
 import { createElement } from "react";
 import type { ReactElement } from "react";
 import type { Guide } from "@bluelearn/schemas";
@@ -35,7 +35,7 @@ const sanitizeSchema = {
 // subjects whose slug is not minted yet, so either identifier will do.
 type ReaderTag = { id?: string; slug?: string; name: string };
 
-export type ReaderGuide = Omit<Guide, "tags" | "variant_id"> & {
+export type ReaderGuide = Omit<Guide, "tags" | "variant_id" | "is_official"> & {
   tags: Array<ReaderTag>;
 };
 
@@ -43,12 +43,14 @@ type PropTypes = {
   guide: ReaderGuide;
   guideType?: GuideType;
   showToc?: boolean;
+  isOfficial?: boolean;
 };
 
 export const GuideReader = ({
   guide,
   guideType,
   showToc = false,
+  isOfficial = false,
 }: PropTypes) => {
   const created = new Date(guide.created_at);
   const createdLabel = Number.isNaN(created.getTime())
@@ -84,15 +86,26 @@ export const GuideReader = ({
             {showToc && <GuideToc body={guide.body ?? ""} />}
             <h1 className="text-3xl font-bold">{guide.title}</h1>
           </div>
-          {guideType && (
-            <Badge
-              key={guideType}
-              variant="outline"
-              className="mono-micro shrink-0 rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
-            >
-              {guideType}
-            </Badge>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {isOfficial && (
+              <Badge
+                variant="outline"
+                className="mono-micro shrink-0 gap-1 rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
+              >
+                <BadgeCheck className="h-3 w-3 text-primary" />
+                Official
+              </Badge>
+            )}
+            {guideType && (
+              <Badge
+                key={guideType}
+                variant="outline"
+                className="mono-micro shrink-0 rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
+              >
+                {guideType}
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="mono-micro my-2 flex flex-wrap items-center gap-2.5 text-muted-foreground">

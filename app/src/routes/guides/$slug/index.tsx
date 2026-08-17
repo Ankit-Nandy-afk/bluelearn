@@ -67,11 +67,15 @@ function RouteComponent() {
       to: `/guides/${slug}/${guide.variant_slug}/edit`,
       icon: <Pencil className="h-4 w-4" />,
     },
-    {
-      label: "Create Variant",
-      to: "/contribute",
-      icon: <Plus className="h-4 w-4" />,
-    },
+    ...(guide.is_official
+      ? []
+      : [
+          {
+            label: "Create Variant",
+            to: "/contribute",
+            icon: <Plus className="h-4 w-4" />,
+          },
+        ]),
     // { label: "Report", to: "/report", <Flag className="h-4 w-4" /> },// TODO: Implement post v1
   ];
 
@@ -86,6 +90,7 @@ function RouteComponent() {
               slug={slug}
               currentVariantSlug={guide.variant_slug}
               variantId={guide.variant_id}
+              isOfficial={guide.is_official}
             />
           }
           guide={guide}
@@ -193,6 +198,7 @@ function RouteComponent() {
                 guideTitle={guide.title}
                 menuItems={guideMenuItems}
                 prerequisites={guide.prerequisites}
+                isOfficial={guide.is_official}
               />
 
               <DropdownMenu>
@@ -224,7 +230,7 @@ function RouteComponent() {
 
           {/* Header */}
 
-          <GuideReader guide={guide} showToc />
+          <GuideReader guide={guide} showToc isOfficial={guide.is_official} />
         </main>
       </section>
     </div>

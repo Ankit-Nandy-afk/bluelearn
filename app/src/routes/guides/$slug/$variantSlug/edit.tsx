@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import type { Guide } from "@bluelearn/schemas";
+import type { ReaderGuide } from "@/components/GuideReader";
 import type { GuideContribution } from "@/types/contributions";
 import type { GuideType } from "@/types/guides";
 import { listGuides } from "@/lib/api/guides";
@@ -123,7 +123,7 @@ function RouteComponent() {
     return () => controller.abort();
   }, []);
 
-  const previewGuide: Guide = useMemo(() => {
+  const previewGuide: ReaderGuide = useMemo(() => {
     const nameById = new Map(
       subjectOptions.map((s) => [s.id, s.name] as const)
     );

@@ -83,11 +83,15 @@ function RouteComponent() {
       to: `/guides/${slug}/${variantSlug}/edit`,
       icon: <Pencil className="h-4 w-4" />,
     },
-    {
-      label: "Create Variant",
-      to: "/contribute",
-      icon: <Plus className="h-4 w-4" />,
-    },
+    ...(variant.is_official
+      ? []
+      : [
+          {
+            label: "Create Variant",
+            to: "/contribute",
+            icon: <Plus className="h-4 w-4" />,
+          },
+        ]),
   ];
 
   const breadcrumbs = buildBreadcrumbs(guide.title, breadcrumbOrigin);
@@ -101,6 +105,7 @@ function RouteComponent() {
               slug={slug}
               currentVariantSlug={variant.slug}
               variantId={variant.id}
+              isOfficial={variant.is_official}
             />
           }
           guide={guide}
@@ -199,6 +204,7 @@ function RouteComponent() {
                 variantId={variant.id}
                 guideTitle={guide.title}
                 menuItems={guideMenuItems}
+                isOfficial={variant.is_official}
               />
 
               <DropdownMenu>
@@ -228,7 +234,7 @@ function RouteComponent() {
 
           <Separator className="mb-8" />
 
-          <GuideReader guide={guide} showToc />
+          <GuideReader guide={guide} showToc isOfficial={variant.is_official} />
         </main>
       </section>
     </div>
