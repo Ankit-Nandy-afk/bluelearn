@@ -31,16 +31,6 @@ const sanitizeSchema = {
   tagNames: [...(defaultSchema.tagNames ?? []), "callout"],
 };
 
-function getHeadingId(text: string, headingIds: Map<string, number>): string {
-  const slug = text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-");
-  const count = headingIds.get(slug) ?? 0;
-  headingIds.set(slug, count + 1);
-  return count > 0 ? `${slug}-${count}` : slug;
-}
-
 type ReaderTag = { id?: string; slug?: string; name: string };
 
 export type ReaderGuide = Omit<Guide, "tags" | "variant_id"> & {
