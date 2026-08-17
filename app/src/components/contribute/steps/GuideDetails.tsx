@@ -201,7 +201,10 @@ export const GuideDetails = ({
         {onChangeSummaryChange && (
           <Field className="space-y-2">
             <div className="space-y-1">
-              <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+              <FieldLabel
+                required
+                className="font-mono tracking-[0.08em] uppercase"
+              >
                 Change Summary
               </FieldLabel>
               <FieldDescription className="text-xs">
