@@ -19,12 +19,13 @@ const COOLDOWN_SECONDS = 60;
 
 export function EmailVerification({
   email,
+  justSent,
   className,
   ...props
-}: React.ComponentProps<"div"> & { email?: string }) {
+}: React.ComponentProps<"div"> & { email?: string; justSent?: boolean }) {
   const [submitting, setSubmitting] = useState(false);
-  // signup already sent one, so start on cooldown
-  const [cooldown, setCooldown] = useState(COOLDOWN_SECONDS);
+  // only signup just sent one, so only that entry starts on cooldown
+  const [cooldown, setCooldown] = useState(justSent ? COOLDOWN_SECONDS : 0);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -62,22 +63,38 @@ export function EmailVerification({
 
               <div className="space-y-2">
                 <CardTitle className="text-2xl font-semibold tracking-tight">
-                  Check your email
+                  {justSent ? "Check your email" : "Verify your email"}
                 </CardTitle>
 
                 <CardDescription className="text-sm text-muted-foreground">
-                  {email ? (
+                  {justSent ? (
+                    email ? (
+                      <>
+                        We sent a verification link to{" "}
+                        <span className="font-medium text-foreground">
+                          {email}
+                        </span>
+                        . Click it to activate your account.
+                      </>
+                    ) : (
+                      <>
+                        We sent a verification link to your email. Click it to
+                        activate your account.
+                      </>
+                    )
+                  ) : email ? (
                     <>
-                      We sent a verification link to{" "}
+                      This account still needs verifying. Open the link we sent
+                      to{" "}
                       <span className="font-medium text-foreground">
                         {email}
                       </span>
-                      . Click it to activate your account.
+                      , or send yourself a fresh one below.
                     </>
                   ) : (
                     <>
-                      We sent a verification link to your email. Click it to
-                      activate your account.
+                      This account still needs verifying. Open the link we sent
+                      to your email, or send yourself a fresh one below.
                     </>
                   )}
                 </CardDescription>
