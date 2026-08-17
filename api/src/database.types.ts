@@ -1144,6 +1144,7 @@ export type Database = {
           guide_id: string | null
           guide_slug: string | null
           id: string | null
+          is_official: boolean | null
           knowledge_type: Database["public"]["Enums"]["knowledge_type"] | null
           revision_id: string | null
           status: Database["public"]["Enums"]["node_status"] | null

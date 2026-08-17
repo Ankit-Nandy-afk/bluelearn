@@ -52,6 +52,7 @@ export const guideListItemSchema = z.object({
   author: z.string().nullable(),
   duration_minutes: z.number().int(),
   tags: z.array(subjectReferenceSchema),
+  is_official: z.boolean(),
 });
 
 export type Guide = z.infer<typeof guideSchema>;
