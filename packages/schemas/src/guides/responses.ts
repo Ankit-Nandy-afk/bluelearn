@@ -9,12 +9,14 @@ export const guideSchema = z.object({
   variant_slug: z.string().nullable(),
   title: z.string(),
   author: z.string().nullable(),
+  knowledge_type: knowledgeTypeSchema,
   summary: z.string().nullable(),
   body: z.string().nullable(),
   duration_minutes: z.number().int(),
   created_at: z.iso.datetime(),
   tags: z.array(subjectReferenceSchema),
   prerequisites: z.array(guideReferenceSchema),
+  is_official: z.boolean(),
 });
 export const walkthroughSchema = z.object({
   nodes: z.array(
@@ -46,6 +48,7 @@ export const guideListItemSchema = z.object({
   author: z.string().nullable(),
   duration_minutes: z.number().int(),
   tags: z.array(subjectReferenceSchema),
+  is_official: z.boolean(),
 });
 export type Guide = z.infer<typeof guideSchema>;
 export type GuideListItem = z.infer<typeof guideListItemSchema>;

@@ -13,8 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  GUIDE_ACTIONS,
   GuideActionModals,
+  guideActions,
 } from "@/components/GuideActionModals";
 import { PrerequisitesModal } from "@/components/modals/PrerequisitesModal";
 
@@ -25,6 +25,7 @@ type GuideMobileMenuProps = {
   guideTitle: string;
   menuItems: Array<{ label: string; to: string; icon: React.ReactNode }>;
   prerequisites?: Array<GuideReference>;
+  isOfficial?: boolean;
 };
 
 export function GuideMobileMenu({
@@ -34,6 +35,7 @@ export function GuideMobileMenu({
   guideTitle,
   menuItems,
   prerequisites,
+  isOfficial = false,
 }: GuideMobileMenuProps) {
   const [activeModal, setActiveModal] = useState<
     GuideModalType | "prerequisites" | null
@@ -66,7 +68,7 @@ export function GuideMobileMenu({
 
           <DropdownMenuSeparator />
 
-          {GUIDE_ACTIONS.map((action) => (
+          {guideActions(isOfficial).map((action) => (
             <DropdownMenuItem
               key={action.type}
               className="cursor-pointer text-xs"
@@ -95,6 +97,7 @@ export function GuideMobileMenu({
         slug={slug}
         currentVariantSlug={currentVariantSlug}
         variantId={variantId}
+        isOfficial={isOfficial}
       />
 
       {prerequisites && (

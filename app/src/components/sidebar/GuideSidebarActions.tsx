@@ -8,20 +8,22 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  GUIDE_ACTIONS,
   GuideActionModals,
+  guideActions,
 } from "@/components/GuideActionModals";
 
 type PropsTypes = {
   slug: string;
   currentVariantSlug: string | null;
   variantId: string | null;
+  isOfficial?: boolean;
 };
 
 export const GuideSidebarActions = ({
   slug,
   currentVariantSlug,
   variantId,
+  isOfficial = false,
 }: PropsTypes) => {
   const [activeModal, setActiveModal] = useState<GuideModalType | null>(null);
   const close = (open: boolean) => !open && setActiveModal(null);
@@ -29,7 +31,7 @@ export const GuideSidebarActions = ({
   return (
     <>
       <div className="flex items-center justify-start gap-4">
-        {GUIDE_ACTIONS.map((action) => (
+        {guideActions(isOfficial).map((action) => (
           <Tooltip key={action.label}>
             <TooltipTrigger asChild>
               <Button
@@ -55,6 +57,7 @@ export const GuideSidebarActions = ({
         slug={slug}
         currentVariantSlug={currentVariantSlug}
         variantId={variantId}
+        isOfficial={isOfficial}
       />
     </>
   );

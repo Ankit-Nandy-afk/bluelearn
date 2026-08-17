@@ -5,7 +5,7 @@ import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { extractHeadings } from "@/lib/guideUtils";
 
 type PropTypes = {
-  guide: Omit<Guide, "variant_id">;
+  guide: Omit<Guide, "variant_id" | "is_official">;
   slug: string;
   sidebarActions?: React.ReactNode;
   reviewSection?: React.ReactNode;
