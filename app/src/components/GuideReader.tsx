@@ -7,17 +7,19 @@ import remarkMath from "remark-math";
 import remarkDirective from "remark-directive";
 
 import { Calendar, Clock, User } from "lucide-react";
+import { createElement } from "react";
+import type { ReactElement } from "react";
 import type { Guide } from "@bluelearn/schemas";
 import type { GuideType } from "@/types/guides";
-import type { ReactElement } from "react";
 import { remarkCallout } from "@/lib/remarkCallout";
+import { remarkIndentedCodeAsParagraph } from "@/lib/remarkIndentedCodeAsParagraph";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components//ui/badge";
 import { CodeBlock } from "@/components/CodeBlock";
 import { Callout } from "@/components/Callout";
 import { GuideToc } from "@/components/GuideToc";
 
-import { formatDate, formatDuration } from "@/lib/guideUtils";
+import { formatDate, formatDuration, getHeadingId } from "@/lib/guideUtils";
 
 const sanitizeSchema = {
   ...defaultSchema,
@@ -29,8 +31,6 @@ const sanitizeSchema = {
   tagNames: [...(defaultSchema.tagNames ?? []), "callout"],
 };
 
-// Tags only render as a name badge here, and a guide under review can carry
-// subjects whose slug is not minted yet, so either identifier will do.
 type ReaderTag = { id?: string; slug?: string; name: string };
 
 export type ReaderGuide = Omit<Guide, "tags" | "variant_id"> & {
@@ -52,6 +52,27 @@ export const GuideReader = ({
   const createdLabel = Number.isNaN(created.getTime())
     ? guide.created_at
     : formatDate(created);
+  const headingIds = new Map<string, number>();
+
+  const renderHeading =
+    (level: number) =>
+    ({ children }: any) => {
+      const text = Array.isArray(children)
+        ? children
+            .map((child) =>
+              typeof child === "string" || typeof child === "number"
+                ? String(child)
+                : (child?.props?.children ?? "")
+            )
+            .join("")
+        : String(children ?? "");
+
+      return createElement(
+        `h${level}`,
+        { id: getHeadingId(text.trim(), headingIds) },
+        children
+      );
+    };
 
   return (
     <>
@@ -73,12 +94,10 @@ export const GuideReader = ({
         </div>
 
         <div className="mono-micro my-2 flex flex-wrap items-center gap-2.5 text-muted-foreground">
-          {guide.author && (
-            <span className="flex items-center gap-1">
-              <User className="h-3 w-3 text-muted-foreground/75" />@
-              {guide.author}
-            </span>
-          )}
+          <span className="flex items-center gap-1">
+            <User className="h-3 w-3 text-muted-foreground/75" />@
+            {guide.author ?? "deleted_user"}
+          </span>
           <span className="flex items-center gap-1">
             <Calendar className="h-3 w-3 text-muted-foreground/75" />
             {createdLabel}
@@ -119,6 +138,7 @@ export const GuideReader = ({
             remarkMath,
             remarkDirective,
             remarkCallout,
+            remarkIndentedCodeAsParagraph,
           ]}
           rehypePlugins={[
             rehypeRaw,
@@ -126,6 +146,12 @@ export const GuideReader = ({
             rehypeKatex,
           ]}
           components={{
+            h1: renderHeading(1),
+            h2: renderHeading(2),
+            h3: renderHeading(3),
+            h4: renderHeading(4),
+            h5: renderHeading(5),
+            h6: renderHeading(6),
             pre({ children }) {
               const child = children as ReactElement<{
                 className?: string;
