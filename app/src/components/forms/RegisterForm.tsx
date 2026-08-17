@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signUp } from "@/lib/auth";
+import { isUsernameAvailable } from "@/lib/api/identity";
 import { validateRegister } from "@/lib/authValidation";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,6 +55,13 @@ export function RegisterForm({
     }
 
     setSubmitting(true);
+
+    if (!(await isUsernameAvailable(username))) {
+      setSubmitting(false);
+      toast.error("The username is already taken");
+      return;
+    }
+
     const { data, error } = await signUp(email, password, username);
 
     setSubmitting(false);
