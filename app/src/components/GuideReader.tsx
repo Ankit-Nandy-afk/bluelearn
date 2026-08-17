@@ -12,14 +12,13 @@ import type { ReactElement } from "react";
 import type { Guide } from "@bluelearn/schemas";
 import type { GuideType } from "@/types/guides";
 import { remarkCallout } from "@/lib/remarkCallout";
-import { remarkIndentedCodeAsParagraph } from "@/lib/remarkIndentedCodeAsParagraph";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components//ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/components/CodeBlock";
 import { Callout } from "@/components/Callout";
 import { GuideToc } from "@/components/GuideToc";
 
-import { formatDate, formatDuration, getHeadingId } from "@/lib/guideUtils";
+import { formatDate, formatDuration } from "@/lib/guideUtils";
 
 const sanitizeSchema = {
   ...defaultSchema,
@@ -30,6 +29,16 @@ const sanitizeSchema = {
   },
   tagNames: [...(defaultSchema.tagNames ?? []), "callout"],
 };
+
+function getHeadingId(text: string, headingIds: Map<string, number>): string {
+  const slug = text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-");
+  const count = headingIds.get(slug) ?? 0;
+  headingIds.set(slug, count + 1);
+  return count > 0 ? `${slug}-${count}` : slug;
+}
 
 type ReaderTag = { id?: string; slug?: string; name: string };
 
@@ -138,7 +147,6 @@ export const GuideReader = ({
             remarkMath,
             remarkDirective,
             remarkCallout,
-            remarkIndentedCodeAsParagraph,
           ]}
           rehypePlugins={[
             rehypeRaw,
