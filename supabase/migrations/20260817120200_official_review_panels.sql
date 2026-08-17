@@ -28,6 +28,29 @@ $$;
 revoke execute on function public.eligible_panel_admins(uuid, uuid) from public;
 grant execute on function public.eligible_panel_admins(uuid, uuid) to service_role;
 
+-- Same as 20260805120000_review_time_limits.sql except exclude official seats because they
+-- never expire.
+create or replace function public.set_panel_member_expires_at()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.expires_at is null then
+    select coalesce(new.assigned_at, now()) + coalesce(rc.time_limit, interval '2 days')
+      into new.expires_at
+      from public.review_panels rp
+      join public.review_cases rc on rc.id = rp.case_id
+      where rp.id = new.panel_id
+        and rc.case_type not in ('official_publish', 'official_edit');
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.set_panel_member_expires_at() from public;
+
 -- Same as 20260805120000_review_time_limits.sql for the verifier case types, but for an
 -- official case, it seats every eligible admin instead of drawing a random panel,
 -- so target_seat_count records how many were seated and carries no odd size check.
@@ -119,8 +142,8 @@ $$;
 revoke execute on function public.assemble_review_panel(uuid, integer) from public;
 grant execute on function public.assemble_review_panel(uuid, integer) to service_role;
 
--- Same as 20260716140000_guide_contribution_flow.sql except official cases need
--- two matching votes rather than a normal majority vote from the seats.
+-- Same as 20260802120100_resolve_claimed_todos_on_publish.sql except official
+-- cases need two matching votes rather than a normal majority vote from the seats.
 create or replace function public.close_review_panel(p_case_id uuid)
 returns void
 language plpgsql
@@ -138,10 +161,12 @@ declare
   v_revision_id uuid;
   v_guide_id uuid;
   v_base_id uuid;
+  v_base_slug text;
   v_title text;
   v_slug_base text;
   v_slug text;
   v_suffix integer;
+  v_subject record;
 begin
   select rp.id, rp.target_seat_count, rc.case_type
     into v_panel_id, v_target, v_case_type
@@ -187,11 +212,12 @@ begin
     return;
   end if;
 
-  select grc.guide_revision_id, gr.guide_id, g.guide_base_id, gr.title
-    into v_revision_id, v_guide_id, v_base_id, v_title
+  select grc.guide_revision_id, gr.guide_id, g.guide_base_id, gr.title, b.slug
+    into v_revision_id, v_guide_id, v_base_id, v_title, v_base_slug
     from public.guide_review_cases grc
     join public.guide_revisions gr on gr.id = grc.guide_revision_id
     join public.guides g on g.id = gr.guide_id
+    join public.guide_bases b on b.id = g.guide_base_id
     where grc.case_id = p_case_id;
 
   update public.guide_revisions
@@ -221,15 +247,64 @@ begin
           slug = coalesce(slug, v_slug)
       where id = v_guide_id;
 
+    if v_base_slug is null then
+      v_slug := v_slug_base;
+      v_suffix := 1;
+      while exists (
+        select 1 from public.guide_bases where slug = v_slug and id <> v_base_id
+      ) loop
+        v_suffix := v_suffix + 1;
+        v_slug := v_slug_base || '-' || v_suffix;
+      end loop;
+      v_base_slug := v_slug;
+    end if;
+
     update public.guide_bases
       set status = 'published',
-          canonical_guide_id = coalesce(canonical_guide_id, v_guide_id)
+          canonical_guide_id = coalesce(canonical_guide_id, v_guide_id),
+          slug = coalesce(slug, v_base_slug)
       where id = v_base_id;
+
+    update public.todo_prerequisites
+      set status = 'resolved',
+          resolved_guide_base_id = v_base_id
+      where status = 'open'
+        and id in (
+          select tc.todo_id
+          from public.todo_claims tc
+          where tc.guide_base_id = v_base_id
+        );
   else
     update public.guides
       set current_revision_id = v_revision_id
       where id = v_guide_id;
   end if;
+
+  for v_subject in
+    select s.id, s.name
+      from public.subjects s
+      join public.guide_revision_subjects grs on grs.subject_id = s.id
+      where grs.guide_revision_id = v_revision_id
+        and s.slug is null
+      for update of s
+  loop
+    v_slug_base := lower(
+      trim(both '-' from regexp_replace(coalesce(v_subject.name, ''), '[^a-zA-Z0-9]+', '-', 'g'))
+    );
+    if v_slug_base = '' then
+      v_slug_base := 'subject';
+    end if;
+    v_slug := v_slug_base;
+    v_suffix := 1;
+    while exists (
+      select 1 from public.subjects where slug = v_slug
+    ) loop
+      v_suffix := v_suffix + 1;
+      v_slug := v_slug_base || '-' || v_suffix;
+    end loop;
+
+    update public.subjects set slug = v_slug where id = v_subject.id;
+  end loop;
 
   update public.subjects s
     set status = 'published'
@@ -241,90 +316,3 @@ end;
 $$;
 
 grant execute on function public.close_review_panel(uuid) to authenticated, service_role;
-
--- Same as 20260805120000_review_time_limits.sql except official panels sit out
--- the sweep.
-create or replace function public.sweep_expired_review_seats()
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  v_lock_acquired boolean;
-  v_seat record;
-  v_panel record;
-  v_new_member record;
-  v_replaced_count integer := 0;
-  v_assigned_count integer := 0;
-begin
-  v_lock_acquired := pg_try_advisory_xact_lock(hashtext('sweep_expired_review_seats'));
-  if not v_lock_acquired then
-    return jsonb_build_object(
-      'replaced_count', 0,
-      'assigned_count', 0,
-      'skipped', true
-    );
-  end if;
-
-  for v_seat in (
-    select pm.id as seat_id
-      from public.panel_members pm
-      join public.review_panels rp on rp.id = pm.panel_id
-      join public.review_cases rc on rc.id = rp.case_id
-      where rp.closed_at is null
-        and rc.status = 'in_review'
-        and rc.case_type not in ('official_publish', 'official_edit')
-        and pm.status = 'assigned'
-        and now() > pm.expires_at
-      order by pm.expires_at asc
-      limit 100
-      for update of pm skip locked
-  ) loop
-    update public.panel_members
-      set status = 'replaced'
-      where id = v_seat.seat_id;
-    v_replaced_count := v_replaced_count + 1;
-  end loop;
-
-  for v_panel in (
-    select
-      rp.id as panel_id,
-      rc.created_by,
-      rp.target_seat_count - count(pm.id) filter (
-        where pm.status in ('assigned', 'completed')
-      ) as needed
-      from public.review_panels rp
-      join public.review_cases rc on rc.id = rp.case_id
-      left join public.panel_members pm on pm.panel_id = rp.id
-      where rp.closed_at is null
-        and rc.status = 'in_review'
-        and rc.case_type not in ('official_publish', 'official_edit')
-      group by rp.id, rp.target_seat_count, rc.created_by
-      having rp.target_seat_count - count(pm.id) filter (
-        where pm.status in ('assigned', 'completed')
-      ) > 0
-      limit 100
-  ) loop
-    for v_new_member in (
-      select id
-        from public.eligible_panel_verifiers(v_panel.created_by, v_panel.panel_id)
-        order by random()
-        limit v_panel.needed
-    ) loop
-      insert into public.panel_members (panel_id, member_id, status, assigned_at)
-        values (v_panel.panel_id, v_new_member.id, 'assigned', now());
-      v_assigned_count := v_assigned_count + 1;
-    end loop;
-  end loop;
-
-  return jsonb_build_object(
-    'replaced_count', v_replaced_count,
-    'assigned_count', v_assigned_count,
-    'skipped', false
-  );
-end;
-$$;
-
-revoke execute on function public.sweep_expired_review_seats() from public;
-grant execute on function public.sweep_expired_review_seats() to service_role;
