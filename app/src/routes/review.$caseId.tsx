@@ -90,7 +90,7 @@ function RouteComponent() {
       slug: "",
       variant_slug: null,
       title: revision.title ?? "",
-      author: "",
+      author: revision.author_username,
       summary: revision.summary ?? null,
       body: revision.body ?? null,
       duration_minutes: revision.duration_minutes,
