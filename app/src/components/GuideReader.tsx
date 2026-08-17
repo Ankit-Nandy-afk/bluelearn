@@ -12,13 +12,14 @@ import type { ReactElement } from "react";
 import type { Guide } from "@bluelearn/schemas";
 import type { GuideType } from "@/types/guides";
 import { remarkCallout } from "@/lib/remarkCallout";
+import { remarkIndentedCodeAsParagraph } from "@/lib/remarkIndentedCodeAsParagraph";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/components/CodeBlock";
 import { Callout } from "@/components/Callout";
 import { GuideToc } from "@/components/GuideToc";
 
-import { formatDate, formatDuration } from "@/lib/guideUtils";
+import { formatDate, formatDuration, getHeadingId } from "@/lib/guideUtils";
 
 const sanitizeSchema = {
   ...defaultSchema,
@@ -147,6 +148,7 @@ export const GuideReader = ({
             remarkMath,
             remarkDirective,
             remarkCallout,
+            remarkIndentedCodeAsParagraph,
           ]}
           rehypePlugins={[
             rehypeRaw,

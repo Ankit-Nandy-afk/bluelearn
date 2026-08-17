@@ -41,7 +41,7 @@ export function SearchFilterMenu({ value, onChange }: Props) {
     value.scope || value.knowledgeType ? "text-brand-bright-blue" : "";
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           type="button"

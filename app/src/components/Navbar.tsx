@@ -101,7 +101,7 @@ export function Navbar() {
             {session ? (
               /* Desktop Profile Dropdown */
               <div className="hidden md:block">
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"

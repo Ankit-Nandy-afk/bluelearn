@@ -1,78 +1,37 @@
-## Baseline Requirements
+This guide serves as a convention manual for creating content in the BlueLearn knowledge graph. Adhering to these constraints is critical; publishing non-compliant guides will hurt the presentation and make maintenance more difficult for the DAG.
 
-**All guides must**:
+## 1. Core Principles
+- **Atomic Content**: Guides must explain one (and only one) **Primary Topic**. Knowledge dumps (long guides explaining multiple topics) must be split ("atomized") into multiple atomic guides.
+- **Narrative Tension**: Learning requires tension. Follow a progression of problem, struggle, and resolution. Do not put the conclusion first, as doing so increases the chance that the reader will discard the explanatory mechanism.
+- **Explanatory Focus**: Writers must dismantle their own assumptions and explain ideas step-by-step to newcomers. Repeat important concepts, but avoid over-repeating less important ones.
+- **Quality**: Guides must contain no spelling errors, be grammatically sound, and be easy to understand.
 
-- Contain no spelling errors.
-- Be grammatically sound.
-- Be easy to understand.
+## 2. Content & Scope
+- **Primary Topic**: This is the unique idea the guide centers around. It must be explicitly stated in the title and description.
+- **Prerequisites & Connections**: Guides must flow naturally from their prerequisite guides and use them to explain the current topic. They must not contradict previous guides. When connections are drawn between guides, the relationship must be explicitly stated in the text.
+- **Introducing New Concepts (Jargon)**: Jargon should be defined in a separate guide and only introduced and explained in a standard guide if it's core to the concept or practice being described. 
+    - Any other technical terms (Secondary Topics) must be covered in prerequisite guides. 
+    - Minimize jargon whenever possible. 
+    - Links should be used on all Jargon introduced, so they map directly to their definition guide.
+    - Guides which are composed of definitions alone (with the "Definition" subject tag) will be excluded from walkthroughs by default.
+- **Word Count**: The length of the guide should generally correspond to the total number of prerequisites plus the number of additional minor concepts introduced. Excessive word counts (500+ words) with few concepts usually mean the writer is being overly verbose or hiding simpler concepts instead of using prerequisites.
+- **Legal Compliance**: Guides must not contain copyrighted or illegal content.
 
-## Title & Summary
+## 3. Writing Style
+- **Voice**: Use an active, second-person voice (e.g., "You will then flip the pancake," not "The pancake will then be flipped") to increase immersion.
+- **Analogies & Metaphors**: Provide culturally neutral, tangible analogies for abstract ideas. Avoid culturally specific idioms or sports metaphors (e.g., "slam dunk", "home run"). Default to universal, physics-based metaphors (e.g., "push", "pull", "jump").
+- **Spatial References**: Do not use spatial references such as "as shown above" or "as shown below".
+- **Paragraph Length**: Paragraphs must not be longer than 4 sentences.
 
-Title of the guide must be declarative (a short explanation on what this guide is about). The summary is a brief description (3 sentences) explaining:
-
-1. What the guide will explain.
-2. When it will be applied/be useful.
-
-## Continuity
-
-- Have continuity with previous guides in the same Objective (i.e. must flow naturally from previous guides, and must be directly connected to those guides in terms of subject matter & explanation).
-- Do not contradict information in previous (prerequisite) guides.
-
-## Primary Topic
-
-- Explain one (and only one) **Primary** topic.
-- A Primary Topic is a unique idea or concept which the title, description, and content of a guide centers around.
-- A Primary Topic must be significant enough to warrant its own explanation, but not so broad as to have multiple interpretations.
-- The purpose of a guide is to hone in on & illuminate one, single interpretation of a concept (the Primary Topic), which is explicitly stated in the guide's title/description.
-
-## Secondary Topics
-- Secondary Topics are smaller ideas (which it is assumed the reader already understands) used to explain a Primary Topic.
-- If a Secondary Topic is technical in nature, it must be explained in a prerequisite or lower level guide, and a direct connection to the current Primary Topic must be drawn/set.
-- Knowledge Dumps (long, drawn-out guides which explain multiple topics or subjects) must be split up into multiple guides (one for each topic), before publication.
-
-## Knowledge Dumps
-- Knowledge Dumps which are submitted by authors _without_ being split up will be rejected by Verifiers.
-- The process of splitting a knowledge dump into multiple guides is also called "atomizing."
-
-Currently, Bluelearn's central focus is on "atomic" content.
-
-## Jargon
-"Jargon" is specialized or technical vocabulary, specific to a culture or sub-culture, which has a different - or no - meaning outside that culture.
-
-- **Minimize** the use of jargon.
-- **Always** assume that the person reading is brand new to the subject, aside from whatever they learned in previous (prerequisite) guides on the current path.
-- If/when jargon is introduced, it must be explicitly defined.
-- If jargon is attached to a Primary Concept, it must link to a relevant article/guide from a prerequisite (and a connection must be defined between that guide and the current guide you are writing).
-
-## Connections Between Guides
-
-- When connections are drawn between two or more guides, the reason for that connection must be clear to the user in the text of one of the guides.
-- For example, let's say you're writing a guide titled "Atomic Structure", and that guide is meant to be connected to a guide titled "What is a Chemical".
-  - In *either* the "What is a Chemical" guide or the "Atomic Structure" guide, (whichever comes later in the Objective, or whichever is higher level), there must be an in-text reference to the other, making it obvious that these two guides are related to each other.
-- In other words, connections between guides should be explicitly stated, not simply implied.
-
-## Explanation
-
-- Be explanatory.
-- The point of Bluelearn is to make it easy for anyone, including those with no prior knowledge, to become proficient in any subject. This requires writers to be good at explaining ideas to newcomers and laymen.
-- It's a mistake to assume that newcomers will understand concepts, ideas, and jargon that you've learned & trained with.
-- Becoming a great writer requires you dismantle each assumption, as well as your own thought process, and explain each relevant idea in a step-by-step manner.
-- Another mistake is not repeating important concepts enough, as well as over-repeating concepts which are less important.
-
-## Writing Style
-
-- If using an analogy, provide culturally neutral, tangible analogies for abstract formulas or ideas.
-- Active second person voice. "You will then flip the pancake" (good) vs "The pancake will then be flipped" (bad). This is to increase immersion.
-- Do not put the conclusion first. Learning requires narrative tension. The progression should be problem, struggle, resolution. Giving the answer immediately increases the chances of discarding the explanatory mechanism.
-- Must not have paragraphs longer than 4 sentences.
-- No culturally specific idioms or sports metaphors such as the term "home run", "slam dunk" (this is related to jargon). Use universal physics-based metaphors as the default option. (e.g. "push", "pull", "jump").
-
-## Images
-
-- **You are allowed to use images** to bolster your guide. Images must be complementary to guide itself, and must be placed at appropriate locations. For example, in a cooking recipe guide, images must correspond with appropriate steps in the recipe.
-
-- Images must be in the following format:
-  - .jpg
-  - .png
-  - .webp
-- Images must have a max file size of 10mb
+## 4. Formatting & Assets
+- **Title**: Must be declarative (stating exactly what the guide is about).
+- **Description**: Immediately underneath the title, provide a brief 3-sentence description stating:
+  1. What the guide will explain.
+  2. When it will be applied or useful.
+  3. What other guides it connects to.
+- **Headings**: Use Heading 3 (`###`) to characterize sections within the guide.
+- **Emphasis**: Use *italics* for general emphasis. Do not use italics for introducing minor concepts (use **boldface** instead).
+- **Images**: Images are allowed to bolster a guide but must be complementary and placed at appropriate locations (e.g., in a recipe guide, images should correspond to the appropriate steps).
+  - Allowed formats: `.jpg`, `.png`, `.webp`.
+  - Max file size: 10MB.
+  - IMAGES WITH TRANSPARENCY WILL NOT SHOW PROPERLY.  So make sure you do not use images with transparency on them.
