@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { NotFound } from "@/components/NotFound";
+import { ErrorFallback } from "@/components/ErrorFallback";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/authContext";
 import { ThemeProvider } from "@/lib/themeProvider";
@@ -36,6 +37,7 @@ export const Route = createRootRoute({
     ],
   }),
   notFoundComponent: () => <NotFound />,
+  errorComponent: ErrorFallback,
   shellComponent: RootDocument,
 });
 
