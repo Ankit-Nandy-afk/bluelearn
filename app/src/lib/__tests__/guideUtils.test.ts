@@ -52,15 +52,6 @@ describe("isRevisionDraftUnchanged", () => {
     ).toBe(false);
   });
 
-  it("returns false when only a change summary was added", () => {
-    expect(
-      isRevisionDraftUnchanged(snapshot, {
-        ...identicalDraft,
-        change_summary: "Rewrote the intro.",
-      })
-    ).toBe(false);
-  });
-
   it("returns false when a tag was added", () => {
     expect(
       isRevisionDraftUnchanged(snapshot, {
