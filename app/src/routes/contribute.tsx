@@ -4,6 +4,7 @@ import type { ContributionType } from "@/types/contributions";
 import ContributionFlow from "@/components/contribute/ContributionFlow";
 import { requireSession } from "@/lib/auth";
 import { RejectionFeedback } from "@/components/review/RejectionFeedback";
+import { ErrorFallback } from "@/components/ErrorFallback";
 
 export type ContributeSearch = {
   draft?: string;
@@ -54,6 +55,7 @@ export const Route = createFileRoute("/contribute")({
       todos,
     };
   },
+  errorComponent: ErrorFallback,
   component: RouteComponent,
 });
 
