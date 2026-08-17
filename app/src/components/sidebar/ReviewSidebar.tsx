@@ -59,7 +59,9 @@ export const ReviewSidebar = ({
 
   const subjects = revision?.tags ?? [];
 
-  const isEdit = revisionData.case.case_type === "guide_edit";
+  const isEdit =
+    revisionData.case.case_type === "guide_edit" ||
+    revisionData.case.case_type === "official_edit";
 
   const priorDecision = revisionData.viewer_decision;
   const hasVoted = priorDecision !== null;

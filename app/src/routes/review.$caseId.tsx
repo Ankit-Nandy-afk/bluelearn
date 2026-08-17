@@ -60,7 +60,9 @@ function RouteComponent() {
 
   // Only an edit has something to be compared against. A creation is the first
   // version of its guide, so there is no live revision to diff against.
-  const isEdit = revisionData.case.case_type === "guide_edit";
+  const isEdit =
+    revisionData.case.case_type === "guide_edit" ||
+    revisionData.case.case_type === "official_edit";
 
   const [view, setView] = useState<"guide" | "changes">("guide");
   const [diff, setDiff] = useState<RevisionDiffData | null>(null);

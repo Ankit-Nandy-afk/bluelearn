@@ -124,7 +124,7 @@ function CaseGrid({ cases }: { cases: Array<QueueCase> }) {
           <div className="rounded-md border bg-background p-4 shadow-none transition-colors hover:bg-muted">
             <div className="flex items-center justify-between">
               <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
-                {c.case_type === "guide_edit"
+                {c.case_type === "guide_edit" || c.case_type === "official_edit"
                   ? "Guide Revision"
                   : "Guide Creation"}
               </p>
