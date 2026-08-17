@@ -1,164 +1,120 @@
 import { useEffect, useState } from "react";
-import { Trash2, X } from "lucide-react";
-import type { VotingType } from "@/lib/api/votes";
-import { getVariantId } from "@/lib/api/guides";
-import { Route } from "@/routes/guides/$slug/index";
-import { downvoteReasons, submitVote } from "@/lib/api/votes";
+import { Trash2 } from "lucide-react";
 
+import type { DownvoteReason } from "@/lib/api/votes";
+import { downvoteReasonItems } from "@/lib/api/votes";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-import { Combobox } from "@/components/ui/combobox";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
+import { FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 
-// TODO: refactor
-
-type PropTypes = {
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
-  vote: VotingType;
-  setVote: (vote: VotingType) => void;
-  defaults: {
-    vote: string | null;
-    reason: string;
-    note: string;
-  };
+type PropsTypes = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  submitting: boolean;
+  existing: { reason: DownvoteReason | null; note: string | null } | null;
+  onSubmit: (reason: DownvoteReason, note: string) => void;
+  onRemove: () => void;
 };
 
 export const DownvoteModal = ({
-  isOpen,
-  setIsOpen,
-  vote,
-  setVote,
-  defaults,
-}: PropTypes) => {
-  const [reason, setReason] = useState<string>("");
-  const [note, setNote] = useState<string>("");
-  const [modified, setModified] = useState<boolean>(false);
-
-  const [submitted, setSubmitted] = useState<boolean>();
+  open,
+  onOpenChange,
+  submitting,
+  existing,
+  onSubmit,
+  onRemove,
+}: PropsTypes) => {
+  const [reason, setReason] = useState("");
+  const [note, setNote] = useState("");
 
   useEffect(() => {
-    if (isOpen && !modified) {
-      setReason(defaults.reason);
-      setNote(defaults.note);
-    }
+    if (!open) return;
+    setReason(existing?.reason ?? "");
+    setNote(existing?.note ?? "");
+  }, [open, existing]);
 
-    setSubmitted(defaults.vote === "down");
-  }, [isOpen]);
-
-  console.log("defaults:", defaults);
-  console.log("defaults.vote === 'down':", defaults.vote === "down");
-  console.log("submitted:", submitted);
-
-  const handleNoteChange = (note: string) => {
-    setModified(true);
-    setNote(note);
-  };
-  const handleReasonChange = (reason: string) => {
-    setModified(true);
-    setReason(reason);
-  };
-
-  const { slug } = Route.useParams();
-
-  const handleCancel = async () => {
-    const variantId = await getVariantId(slug);
-
-    if (vote !== null) {
-      const newVote = await submitVote(variantId, null);
-      setVote(newVote);
-    }
-
-    setIsOpen(false);
-    handleNoteChange("");
-    handleReasonChange("");
-    setSubmitted(false);
-  };
-
-  const handleSubmit = async () => {
-    const variantId = await getVariantId(slug);
-    const newVote = await submitVote(variantId, "down", reason, note);
-
-    if (reason === "") {
-      console.error("Downvote submission must contain reason");
-      return;
-    }
-
-    if (newVote !== "down") {
-      // TODO: handle case where downvote fails to submit
-      console.log("Failed to submit downvote");
-      setSubmitted(false);
-    }
-
-    setIsOpen(false);
-    setSubmitted(true);
-  };
-
-  const handleOpenChange = async (willOpen: boolean) => {
-    // Handle case where user closes out of dialog without clicking cancel
-    const beingDismissed = !willOpen && isOpen;
-    const beingOpened = willOpen && !isOpen;
-
-    if (beingDismissed) {
-      if (vote === "down") {
-        setIsOpen(false);
-        setVote("down");
-      } else await handleCancel();
-
-      return;
-    }
-
-    if (beingOpened && vote === "down") {
-      setIsOpen(true);
-      setVote("down");
-      return;
-    }
-
-    console.error("DownvoteModal is neither being opened nor bein closed");
-  };
-
-  const config = {
-    title: !submitted ? "Add Downvote" : "Modify Downvote",
-    removeVoteTitle: !submitted ? "Cancel" : "Delete",
-    removeVoteIcon: !submitted ? <X /> : <Trash2 />,
+  const handleSubmit = () => {
+    if (!reason || submitting) return;
+    onSubmit(reason as DownvoteReason, note.trim());
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogTitle>{config.title}</DialogTitle>
-        <DialogDescription className="sr-only">
-          Dialog to submit reasoning for downvote
-        </DialogDescription>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="gap-0 p-0 sm:max-w-md">
+        <DialogHeader className="gap-2 p-5 pb-0">
+          <span className="mono-micro text-muted-foreground">Downvote</span>
+          <DialogTitle className="editorial-heading text-lg">
+            {existing ? "Update your downvote" : "Why this downvote?"}
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            A downvote needs a reason so the author knows what to fix. Only the
+            reason is required; the note is yours to add if it helps.
+          </DialogDescription>
+        </DialogHeader>
 
-        <DialogHeader>Reason</DialogHeader>
-        <Combobox
-          items={downvoteReasons}
-          value={reason}
-          onValueChange={(reason) => handleReasonChange(reason)}
-        />
+        <div className="space-y-4 p-5">
+          <div className="space-y-2">
+            <FieldLabel className="text-xs">Reason</FieldLabel>
+            <Combobox
+              items={downvoteReasonItems}
+              value={reason}
+              onValueChange={setReason}
+              disabled={submitting}
+              modal
+            />
+          </div>
 
-        <DialogHeader>Note</DialogHeader>
-        <Textarea
-          value={note}
-          onChange={(e) => handleNoteChange(e.target.value)}
-          placeholder="State your reason here."
-        />
+          <div className="space-y-2">
+            <FieldLabel htmlFor="downvote-note" className="text-xs">
+              Note (optional)
+            </FieldLabel>
+            <Textarea
+              id="downvote-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              disabled={submitting}
+              placeholder="Add anything the author should know."
+            />
+          </div>
+        </div>
 
-        <DialogFooter>
-          <Button variant="destructive" size="lg" onClick={handleCancel}>
-            {config.removeVoteIcon} {config.removeVoteTitle}
-          </Button>
-          <Button variant="default" size="lg" onClick={handleSubmit}>
-            Submit
+        <DialogFooter className="p-5 pt-0">
+          {existing && (
+            <Button
+              variant="destructive"
+              size="lg"
+              className="mr-auto"
+              disabled={submitting}
+              onClick={onRemove}
+            >
+              <Trash2 className="h-4 w-4" />
+              Remove vote
+            </Button>
+          )}
+
+          <DialogClose asChild>
+            <Button variant="outline" size="lg" className="btn-sec">
+              Cancel
+            </Button>
+          </DialogClose>
+
+          <Button
+            size="lg"
+            className="btn-pri"
+            disabled={submitting || !reason}
+            onClick={handleSubmit}
+          >
+            {submitting ? "Submitting..." : "Submit"}
           </Button>
         </DialogFooter>
       </DialogContent>

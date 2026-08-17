@@ -30,6 +30,7 @@ type ComboboxBaseProps = {
   placeholder?: string;
   disabled?: boolean;
   invalid?: boolean;
+  modal?: boolean;
 };
 
 type SingleProps = ComboboxBaseProps & {
@@ -53,6 +54,7 @@ export function Combobox({
   onValueChange,
   disabled,
   invalid,
+  modal,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -78,7 +80,7 @@ export function Combobox({
 
   return (
     <div className="space-y-2">
-      <Popover modal={true} open={open} onOpenChange={setOpen}>
+      <Popover modal={modal} open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
