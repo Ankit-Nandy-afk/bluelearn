@@ -70,7 +70,8 @@ export function RegisterForm({
       return;
     }
 
-    if (!data.session) navigate({ to: "/verify-email", search: { email } });
+    if (!data.session)
+      navigate({ to: "/verify-email", search: { email, sent: true } });
   }
 
   return (
