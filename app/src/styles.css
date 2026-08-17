@@ -121,7 +121,7 @@
 
   html {
     @apply font-sans;
-    overflow-y: scroll !important; /* fallback */
+    overflow-y: scroll; /* fallback */
     /* Reserve space for the scrollbar so centered content (e.g. the navbar)
        doesn't shift when a scrollbar appears/disappears, such as when a
        Radix DropdownMenu opens. */
