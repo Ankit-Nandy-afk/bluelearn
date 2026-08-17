@@ -16,6 +16,7 @@ export const guideSchema = z.object({
   created_at: z.iso.datetime(),
   tags: z.array(subjectReferenceSchema),
   prerequisites: z.array(guideReferenceSchema),
+  is_official: z.boolean(),
 });
 
 export const walkthroughSchema = z.object({

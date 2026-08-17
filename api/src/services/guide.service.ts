@@ -277,7 +277,7 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
   const { data: guide, error } = await supabase
     .from("guide_bases")
     .select(
-      `id, slug, knowledge_type, status, created_at, updated_at, ${CANONICAL_CONTENT}`
+      `id, slug, knowledge_type, status, created_at, updated_at, is_official, ${CANONICAL_CONTENT}`
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -309,6 +309,7 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
     created_at: guide.created_at,
     tags: subjects.map((s) => ({ slug: s.slug, name: s.name })),
     prerequisites,
+    is_official: guide.is_official,
   };
 
   return detail;
