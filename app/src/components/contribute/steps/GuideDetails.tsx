@@ -438,17 +438,18 @@ export const GuideDetails = ({
                     key={index}
                     className="flex h-auto w-full items-start justify-between gap-1.5 rounded-md border border-input/20 px-3 py-1.5 text-left break-words whitespace-normal"
                   >
-                    <span className="min-w-0 flex-1 pr-2">
-                      <div className="break-words">
-                        <div>
-                          <span className="font-semibold">{todo.title}</span>
-                        </div>
-                        {todo.summary && (
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {todo.summary}
-                          </div>
-                        )}
+                    <span className="min-w-0 flex-1">
+                      <div className="truncate">
+                        <span className="text-sm leading-tight font-semibold">
+                          {todo.title}
+                        </span>
                       </div>
+
+                      {todo.summary && (
+                        <div className="mt-0.5 text-xs break-words text-muted-foreground">
+                          {todo.summary}
+                        </div>
+                      )}
                     </span>
 
                     <button
