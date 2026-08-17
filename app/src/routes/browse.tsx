@@ -19,6 +19,7 @@ import { GuideCard } from "@/components/cards/GuideCard";
 import { Pagination } from "@/components/Pagination";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchFilterMenu } from "@/components/SearchFilterMenu";
+import { ApiError } from "@/lib/api/apiHelpers";
 import { filtersToParams, search } from "@/lib/api/search";
 import { listGuidesPage } from "@/lib/api/guides";
 import { listObjectives } from "@/lib/api/objectives";
@@ -65,9 +66,8 @@ async function fetchGuides(
     );
     return guides;
   } catch (e) {
-    if (e instanceof Error && e.message.includes("404")) {
+    if (e instanceof ApiError && e.status === 404)
       return { found: 0, items: [] };
-    }
     throw e;
   }
 }
@@ -96,9 +96,8 @@ async function fetchObjectives(
     );
     return objectives;
   } catch (e) {
-    if (e instanceof Error && e.message.includes("404")) {
+    if (e instanceof ApiError && e.status === 404)
       return { found: 0, items: [] };
-    }
     throw e;
   }
 }
@@ -146,6 +145,7 @@ export const Route = createFileRoute("/browse")({
       ]);
       return { guides, objectives, error: null };
     } catch (e) {
+      if (signal.aborted) throw e;
       return {
         guides: null,
         objectives: null,
