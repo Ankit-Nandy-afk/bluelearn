@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   Link,
@@ -36,6 +36,7 @@ import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthroug
 import { DownvoteModal } from "@/components/modals/DownvoteModal";
 
 import { castVote, getMyVote, retractVote } from "@/lib/api/votes";
+import { getVariant } from "@/lib/api/variants";
 import { useAuth } from "@/lib/authContext";
 import { GuideSidebarActions } from "@/components/sidebar/GuideSidebarActions";
 import { GuideMobileMenu } from "@/components/GuideMobileMenu";
@@ -47,7 +48,23 @@ function useVote(variantId: string | null) {
   const userId = session?.user.id ?? null;
 
   const [vote, setVote] = useState<MyVote>(null);
+  const [tally, setTally] = useState({ up: 0, down: 0 });
   const [submitting, setSubmitting] = useState(false);
+
+  const loadTally = useCallback((id: string, signal?: AbortSignal) => {
+    return getVariant(id, { signal })
+      .then((variant) => setTally(variant.votes))
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    if (!variantId) return;
+
+    const controller = new AbortController();
+    loadTally(variantId, controller.signal);
+
+    return () => controller.abort();
+  }, [variantId, loadTally]);
 
   useEffect(() => {
     if (!variantId || !userId) {
@@ -80,6 +97,7 @@ function useVote(variantId: string | null) {
     setSubmitting(true);
     try {
       setVote(await run(variantId));
+      await loadTally(variantId);
       return true;
     } catch {
       toast.error(failure);
@@ -110,7 +128,7 @@ function useVote(variantId: string | null) {
       return null;
     }, "Could not remove your vote.");
 
-  return { vote, submitting, upvote, downvote, removeVote };
+  return { vote, tally, submitting, upvote, downvote, removeVote };
 }
 
 export const Route = createFileRoute("/guides/$slug/")({
@@ -128,7 +146,7 @@ function RouteComponent() {
   const { slug } = Route.useParams();
   const guide = Route.useLoaderData();
 
-  const { vote, submitting, upvote, downvote, removeVote } = useVote(
+  const { vote, tally, submitting, upvote, downvote, removeVote } = useVote(
     guide.variant_id
   );
   const [downvoteOpen, setDownvoteOpen] = useState(false);
@@ -226,6 +244,7 @@ function RouteComponent() {
                   color={vote?.direction === "up" ? "#3D80DD" : "#000000"}
                   fill={vote?.direction === "up" ? "#3D80DD" : "#FFFFFF"}
                 />
+                <span className="mono-micro">{tally.up}</span>
               </Button>
 
               <Button
@@ -241,6 +260,7 @@ function RouteComponent() {
                   color={vote?.direction === "down" ? "#3D80DD" : "#000000"}
                   fill={vote?.direction === "down" ? "#3D80DD" : "#FFFFFF"}
                 />
+                <span className="mono-micro">{tally.down}</span>
               </Button>
 
               <DownvoteModal
