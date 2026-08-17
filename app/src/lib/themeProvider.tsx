@@ -35,12 +35,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setTheme(prefersDark ? "dark" : "light");
   }, []);
 
-  function setTheme(theme: Theme) {
-    setThemeState(theme);
+  function setTheme(newTheme: Theme) {
+    setThemeState(newTheme);
 
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
 
-    localStorage.setItem("theme", theme);
+    localStorage.setItem("theme", newTheme);
   }
 
   return (
