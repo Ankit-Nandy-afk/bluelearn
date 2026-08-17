@@ -444,7 +444,13 @@ export async function listGuideVariants(
   }
 
   const canonicalId = base?.canonical_guide_id ?? null;
-  const all = data ?? [];
+  const scored = data ?? [];
+  const all = canonicalId
+    ? [
+        ...scored.filter((v) => v.id === canonicalId),
+        ...scored.filter((v) => v.id !== canonicalId),
+      ]
+    : scored;
   const from = (page - 1) * limit;
   const to = from + limit;
   const pageRows = all.slice(from, to);
