@@ -3,7 +3,9 @@ import { z } from "zod";
 export const subjectNameSchema = z
   .string()
   .min(3, { message: "Subject must be at least 3 characters long." })
-  .max(35, { message: "Subject can be no longer than 35 characters." });
+  .max(50, { message: "Subject can be no longer than 50 characters." });
+
+export const subjectSummarySchema = z.string().trim().max(500);
 
 export const subjectSlugSchema = z
   .string()

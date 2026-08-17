@@ -156,7 +156,7 @@ export const ObjectiveDetails = ({
               invalid("summary") && invalidClass
             )}
             rows={4}
-            maxLength={250}
+            maxLength={500}
             placeholder="Write a summary for the objective."
             required
             aria-invalid={invalid("summary")}
