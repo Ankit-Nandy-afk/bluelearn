@@ -320,7 +320,8 @@ export const GuideDetails = ({
                 <button
                   type="button"
                   aria-label={`Remove ${sub.name}`}
-                  className="text-muted-foreground hover:text-foreground"
+                  title={`Remove ${sub.name}`}
+                  className="rounded-full bg-transparent p-1.5 text-muted-foreground filter transition duration-150 outline-none hover:scale-105 hover:bg-muted/10 hover:text-foreground hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                   onClick={() =>
                     setGuideContData((prev) => ({
                       ...prev,
@@ -330,7 +331,7 @@ export const GuideDetails = ({
                     }))
                   }
                 >
-                  <X className="size-2.5" />
+                  <X className="size-3" />
                 </button>
               </Badge>
             ))}
@@ -453,7 +454,7 @@ export const GuideDetails = ({
                     <button
                       type="button"
                       aria-label={`Remove ${todo.title}`}
-                      className="flex-shrink-0 text-muted-foreground hover:text-foreground"
+                      className="flex-shrink-0 rounded-full bg-transparent p-1.5 text-muted-foreground filter transition duration-150 outline-none hover:scale-105 hover:bg-muted/10 hover:text-foreground hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                       onClick={() =>
                         setGuideContData((prev) => ({
                           ...prev,
@@ -463,7 +464,7 @@ export const GuideDetails = ({
                         }))
                       }
                     >
-                      <X className="size-2.5" />
+                      <X className="size-3" />
                     </button>
                   </div>
                 ))}
