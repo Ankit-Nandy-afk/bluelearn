@@ -14,7 +14,7 @@ import type { GuideType } from "@/types/guides";
 import { remarkCallout } from "@/lib/remarkCallout";
 import { remarkIndentedCodeAsParagraph } from "@/lib/remarkIndentedCodeAsParagraph";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components//ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/components/CodeBlock";
 import { Callout } from "@/components/Callout";
 import { GuideToc } from "@/components/GuideToc";
@@ -31,8 +31,6 @@ const sanitizeSchema = {
   tagNames: [...(defaultSchema.tagNames ?? []), "callout"],
 };
 
-// Tags only render as a name badge here, and a guide under review can carry
-// subjects whose slug is not minted yet, so either identifier will do.
 type ReaderTag = { id?: string; slug?: string; name: string };
 
 export type ReaderGuide = Omit<Guide, "tags" | "variant_id"> & {
@@ -96,12 +94,10 @@ export const GuideReader = ({
         </div>
 
         <div className="mono-micro my-2 flex flex-wrap items-center gap-2.5 text-muted-foreground">
-          {guide.author && (
-            <span className="flex items-center gap-1">
-              <User className="h-3 w-3 text-muted-foreground/75" />@
-              {guide.author}
-            </span>
-          )}
+          <span className="flex items-center gap-1">
+            <User className="h-3 w-3 text-muted-foreground/75" />@
+            {guide.author ?? "deleted_user"}
+          </span>
           <span className="flex items-center gap-1">
             <Calendar className="h-3 w-3 text-muted-foreground/75" />
             {createdLabel}
