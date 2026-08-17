@@ -431,20 +431,30 @@ export const GuideDetails = ({
               </div>
             </Field>
             {guideContData.todoPrereqs.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-1">
+              <div className="flex flex-col gap-2 px-1">
                 {guideContData.todoPrereqs.map((todo, index) => (
-                  <Badge
+                  <div
                     key={index}
-                    variant="outline"
-                    className="h-auto w-full items-start justify-between gap-1.5 rounded-md py-1.5 text-left break-words whitespace-normal"
+                    className="flex h-auto w-full items-start justify-between gap-1.5 rounded-md border border-input/20 px-3 py-1.5 text-left break-words whitespace-normal"
                   >
-                    {todo.summary
-                      ? `${todo.title} - ${todo.summary}`
-                      : todo.title}
+                    <span className="min-w-0 flex-1">
+                      <div className="truncate">
+                        <span className="text-sm leading-tight font-semibold">
+                          {todo.title}
+                        </span>
+                      </div>
+
+                      {todo.summary && (
+                        <div className="mt-0.5 text-xs break-words text-muted-foreground">
+                          {todo.summary}
+                        </div>
+                      )}
+                    </span>
+
                     <button
                       type="button"
                       aria-label={`Remove ${todo.title}`}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="flex-shrink-0 text-muted-foreground hover:text-foreground"
                       onClick={() =>
                         setGuideContData((prev) => ({
                           ...prev,
@@ -456,7 +466,7 @@ export const GuideDetails = ({
                     >
                       <X className="size-2.5" />
                     </button>
-                  </Badge>
+                  </div>
                 ))}
               </div>
             )}
