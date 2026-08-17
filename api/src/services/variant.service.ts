@@ -85,22 +85,38 @@ export async function archiveVariant(supabase: DB, id: string) {
   return data[0];
 }
 
-// Gets user's vote for variant
+type VoteRow = {
+  guide_id: string;
+  direction: Database["public"]["Enums"]["vote_direction"];
+  reason: Database["public"]["Enums"]["downvote_reason"] | null;
+  note: string | null;
+  updated_at: string;
+};
+
+function withoutNullReason(row: VoteRow) {
+  const { reason, ...rest } = row;
+  return reason === null
+    ? { ...rest, direction: "up" as const }
+    : { ...rest, direction: "down" as const, reason };
+}
+
 export async function getVote(supabase: DB, voterId: string, id: string) {
+  await requireVariant(supabase, id);
+
   const { data, error } = await supabase
     .from("votes")
-    .select("voter_id, guide_id, direction, reason, note")
+    .select("guide_id, direction, reason, note, updated_at")
     .eq("voter_id", voterId)
     .eq("guide_id", id)
-    .single();
+    .maybeSingle();
 
   if (error) {
-    console.log(error);
-    throw new ServiceError(`User vote or variant not found or permitted`, 404);
+    console.error(error);
+    throw new ServiceError("Failed to load vote", 500);
   }
-  if (!data) throw new ServiceError("User vote not found", 404);
+  if (!data) return null;
 
-  return data;
+  return withoutNullReason(data);
 }
 
 // Cast or update the caller's vote: one row per (voter, variant), re-voting
@@ -131,8 +147,7 @@ export async function castVote(
   if (error) throw new ServiceError("Unable to cast vote", 400);
   // reason belongs to downvotes only; drop the NULL so an upvote payload omits
   // it rather than carrying a non-enum null.
-  const { reason, ...rest } = data;
-  const vote = reason === null ? rest : { ...rest, reason };
+  const vote = withoutNullReason(data);
 
   // A vote can flip the canonical ranking. Best-effort: a failure here must
   // not roll back the vote, the cron reconciliation will catch up.

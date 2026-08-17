@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   Link,
   createFileRoute,
@@ -9,20 +10,17 @@ import {
   ArrowBigDown,
   ArrowBigUp,
   Ellipsis,
-  History,
   House,
   Pencil,
   Plus,
-  Replace,
-  Target,
-  Users,
 } from "lucide-react";
 
+import type { DownvoteReason } from "@/lib/api/votes";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
 import { buildBreadcrumbs } from "@/lib/breadcrumbs";
-import { getGuide, getVariantId } from "@/lib/api/guides";
+import { getGuide } from "@/lib/api/guides";
 
 import "katex/dist/katex.min.css";
 import { GuideSidebar } from "@/components/sidebar/GuideSidebar";
@@ -37,66 +35,82 @@ import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthroug
 
 import { DownvoteModal } from "@/components/modals/DownvoteModal";
 
-import { VariantsModal } from "@/components/guides/modals/VariantsModal";
-import { ObjectivesModal } from "@/components/guides/modals/ObjectivesModal";
-import { ContributorsModal } from "@/components/guides/modals/ContributorsModal";
-import { RevisionsModal } from "@/components/guides/modals/RevisionsModal";
-
-import { getVote, submitVote } from "@/lib/api/votes";
+import { castVote, getMyVote, retractVote } from "@/lib/api/votes";
+import { useAuth } from "@/lib/authContext";
 import { GuideSidebarActions } from "@/components/sidebar/GuideSidebarActions";
 import { GuideMobileMenu } from "@/components/GuideMobileMenu";
 
-type ModalType =
-  | "variants"
-  | "objectives"
-  | "contributors"
-  | "revisions"
-  | null;
+type MyVote = Awaited<ReturnType<typeof getMyVote>>;
 
-type SidebarActionItem = {
-  icon: typeof Replace;
-  label: string;
-  type: NonNullable<ModalType>;
-};
+function useVote(variantId: string | null) {
+  const { session } = useAuth();
+  const userId = session?.user.id ?? null;
 
-const SIDEBAR_ACTIONS: Array<SidebarActionItem> = [
-  { icon: Replace, label: "View Variants", type: "variants" },
-  { icon: Target, label: "View Objectives", type: "objectives" },
-  { icon: Users, label: "View Contributors", type: "contributors" },
-  { icon: History, label: "View Revisions", type: "revisions" },
-];
+  const [vote, setVote] = useState<MyVote>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-function useVote(slug: string) {
-  const [vote, setVote] = useState<"up" | "down" | null>(null);
+  useEffect(() => {
+    if (!variantId || !userId) {
+      setVote(null);
+      return;
+    }
 
-  // Fetches user vote from database
-  async function fetchVote() {
-    const variantId = await getVariantId(slug);
-    const vote = await getVote(variantId);
-    return vote;
-  }
+    const controller = new AbortController();
+    getMyVote(variantId, { signal: controller.signal })
+      .then(setVote)
+      .catch(() => {
+        if (!controller.signal.aborted) setVote(null);
+      });
 
-  const toggleVote = (type: "up" | "down" | null) => {
-    const next = vote === type ? null : type;
-    setVote(next);
-    return next;
+    return () => controller.abort();
+  }, [variantId, userId]);
+
+  // Every mutation reseeds from the server response, so a rejected vote never
+  // leaves the buttons showing something that was not stored.
+  const mutate = async (
+    run: (id: string) => Promise<MyVote>,
+    failure: string
+  ) => {
+    if (!variantId) return false;
+    if (!userId) {
+      toast.error("Sign in to vote on guides.");
+      return false;
+    }
+
+    setSubmitting(true);
+    try {
+      setVote(await run(variantId));
+      return true;
+    } catch {
+      toast.error(failure);
+      return false;
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  return {
-    vote,
-    setVote,
-    upvote: async () => {
-      const variantId = await getVariantId(slug);
-      const toggledVote = toggleVote("up");
-      const next = await submitVote(variantId, toggledVote);
-
-      if (next !== "up") {
-        // TODO: Alert user that vote could not be uploaded
+  const upvote = () =>
+    mutate(async (id) => {
+      if (vote?.direction === "up") {
+        await retractVote(id);
+        return null;
       }
-    },
-    downvote: () => toggleVote("down"),
-    fetchVote: () => fetchVote(),
-  };
+      return castVote(id, { direction: "up" });
+    }, "Could not save your vote.");
+
+  const downvote = (reason: DownvoteReason, note: string) =>
+    mutate(
+      (id) => castVote(id, { direction: "down", reason, note: note || null }),
+      "Could not save your downvote."
+    );
+
+  const removeVote = () =>
+    mutate(async (id) => {
+      await retractVote(id);
+      return null;
+    }, "Could not remove your vote.");
+
+  return { vote, submitting, upvote, downvote, removeVote };
 }
 
 export const Route = createFileRoute("/guides/$slug/")({
@@ -114,30 +128,10 @@ function RouteComponent() {
   const { slug } = Route.useParams();
   const guide = Route.useLoaderData();
 
-  const { vote, setVote, upvote, downvote, fetchVote } = useVote(slug);
-  const [activeModal, setActiveModal] = useState<ModalType>(null);
-
-  const [downvoteDefaults, setDownvoteDefaults] = useState({
-    vote: "",
-    reason: "",
-    note: "",
-  });
-
-  // Fetch vote on first page load
-  useEffect(() => {
-    // Get voting information if user has previously voted on guide
-    async function fetchData() {
-      const vote = await fetchVote();
-
-      setVote(vote.direction);
-      setDownvoteDefaults({
-        vote: vote.direction,
-        reason: vote.reason,
-        note: vote.note,
-      });
-    }
-    fetchData();
-  }, []);
+  const { vote, submitting, upvote, downvote, removeVote } = useVote(
+    guide.variant_id
+  );
+  const [downvoteOpen, setDownvoteOpen] = useState(false);
 
   const breadcrumbOrigin = useLocation({
     select: (location) => location.state.breadcrumbOrigin,
@@ -158,9 +152,6 @@ function RouteComponent() {
   ];
 
   const breadcrumbs = buildBreadcrumbs(guide.title, breadcrumbOrigin);
-
-  // Downvote dialog
-  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   return (
     <div className="mx-auto max-w-7xl bg-background">
@@ -222,35 +213,51 @@ function RouteComponent() {
                 View Walkthrough
               </Link>
 
-              <Button variant="outline" size="lg" onClick={() => upvote()}>
+              <Button
+                variant="outline"
+                size="lg"
+                aria-label="Upvote guide"
+                aria-pressed={vote?.direction === "up"}
+                disabled={!guide.variant_id || submitting}
+                onClick={() => upvote()}
+              >
                 <ArrowBigUp
                   className="h-4 w-4"
-                  color={vote == "up" ? "#3D80DD" : "#000000"}
-                  fill={vote == "up" ? "#3D80DD" : "#FFFFFF"}
+                  color={vote?.direction === "up" ? "#3D80DD" : "#000000"}
+                  fill={vote?.direction === "up" ? "#3D80DD" : "#FFFFFF"}
                 />
               </Button>
 
               <Button
                 variant="outline"
                 size="lg"
-                onClick={() => {
-                  if (vote !== "down") downvote();
-
-                  setIsOpen(true);
-                }}
+                aria-label="Downvote guide"
+                aria-pressed={vote?.direction === "down"}
+                disabled={!guide.variant_id || submitting}
+                onClick={() => setDownvoteOpen(true)}
               >
                 <ArrowBigDown
                   className="h-4 w-4"
-                  color={vote == "down" ? "#3D80DD" : "#000000"}
-                  fill={vote == "down" ? "#3D80DD" : "#FFFFFF"}
+                  color={vote?.direction === "down" ? "#3D80DD" : "#000000"}
+                  fill={vote?.direction === "down" ? "#3D80DD" : "#FFFFFF"}
                 />
               </Button>
+
               <DownvoteModal
-                isOpen={isOpen}
-                setIsOpen={setIsOpen}
-                vote={vote}
-                setVote={setVote}
-                defaults={downvoteDefaults}
+                open={downvoteOpen}
+                onOpenChange={setDownvoteOpen}
+                submitting={submitting}
+                existing={
+                  vote?.direction === "down"
+                    ? { reason: vote.reason, note: vote.note }
+                    : null
+                }
+                onSubmit={async (reason, note) => {
+                  if (await downvote(reason, note)) setDownvoteOpen(false);
+                }}
+                onRemove={async () => {
+                  if (await removeVote()) setDownvoteOpen(false);
+                }}
               />
 
               <GuideMobileMenu

@@ -184,20 +184,15 @@ export const variantsRouter = new Hono<HonoEnv>()
     }
   )
 
-  // Gets the caller's vote
-  .get(
-    "/:id/vote",
-    requireUser,
-    rateLimitMiddleware({ ...MODERATION, bucket: "vote-cast" }),
-    async (c) => {
-      const vote = await getVote(
-        c.get("supabase"),
-        c.get("user").id,
-        c.req.param("id")
-      );
-      return c.json({ vote });
-    }
-  )
+  // Returns the caller's own vote as { vote }, null when they have not voted.
+  .get("/:id/vote", requireUser, async (c) => {
+    const vote = await getVote(
+      c.get("supabase"),
+      c.get("user").id,
+      c.req.param("id")
+    );
+    return c.json({ vote });
+  })
 
   // Stores the caller's vote; returns { vote }.
   .put(
