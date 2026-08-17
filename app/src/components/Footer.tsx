@@ -6,7 +6,12 @@ import {
   FaXTwitter,
   FaYoutube,
 } from "react-icons/fa6";
+
 import type { IconType } from "react-icons";
+
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useTheme } from "@/lib/themeProvider";
 
 const BLUELEARN_OFFICIAL = import.meta.env.VITE_BLUELEARN_OFFICIAL;
 
@@ -40,6 +45,8 @@ const SOCIALS: Array<{ name: string; href: string; Icon: IconType }> = [
 ];
 
 export function Footer() {
+  const { theme, setTheme } = useTheme();
+
   return (
     <footer className="border-t bg-background">
       <div className="mx-auto flex max-w-[1280px] flex-col-reverse items-center gap-4 px-4 py-6 sm:flex-row sm:flex-wrap sm:justify-between sm:px-8 lg:px-16">
@@ -71,6 +78,17 @@ export function Footer() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-1">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="theme-switch"
+              checked={theme === "dark"}
+              onCheckedChange={(checked) => {
+                setTheme(checked ? "dark" : "light");
+              }}
+            />
+            <Label htmlFor="theme-switch">Dark Mode</Label>
+          </div>
+
           {SOCIALS.map(({ name, href, Icon }) => (
             <a
               key={name}
