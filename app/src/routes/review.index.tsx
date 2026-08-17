@@ -43,7 +43,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function RouteComponent() {
   const cases = Route.useLoaderData();
-  const access = useRequireRole("verifier");
+  const access = useRequireRole(["verifier", "admin"]);
 
   if (access === "pending") return null;
   if (access === "not-found") return <NotFound />;
