@@ -29,9 +29,9 @@ This guide serves as a convention manual for creating content in the BlueLearn k
   1. What the guide will explain.
   2. When it will be applied or useful.
   3. What other guides it connects to.
-- **Headings**: Use Heading 3 (`###`) to characterize sections within the guide.
+- **Headings**: Use headings 2-6 to characterize sections within the guide. Heading 1 is reserved for the guide title.
 - **Emphasis**: Use *italics* for general emphasis. Do not use italics for introducing minor concepts (use **boldface** instead).
 - **Images**: Images are allowed to bolster a guide but must be complementary and placed at appropriate locations (e.g., in a recipe guide, images should correspond to the appropriate steps).
   - Allowed formats: `.jpg`, `.png`, `.webp`.
   - Max file size: 10MB.
-  - IMAGES WITH TRANSPARENCY WILL NOT SHOW PROPERLY.  So make sure you do not use images with transparency on them.
+  - **IMAGES WITH TRANSPARENCY WILL NOT DISPLAY PROPERLY.** Please make sure you do not use images with transparent backgrounds.
