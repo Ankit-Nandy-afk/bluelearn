@@ -1,3 +1,8 @@
+-- An official panel seats every eligible admin, so its size can be even.
+-- assemble_review_panel still forces an odd draw for the verifier case types.
+alter table public.review_panels
+  drop constraint if exists review_panels_seat_count_odd;
+
 create or replace function public.eligible_panel_admins(
   p_created_by uuid,
   p_panel_id uuid default null
