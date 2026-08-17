@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { Check, ExternalLink, Scroll, X } from "lucide-react";
+import { Check, ExternalLink, Scroll, ShieldCheck, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 
@@ -59,7 +59,13 @@ export const ReviewSidebar = ({
 
   const subjects = revision?.tags ?? [];
 
-  const isEdit = revisionData.case.case_type === "guide_edit";
+  const isEdit =
+    revisionData.case.case_type === "guide_edit" ||
+    revisionData.case.case_type === "official_edit";
+
+  const isOfficial =
+    revisionData.case.case_type === "official_publish" ||
+    revisionData.case.case_type === "official_edit";
 
   const priorDecision = revisionData.viewer_decision;
   const hasVoted = priorDecision !== null;
@@ -211,12 +217,29 @@ export const ReviewSidebar = ({
             <DetailRow
               label="Case Type"
               value={
-                <Badge
-                  variant="outline"
-                  className="border-badge-border bg-badge font-mono tracking-[0.06em] text-badge-foreground uppercase"
-                >
-                  {isEdit ? "Guide Revision" : "Guide Creation"}
-                </Badge>
+                isOfficial ? (
+                  <Badge
+                    variant="outline"
+                    className="h-6 gap-0.5 border-badge-border bg-transparent font-mono tracking-[0.06em] text-primary uppercase [&>svg]:size-[18px]!"
+                  >
+                    <ShieldCheck
+                      className="fill-primary text-background"
+                      strokeWidth={2.5}
+                    />
+                    <span className="translate-y-[0.25px]">
+                      {isEdit
+                        ? "Official Guide Revision"
+                        : "Official Guide Creation"}
+                    </span>
+                  </Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className="border-badge-border bg-badge font-mono tracking-[0.06em] text-badge-foreground uppercase"
+                  >
+                    {isEdit ? "Guide Revision" : "Guide Creation"}
+                  </Badge>
+                )
               }
             />
             <DetailRow

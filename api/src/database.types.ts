@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -20,6 +40,7 @@ export type Database = {
           created_at: string
           forked_from_guide_base_id: string | null
           id: string
+          is_official: boolean
           knowledge_type: Database["public"]["Enums"]["knowledge_type"]
           slug: string | null
           status: Database["public"]["Enums"]["node_status"]
@@ -30,6 +51,7 @@ export type Database = {
           created_at?: string
           forked_from_guide_base_id?: string | null
           id?: string
+          is_official?: boolean
           knowledge_type: Database["public"]["Enums"]["knowledge_type"]
           slug?: string | null
           status?: Database["public"]["Enums"]["node_status"]
@@ -40,6 +62,7 @@ export type Database = {
           created_at?: string
           forked_from_guide_base_id?: string | null
           id?: string
+          is_official?: boolean
           knowledge_type?: Database["public"]["Enums"]["knowledge_type"]
           slug?: string | null
           status?: Database["public"]["Enums"]["node_status"]
@@ -1121,6 +1144,7 @@ export type Database = {
           guide_id: string | null
           guide_slug: string | null
           id: string | null
+          is_official: boolean | null
           knowledge_type: Database["public"]["Enums"]["knowledge_type"] | null
           revision_id: string | null
           status: Database["public"]["Enums"]["node_status"] | null
@@ -1177,6 +1201,12 @@ export type Database = {
           p_title?: string
         }
         Returns: string
+      }
+      eligible_panel_admins: {
+        Args: { p_created_by: string; p_panel_id?: string }
+        Returns: {
+          id: string
+        }[]
       }
       eligible_panel_verifiers: {
         Args: { p_created_by: string; p_panel_id?: string }
@@ -1242,9 +1272,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "verifier" | "moderator" | "curator" | "admin"
+      app_role: "verifier" | "moderator" | "curator" | "admin" | "official"
       case_status: "pending" | "in_review" | "approved" | "rejected"
-      case_type: "guide_publish" | "guide_edit"
+      case_type:
+        | "guide_publish"
+        | "guide_edit"
+        | "official_publish"
+        | "official_edit"
       decision_reason:
         | "hierarchy_issue"
         | "factual_error"
@@ -1396,11 +1430,19 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
-      app_role: ["verifier", "moderator", "curator", "admin"],
+      app_role: ["verifier", "moderator", "curator", "admin", "official"],
       case_status: ["pending", "in_review", "approved", "rejected"],
-      case_type: ["guide_publish", "guide_edit"],
+      case_type: [
+        "guide_publish",
+        "guide_edit",
+        "official_publish",
+        "official_edit",
+      ],
       decision_reason: [
         "hierarchy_issue",
         "factual_error",
@@ -1432,3 +1474,4 @@ export const Constants = {
     },
   },
 } as const
+

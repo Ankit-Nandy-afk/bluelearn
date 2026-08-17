@@ -7,7 +7,12 @@ export const reviewCaseStatusSchema = z.enum([
   "rejected",
 ]);
 
-export const reviewCaseTypeSchema = z.enum(["guide_publish", "guide_edit"]);
+export const reviewCaseTypeSchema = z.enum([
+  "guide_publish",
+  "guide_edit",
+  "official_publish",
+  "official_edit",
+]);
 
 export const reviewOutcomeSchema = z.enum(["approved", "rejected"]);
 

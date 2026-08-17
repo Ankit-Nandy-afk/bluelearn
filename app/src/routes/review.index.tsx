@@ -43,7 +43,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function RouteComponent() {
   const cases = Route.useLoaderData();
-  const access = useRequireRole("verifier");
+  const access = useRequireRole(["verifier", "admin"]);
 
   if (access === "pending") return null;
   if (access === "not-found") return <NotFound />;
@@ -114,46 +114,52 @@ function reviewerStatus(decision: QueueCase["decision"]) {
 function CaseGrid({ cases }: { cases: Array<QueueCase> }) {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      {cases.map((c) => (
-        <Link
-          key={c.id}
-          to={ReviewCaseIdRoute.to}
-          params={{ caseId: c.id }}
-          className="block"
-        >
-          <div className="rounded-md border bg-background p-4 shadow-none transition-colors hover:bg-muted">
-            <div className="flex items-center justify-between">
-              <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
-                {c.case_type === "guide_edit"
-                  ? "Guide Revision"
-                  : "Guide Creation"}
-              </p>
-              <Badge
-                variant="outline"
-                className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
-              >
-                {reviewerStatus(c.decision)}
-              </Badge>
+      {cases.map((c) => {
+        const isOfficial =
+          c.case_type === "official_publish" || c.case_type === "official_edit";
+        const isEdit =
+          c.case_type === "guide_edit" || c.case_type === "official_edit";
+
+        return (
+          <Link
+            key={c.id}
+            to={ReviewCaseIdRoute.to}
+            params={{ caseId: c.id }}
+            className="block"
+          >
+            <div className="rounded-md border bg-background p-4 shadow-none transition-colors hover:bg-muted">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
+                  {isOfficial ? "Official " : ""}
+                  {isEdit ? "Guide Revision" : "Guide Creation"}
+                </p>
+                <Badge
+                  variant="outline"
+                  className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"
+                >
+                  {reviewerStatus(c.decision)}
+                </Badge>
+              </div>
+
+              <h3 className="mt-2 text-xl font-semibold tracking-tight">
+                {c.title ?? "Untitled Guide"}
+              </h3>
+
+              <div>
+                <p className="mt-2 font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
+                  {new Date(c.created_at).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+
+                <CaseTimer expiresAt={c.expires_at} decision={c.decision} />
+              </div>
             </div>
-
-            <h3 className="mt-2 text-xl font-semibold tracking-tight">
-              {c.title ?? "Untitled Guide"}
-            </h3>
-
-            <div>
-              <p className="mt-2 font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
-                {new Date(c.created_at).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
-
-              <CaseTimer expiresAt={c.expires_at} decision={c.decision} />
-            </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
     </div>
   );
 }

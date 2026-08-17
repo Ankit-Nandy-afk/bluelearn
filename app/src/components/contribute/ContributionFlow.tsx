@@ -12,7 +12,7 @@ import type {
   VariantContribution,
 } from "@/types/contributions";
 import type { GuideType } from "@/types/guides";
-import type { Guide } from "@bluelearn/schemas";
+import type { ReaderGuide } from "@/components/GuideReader";
 import { addGuideVariant, createGuide, listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
@@ -515,7 +515,7 @@ function Inner({
 
   // Shape the in-progress form as a Guide, so the submit step can render it with
   // the same component the published page uses.
-  const previewGuide: Guide = useMemo(() => {
+  const previewGuide: ReaderGuide = useMemo(() => {
     const nameById = new Map(
       subjectOptions.map((s) => [s.id, s.name] as const)
     );
@@ -552,7 +552,7 @@ function Inner({
     };
   }, [guideContData, subjectOptions, guideOptions, username]);
 
-  const previewVariant: Guide = useMemo(() => {
+  const previewVariant: ReaderGuide = useMemo(() => {
     const nameById = new Map(
       subjectOptions.map((s) => [s.id, s.name] as const)
     );
