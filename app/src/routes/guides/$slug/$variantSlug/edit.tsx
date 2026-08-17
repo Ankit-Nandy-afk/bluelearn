@@ -266,6 +266,14 @@ function RouteComponent() {
           "No changes made to the guide, make a change and try again."
         );
         return;
+      } else if (
+        draftFields().change_summary === null ||
+        draftFields().change_summary === ""
+      ) {
+        toast.error(
+          "No changes summary provided, add a change summary and try again."
+        );
+        return;
       }
       const id = await persistDraft();
       await submitRevision(id);

@@ -74,7 +74,6 @@ export function isRevisionDraftUnchanged(
     sameField(original.title, draft.title) &&
     sameField(original.summary, draft.summary) &&
     sameField(original.body, draft.body) &&
-    sameField(original.change_summary, draft.change_summary) &&
     sameTags &&
     draft.newSubjects.length === 0
   );
