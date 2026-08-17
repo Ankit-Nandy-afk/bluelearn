@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { ShieldCheck } from "lucide-react";
 
 import type { QueueCase } from "@/lib/api/reviews";
 import { NotFound } from "@/components/NotFound";
@@ -123,11 +124,29 @@ function CaseGrid({ cases }: { cases: Array<QueueCase> }) {
         >
           <div className="rounded-md border bg-background p-4 shadow-none transition-colors hover:bg-muted">
             <div className="flex items-center justify-between">
-              <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
-                {c.case_type === "guide_edit" || c.case_type === "official_edit"
-                  ? "Guide Revision"
-                  : "Guide Creation"}
-              </p>
+              {c.case_type === "official_publish" ||
+              c.case_type === "official_edit" ? (
+                <Badge
+                  variant="outline"
+                  className="mono-micro h-6 gap-0.5 rounded-full border border-badge-border bg-transparent tracking-[0.08em] text-primary [&>svg]:size-[18px]!"
+                >
+                  <ShieldCheck
+                    className="fill-primary text-background"
+                    strokeWidth={2.5}
+                  />
+                  <span className="translate-y-[0.25px]">
+                    {c.case_type === "official_edit"
+                      ? "Official Guide Revision"
+                      : "Official Guide Creation"}
+                  </span>
+                </Badge>
+              ) : (
+                <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
+                  {c.case_type === "guide_edit"
+                    ? "Guide Revision"
+                    : "Guide Creation"}
+                </p>
+              )}
               <Badge
                 variant="outline"
                 className="mono-micro rounded-full border border-badge-border bg-badge tracking-[0.08em] text-badge-foreground"

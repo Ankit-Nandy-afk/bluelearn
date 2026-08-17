@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import remarkDirective from "remark-directive";
 
-import { BadgeCheck, Calendar, Clock, User } from "lucide-react";
+import { Calendar, Clock, ShieldCheck, User } from "lucide-react";
 import { createElement } from "react";
 import type { ReactElement } from "react";
 import type { Guide } from "@bluelearn/schemas";
@@ -90,10 +90,13 @@ export const GuideReader = ({
             {isOfficial && (
               <Badge
                 variant="outline"
-                className="mono-micro shrink-0 gap-1 rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
+                className="mono-micro h-6 shrink-0 gap-0.5 rounded-full border bg-transparent tracking-[0.08em] text-primary [&>svg]:size-[18px]!"
               >
-                <BadgeCheck className="h-3 w-3 text-primary" />
-                Official
+                <ShieldCheck
+                  className="fill-primary text-background"
+                  strokeWidth={2.5}
+                />
+                <span className="translate-y-[0.25px]">Official</span>
               </Badge>
             )}
             {guideType && (
