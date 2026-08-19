@@ -323,7 +323,8 @@ export const GuideDetails = ({
                 <button
                   type="button"
                   aria-label={`Remove ${sub.name}`}
-                  className="text-muted-foreground hover:text-foreground"
+                  title={`Remove ${sub.name}`}
+                  className="rounded-full bg-transparent p-1.5 text-muted-foreground filter transition duration-150 outline-none hover:scale-105 hover:bg-muted/10 hover:text-foreground hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                   onClick={() =>
                     setGuideContData((prev) => ({
                       ...prev,
@@ -333,7 +334,7 @@ export const GuideDetails = ({
                     }))
                   }
                 >
-                  <X className="size-2.5" />
+                  <X className="size-3" />
                 </button>
               </Badge>
             ))}
@@ -434,20 +435,29 @@ export const GuideDetails = ({
               </div>
             </Field>
             {guideContData.todoPrereqs.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-1">
+              <div className="flex flex-col gap-2 px-1">
                 {guideContData.todoPrereqs.map((todo, index) => (
-                  <Badge
+                  <div
                     key={index}
-                    variant="outline"
-                    className="h-auto w-full items-start justify-between gap-1.5 rounded-md py-1.5 text-left break-words whitespace-normal"
+                    className="flex h-auto w-full items-start justify-between gap-1.5 rounded-md border border-input/20 px-3 py-1.5 text-left break-words whitespace-normal"
                   >
-                    {todo.summary
-                      ? `${todo.title} - ${todo.summary}`
-                      : todo.title}
+                    <span className="min-w-0 flex-1 pr-2">
+                      <div className="break-words">
+                        <div>
+                          <span className="font-semibold">{todo.title}</span>
+                        </div>
+                        {todo.summary && (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {todo.summary}
+                          </div>
+                        )}
+                      </div>
+                    </span>
+
                     <button
                       type="button"
                       aria-label={`Remove ${todo.title}`}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="flex-shrink-0 rounded-full bg-transparent p-1.5 text-muted-foreground filter transition duration-150 outline-none hover:scale-105 hover:bg-muted/10 hover:text-foreground hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                       onClick={() =>
                         setGuideContData((prev) => ({
                           ...prev,
@@ -457,9 +467,9 @@ export const GuideDetails = ({
                         }))
                       }
                     >
-                      <X className="size-2.5" />
+                      <X className="size-3" />
                     </button>
-                  </Badge>
+                  </div>
                 ))}
               </div>
             )}
