@@ -346,7 +346,7 @@ export const GuideDetails = ({
             <Field className="space-y-2">
               <div className="space-y-1">
                 <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                  Prerequsite Guides
+                  Prerequisite Guides
                 </FieldLabel>
                 <FieldDescription className="text-xs">
                   Existing guides a reader should understand first.
@@ -377,7 +377,7 @@ export const GuideDetails = ({
             <Field className="space-y-2">
               <div className="space-y-1">
                 <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                  Todo Prerequsite Guides
+                  Todo Prerequisite Guides
                 </FieldLabel>
                 <FieldDescription className="text-xs">
                   Note missing prerequisite guides that don't exist yet.
@@ -389,7 +389,7 @@ export const GuideDetails = ({
                   id="todo-prereqs"
                   type="text"
                   maxLength={50}
-                  placeholder="Enter title of missing prerequsite guide."
+                  placeholder="Enter title of missing prerequisite guide."
                   className="h-10 rounded-md"
                   value={todoPrereq.title}
                   onChange={(e) =>
@@ -404,7 +404,7 @@ export const GuideDetails = ({
                   id="todo-prereq-summary"
                   type="text"
                   maxLength={500}
-                  placeholder="Enter summary of missing prerequsite guide."
+                  placeholder="Enter summary of missing prerequisite guide."
                   className="h-10 rounded-md"
                   value={todoPrereq.summary}
                   onChange={(e) =>
