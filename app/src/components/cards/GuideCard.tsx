@@ -1,14 +1,10 @@
 import { Link } from "@tanstack/react-router";
-
 import type { BreadcrumbOrigin } from "@/lib/breadcrumbs";
 import type { Route as GuideRoute } from "@/routes/guides/$slug/index";
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Footer } from "@/components/cards/Footer";
 
-// Only the fields the card renders. Callers pass a superset (a full static
-// Guide, or an API list item mapped to these keys).
 type GuideProp = {
   slug: string;
   title: string;
@@ -30,7 +26,6 @@ type PropTypes = {
 export const GuideCard = ({ guide, to, origin }: PropTypes) => {
   const card = (
     <Card className="group h-full rounded-md bg-background shadow-none transition-colors hover:bg-muted">
-      {/* Header */}
       <CardHeader className="relative p-4">
         <div className="flex items-center justify-between">
           <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
@@ -45,26 +40,19 @@ export const GuideCard = ({ guide, to, origin }: PropTypes) => {
             </Badge>
           )}
         </div>
-
         <h3 className="line-clamp-2 text-xl font-semibold tracking-tight">
           {guide.title}
         </h3>
-
         <div className="flex items-center justify-between text-sm">
           <p className="mono-micro text-muted-foreground">
-            @{guide.author} | {guide.created_at}
+            @{guide.author ?? "deleted_user"} | {guide.created_at}
           </p>
         </div>
       </CardHeader>
-
-      {/* Metadata */}
       <CardContent className="border-t p-4">
-        {/* Summary */}
         <p className="max-w-2xl text-sm text-muted-foreground">
           {guide.summary}
         </p>
-
-        {/* Tags */}
         <div className="flex flex-wrap gap-2 pt-4">
           {(guide.tags ?? []).map((tag) => {
             const slug = typeof tag === "string" ? tag : tag.slug;
@@ -81,18 +69,14 @@ export const GuideCard = ({ guide, to, origin }: PropTypes) => {
           })}
         </div>
       </CardContent>
-
-      {/* Footer */}
       {(guide.stats || guide.actionBtns) && (
         <Footer data={{ stats: guide.stats, actionBtns: guide.actionBtns }} />
       )}
     </Card>
   );
-
   if (!to) {
     return card;
   }
-
   return (
     <Link
       to={to}

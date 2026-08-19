@@ -61,7 +61,7 @@ function RouteComponent() {
       });
       if (!res.ok) {
         if (res.status === 409) {
-          throw new Error("Username already taken");
+          throw new Error("The username is already taken");
         }
         throw new Error(`Save failed: ${res.status}`);
       }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { Eye, EyeOff } from "lucide-react";
@@ -26,6 +26,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -41,6 +42,11 @@ export function LoginForm({
     setSubmitting(false);
 
     if (error) {
+      if (error.code === "email_not_confirmed") {
+        toast.error("Verify your email before signing in.");
+        navigate({ to: "/verify-email", search: { email, sent: false } });
+        return;
+      }
       toast.error(error.message);
       return;
     }

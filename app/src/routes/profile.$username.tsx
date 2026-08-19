@@ -73,7 +73,7 @@ function ProfilePage() {
     <div className="mx-auto max-w-7xl bg-background">
       <section className="border-b px-4 py-8 sm:px-8 sm:py-10 lg:px-16">
         <div className="mx-auto mb-6 flex w-full max-w-5xl flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-4">
-          <div className="flex w-full min-w-0 items-center gap-4 sm:w-auto sm:gap-5">
+          <div className="flex w-full min-w-0 flex-1 items-center gap-4 sm:gap-5">
             <Avatar className="size-20 shrink-0 bg-muted sm:size-28">
               <AvatarImage
                 src={getAvatarUrl(profile.id)}

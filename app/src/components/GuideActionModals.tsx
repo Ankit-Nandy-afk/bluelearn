@@ -16,7 +16,7 @@ export type GuideModalType =
   | "contributors"
   | "revisions";
 
-export const GUIDE_ACTIONS: Array<{
+const GUIDE_ACTIONS: Array<{
   icon: typeof Replace;
   label: string;
   type: GuideModalType;
@@ -27,12 +27,18 @@ export const GUIDE_ACTIONS: Array<{
   { icon: History, label: "View Revisions", type: "revisions" },
 ];
 
+export const guideActions = (isOfficial: boolean) =>
+  isOfficial
+    ? GUIDE_ACTIONS.filter((action) => action.type !== "variants")
+    : GUIDE_ACTIONS;
+
 type GuideActionModalsProps = {
   active: GuideModalType | null;
   onOpenChange: (open: boolean) => void;
   slug: string;
   currentVariantSlug: string | null;
   variantId: string | null;
+  isOfficial?: boolean;
 };
 
 export function GuideActionModals({
@@ -41,6 +47,7 @@ export function GuideActionModals({
   slug,
   currentVariantSlug,
   variantId,
+  isOfficial = false,
 }: GuideActionModalsProps) {
   const fetchContributors = useCallback(
     () => getVariantContributors(variantId ?? ""),
@@ -60,7 +67,7 @@ export function GuideActionModals({
   return (
     <>
       <VariantsModal
-        open={active === "variants"}
+        open={!isOfficial && active === "variants"}
         onOpenChange={onOpenChange}
         slug={slug}
         currentVariantSlug={currentVariantSlug}

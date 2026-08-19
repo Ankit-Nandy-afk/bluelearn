@@ -8,4 +8,8 @@ type CaseType = Database["public"]["Enums"]["case_type"];
 export const PANEL_POLICY_DEFAULTS: Record<CaseType, number> = {
   guide_publish: 3,
   guide_edit: 3,
+
+  // Official panels seat every eligible admin, so the RPC ignores these.
+  official_publish: 3,
+  official_edit: 3,
 };

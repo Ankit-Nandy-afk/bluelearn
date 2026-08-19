@@ -27,14 +27,14 @@ The schema deliberately keeps the database source of truth small:
 - `bio`: optional short profile text.
 - `is_suspended`: optional flag for moderation actions against a member, kept separate from roles so a role is not silently lost on suspension.
 
-`roles` is not a column on `profiles`. Every user is a `learner` implicitly; granted roles (`verifier`, `moderator`, `curator`, `admin`) live in `user_roles`.
+`roles` is not a column on `profiles`. Every user is a `learner` implicitly; granted roles (`verifier`, `moderator`, `curator`, `admin`, `official`) live in `user_roles`.
 
 ### `user_roles`
 
 The roles a user holds. A user may hold several at once (e.g. both `verifier` and `moderator`). `learner` is the implicit baseline and is not stored here; absence of any row means learner-only.
 
 - `user_id`: FK to `profiles.id`.
-- `role`: granted role enum `verifier | moderator | curator | admin`.
+- `role`: granted role enum `verifier | moderator | curator | admin | official`.
 - `granted_at`: when the role was granted.
 
 For now, roles are granted directly by an admin inserting the `user_roles` row. A self-service application flow is deferred for later; see [Role applications](#role-applications) under Not Yet Implemented.
@@ -48,6 +48,7 @@ A guide base is the graph node. It stores no content of its own, as all content 
 - `slug`: stable URL identifier. Derived from the first published revision's title and frozen at first publish, unique across all guide bases; never auto-changed by later title edits, exactly like `guides.slug`.
 - `knowledge_type`: `theoretical` (a grand explanation of something we can observe) or `practical` (a route to a specific, well-defined goal). Determines how the topic is structured and what its guides are called: `practical` guides display as **methods**, `theoretical` guides as **alternatives**.
 - `status`: draft lifecycle state (see enum below).
+- `is_official`: boolean, default `false`. `true` marks a BLUE-authored topic. An official base does not allow variants, and its publish and edit reviews go to admins rather than verifiers.
 - `created_at`: row creation time.
 - `updated_at`: last update time.
 - `forked_from_guide_base_id`: nullable self-reference. When a cross-subject conflict resolves into a **spin-off** (see `overall-system.md`), the guide base forks into a subject-specific version. This makes the spin-off an explicit, governed exception to "one canonical guide base per topic" instead of looking like an accidental duplicate. In practice, there will be a message/indicator saying something like "forked from {original-title}".
@@ -357,7 +358,7 @@ Verifier gates, post-publish re-reviews, disputes, and appeals all share the sam
 The item being reviewed.
 
 - `id`: primary key of the case.
-- `case_type`: what work the case represents: `guide_publish` | `guide_edit` | `dispute` | `appeal` | `re_review`.
+- `case_type`: what work the case represents: `guide_publish` | `guide_edit` | `official_publish` | `official_edit` | `dispute` | `appeal` | `re_review`.
 - `status`: lifecycle state: `pending` | `in_review` | `approved` | `rejected`.
 - `created_by`: the user who opened the case (author for publish/edit/appeal, filer for dispute).
 - `created_at`: when the case was created.
@@ -366,7 +367,7 @@ The item being reviewed.
 
 `review_panels`:
 
-An odd-numbered random group of panelists assembled to decide a case, drawn from the pool that matches the case type: **verifiers** for `guide_publish`/`guide_edit`, **moderators** for `re_review`/`dispute`/`appeal`.
+An odd-numbered random group of panelists assembled to decide a case, drawn from the pool that matches the case type: **verifiers** for `guide_publish`/`guide_edit`, **moderators** for `re_review`/`dispute`/`appeal`, **admins** for `official_publish`/`official_edit`.
 
 - `id`: primary key of the panel.
 - `case_id`: the case this panel decides (FK to `review_cases`). One case may have many panels.
@@ -381,7 +382,7 @@ Panelists seated on a panel. One row per seat per panel. Tracks each seat's life
 
 - `id`: primary key of the seat.
 - `panel_id`: the panel this seat belongs to (FK to `review_panels`).
-- `member_id`: the panelist (verifier or moderator) holding the seat (FK to `profiles.id`). 
+- `member_id`: the panelist (verifier, moderator, or admin) holding the seat (FK to `profiles.id`). 
 - `status`: seat lifecycle state (see enum below).
 - `assigned_at`: when the panelist was drawn onto the panel. The time limit counts from here.
 
@@ -417,7 +418,7 @@ A `rejected` decision must have at least one row here; an `approved` has none.
 
 Each attaches type-specific data to a `review_cases` row. `case_id` is both primary key and FK to `review_cases` → one satellite row per case.
 
-`guide_review_cases` (for `guide_publish`, `guide_edit`):
+`guide_review_cases` (for `guide_publish`, `guide_edit`, `official_publish`, `official_edit`):
 
 - `case_id`: PK and FK to `review_cases`.
 - `guide_revision_id`: FK to `guide_revisions` — the exact guide revision under review. All content lives in one revision table now, so this is a single FK (no polymorphic split). It pins the panel to the exact snapshot it judged, so the decision stays attached to specific content after later edits.
