@@ -16,6 +16,7 @@ This guide serves as a convention manual for creating content in the BlueLearn k
     - Guides which are composed of definitions alone (with the "Definition" subject tag) will be excluded from walkthroughs by default.
 - **Word Count**: The length of the guide should generally correspond to the total number of prerequisites plus the number of additional minor concepts introduced. Excessive word counts (500+ words) with few concepts usually mean the writer is being overly verbose or hiding simpler concepts instead of using prerequisites.
 - **Legal Compliance**: Guides must not contain copyrighted or illegal content.
+- **Disclaimers**: Guides with medical content must always contain at the top of the guide "Disclaimer: This article is for informational purposes only and does not constitute medical advice. Always consult a qualified healthcare provider for diagnosis and treatment recommendations."
 
 ## 3. Writing Style
 - **Voice**: Use an active, second-person voice (e.g., "You will then flip the pancake," not "The pancake will then be flipped") to increase immersion.
