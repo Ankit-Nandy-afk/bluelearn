@@ -182,8 +182,24 @@ export default function EditorToolbar({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [copied, setCopied] = useState(false);
   const [showWordCount, setShowWordCount] = useState(true);
+  const cleanText = markdown
+    // Remove HTML images completely
+    .replace(/<img\b[^>]*>/gi, "")
+    // Remove Markdown images completely
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    // Decode the spaces/tabs your editor produces
+    .replace(/&#x20;/g, " ")
+    .replace(/&#x9;/g, "\t");
+  // Treat Windows newlines as one character
+  const wordCountText = cleanText
+    // Newlines separate words, but are not themselves words
+    .replace(/\r\n/g, " ")
+    .replace(/\n/g, " ")
+    .replace(/\r/g, " ");
 
-  const wordCount = markdown.trim() ? markdown.trim().split(/\s+/).length : 0;
+  const wordCount = wordCountText.trim()
+    ? wordCountText.trim().split(/\s+/).length
+    : 0;
   const MAX_WORD_COUNT = 2500;
   const previousWordCountRef = useRef(wordCount);
 
@@ -199,9 +215,7 @@ export default function EditorToolbar({
 
     previousWordCountRef.current = wordCount;
   }, [wordCount]);
-  const characterCount = markdown
-    .replace(/&#x20;/g, " ")
-    .replace(/&#x9;/g, "\t").length;
+  const characterCount = cleanText.length;
 
   // Refs for hidden native buttons to trigger programmatically from our custom Popovers
   const linkRef = useRef<HTMLSpanElement>(null);
