@@ -717,6 +717,9 @@ math-field::part(menu-toggle):hover {
   color: hsl(var(--muted-foreground) / 0.7);
   user-select: none;
 }
+.editor-word-count.text-red-500 {
+  color: rgb(239 68 68);
+}
 
 @media (max-width: 639px) {
   .editor-only-container,

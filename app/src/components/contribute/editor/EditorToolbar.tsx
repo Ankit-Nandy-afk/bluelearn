@@ -41,6 +41,7 @@ import {
   Type,
   Upload,
 } from "lucide-react";
+import { toast } from "sonner";
 import { InsertBlockMath, InsertInlineMath } from "./MathLivePlugin";
 import MarkdownLinkImageShortcutListener from "./MarkdownLinkImageShortcutListener";
 import H1RestrictionListener from "./H1RestrictionListener.tsx";
@@ -183,10 +184,25 @@ export default function EditorToolbar({
   const [showWordCount, setShowWordCount] = useState(true);
 
   const wordCount = markdown.trim() ? markdown.trim().split(/\s+/).length : 0;
-  console.log(JSON.stringify(markdown));
+  const MAX_WORD_COUNT = 2500;
+  const previousWordCountRef = useRef(wordCount);
+
+  useEffect(() => {
+    if (
+      previousWordCountRef.current <= MAX_WORD_COUNT &&
+      wordCount > MAX_WORD_COUNT
+    ) {
+      toast.warning("Word count limit exceeded", {
+        description: `Your guide has ${wordCount.toLocaleString()} words. The maximum allowed is ${MAX_WORD_COUNT.toLocaleString()}.`,
+      });
+    }
+
+    previousWordCountRef.current = wordCount;
+  }, [wordCount]);
   const characterCount = markdown
     .replace(/&#x20;/g, " ")
     .replace(/&#x9;/g, "\t").length;
+
   // Refs for hidden native buttons to trigger programmatically from our custom Popovers
   const linkRef = useRef<HTMLSpanElement>(null);
   const tableRef = useRef<HTMLSpanElement>(null);
@@ -631,7 +647,11 @@ export default function EditorToolbar({
         />
       </div>
       {showWordCount && (
-        <div className="editor-word-count">
+        <div
+          className={`editor-word-count ${
+            wordCount > MAX_WORD_COUNT ? "text-red-500" : ""
+          }`}
+        >
           {wordCount.toLocaleString()} words
           <span className="mx-2">·</span>
           {characterCount.toLocaleString()} characters

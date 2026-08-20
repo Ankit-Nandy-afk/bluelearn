@@ -14,7 +14,7 @@ This guide serves as a convention manual for creating content in the BlueLearn k
     - Minimize jargon whenever possible. 
     - Links should be used on all Jargon introduced, so they map directly to their definition guide.
     - Guides which are composed of definitions alone (with the "Definition" subject tag) will be excluded from walkthroughs by default.
-- **Word Count**: The length of the guide should generally correspond to the total number of prerequisites plus the number of additional minor concepts introduced. Excessive word counts (500+ words) with few concepts usually mean the writer is being overly verbose or hiding simpler concepts instead of using prerequisites.
+- **Word Count**: The length of the guide should generally correspond to the total number of prerequisites plus the number of additional minor concepts introduced. Avoid unnecessary verbosity or hiding simpler concepts that should instead be prerequisites. Guides may contain up to 2,500 words; submissions exceeding this limit are not allowed.
 - **Legal Compliance**: Guides must not contain copyrighted or illegal content.
 - **Disclaimers**: Guides with medical content must always contain at the top of the guide "Disclaimer: This article is for informational purposes only and does not constitute medical advice. Always consult a qualified healthcare provider for diagnosis and treatment recommendations."
 
