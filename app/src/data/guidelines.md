@@ -28,7 +28,7 @@ This guide serves as a convention manual for creating content in the Bluelearn k
 ## 4. Formatting & Assets
 
 - **Title**: Must be declarative (stating exactly what the guide is about).
-- **S****ummary**: Provide a brief 1-3 sentence summary (also known as a "description") which states what the guide will explain, when it will be applied or useful, or what other guides it connects to.
+- **Summary**: Provide a brief 1-3 sentence summary (also known as a "description") which states what the guide will explain, when it will be applied or useful, or what other guides it connects to.
 - **Headings**: Use headings 2-6 to characterize sections within the guide. Heading 1 is reserved for the guide title.
 - **Emphasis**: Use _italics_ for general emphasis. Do not use italics for introducing minor concepts (use **boldface** instead).
 - **Images**: Images are allowed to bolster a guide but must be complementary and placed at appropriate locations (e.g., in a recipe guide, images should correspond to the appropriate steps).
