@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { describeRoute, validator } from "hono-openapi";
+import { describeRoute } from "hono-openapi";
 import { z } from "zod";
 import {
   meResponseSchema,
@@ -7,7 +7,7 @@ import {
   profilePageResponseSchema,
   updateProfileSchema,
 } from "@bluelearn/schemas";
-import { errorResponses, jsonContent } from "../lib/openapi";
+import { errorResponses, jsonContent, validate } from "../lib/openapi";
 import {
   getAuthenticatedUser,
   getServiceSupabase,
@@ -88,7 +88,7 @@ export const meRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "profile-update" }),
-    validator("json", updateProfileSchema),
+    validate("json", updateProfileSchema),
     async (c) => {
       const user = c.get("user");
       const { profile, roles } = await updateMyProfile(
@@ -138,7 +138,7 @@ export const profilesRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", usernameParamSchema),
+    validate("param", usernameParamSchema),
     async (c) => {
       const { user } = await getAuthenticatedUser(c);
       const page = await getProfilePage(

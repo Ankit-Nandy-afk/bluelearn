@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { describeRoute, validator } from "hono-openapi";
+import { describeRoute } from "hono-openapi";
 import { z } from "zod";
 import { requireUser } from "../middleware/auth.middleware";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
@@ -12,7 +12,7 @@ import {
   todoListResponseSchema,
   todoResponseSchema,
 } from "@bluelearn/schemas";
-import { errorResponses, jsonContent } from "../lib/openapi";
+import { errorResponses, jsonContent, validate } from "../lib/openapi";
 import {
   createPrerequisite,
   suspendPrerequisite,
@@ -36,7 +36,7 @@ export const prerequisitesRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "prerequisite-create" }),
-    validator("json", createPrerequisiteSchema),
+    validate("json", createPrerequisiteSchema),
     async (c) => {
       const { from_guide_base_id, to_guide_base_id } = c.req.valid("json");
       const edge = await createPrerequisite(
@@ -62,7 +62,7 @@ export const prerequisitesRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "prerequisite-suspend" }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const edge = await suspendPrerequisite(
         c.get("supabase"),
@@ -103,7 +103,7 @@ export const todosRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "todo-create" }),
-    validator("json", createTodoPrerequisiteSchema),
+    validate("json", createTodoPrerequisiteSchema),
     async (c) => {
       const { guide_base_id, title, summary } = c.req.valid("json");
       const todo = await createTodo(

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { describeRoute, validator } from "hono-openapi";
+import { describeRoute } from "hono-openapi";
 import { searchQuerySchema, searchResponseSchema } from "@bluelearn/schemas";
 import type { HonoEnv } from "../types";
-import { errorResponses, jsonContent } from "../lib/openapi";
+import { errorResponses, jsonContent, validate } from "../lib/openapi";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
 import { SEARCH } from "../middleware/rateLimits";
 import { searchCollections } from "../services/search.service";
@@ -22,7 +22,7 @@ export const searchRouter = new Hono<HonoEnv>()
       },
     }),
     rateLimitMiddleware({ ...SEARCH, bucket: "search" }),
-    validator("query", searchQuerySchema),
+    validate("query", searchQuerySchema),
     async (c) => {
       const results = await searchCollections(c.env, c.req.valid("query"));
       return c.json({ results }, 200);

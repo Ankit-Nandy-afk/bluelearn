@@ -1,4 +1,4 @@
-import { resolver } from "hono-openapi";
+import { resolver, validator } from "hono-openapi";
 import { z } from "zod";
 import type {
   GenerateSpecOptions,
@@ -7,6 +7,25 @@ import type {
 } from "hono-openapi";
 
 export const errorSchema = z.strictObject({ error: z.string() });
+
+const INVALID = {
+  json: "Invalid request body",
+  form: "Invalid request body",
+  query: "Invalid query parameters",
+  param: "Invalid path parameters",
+  header: "Invalid headers",
+  cookie: "Invalid cookies",
+};
+
+// Keeps validation failures in the { error } shape 400s are documented with.
+export const validate: typeof validator = (target, schema, _hook, options) =>
+  validator(
+    target,
+    schema,
+    (result, c) =>
+      result.success ? undefined : c.json({ error: INVALID[target] }, 400),
+    options
+  ) as never;
 
 export type JsonResponse = {
   description: string;

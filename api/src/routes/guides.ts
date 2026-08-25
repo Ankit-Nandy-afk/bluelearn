@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { describeRoute, validator } from "hono-openapi";
+import { describeRoute } from "hono-openapi";
 import { z } from "zod";
 import { requireUser } from "../middleware/auth.middleware";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
@@ -30,7 +30,7 @@ import {
   voteResponseSchema,
   walkthroughSchema,
 } from "@bluelearn/schemas";
-import { errorResponses, jsonContent } from "../lib/openapi";
+import { errorResponses, jsonContent, validate } from "../lib/openapi";
 import {
   addGuideVariant,
   archiveGuide,
@@ -97,7 +97,7 @@ export const guidesRouter = new Hono<HonoEnv>()
         ...errorResponses(400),
       },
     }),
-    validator("query", paginationSchema),
+    validate("query", paginationSchema),
     async (c) => {
       const { page, limit } = c.req.valid("query");
       const { data, total } = await listPublishedGuides(c.get("supabase"), {
@@ -125,7 +125,7 @@ export const guidesRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CREATE, bucket: "guide-create" }),
-    validator("json", createGuideBody),
+    validate("json", createGuideBody),
     async (c) => {
       const { revision_id } = await createGuide(
         c.get("supabase"),
@@ -147,7 +147,7 @@ export const guidesRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", slugParamSchema),
+    validate("param", slugParamSchema),
     async (c) => {
       const guide = await getGuideBySlug(
         c.get("supabase"),
@@ -171,7 +171,7 @@ export const guidesRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "guide-archive" }),
-    validator("param", slugParamSchema),
+    validate("param", slugParamSchema),
     async (c) => {
       const guide = await archiveGuide(
         c.get("supabase"),
@@ -197,7 +197,7 @@ export const guidesRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", slugParamSchema),
+    validate("param", slugParamSchema),
     async (c) => {
       const walkthrough = await getWalkthrough(
         c.get("supabase"),
@@ -221,8 +221,8 @@ export const guidesRouter = new Hono<HonoEnv>()
         ...errorResponses(400, 404),
       },
     }),
-    validator("param", slugParamSchema),
-    validator("query", paginationSchema),
+    validate("param", slugParamSchema),
+    validate("query", paginationSchema),
     async (c) => {
       const { page, limit } = c.req.valid("query");
       const { data, total } = await listGuideVariants(
@@ -251,8 +251,8 @@ export const guidesRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "variant-create" }),
-    validator("param", slugParamSchema),
-    validator("json", createVariantBody),
+    validate("param", slugParamSchema),
+    validate("json", createVariantBody),
     async (c) => {
       const { revision_id } = await addGuideVariant(
         c.get("supabase"),
@@ -278,7 +278,7 @@ export const guidesRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", slugParamSchema),
+    validate("param", slugParamSchema),
     async (c) => {
       const { objectives, total } = await listObjectivesForGuide(
         c.get("supabase"),
@@ -299,7 +299,7 @@ export const guidesRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", variantSlugParamSchema),
+    validate("param", variantSlugParamSchema),
     async (c) => {
       const { slug, variantSlug } = c.req.valid("param");
       const { variant } = await getVariantBySlug(
@@ -323,7 +323,7 @@ export const variantsRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const { variant } = await getVariant(
         c.get("supabase"),
@@ -347,7 +347,7 @@ export const variantsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "variant-archive" }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const variant = await archiveVariant(
         c.get("supabase"),
@@ -370,7 +370,7 @@ export const variantsRouter = new Hono<HonoEnv>()
       },
     }),
     requireUser,
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const vote = await getVote(
         c.get("supabase"),
@@ -395,8 +395,8 @@ export const variantsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...MODERATION, bucket: "vote-cast" }),
-    validator("param", idParamSchema),
-    validator("json", castVoteSchema),
+    validate("param", idParamSchema),
+    validate("json", castVoteSchema),
     async (c) => {
       const { vote } = await castVote(
         c.get("supabase"),
@@ -422,7 +422,7 @@ export const variantsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...MODERATION, bucket: "vote-retract" }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       await retractVote(
         c.get("supabase"),
@@ -444,7 +444,7 @@ export const variantsRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const { contributors } = await listVariantContributors(
         c.get("supabase"),
@@ -468,8 +468,8 @@ export const variantsRouter = new Hono<HonoEnv>()
         ...errorResponses(400, 404),
       },
     }),
-    validator("param", idParamSchema),
-    validator("query", paginationSchema),
+    validate("param", idParamSchema),
+    validate("query", paginationSchema),
     async (c) => {
       const { page, limit } = c.req.valid("query");
       const { data, total } = await listVariantRevisions(
@@ -498,7 +498,7 @@ export const variantsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "variant-revision-create" }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const { revision_id } = await createVariantRevision(
         c.get("supabase"),
@@ -523,8 +523,8 @@ export const variantsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "variant-rollback" }),
-    validator("param", idParamSchema),
-    validator("json", rollbackRevisionSchema),
+    validate("param", idParamSchema),
+    validate("json", rollbackRevisionSchema),
     async (c) => {
       const { revision_id } = await rollbackVariant(
         c.get("supabase"),
@@ -555,7 +555,7 @@ export const guideRevisionsRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const {
         revision,
@@ -599,8 +599,8 @@ export const guideRevisionsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "guide-revision-update" }),
-    validator("param", idParamSchema),
-    validator("json", updateRevisionSchema),
+    validate("param", idParamSchema),
+    validate("json", updateRevisionSchema),
     async (c) => {
       const { revision, subjects } = await updateRevision(
         c.get("supabase"),
@@ -626,7 +626,7 @@ export const guideRevisionsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "guide-revision-submit" }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const { review_case_id } = await submitRevision(
         c.get("supabase"),
@@ -652,7 +652,7 @@ export const guideRevisionsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "guide-revision-revise" }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const { revision_id } = await reviseRevision(
         c.get("supabase"),
@@ -673,7 +673,7 @@ export const guideRevisionsRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const { from, to, fields } = await diffWithPrevious(
         c.get("supabase"),
@@ -694,7 +694,7 @@ export const guideRevisionsRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", diffParamSchema),
+    validate("param", diffParamSchema),
     async (c) => {
       const { id, otherId } = c.req.valid("param");
       const { from, to, fields } = await diffRevisions(

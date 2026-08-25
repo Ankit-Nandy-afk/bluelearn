@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { describeRoute, validator } from "hono-openapi";
+import { describeRoute } from "hono-openapi";
 import { z } from "zod";
 import {
   createDecisionSchema,
@@ -9,7 +9,7 @@ import {
   reviewDecisionResponseSchema,
   reviewQueueResponseSchema,
 } from "@bluelearn/schemas";
-import { errorResponses, jsonContent } from "../lib/openapi";
+import { errorResponses, jsonContent, validate } from "../lib/openapi";
 import {
   getAuthenticatedUser,
   getServiceSupabase,
@@ -45,7 +45,7 @@ export const reviewsRouter = new Hono<HonoEnv>()
       },
     }),
     requireUser,
-    validator("query", paginationSchema),
+    validate("query", paginationSchema),
     async (c) => {
       const { page, limit } = c.req.valid("query");
       const { data, total } = await getReviewQueue(
@@ -89,7 +89,7 @@ export const reviewsRouter = new Hono<HonoEnv>()
         ...errorResponses(403, 404),
       },
     }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const { user } = await getAuthenticatedUser(c);
       const result = await getReviewCase(
@@ -116,8 +116,8 @@ export const reviewsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...MODERATION, bucket: "review-decision" }),
-    validator("param", idParamSchema),
-    validator("json", createDecisionSchema),
+    validate("param", idParamSchema),
+    validate("json", createDecisionSchema),
     async (c) => {
       const input = c.req.valid("json");
       const id = c.req.valid("param").id;

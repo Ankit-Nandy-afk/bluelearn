@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { describeRoute, validator } from "hono-openapi";
+import { describeRoute } from "hono-openapi";
 import { z } from "zod";
 import { requireUser } from "../middleware/auth.middleware";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
@@ -23,7 +23,7 @@ import {
   updateObjectiveNodeSchema,
   updateObjectiveRevisionSchema,
 } from "@bluelearn/schemas";
-import { errorResponses, jsonContent } from "../lib/openapi";
+import { errorResponses, jsonContent, validate } from "../lib/openapi";
 import {
   archiveObjective,
   createObjective,
@@ -64,7 +64,7 @@ export const objectivesRouter = new Hono<HonoEnv>()
         ...errorResponses(400),
       },
     }),
-    validator("query", paginationSchema),
+    validate("query", paginationSchema),
     async (c) => {
       const { page, limit } = c.req.valid("query");
       const { data, total } = await listPublishedObjectives(c.get("supabase"), {
@@ -92,7 +92,7 @@ export const objectivesRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CREATE, bucket: "objective-create" }),
-    validator("json", createObjectiveSchema),
+    validate("json", createObjectiveSchema),
     async (c) => {
       const { revision_id } = await createObjective(
         c.get("supabase"),
@@ -116,7 +116,7 @@ export const objectivesRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", slugParamSchema),
+    validate("param", slugParamSchema),
     async (c) => {
       const { objective, snapshot } = await getObjectiveBySlug(
         c.get("supabase"),
@@ -143,7 +143,7 @@ export const objectivesRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "objective-archive" }),
-    validator("param", slugParamSchema),
+    validate("param", slugParamSchema),
     async (c) => {
       const objective = await archiveObjective(
         c.get("supabase"),
@@ -172,8 +172,8 @@ export const objectivesRouter = new Hono<HonoEnv>()
         ...errorResponses(400, 404),
       },
     }),
-    validator("param", slugParamSchema),
-    validator("query", paginationSchema),
+    validate("param", slugParamSchema),
+    validate("query", paginationSchema),
     async (c) => {
       const { page, limit } = c.req.valid("query");
       const { data, total } = await listObjectiveRevisions(
@@ -205,7 +205,7 @@ export const objectivesRouter = new Hono<HonoEnv>()
       ...CONTRIBUTION,
       bucket: "objective-revision-create",
     }),
-    validator("param", slugParamSchema),
+    validate("param", slugParamSchema),
     async (c) => {
       const { revision_id } = await createObjectiveRevision(
         c.get("supabase"),
@@ -227,7 +227,7 @@ export const objectivesRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", slugParamSchema),
+    validate("param", slugParamSchema),
     async (c) => {
       const { contributors } = await listObjectiveContributors(
         c.get("supabase"),
@@ -253,7 +253,7 @@ export const objectiveRevisionsRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const { revision, objective, snapshot, subjects } =
         await getObjectiveRevision(c.get("supabase"), c.req.valid("param").id);
@@ -282,8 +282,8 @@ export const objectiveRevisionsRouter = new Hono<HonoEnv>()
       ...CONTRIBUTION,
       bucket: "objective-revision-update",
     }),
-    validator("param", idParamSchema),
-    validator("json", updateObjectiveRevisionSchema),
+    validate("param", idParamSchema),
+    validate("json", updateObjectiveRevisionSchema),
     async (c) => {
       const { revision, subjects } = await updateObjectiveRevision(
         c.get("supabase"),
@@ -309,8 +309,8 @@ export const objectiveRevisionsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "objective-node-update" }),
-    validator("param", nodeParamSchema),
-    validator("json", updateObjectiveNodeSchema),
+    validate("param", nodeParamSchema),
+    validate("json", updateObjectiveNodeSchema),
     async (c) => {
       const { id, baseId } = c.req.valid("param");
       const { node } = await updateObjectiveNode(
@@ -337,7 +337,7 @@ export const objectiveRevisionsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "objective-publish" }),
-    validator("param", idParamSchema),
+    validate("param", idParamSchema),
     async (c) => {
       const id = c.req.valid("param").id;
       const { slug } = await publishObjectiveRevision(c.get("supabase"), id);
@@ -367,8 +367,8 @@ export const objectiveRevisionsRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...CONTRIBUTION, bucket: "objective-rollback" }),
-    validator("param", idParamSchema),
-    validator("json", rollbackRevisionSchema),
+    validate("param", idParamSchema),
+    validate("json", rollbackRevisionSchema),
     async (c) => {
       const { revision_id } = await rollbackObjectiveRevision(
         c.get("supabase"),
@@ -390,7 +390,7 @@ export const objectiveRevisionsRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", diffParamSchema),
+    validate("param", diffParamSchema),
     async (c) => {
       const { id, otherId } = c.req.valid("param");
       const { from, to, fields, targets } = await diffObjectiveRevisions(

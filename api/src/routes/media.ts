@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { describeRoute, validator } from "hono-openapi";
+import { describeRoute } from "hono-openapi";
 import { requireUser } from "../middleware/auth.middleware";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware";
 import { HEAVY } from "../middleware/rateLimits";
@@ -8,7 +8,7 @@ import {
   mediaUploadResponseSchema,
   mediaUploadSchema,
 } from "@bluelearn/schemas";
-import { errorResponses, jsonContent } from "../lib/openapi";
+import { errorResponses, jsonContent, validate } from "../lib/openapi";
 
 import { uploadRevisionMedia } from "../services/media.service";
 
@@ -28,7 +28,7 @@ export const mediaRouter = new Hono<HonoEnv>()
     }),
     requireUser,
     rateLimitMiddleware({ ...HEAVY, bucket: "media-upload" }),
-    validator("form", mediaUploadSchema),
+    validate("form", mediaUploadSchema),
     async (c) => {
       const { file, revision_id } = c.req.valid("form");
       const asset = await uploadRevisionMedia(

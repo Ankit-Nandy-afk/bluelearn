@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { describeRoute, validator } from "hono-openapi";
+import { describeRoute } from "hono-openapi";
 import { z } from "zod";
 import {
   paginationSchema,
@@ -9,7 +9,7 @@ import {
   subjectObjectivesResponseSchema,
   subjectResponseSchema,
 } from "@bluelearn/schemas";
-import { errorResponses, jsonContent } from "../lib/openapi";
+import { errorResponses, jsonContent, validate } from "../lib/openapi";
 import type { HonoEnv } from "../types";
 import {
   getSubjectBySlug,
@@ -33,7 +33,7 @@ export const subjectsRouter = new Hono<HonoEnv>()
         ...errorResponses(400),
       },
     }),
-    validator("query", paginationSchema),
+    validate("query", paginationSchema),
     async (c) => {
       const { page, limit } = c.req.valid("query");
       const { data, total } = await listSubjects(c.get("supabase"), {
@@ -71,7 +71,7 @@ export const subjectsRouter = new Hono<HonoEnv>()
         ...errorResponses(404),
       },
     }),
-    validator("param", slugParamSchema),
+    validate("param", slugParamSchema),
     async (c) => {
       const subject = await getSubjectBySlug(
         c.get("supabase"),
@@ -92,8 +92,8 @@ export const subjectsRouter = new Hono<HonoEnv>()
         ...errorResponses(400, 404),
       },
     }),
-    validator("param", slugParamSchema),
-    validator("query", paginationSchema),
+    validate("param", slugParamSchema),
+    validate("query", paginationSchema),
     async (c) => {
       const { page, limit } = c.req.valid("query");
       const { data, total } = await listSubjectGuides(
@@ -116,8 +116,8 @@ export const subjectsRouter = new Hono<HonoEnv>()
         ...errorResponses(400, 404),
       },
     }),
-    validator("param", slugParamSchema),
-    validator("query", paginationSchema),
+    validate("param", slugParamSchema),
+    validate("query", paginationSchema),
     async (c) => {
       const { page, limit } = c.req.valid("query");
       const { data, total } = await listSubjectObjectives(
