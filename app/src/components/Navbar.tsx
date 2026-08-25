@@ -16,13 +16,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/Logo";
 
-// `role`, when set, hides the item from anyone who doesn't hold it.
-const navItems: Array<{ label: string; to: string; role?: string }> = [
+// `roles`, when set, hides the item from anyone holding none of them.
+const navItems: Array<{ label: string; to: string; roles?: Array<string> }> = [
   { label: "Browse", to: "/browse" },
   { label: "Subjects", to: "/subjects" },
   { label: "Objectives", to: "/objectives" },
   { label: "Todo", to: "/todos" },
-  { label: "Review", to: "/review", role: "verifier" },
+  { label: "Review", to: "/review", roles: ["verifier", "admin"] },
 ];
 
 // Profile isn't here because its link needs the signed-in username.
@@ -35,7 +35,7 @@ export function Navbar() {
   const navigate = useNavigate();
 
   const visibleNavItems = navItems.filter(
-    (item) => !item.role || roles.includes(item.role)
+    (item) => !item.roles || item.roles.some((r) => roles.includes(r))
   );
 
   function handleSearch(e: React.FormEvent) {
@@ -101,7 +101,7 @@ export function Navbar() {
             {session ? (
               /* Desktop Profile Dropdown */
               <div className="hidden md:block">
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"

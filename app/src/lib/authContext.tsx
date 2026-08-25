@@ -111,7 +111,7 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-export function useRequireRole(role: string) {
+export function useRequireRole(role: string | Array<string>) {
   const { session, roles, loading, rolesLoading } = useAuth();
   const navigate = useNavigate();
   const resolving = loading || rolesLoading;
@@ -121,7 +121,11 @@ export function useRequireRole(role: string) {
   }, [resolving, session, navigate]);
 
   if (resolving || !session) return "pending" as const;
-  return roles.includes(role) ? ("allowed" as const) : ("not-found" as const);
+
+  const allowed = Array.isArray(role) ? role : [role];
+  return allowed.some((r) => roles.includes(r))
+    ? ("allowed" as const)
+    : ("not-found" as const);
 }
 
 // Redirect already-authed users away from auth-only pages (login, register).

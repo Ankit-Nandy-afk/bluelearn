@@ -1,5 +1,11 @@
 import { useEffect, useRef } from "react";
+import { z } from "zod";
 import type { ContributionType } from "@/types/contributions";
+import {
+  guideContributionSchema,
+  objectiveContributionSchema,
+  variantContributionSchema,
+} from "@/types/contributions";
 
 const STORAGE_KEYS: Record<ContributionType, string> = {
   guide: "bluelearn:contrib:guide",
@@ -14,23 +20,57 @@ export interface PersistedContributionDraft<T> {
   updatedAt: number;
 }
 
+// Checks a draft read back from local storage.
+const persistedDraftSchema = (data: z.ZodType) =>
+  z.object({
+    data,
+    revisionId: z
+      .string()
+      .nullish()
+      .transform((v) => v ?? null),
+    step: z.string().optional(),
+    updatedAt: z.number(),
+  });
+
+const DRAFT_SCHEMAS: Record<ContributionType, z.ZodType> = {
+  guide: persistedDraftSchema(guideContributionSchema),
+  variant: persistedDraftSchema(variantContributionSchema),
+  objective: persistedDraftSchema(objectiveContributionSchema),
+};
+
 /**
  * Safely reads a contribution draft from localStorage.
  * Handles SSR (returns null when window is not defined) and JSON parse errors.
+ * A draft that doesn't match the expected shape is dropped and cleared, since
+ * loading one into form state crashes the first render that touches it.
  */
 export function getStoredDraft<T>(
   type: ContributionType
 ): PersistedContributionDraft<T> | null {
   if (typeof window === "undefined") return null;
 
+  let parsed: unknown;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEYS[type]);
     if (!raw) return null;
-    return JSON.parse(raw) as PersistedContributionDraft<T>;
+    parsed = JSON.parse(raw);
   } catch (error) {
     console.warn(`Failed to read stored draft for ${type}:`, error);
+    clearStoredDraft(type);
     return null;
   }
+
+  const result = DRAFT_SCHEMAS[type].safeParse(parsed);
+  if (!result.success) {
+    console.warn(
+      `Discarding malformed stored draft for ${type}:`,
+      result.error
+    );
+    clearStoredDraft(type);
+    return null;
+  }
+
+  return result.data as PersistedContributionDraft<T>;
 }
 
 /**

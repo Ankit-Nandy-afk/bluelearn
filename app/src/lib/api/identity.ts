@@ -17,6 +17,18 @@ export async function deleteMyAccount() {
   await assertOk(res);
 }
 
+export async function isUsernameAvailable(username: string) {
+  try {
+    const res = await client.profiles[":username"].$get({
+      param: { username },
+    });
+
+    return !res.ok;
+  } catch {
+    return true;
+  }
+}
+
 export async function getProfilePage(
   username: string,
   { signal }: FetchOptions = {}

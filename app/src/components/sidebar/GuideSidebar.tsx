@@ -5,7 +5,7 @@ import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { extractHeadings } from "@/lib/guideUtils";
 
 type PropTypes = {
-  guide: Omit<Guide, "variant_id">;
+  guide: Omit<Guide, "variant_id" | "is_official">;
   slug: string;
   sidebarActions?: React.ReactNode;
   reviewSection?: React.ReactNode;
@@ -43,10 +43,16 @@ export const GuideSidebar = ({
                       ? 12
                       : h.level === 3
                         ? 24
-                        : 28,
+                        : h.level === 4
+                          ? 36
+                          : h.level === 5
+                            ? 48
+                            : 60,
               }}
             >
-              {h.text}
+              <Link to="." hash={h.id} className="block w-full py-1">
+                {h.text}
+              </Link>
             </li>
           ))}
         </ul>

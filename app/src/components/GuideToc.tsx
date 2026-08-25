@@ -48,10 +48,16 @@ export function GuideToc({ body }: { body: string }) {
                       ? 12
                       : h.level === 3
                         ? 24
-                        : 28,
+                        : h.level === 4
+                          ? 36
+                          : h.level === 5
+                            ? 48
+                            : 60,
               }}
             >
-              {h.text}
+              <a href={`#${h.id}`} className="block w-full py-1">
+                {h.text}
+              </a>
             </li>
           ))}
         </ul>

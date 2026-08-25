@@ -72,7 +72,7 @@ function RouteComponent() {
     <SubjectsPage>
       <section>
         {/* Desktop */}
-        <div className="hidden md:grid md:grid-cols-[320px_1fr]">
+        <div className="hidden md:grid md:grid-cols-[320px_1fr] md:items-start">
           <SubjectSidebar groups={groups} />
 
           <SubjectsGrid subjects={subjects} />

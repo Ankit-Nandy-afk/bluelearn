@@ -30,22 +30,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Route as GuideWalkthroughRoute } from "@/routes/guides/$slug/walkthrough";
+
+import { DownvoteModal } from "@/components/modals/DownvoteModal";
+
+import { useVote } from "@/lib/useVote";
 import { GuideSidebarActions } from "@/components/sidebar/GuideSidebarActions";
 import { GuideMobileMenu } from "@/components/GuideMobileMenu";
-
-function useVote() {
-  const [vote, setVote] = useState<"up" | "down" | null>(null);
-
-  const toggleVote = (type: "up" | "down") => {
-    setVote((current) => (current === type ? null : type));
-  };
-
-  return {
-    vote,
-    upvote: () => toggleVote("up"),
-    downvote: () => toggleVote("down"),
-  };
-}
 
 export const Route = createFileRoute("/guides/$slug/")({
   loader: async ({ params, abortController }) => {
@@ -62,7 +52,10 @@ function RouteComponent() {
   const { slug } = Route.useParams();
   const guide = Route.useLoaderData();
 
-  const { vote, upvote, downvote } = useVote();
+  const { vote, tally, submitting, upvote, downvote, removeVote } = useVote(
+    guide.variant_id
+  );
+  const [downvoteOpen, setDownvoteOpen] = useState(false);
 
   const breadcrumbOrigin = useLocation({
     select: (location) => location.state.breadcrumbOrigin,
@@ -74,11 +67,15 @@ function RouteComponent() {
       to: `/guides/${slug}/${guide.variant_slug}/edit`,
       icon: <Pencil className="h-4 w-4" />,
     },
-    {
-      label: "Create Variant",
-      to: "/contribute",
-      icon: <Plus className="h-4 w-4" />,
-    },
+    ...(guide.is_official
+      ? []
+      : [
+          {
+            label: "Create Variant",
+            to: "/contribute",
+            icon: <Plus className="h-4 w-4" />,
+          },
+        ]),
     // { label: "Report", to: "/report", <Flag className="h-4 w-4" /> },// TODO: Implement post v1
   ];
 
@@ -93,6 +90,7 @@ function RouteComponent() {
               slug={slug}
               currentVariantSlug={guide.variant_slug}
               variantId={guide.variant_id}
+              isOfficial={guide.is_official}
             />
           }
           guide={guide}
@@ -144,21 +142,54 @@ function RouteComponent() {
                 View Walkthrough
               </Link>
 
-              <Button variant="outline" size="lg" onClick={() => upvote()}>
+              <Button
+                variant="outline"
+                size="lg"
+                aria-label="Upvote guide"
+                aria-pressed={vote?.direction === "up"}
+                disabled={!guide.variant_id || submitting}
+                onClick={() => upvote()}
+              >
                 <ArrowBigUp
                   className="h-4 w-4"
-                  color={vote == "up" ? "#3D80DD" : "#000000"}
-                  fill={vote == "up" ? "#3D80DD" : "#FFFFFF"}
+                  color={vote?.direction === "up" ? "#3D80DD" : "#000000"}
+                  fill={vote?.direction === "up" ? "#3D80DD" : "#FFFFFF"}
                 />
+                <span className="mono-micro">{tally.up}</span>
               </Button>
 
-              <Button variant="outline" size="lg" onClick={() => downvote()}>
+              <Button
+                variant="outline"
+                size="lg"
+                aria-label="Downvote guide"
+                aria-pressed={vote?.direction === "down"}
+                disabled={!guide.variant_id || submitting}
+                onClick={() => setDownvoteOpen(true)}
+              >
                 <ArrowBigDown
                   className="h-4 w-4"
-                  color={vote == "down" ? "#3D80DD" : "#000000"}
-                  fill={vote == "down" ? "#3D80DD" : "#FFFFFF"}
+                  color={vote?.direction === "down" ? "#3D80DD" : "#000000"}
+                  fill={vote?.direction === "down" ? "#3D80DD" : "#FFFFFF"}
                 />
+                <span className="mono-micro">{tally.down}</span>
               </Button>
+
+              <DownvoteModal
+                open={downvoteOpen}
+                onOpenChange={setDownvoteOpen}
+                submitting={submitting}
+                existing={
+                  vote?.direction === "down"
+                    ? { reason: vote.reason, note: vote.note }
+                    : null
+                }
+                onSubmit={async (reason, note) => {
+                  if (await downvote(reason, note)) setDownvoteOpen(false);
+                }}
+                onRemove={async () => {
+                  if (await removeVote()) setDownvoteOpen(false);
+                }}
+              />
 
               <GuideMobileMenu
                 slug={slug}
@@ -167,6 +198,7 @@ function RouteComponent() {
                 guideTitle={guide.title}
                 menuItems={guideMenuItems}
                 prerequisites={guide.prerequisites}
+                isOfficial={guide.is_official}
               />
 
               <DropdownMenu>
@@ -198,7 +230,12 @@ function RouteComponent() {
 
           {/* Header */}
 
-          <GuideReader guide={guide} showToc />
+          <GuideReader
+            guide={guide}
+            guideType={guide.knowledge_type}
+            showToc
+            isOfficial={guide.is_official}
+          />
         </main>
       </section>
     </div>

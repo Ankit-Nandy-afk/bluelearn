@@ -138,7 +138,10 @@ export const VariantDetails = ({
 
           <Combobox
             items={guides
-              .filter((g): g is typeof g & { slug: string } => !!g.slug)
+              .filter(
+                (g): g is typeof g & { slug: string } =>
+                  !!g.slug && !g.is_official
+              )
               .map((g) => {
                 return {
                   value: g.slug,
