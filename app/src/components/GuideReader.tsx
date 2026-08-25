@@ -28,7 +28,7 @@ const sanitizeSchema = {
     img: [...(defaultSchema.attributes?.img ?? []), "width", "height"],
     callout: ["type"],
   },
-  tagNames: [...(defaultSchema.tagNames ?? []), "callout"],
+  tagNames: [...(defaultSchema.tagNames ?? []), "callout", "u"],
 };
 
 type ReaderTag = { id?: string; slug?: string; name: string };
