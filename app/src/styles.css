@@ -247,6 +247,10 @@
   .markdown img {
     @apply my-4 h-auto max-w-full rounded-lg;
   }
+
+  .markdown a {
+    @apply text-primary underline;
+  }
 }
 
 /* == COMPONENT UTILITIES == */
