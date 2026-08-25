@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { subjectReferenceSchema } from "../subjects";
+import { subjectReferenceSchema } from "../subjects/references";
 import { contributorSchema } from "../identity/responses";
 import { guideStatusSchema, knowledgeTypeSchema } from "./enums";
 import { guideReferenceSchema } from "./references";
@@ -13,7 +13,7 @@ export const guideSchema = z.object({
   summary: z.string().nullable(),
   body: z.string().nullable(),
   duration_minutes: z.number().int(),
-  created_at: z.iso.datetime(),
+  created_at: z.iso.datetime({ offset: true }),
   tags: z.array(subjectReferenceSchema),
   prerequisites: z.array(guideReferenceSchema),
   is_official: z.boolean(),
@@ -44,7 +44,7 @@ export const guideListItemSchema = z.object({
   knowledge_type: knowledgeTypeSchema,
   summary: z.string().nullable(),
   status: guideStatusSchema,
-  created_at: z.iso.datetime(),
+  created_at: z.iso.datetime({ offset: true }),
   author: z.string().nullable(),
   duration_minutes: z.number().int(),
   tags: z.array(subjectReferenceSchema),

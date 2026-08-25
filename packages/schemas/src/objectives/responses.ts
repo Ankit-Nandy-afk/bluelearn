@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { diffLineSchema, fieldDiffSchema, revisionRefSchema } from "../diff";
-import { subjectReferenceSchema } from "../subjects";
+import { subjectReferenceSchema } from "../subjects/references";
 import { guideReferenceSchema } from "../guides/references";
 
 export const objectiveNodeSchema = z.object({
@@ -25,7 +25,7 @@ export const objectiveSchema = z.object({
   title: z.string().nullable(),
   summary: z.string().nullable(),
   curator: z.string().nullable(),
-  created_at: z.iso.datetime(),
+  created_at: z.iso.datetime({ offset: true }),
   tags: z.array(subjectReferenceSchema),
   current_revision_id: z.uuid().nullable(),
   guides_total: z.number().int(),
@@ -47,7 +47,7 @@ export const objectiveListItemSchema = z.object({
   title: z.string().nullable(),
   summary: z.string().nullable(),
   curator: z.string().nullable(),
-  created_at: z.iso.datetime(),
+  created_at: z.iso.datetime({ offset: true }),
   guides_total: z.number().int(),
   duration_minutes: z.number().int(),
   featured_sub_objective: z.array(featuredNodeSchema),

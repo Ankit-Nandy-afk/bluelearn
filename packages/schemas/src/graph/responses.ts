@@ -10,7 +10,7 @@ export const todoListItemSchema = z.object({
   summary: z.string(),
   status: todoStatusSchema,
   claim_count: z.number().int(),
-  created_at: z.iso.datetime(),
+  created_at: z.iso.datetime({ offset: true }),
 });
 
 export type TodoStatus = z.infer<typeof todoStatusSchema>;
