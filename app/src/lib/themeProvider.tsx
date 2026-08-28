@@ -11,36 +11,35 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof document === "undefined") return "light";
+const STORAGE_KEY = "theme";
 
-    return document.documentElement.classList.contains("dark")
-      ? "dark"
-      : "light";
-  });
+// gets theme from client - set theme before the page first renders
+function resolveTheme(): Theme {
+  const saved = localStorage.getItem(STORAGE_KEY);
+
+  if (saved === "dark" || saved === "light") {
+    return saved;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  // keeps client render consistent with server light markup - avoid hydration mismatch then applies the actual theme after hydration
+  const [theme, setThemeState] = useState<Theme>("light");
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme") as Theme | null;
-
-    if (saved) {
-      setTheme(saved);
-      return;
-    }
-
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
-
-    setTheme(prefersDark ? "dark" : "light");
+    setTheme(resolveTheme());
   }, []);
 
-  function setTheme(theme: Theme) {
-    setThemeState(theme);
+  function setTheme(newTheme: Theme) {
+    setThemeState(newTheme);
 
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
 
-    localStorage.setItem("theme", theme);
+    localStorage.setItem(STORAGE_KEY, newTheme);
   }
 
   return (

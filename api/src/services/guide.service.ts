@@ -35,12 +35,13 @@ type GuideCardRow = Pick<
   | "revision_id"
   | "summary"
   | "word_count"
+  | "is_official"
 >;
 
 // Columns of published_guides a card needs.
 export const PUBLISHED_GUIDE_SELECT =
   `id, base_slug, title, knowledge_type, status, created_at,
-   author_id, revision_id, summary, word_count` as const;
+   author_id, revision_id, summary, word_count, is_official` as const;
 
 type WalkthroughRPC = {
   nodes: (Omit<Walkthrough["nodes"][number], "duration_minutes"> & {
@@ -162,6 +163,7 @@ export async function buildGuideListItems(
     author: card.author_id ? (usernames.get(card.author_id) ?? null) : null,
     duration_minutes: readingMinutes(card.word_count ?? 0),
     tags: tagsByRevision.get(card.revision_id!) ?? [],
+    is_official: card.is_official!,
   }));
 }
 
@@ -277,7 +279,7 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
   const { data: guide, error } = await supabase
     .from("guide_bases")
     .select(
-      `id, slug, knowledge_type, status, created_at, updated_at, ${CANONICAL_CONTENT}`
+      `id, slug, knowledge_type, status, created_at, updated_at, is_official, ${CANONICAL_CONTENT}`
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -303,12 +305,14 @@ export async function getGuideBySlug(supabase: DB, rawSlug: string) {
     variant_slug: canonical?.slug ?? null,
     title: current?.title ?? "",
     author: authorId ? (usernames.get(authorId) ?? "") : "",
+    knowledge_type: guide.knowledge_type,
     summary: current?.summary ?? null,
     body: current?.body ?? null,
     duration_minutes: readingMinutes(current?.word_count ?? 0),
     created_at: guide.created_at,
     tags: subjects.map((s) => ({ slug: s.slug, name: s.name })),
     prerequisites,
+    is_official: guide.is_official,
   };
 
   return detail;
@@ -444,7 +448,13 @@ export async function listGuideVariants(
   }
 
   const canonicalId = base?.canonical_guide_id ?? null;
-  const all = data ?? [];
+  const scored = data ?? [];
+  const all = canonicalId
+    ? [
+        ...scored.filter((v) => v.id === canonicalId),
+        ...scored.filter((v) => v.id !== canonicalId),
+      ]
+    : scored;
   const from = (page - 1) * limit;
   const to = from + limit;
   const pageRows = all.slice(from, to);
@@ -508,6 +518,7 @@ export async function getVariantBySlug(
     .from("guides")
     .select(
       `id, guide_base_id, slug, status, author_id,
+       base:guide_bases!guides_guide_base_id_fkey(is_official, knowledge_type),
        current:guide_revisions!guides_current_revision_id_fkey(id, title, summary, body, word_count, created_at)`
     )
     .eq("guide_base_id", baseId)
@@ -539,7 +550,7 @@ export async function getVariantBySlug(
     throw new ServiceError("Failed to load vote tally", 500);
   }
 
-  const { author_id, current, ...rest } = variant;
+  const { author_id, current, base, ...rest } = variant;
 
   return {
     variant: {
@@ -557,6 +568,8 @@ export async function getVariantBySlug(
       tags: tags.map((s) => ({ slug: s.slug, name: s.name })),
       duration_minutes: readingMinutes(current?.word_count ?? 0),
       votes: { up: tally?.upvotes ?? 0, down: tally?.downvotes ?? 0 },
+      is_official: base?.is_official ?? false,
+      knowledge_type: base?.knowledge_type ?? "theoretical",
     },
   };
 }

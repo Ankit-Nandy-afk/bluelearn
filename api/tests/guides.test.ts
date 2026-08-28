@@ -283,11 +283,12 @@ describe("GET /guides/{slug}/variants", () => {
 
   // 1 up / 1 down scores ~0.09, 3 up scores ~0.44, so the challenger leads
   // despite sorting later by slug.
-  it("orders variants by Wilson score, not by slug", async () => {
+  it("pins the canonical variant first, then orders by Wilson score", async () => {
     const { base, guide: incumbent } = await createPublishedGuide({
       title: "Incumbent",
     });
-    const challenger = await publishSiblingVariant(base.id, "Challenger");
+    const leader = await publishSiblingVariant(base.id, "Leader");
+    const trailer = await publishSiblingVariant(base.id, "Trailer");
 
     const up = await makeUser();
     const down = await makeUser();
@@ -298,8 +299,10 @@ describe("GET /guides/{slug}/variants", () => {
     });
     for (let i = 0; i < 3; i++) {
       const voter = await makeUser();
-      await createVote(voter.userId, challenger.id, { direction: "up" });
+      await createVote(voter.userId, leader.id, { direction: "up" });
     }
+    const trailerVoter = await makeUser();
+    await createVote(trailerVoter.userId, trailer.id, { direction: "up" });
 
     const res = await app.request(`/guides/${base.slug}/variants`, {}, env);
 
@@ -307,7 +310,7 @@ describe("GET /guides/{slug}/variants", () => {
     await expectToMatchSpec(res, "GET", "/guides/{slug}/variants");
     const body = (await res.json()) as { variants: Array<{ id: string }> };
     const ids = body.variants.map((v) => v.id);
-    expect(ids).toEqual([challenger.id, incumbent.id]);
+    expect(ids).toEqual([incumbent.id, leader.id, trailer.id]);
   });
 });
 

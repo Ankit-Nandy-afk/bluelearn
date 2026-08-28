@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import type { Guide } from "@bluelearn/schemas";
+import type { ReaderGuide } from "@/components/GuideReader";
 import type { GuideContribution } from "@/types/contributions";
 import type { GuideType } from "@/types/guides";
 import { listGuides } from "@/lib/api/guides";
@@ -17,7 +17,10 @@ import {
 } from "@/lib/api/guideRevisions";
 import { createVariantRevision, getVariantBySlug } from "@/lib/api/variants";
 import { uploadMedia } from "@/lib/api/media";
-import { estimateReadMinutes } from "@/lib/guideUtils";
+import {
+  estimateReadMinutes,
+  isRevisionDraftUnchanged,
+} from "@/lib/guideUtils";
 import { requireSession } from "@/lib/auth";
 
 import { GuideDetails } from "@/components/contribute/steps/GuideDetails";
@@ -123,7 +126,7 @@ function RouteComponent() {
     return () => controller.abort();
   }, []);
 
-  const previewGuide: Guide = useMemo(() => {
+  const previewGuide: ReaderGuide = useMemo(() => {
     const nameById = new Map(
       subjectOptions.map((s) => [s.id, s.name] as const)
     );
@@ -247,6 +250,31 @@ function RouteComponent() {
   const publish = async () => {
     setSubmitting(true);
     try {
+      if (
+        isRevisionDraftUnchanged(
+          {
+            title: snapshot.revision.title,
+            summary: snapshot.revision.summary,
+            body: snapshot.revision.body,
+            change_summary: snapshot.revision.change_summary,
+            subjectIds: snapshot.subjects.map((s) => s.id),
+          },
+          draftFields()
+        )
+      ) {
+        toast.error(
+          "No changes made to the guide, make a change and try again."
+        );
+        return;
+      } else if (
+        draftFields().change_summary === null ||
+        draftFields().change_summary === ""
+      ) {
+        toast.error(
+          "No changes summary provided, add a change summary and try again."
+        );
+        return;
+      }
       const id = await persistDraft();
       await submitRevision(id);
       await router.invalidate();

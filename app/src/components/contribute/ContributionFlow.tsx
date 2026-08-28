@@ -12,7 +12,7 @@ import type {
   VariantContribution,
 } from "@/types/contributions";
 import type { GuideType } from "@/types/guides";
-import type { Guide } from "@bluelearn/schemas";
+import type { ReaderGuide } from "@/components/GuideReader";
 import { addGuideVariant, createGuide, listGuides } from "@/lib/api/guides";
 import { getMyIdentity } from "@/lib/api/identity";
 import { listSubjects } from "@/lib/api/subjects";
@@ -48,6 +48,8 @@ import {
   setStoredDraft,
   useDebouncedContributionSave,
 } from "@/lib/contributionStorage";
+
+const MAX_WORD_COUNT = 2500;
 
 type PropTypes = {
   type: ContributionType | null;
@@ -515,7 +517,7 @@ function Inner({
 
   // Shape the in-progress form as a Guide, so the submit step can render it with
   // the same component the published page uses.
-  const previewGuide: Guide = useMemo(() => {
+  const previewGuide: ReaderGuide = useMemo(() => {
     const nameById = new Map(
       subjectOptions.map((s) => [s.id, s.name] as const)
     );
@@ -552,7 +554,7 @@ function Inner({
     };
   }, [guideContData, subjectOptions, guideOptions, username]);
 
-  const previewVariant: Guide = useMemo(() => {
+  const previewVariant: ReaderGuide = useMemo(() => {
     const nameById = new Map(
       subjectOptions.map((s) => [s.id, s.name] as const)
     );
@@ -800,6 +802,18 @@ function Inner({
   const publish = async () => {
     setSubmitting(true);
     try {
+      if (type === "guide") {
+        const text = guideContData.body.trim();
+        const wordCount = text ? text.split(/\s+/).length : 0;
+
+        if (wordCount > MAX_WORD_COUNT) {
+          toast.error("Word count limit exceeded", {
+            description: `Your guide currently has ${wordCount.toLocaleString()} words. Please reduce it to ${MAX_WORD_COUNT.toLocaleString()} words or fewer.`,
+          });
+          return;
+        }
+      }
+
       if (type === "objective") {
         const missing = missingObjectiveFields();
         if (missing.length > 0) {

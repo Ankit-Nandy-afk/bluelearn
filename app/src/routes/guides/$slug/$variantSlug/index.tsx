@@ -31,20 +31,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { GuideSidebarActions } from "@/components/sidebar/GuideSidebarActions";
 import { GuideMobileMenu } from "@/components/GuideMobileMenu";
-
-function useVote() {
-  const [vote, setVote] = useState<"up" | "down" | null>(null);
-
-  const toggleVote = (type: "up" | "down") => {
-    setVote((current) => (current === type ? null : type));
-  };
-
-  return {
-    vote,
-    upvote: () => toggleVote("up"),
-    downvote: () => toggleVote("down"),
-  };
-}
+import { DownvoteModal } from "@/components/modals/DownvoteModal";
+import { useVote } from "@/lib/useVote";
 
 export const Route = createFileRoute("/guides/$slug/$variantSlug/")({
   loader: async ({ params, abortController }) => {
@@ -66,7 +54,11 @@ function RouteComponent() {
   const { slug, variantSlug } = Route.useParams();
   const { variant, current } = Route.useLoaderData();
 
-  const { vote, upvote, downvote } = useVote();
+  const { vote, tally, submitting, upvote, downvote, removeVote } = useVote(
+    variant.id,
+    variant.votes
+  );
+  const [downvoteOpen, setDownvoteOpen] = useState(false);
 
   const breadcrumbOrigin = useLocation({
     select: (location) => location.state.breadcrumbOrigin,
@@ -77,6 +69,7 @@ function RouteComponent() {
     variant_slug: variant.slug,
     title: current.title ?? "",
     author: variant.author,
+    knowledge_type: variant.knowledge_type,
     summary: current.summary,
     body: current.body,
     duration_minutes: variant.duration_minutes,
@@ -91,11 +84,15 @@ function RouteComponent() {
       to: `/guides/${slug}/${variantSlug}/edit`,
       icon: <Pencil className="h-4 w-4" />,
     },
-    {
-      label: "Create Variant",
-      to: "/contribute",
-      icon: <Plus className="h-4 w-4" />,
-    },
+    ...(variant.is_official
+      ? []
+      : [
+          {
+            label: "Create Variant",
+            to: "/contribute",
+            icon: <Plus className="h-4 w-4" />,
+          },
+        ]),
   ];
 
   const breadcrumbs = buildBreadcrumbs(guide.title, breadcrumbOrigin);
@@ -109,6 +106,7 @@ function RouteComponent() {
               slug={slug}
               currentVariantSlug={variant.slug}
               variantId={variant.id}
+              isOfficial={variant.is_official}
             />
           }
           guide={guide}
@@ -152,23 +150,54 @@ function RouteComponent() {
 
             {/* Actions */}
             <div className="flex shrink-0 items-center gap-2">
-              <Button variant="outline" size="lg" onClick={() => upvote()}>
+              <Button
+                variant="outline"
+                size="lg"
+                aria-label="Upvote variant"
+                aria-pressed={vote?.direction === "up"}
+                disabled={submitting}
+                onClick={() => upvote()}
+              >
                 <ArrowBigUp
                   className="h-4 w-4"
-                  color={vote == "up" ? "#3D80DD" : "#000000"}
-                  fill={vote == "up" ? "#3D80DD" : "#FFFFFF"}
+                  color={vote?.direction === "up" ? "#3D80DD" : "#000000"}
+                  fill={vote?.direction === "up" ? "#3D80DD" : "#FFFFFF"}
                 />
-                <span className="mono-micro">{variant.votes.up}</span>
+                <span className="mono-micro">{tally.up}</span>
               </Button>
 
-              <Button variant="outline" size="lg" onClick={() => downvote()}>
+              <Button
+                variant="outline"
+                size="lg"
+                aria-label="Downvote variant"
+                aria-pressed={vote?.direction === "down"}
+                disabled={submitting}
+                onClick={() => setDownvoteOpen(true)}
+              >
                 <ArrowBigDown
                   className="h-4 w-4"
-                  color={vote == "down" ? "#3D80DD" : "#000000"}
-                  fill={vote == "down" ? "#3D80DD" : "#FFFFFF"}
+                  color={vote?.direction === "down" ? "#3D80DD" : "#000000"}
+                  fill={vote?.direction === "down" ? "#3D80DD" : "#FFFFFF"}
                 />
-                <span className="mono-micro">{variant.votes.down}</span>
+                <span className="mono-micro">{tally.down}</span>
               </Button>
+
+              <DownvoteModal
+                open={downvoteOpen}
+                onOpenChange={setDownvoteOpen}
+                submitting={submitting}
+                existing={
+                  vote?.direction === "down"
+                    ? { reason: vote.reason, note: vote.note }
+                    : null
+                }
+                onSubmit={async (reason, note) => {
+                  if (await downvote(reason, note)) setDownvoteOpen(false);
+                }}
+                onRemove={async () => {
+                  if (await removeVote()) setDownvoteOpen(false);
+                }}
+              />
 
               <GuideMobileMenu
                 slug={slug}
@@ -176,6 +205,7 @@ function RouteComponent() {
                 variantId={variant.id}
                 guideTitle={guide.title}
                 menuItems={guideMenuItems}
+                isOfficial={variant.is_official}
               />
 
               <DropdownMenu>
@@ -205,7 +235,12 @@ function RouteComponent() {
 
           <Separator className="mb-8" />
 
-          <GuideReader guide={guide} showToc />
+          <GuideReader
+            guide={guide}
+            guideType={guide.knowledge_type}
+            showToc
+            isOfficial={variant.is_official}
+          />
         </main>
       </section>
     </div>

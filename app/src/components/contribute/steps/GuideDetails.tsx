@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { useState } from "react";
+import { normalizeTodoTitle, todoPrereqSchema } from "@bluelearn/schemas";
 import type { Dispatch, SetStateAction } from "react";
 import type {
   ContributionType,
@@ -10,6 +11,7 @@ import { StepperActionHeader } from "@/components/contribute/StepperActionHeader
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
@@ -66,6 +68,10 @@ export const GuideDetails = ({
     title: "",
     summary: "",
   });
+  const [todoPrereqError, setTodoPrereqError] = useState<{
+    field: "title" | "summary";
+    message: string;
+  } | null>(null);
   const [newSubject, setNewSubject] = useState<{
     name: string;
     summary: string;
@@ -201,7 +207,10 @@ export const GuideDetails = ({
         {onChangeSummaryChange && (
           <Field className="space-y-2">
             <div className="space-y-1">
-              <FieldLabel className="font-mono tracking-[0.08em] uppercase">
+              <FieldLabel
+                required
+                className="font-mono tracking-[0.08em] uppercase"
+              >
                 Change Summary
               </FieldLabel>
               <FieldDescription className="text-xs">
@@ -320,7 +329,8 @@ export const GuideDetails = ({
                 <button
                   type="button"
                   aria-label={`Remove ${sub.name}`}
-                  className="text-muted-foreground hover:text-foreground"
+                  title={`Remove ${sub.name}`}
+                  className="rounded-full bg-transparent p-1.5 text-muted-foreground filter transition duration-150 outline-none hover:scale-105 hover:bg-muted/10 hover:text-foreground hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                   onClick={() =>
                     setGuideContData((prev) => ({
                       ...prev,
@@ -330,7 +340,7 @@ export const GuideDetails = ({
                     }))
                   }
                 >
-                  <X className="size-2.5" />
+                  <X className="size-3" />
                 </button>
               </Badge>
             ))}
@@ -342,7 +352,7 @@ export const GuideDetails = ({
             <Field className="space-y-2">
               <div className="space-y-1">
                 <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                  Prerequsite Guides
+                  Prerequisite Guides
                 </FieldLabel>
                 <FieldDescription className="text-xs">
                   Existing guides a reader should understand first.
@@ -373,7 +383,7 @@ export const GuideDetails = ({
             <Field className="space-y-2">
               <div className="space-y-1">
                 <FieldLabel className="font-mono tracking-[0.08em] uppercase">
-                  Todo Prerequsite Guides
+                  Todo Prerequisite Guides
                 </FieldLabel>
                 <FieldDescription className="text-xs">
                   Note missing prerequisite guides that don't exist yet.
@@ -385,14 +395,19 @@ export const GuideDetails = ({
                   id="todo-prereqs"
                   type="text"
                   maxLength={50}
-                  placeholder="Enter title of missing prerequsite guide."
-                  className="h-10 rounded-md"
+                  placeholder="Enter title of missing prerequisite guide."
+                  className={`h-10 rounded-md ${todoPrereqError ? "outline-2 outline-offset-2 outline-destructive" : ""}`}
                   value={todoPrereq.title}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    setTodoPrereqError(null);
                     setTodoPrereq((prev) => ({
                       ...prev,
                       title: e.target.value,
-                    }))
+                    }));
+                  }}
+                  aria-invalid={!!todoPrereqError}
+                  aria-describedby={
+                    todoPrereqError ? "todo-prereq-error" : undefined
                   }
                 />
 
@@ -400,51 +415,95 @@ export const GuideDetails = ({
                   id="todo-prereq-summary"
                   type="text"
                   maxLength={500}
-                  placeholder="Enter summary of missing prerequsite guide."
-                  className="h-10 rounded-md"
+                  placeholder="Enter summary of missing prerequisite guide."
+                  className={`h-10 rounded-md ${todoPrereqError ? "outline-2 outline-offset-2 outline-destructive" : ""}`}
                   value={todoPrereq.summary}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    setTodoPrereqError(null);
                     setTodoPrereq((prev) => ({
                       ...prev,
                       summary: e.target.value,
-                    }))
+                    }));
+                  }}
+                  aria-invalid={!!todoPrereqError}
+                  aria-describedby={
+                    todoPrereqError ? "todo-prereq-error" : undefined
                   }
                 />
                 <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
                   className="btn-sec h-10 w-full rounded-md sm:w-24"
                   onClick={() => {
-                    if (todoPrereq.title !== "" && todoPrereq.summary !== "") {
-                      const todos = [...guideContData.todoPrereqs, todoPrereq];
-                      setGuideContData((prev) => ({
-                        ...prev,
-                        todoPrereqs: todos,
-                      }));
-
-                      setTodoPrereq({ title: "", summary: "" });
+                    const result = todoPrereqSchema.safeParse(todoPrereq);
+                    if (!result.success) {
+                      const issue = result.error.issues[0];
+                      const field =
+                        issue.path[0] === "summary" ? "summary" : "title";
+                      setTodoPrereqError({
+                        field,
+                        message: issue.message,
+                      });
+                      return;
                     }
+
+                    const normalizedTitle = normalizeTodoTitle(
+                      result.data.title
+                    );
+                    if (
+                      guideContData.todoPrereqs.some(
+                        (todo) =>
+                          normalizeTodoTitle(todo.title) === normalizedTitle
+                      )
+                    ) {
+                      setTodoPrereqError({
+                        field: "title",
+                        message:
+                          "A TODO prerequisite with this title already exists.",
+                      });
+                      return;
+                    }
+
+                    setGuideContData((prev) => ({
+                      ...prev,
+                      todoPrereqs: [...prev.todoPrereqs, result.data],
+                    }));
+                    setTodoPrereq({ title: "", summary: "" });
+                    setTodoPrereqError(null);
                   }}
                 >
                   Add Todo
                 </Button>
               </div>
+              <FieldError id="todo-prereq-error">
+                {todoPrereqError ? todoPrereqError.message : null}
+              </FieldError>
             </Field>
             {guideContData.todoPrereqs.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-1">
+              <div className="flex flex-col gap-2 px-1">
                 {guideContData.todoPrereqs.map((todo, index) => (
-                  <Badge
+                  <div
                     key={index}
-                    variant="outline"
-                    className="h-auto w-full items-start justify-between gap-1.5 rounded-md py-1.5 text-left break-words whitespace-normal"
+                    className="flex h-auto w-full items-start justify-between gap-1.5 rounded-md border border-input/20 px-3 py-1.5 text-left break-words whitespace-normal"
                   >
-                    {todo.summary
-                      ? `${todo.title} - ${todo.summary}`
-                      : todo.title}
+                    <span className="min-w-0 flex-1 pr-2">
+                      <div className="break-words">
+                        <div>
+                          <span className="font-semibold">{todo.title}</span>
+                        </div>
+                        {todo.summary && (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {todo.summary}
+                          </div>
+                        )}
+                      </div>
+                    </span>
+
                     <button
                       type="button"
                       aria-label={`Remove ${todo.title}`}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="flex-shrink-0 rounded-full bg-transparent p-1.5 text-muted-foreground filter transition duration-150 outline-none hover:scale-105 hover:bg-muted/10 hover:text-foreground hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                       onClick={() =>
                         setGuideContData((prev) => ({
                           ...prev,
@@ -454,9 +513,9 @@ export const GuideDetails = ({
                         }))
                       }
                     >
-                      <X className="size-2.5" />
+                      <X className="size-3" />
                     </button>
-                  </Badge>
+                  </div>
                 ))}
               </div>
             )}

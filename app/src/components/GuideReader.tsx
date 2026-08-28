@@ -6,18 +6,20 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import remarkDirective from "remark-directive";
 
-import { Calendar, Clock, User } from "lucide-react";
+import { Calendar, Clock, ShieldCheck, User } from "lucide-react";
+import { createElement } from "react";
+import type { ReactElement } from "react";
 import type { Guide } from "@bluelearn/schemas";
 import type { GuideType } from "@/types/guides";
-import type { ReactElement } from "react";
 import { remarkCallout } from "@/lib/remarkCallout";
+import { remarkIndentedCodeAsParagraph } from "@/lib/remarkIndentedCodeAsParagraph";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components//ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/components/CodeBlock";
 import { Callout } from "@/components/Callout";
 import { GuideToc } from "@/components/GuideToc";
 
-import { formatDate, formatDuration } from "@/lib/guideUtils";
+import { formatDate, formatDuration, getHeadingId } from "@/lib/guideUtils";
 
 const sanitizeSchema = {
   ...defaultSchema,
@@ -26,14 +28,15 @@ const sanitizeSchema = {
     img: [...(defaultSchema.attributes?.img ?? []), "width", "height"],
     callout: ["type"],
   },
-  tagNames: [...(defaultSchema.tagNames ?? []), "callout"],
+  tagNames: [...(defaultSchema.tagNames ?? []), "callout", "u"],
 };
 
-// Tags only render as a name badge here, and a guide under review can carry
-// subjects whose slug is not minted yet, so either identifier will do.
 type ReaderTag = { id?: string; slug?: string; name: string };
 
-export type ReaderGuide = Omit<Guide, "tags" | "variant_id"> & {
+export type ReaderGuide = Omit<
+  Guide,
+  "tags" | "variant_id" | "is_official" | "knowledge_type"
+> & {
   tags: Array<ReaderTag>;
 };
 
@@ -41,17 +44,52 @@ type PropTypes = {
   guide: ReaderGuide;
   guideType?: GuideType;
   showToc?: boolean;
+  isOfficial?: boolean;
 };
 
 export const GuideReader = ({
   guide,
   guideType,
   showToc = false,
+  isOfficial = false,
 }: PropTypes) => {
   const created = new Date(guide.created_at);
   const createdLabel = Number.isNaN(created.getTime())
     ? guide.created_at
     : formatDate(created);
+  const headingIds = new Map<string, number>();
+
+  const renderHeading =
+    (level: number) =>
+    ({ children }: any) => {
+      const getText = (value: any): string => {
+        if (value == null) {
+          return "";
+        }
+
+        if (typeof value === "string" || typeof value === "number") {
+          return String(value);
+        }
+
+        if (Array.isArray(value)) {
+          return value.map(getText).join("");
+        }
+
+        if (value?.props?.children != null) {
+          return getText(value.props.children);
+        }
+
+        return "";
+      };
+
+      const text = getText(children);
+
+      return createElement(
+        `h${level}`,
+        { id: getHeadingId(text.trim(), headingIds) },
+        children
+      );
+    };
 
   return (
     <>
@@ -61,24 +99,36 @@ export const GuideReader = ({
             {showToc && <GuideToc body={guide.body ?? ""} />}
             <h1 className="text-3xl font-bold">{guide.title}</h1>
           </div>
-          {guideType && (
-            <Badge
-              key={guideType}
-              variant="outline"
-              className="mono-micro shrink-0 rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
-            >
-              {guideType}
-            </Badge>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {isOfficial && (
+              <Badge
+                variant="outline"
+                className="mono-micro h-6 shrink-0 gap-0.5 rounded-full border border-badge-border bg-transparent tracking-[0.08em] text-primary [&>svg]:size-[18px]!"
+              >
+                <ShieldCheck
+                  className="fill-primary text-background"
+                  strokeWidth={2.5}
+                />
+                <span className="translate-y-[0.25px]">Official</span>
+              </Badge>
+            )}
+            {guideType && (
+              <Badge
+                key={guideType}
+                variant="outline"
+                className="mono-micro shrink-0 rounded-full border bg-badge tracking-[0.08em] text-badge-foreground"
+              >
+                {guideType}
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="mono-micro my-2 flex flex-wrap items-center gap-2.5 text-muted-foreground">
-          {guide.author && (
-            <span className="flex items-center gap-1">
-              <User className="h-3 w-3 text-muted-foreground/75" />@
-              {guide.author}
-            </span>
-          )}
+          <span className="flex items-center gap-1">
+            <User className="h-3 w-3 text-muted-foreground/75" />@
+            {guide.author ?? "deleted_user"}
+          </span>
           <span className="flex items-center gap-1">
             <Calendar className="h-3 w-3 text-muted-foreground/75" />
             {createdLabel}
@@ -119,6 +169,7 @@ export const GuideReader = ({
             remarkMath,
             remarkDirective,
             remarkCallout,
+            remarkIndentedCodeAsParagraph,
           ]}
           rehypePlugins={[
             rehypeRaw,
@@ -126,6 +177,12 @@ export const GuideReader = ({
             rehypeKatex,
           ]}
           components={{
+            h1: renderHeading(1),
+            h2: renderHeading(2),
+            h3: renderHeading(3),
+            h4: renderHeading(4),
+            h5: renderHeading(5),
+            h6: renderHeading(6),
             pre({ children }) {
               const child = children as ReactElement<{
                 className?: string;
