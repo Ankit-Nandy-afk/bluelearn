@@ -4,9 +4,8 @@ export type ReviewDecisionInput = {
   reasons: Array<string>;
 };
 
-// A note has to carry something a guide author can actually read back. Any
-// letter or number in any script counts, so notes are not limited to Latin
-// characters; whitespace and bare punctuation are not a note.
+// Any letter or number in any script counts, so notes are not limited to Latin
+// characters. Whitespace and bare punctuation are not a note.
 const MEANINGFUL_TEXT = /[\p{L}\p{N}]/u;
 
 export function hasMeaningfulText(value: string): boolean {
@@ -16,10 +15,6 @@ export function hasMeaningfulText(value: string): boolean {
 /**
  * Describes what is stopping a decision from being submitted, or returns an
  * empty string when it is ready to go.
- *
- * `createDecisionSchema` already requires `notes` to survive a trim on the
- * server, so a blank-but-not-empty note used to clear this check and fail at
- * the API instead, surfacing a generic error rather than the guidance below.
  */
 export function validateReviewDecision(review: ReviewDecisionInput): string {
   if (review.decision === "")
